@@ -603,7 +603,9 @@
       }
     },
     "ZLLC_2026": {
-      "excludeList": [],
+      "excludeList": [
+        "../DSP/libCMSISDSP.a"
+      ],
       "toolchain": "AC6",
       "compileConfig": {
         "cpuType": "Cortex-M7",
@@ -716,7 +718,8 @@
             }
           ]
         },
-        "options": "null"
+        "options": "null",
+        "archExtensions": ""
       },
       "uploader": "JLink",
       "uploadConfig": {
@@ -751,7 +754,9 @@
           "../User/Driver/Inc",
           "../User/Algorithm/Inc",
           "../Drivers/CMSIS/Include",
+          ".cmsis/include",
           "RTE/_ZLLC_2026",
+          "../DSP",
           "../DSP/Include"
         ],
         "libList": [],
@@ -770,27 +775,31 @@
           "beforeBuildTasks": [],
           "afterBuildTasks": [],
           "global": {
+            "use-microLIB": false,
             "output-debug-info": "enable"
           },
           "c/cpp-compiler": {
             "optimization": "level-0",
             "language-c": "c99",
             "language-cpp": "c++11",
+            "link-time-optimization": false,
             "one-elf-section-per-function": true,
             "short-enums#wchar": true,
             "warnings": "no-warnings"
           },
           "asm-compiler": {
-            "$use": "asm-auto",
-            "misc-controls": "--diag_suppress=1950"
+            "$use": "asm-auto"
           },
           "linker": {
             "output-format": "elf",
-            "misc-controls": "--diag_suppress=L6329"
+            "misc-controls": "--diag_suppress=L6329",
+            "xo-base": "",
+            "ro-base": "",
+            "rw-base": ""
           }
         }
       }
     }
   },
-  "version": "3.5"
+  "version": "3.6"
 }
