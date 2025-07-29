@@ -230,10 +230,10 @@ public:
     /*后期yaw pitch这两个类要换成其父类，大疆电机类*/
 
     // yaw轴电机
-    Class_DJI_Motor_GM6020 Motor_Yaw;
+    Class_Gimbal_Yaw_Motor_GM6020 Motor_Yaw;
 
     // pitch轴电机
-    Class_DJI_Motor_GM6020 Motor_Pitch;
+    Class_Gimbal_Pitch_Motor_GM6020 Motor_Pitch;
 
 
     void Init();

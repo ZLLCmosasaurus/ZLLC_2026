@@ -398,102 +398,68 @@ float Offset_K = 0.175f;
 void Class_Chariot::Control_Chassis()
 {
     //遥控器摇杆值
-    float dr16_l_x, dr16_l_y;    
-    //云台坐标系速度目标值 float
-    float gimbal_velocity_x = 0, gimbal_velocity_y = 0;      
+    float dr16_l_x = 0, dr16_l_y = 0;
+    float vt13_l_x = 0, vt13_l_y = 0;
+    
     //底盘坐标系速度目标值 float
     float chassis_velocity_x = 0, chassis_velocity_y = 0;
     float chassis_omega = 0;  
-    //云台坐标系角度目标值 float
-    float gimbal_angle = 0,chassis_angle = 0,relative_angle = 0;
+#ifdef USE_DR16
 	
     //排除遥控器死区
     dr16_l_x = (Math_Abs(DR16.Get_Left_X()) > DR16_Dead_Zone) ? DR16.Get_Left_X() : 0;
     dr16_l_y = (Math_Abs(DR16.Get_Left_Y()) > DR16_Dead_Zone) ? DR16.Get_Left_Y() : 0;
 
-    //设定矩形到圆形映射进行控制
-    gimbal_velocity_x = dr16_l_x * sqrt(1.0f - dr16_l_y * dr16_l_y / 2.0f) * Chassis.Get_Velocity_X_Max() ;
-    gimbal_velocity_y = dr16_l_y * sqrt(1.0f - dr16_l_x * dr16_l_x / 2.0f) * Chassis.Get_Velocity_Y_Max() ;
-
-    //遥控器操作逻辑
-    volatile int DR16_Left_Switch_Status = DR16.Get_Left_Switch();
-    switch(DR16_Left_Switch_Status){
-        case (DR16_Switch_Status_UP):   // 左上 小陀螺模式
+		// 设定矩形到圆形映射进行控制，因为遥控器理想是圆，但实际数据是正方形，如果45°移动，将会是1.414倍，所以要映射
+	chassis_velocity_x = dr16_l_x * sqrt(1.0f - dr16_l_y * dr16_l_y / 2.0f) * Chassis.Get_Velocity_X_Max();
+    chassis_velocity_y = dr16_l_y * sqrt(1.0f - dr16_l_x * dr16_l_x / 2.0f) * Chassis.Get_Velocity_Y_Max();	
+	
+        // 键盘遥控器操作逻辑
+        if (DR16.Get_Left_Switch() == DR16_Switch_Status_MIDDLE) // 左中 随动模式
         {
-
-            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SPIN);
-            break;
-        }
-        case(DR16_Switch_Status_MIDDLE): // 左中 随动模式
-        {
+            // 底盘随动
             Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_FLLOW);
-            break;
         }
-    }
-
-    Chassis.Set_Target_Velocity_X(gimbal_velocity_y);
-    Chassis.Set_Target_Velocity_Y(-gimbal_velocity_x);//前x左y正
-
-    //相对角度计算
-    gimbal_angle = Gimbal.Motor_Yaw.Get_Zero_Position();
-    chassis_angle = addSampleAndFilter(Gimbal.Motor_Yaw.Get_Now_Angle(),5);
-    relative_angle = chassis_angle - gimbal_angle ;
-    
-    MiniPC.Set_Gimbal_Now_Relative_Angle(relative_angle);
-
-    relative_angle = DEG_TO_RAD * relative_angle;
-
-    if(MiniPC.Get_MiniPC_Status() != MiniPC_Status_DISABLE && DR16.Get_Left_Switch() == DR16_Switch_Status_DOWN){//上位机导航信息接收
-        if(MiniPC.Get_Chassis_Target_Velocity_X() != 0 || MiniPC.Get_Chassis_Target_Velocity_Y() != 0){
-            Chassis.Set_Target_Velocity_X(float(MiniPC.Get_Chassis_Target_Velocity_X() / 100.f));
-            Chassis.Set_Target_Velocity_Y(float(MiniPC.Get_Chassis_Target_Velocity_Y() / 100.f));
-        }
-    }
-   
-    //云台到底盘坐标系转换
-    volatile int Chassis_control_type = Chassis.Get_Chassis_Control_Type(); 
-     switch(Chassis_control_type){
-        case(Chassis_Control_Type_DISABLE):{//失能
-            chassis_velocity_x = 0;
-            chassis_velocity_y = 0;
-            chassis_omega = 0;
-            break;
-        }
-        case(Chassis_Control_Type_FLLOW):
-        {   //随动 附有非随动和受击陀螺逻辑
-            if(Gimbal.Motor_Yaw.Get_DJI_Motor_Status() == LK_Motor_Status_DISABLE){//大yaw离线失能
-                Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);           
-            }
-            else{//正常随动
-                Chassis.Chassis_Follow_PID_Angle.Set_Target(0);
-                Chassis.Chassis_Follow_PID_Angle.Set_Now(relative_angle * 180 / PI);
-                Chassis.Chassis_Follow_PID_Angle.TIM_Adjust_PeriodElapsedCallback();
-                chassis_omega = Chassis.Chassis_Follow_PID_Angle.Get_Out() / 2;
-                chassis_velocity_x = Chassis.Get_Target_Velocity_X() * cos(relative_angle) - Chassis.Get_Target_Velocity_Y() * sin(relative_angle);
-                chassis_velocity_y = Chassis.Get_Target_Velocity_X() * sin(relative_angle) + Chassis.Get_Target_Velocity_Y() * cos(relative_angle);
-            }
-            break;
-        }
-        case(Chassis_Control_Type_SPIN):
+        if (DR16.Get_Left_Switch() == DR16_Switch_Status_UP) // 左上 小陀螺模式
         {
-            chassis_omega = 0.75f;
-            relative_angle += Gimbal.Motor_Yaw.Get_Now_Omega_Radian() * Offset_K;
-            chassis_velocity_x = Chassis.Get_Target_Velocity_X() * cos(relative_angle) - Chassis.Get_Target_Velocity_Y() * sin(relative_angle);
-            chassis_velocity_y = Chassis.Get_Target_Velocity_X() * sin(relative_angle) + Chassis.Get_Target_Velocity_Y() * cos(relative_angle);
-            if(DR16.Get_Right_Switch() == DR16_Switch_Status_DOWN &&
-                DR16.Get_Left_Switch() == DR16_Switch_Status_UP)
+            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SPIN);
+            chassis_omega = -Chassis.Get_Spin_Omega();
+            if (DR16.Get_Right_Switch() == DR16_Switch_Status_DOWN) // 右下 小陀螺反向
             {
-                chassis_omega = -0.75f;
+                chassis_omega = Chassis.Get_Spin_Omega();
             }
-            break;
+        }	
+#endif
+ 
+#ifdef USE_VT13
+       // 排除遥控器死区
+     vt13_l_x = (Math_Abs(VT13.Get_Left_X()) > DR16_Dead_Zone) ? VT13.Get_Left_X() : 0;
+     vt13_l_y = (Math_Abs(VT13.Get_Left_Y()) > DR16_Dead_Zone) ? VT13.Get_Left_Y() : 0;
+
+        // 设定矩形到圆形映射进行控制
+     chassis_velocity_x = vt13_l_x * sqrt(1.0f - vt13_l_y * vt13_l_y / 2.0f) * Chassis.Get_Velocity_X_Max();
+     chassis_velocity_y = vt13_l_y * sqrt(1.0f - vt13_l_x * vt13_l_x / 2.0f) * Chassis.Get_Velocity_Y_Max();
+
+        // 键盘遥控器操作逻辑
+        if (VT13.Get_Switch() == VT13_Switch_Status_Left)
+        {
+            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SPIN);
+            chassis_omega = -Chassis.Get_Spin_Omega();
         }
-        
-    }
-    if(chassis_omega > 4)chassis_omega = 4;
-    if(chassis_omega < -4)chassis_omega = -4;
-    
+        if (VT13.Get_Switch() == VT13_Switch_Status_Middle)
+        {
+            // 底盘随动
+            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_FLLOW);
+        }
+        if (VT13.Get_Switch() == VT13_Switch_Status_Right)
+        {
+            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SPIN);
+            chassis_omega = Chassis.Get_Spin_Omega();
+        }
+#endif
+
     Chassis.Set_Target_Velocity_X(chassis_velocity_x);
-    Chassis.Set_Target_Velocity_Y(chassis_velocity_y);//前x左y正
+    Chassis.Set_Target_Velocity_Y(chassis_velocity_y);//前x正，左y正
     Chassis.Set_Target_Omega(chassis_omega);
 }
 #endif
@@ -519,44 +485,88 @@ void Class_Chariot::Control_Gimbal()
         // 角度目标值
     float tmp_gimbal_yaw, tmp_gimbal_pitch;
     // 遥控器摇杆值
-    float dr16_y, dr16_r_y;
-
+    float dr16_y = 0, dr16_r_y = 0;
+    float vt13_y = 0, vt13_r_y = 0;//把所有主要的变量统一放在交互层函数开头，便于后面查找
+	
+    tmp_gimbal_yaw = Gimbal.Get_Target_Yaw_Angle();//增量环
+	tmp_gimbal_pitch = Gimbal.Motor_Pitch.Get_Target_Angle();//在第一步直接获取Target，后面就只是不断优化	
+#ifdef USE_DR16
     // 排除遥控器死区
-    dr16_y = (Math_Abs(DR16.Get_Right_X()) > DR16_Dead_Zone) ? DR16.Get_Right_X() : 0;
+	dr16_y = (Math_Abs(DR16.Get_Right_X()) > DR16_Dead_Zone) ? DR16.Get_Right_X() : 0;//DR16和VT13共用一套死区
     dr16_r_y = (Math_Abs(DR16.Get_Right_Y()) > DR16_Dead_Zone) ? DR16.Get_Right_Y() : 0;
-
-    tmp_gimbal_yaw = Gimbal.Get_Target_Yaw_Angle();
-    tmp_gimbal_pitch = Gimbal.Motor_Pitch.Get_Target_Angle();
-
-    // 遥控器操作逻辑
-    tmp_gimbal_yaw -= dr16_y * DR16_Yaw_Angle_Resolution;
-    tmp_gimbal_pitch -= dr16_r_y * DR16_Pitch_Angle_Resolution;
-    // 限制角度范围 处理yaw轴180度问题
-    if ((tmp_gimbal_yaw ) > 180.0f)
-    {
-        tmp_gimbal_yaw -= (360.0f);
-    }
-    else if ((tmp_gimbal_yaw) < -180.0f)
-    {
-        tmp_gimbal_yaw += (360.0f);
-    }
-
-    if(tmp_gimbal_pitch > 18.0f)tmp_gimbal_pitch = 18.0f;
-    if(tmp_gimbal_pitch < -25.0f)tmp_gimbal_pitch = -25.0f;
-
+	
+	//已经获取了右杆的数据，接下来考虑遥控器上面的按键
     if (DR16.Get_Left_Switch() == DR16_Switch_Status_DOWN) // 左下 上位机
     {
         Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_MINIPC);
     }
-    else // 其余位置都是遥控器控制
-    {
-        // 中间遥控模式
-        Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
+    else // 其余位置都是遥控器控制， 左中是普通遥控模式，非自瞄模式   
+    { 
+			Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
+			
+			
+			// 遥控器操作逻辑
+			tmp_gimbal_yaw -= dr16_y * DR16_Yaw_Angle_Resolution;//共用一套灵敏度系数，调参调这个
+			tmp_gimbal_pitch -= dr16_r_y * DR16_Pitch_Angle_Resolution;
+			
+			
+			// 限制角度范围 处理yaw轴180度问题
+			if ((tmp_gimbal_yaw ) > 180.0f)
+			{
+				tmp_gimbal_yaw -= (360.0f);
+			}
+			else if ((tmp_gimbal_yaw) < -180.0f)
+			{
+				tmp_gimbal_yaw += (360.0f);
+			}
+	
+			if(tmp_gimbal_pitch > 18.0f)tmp_gimbal_pitch = 18.0f;
+			if(tmp_gimbal_pitch < -25.0f)tmp_gimbal_pitch = -25.0f;//框定范围
 
-        // 设定角度
-        Gimbal.Set_Target_Yaw_Angle(tmp_gimbal_yaw);
-        Gimbal.Set_Target_Pitch_Angle(tmp_gimbal_pitch);
     }
+#endif	
+	
+
+#ifdef USE_VT13
+        // 排除遥控器死区
+        vt13_y = (Math_Abs(VT13.Get_Right_X()) > DR16_Dead_Zone) ? VT13.Get_Right_X() : 0;//共用一套死区
+        vt13_r_y = (Math_Abs(VT13.Get_Right_Y()) > DR16_Dead_Zone) ? VT13.Get_Right_Y() : 0;
+				
+
+        if (Gimbal.Get_Gimbal_Control_Type() == Gimbal_Control_Type_DISABLE)//VT13是按键控制，所以比DR16多了点东西
+            Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
+        if (VT13.Get_Button_Right() == VT13_Button_TRIG_FREE_PRESSED) //
+        {
+            if (Gimbal.Get_Gimbal_Control_Type() == Gimbal_Control_Type_NORMAL)//从这里开始看，是一致的
+                Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_MINIPC);
+            else if (Gimbal.Get_Gimbal_Control_Type() == Gimbal_Control_Type_MINIPC)
+			{
+                Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
+								// 遥控器操作逻辑
+				tmp_gimbal_yaw -= dr16_y * DR16_Yaw_Angle_Resolution;//共用一套灵敏度系数，调参调这个
+				tmp_gimbal_pitch -= dr16_r_y * DR16_Pitch_Angle_Resolution;
+			
+			
+			    // 限制角度范围 处理yaw轴180度问题
+				if ((tmp_gimbal_yaw ) > 180.0f)
+				{
+					tmp_gimbal_yaw -= (360.0f);
+				}
+					else if ((tmp_gimbal_yaw) < -180.0f)
+				{
+					tmp_gimbal_yaw += (360.0f);
+				}
+	
+				if(tmp_gimbal_pitch > 18.0f)tmp_gimbal_pitch = 18.0f;
+				if(tmp_gimbal_pitch < -25.0f)tmp_gimbal_pitch = -25.0f;//框定范围							
+			}
+ 
+        }
+#endif		
+    //todo：键鼠   
+		// 设定目标角度
+      Gimbal.Set_Target_Yaw_Angle(tmp_gimbal_yaw);
+      Gimbal.Set_Target_Pitch_Angle(tmp_gimbal_pitch);		
 }
 #endif
 /**
@@ -567,22 +577,73 @@ int Booster_Sign = 0;
 #ifdef GIMBAL
 void Class_Chariot::Control_Booster()
 {
-    static uint8_t booster_sign = 0;
-    volatile int DR16_Left_Switch_Status = DR16.Get_Left_Switch();
-    switch(DR16_Left_Switch_Status){
-        case(DR16_Switch_Status_MIDDLE): // 左中 失能
+#ifdef USE_DR16
+        // 左上 开启摩擦轮和发射机构
+        if (DR16.Get_Right_Switch() == DR16_Switch_Status_UP)
         {
-            Booster.Set_Booster_Control_Type(Booster_Control_Type_DISABLE);
+            Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+            Booster.Set_Friction_Control_Type(Friction_Control_Type_ENABLE);
+            Fric_Status = Fric_Status_OPEN;
+
+            if (DR16.Get_Yaw() > -0.2f && DR16.Get_Yaw() < 0.2f)
+            {
+                Shoot_Flag = 0;
+            }
+            if (DR16.Get_Yaw() < -0.8f && Shoot_Flag == 0) // 单发
+            {
+                Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                Shoot_Flag = 1;
+            }
+            if (DR16.Get_Yaw() > 0.8f && Shoot_Flag == 0) // 五连发
+            {
+                Booster.Set_Booster_Control_Type(Booster_Control_Type_MULTI);
+                Shoot_Flag = 1;
+            }
+        }
+        else
+        {
+            Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
             Booster.Set_Friction_Control_Type(Friction_Control_Type_DISABLE);
-            break;
+            Fric_Status = Fric_Status_CLOSE;
         }
-        case(DR16_Switch_Status_DOWN):  // 左下 上位机
+#endif
+
+#ifdef USE_VT13
+       // 开启摩擦轮和发射机构
+        if (VT13.Get_Button_Left() == VT13_Button_TRIG_FREE_PRESSED)
         {
-            
+            if (Fric_Status == Fric_Status_OPEN)
+            {
+                Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+                Booster.Set_Friction_Control_Type(Friction_Control_Type_DISABLE);
+                Fric_Status = Fric_Status_CLOSE;
+            }
+            else
+            {
+                Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+                Booster.Set_Friction_Control_Type(Friction_Control_Type_ENABLE);
+                Fric_Status = Fric_Status_OPEN;
+            }
         }
-    }
+        if (Fric_Status == Fric_Status_OPEN)
+        {
+            if (VT13.Get_Yaw() > -0.2f && VT13.Get_Yaw() < 0.2f)
+            {
+                Shoot_Flag = 0;
+            }
+            if (VT13.Get_Yaw() < -0.8f && Shoot_Flag == 0) // 单发
+            {
+                Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                Shoot_Flag = 1;
+            }
+            if (VT13.Get_Yaw() > 0.8f && Shoot_Flag == 0) // 五连发
+            {
+                Booster.Set_Booster_Control_Type(Booster_Control_Type_MULTI);
+                Shoot_Flag = 1;
+            }
+        }
 
-
+#endif
 }
 #endif
 

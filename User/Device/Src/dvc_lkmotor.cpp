@@ -39,10 +39,10 @@ uint8_t LK_Motor_CAN_Message_Save_Zero[8] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
  * @param __CAN_ID CAN ID
  * @return uint8_t* 缓冲区指针
  */
-uint8_t *allocate_tx_data(FDCAN_HandleTypeDef *hcan, Enum_LK_Motor_ID __CAN_ID)
+uint8_t *allocate_tx_data(CAN_HandleTypeDef *hcan, Enum_LK_Motor_ID __CAN_ID)
 {
     uint8_t *tmp_tx_data_ptr;
-    if (hcan == &hfdcan1)
+    if (hcan == &hcan1)
     {
         switch (__CAN_ID)
         {
@@ -88,7 +88,7 @@ uint8_t *allocate_tx_data(FDCAN_HandleTypeDef *hcan, Enum_LK_Motor_ID __CAN_ID)
         break;
         }
     }
-    else if (hcan == &hfdcan2)
+    else if (hcan == &hcan2)
     {
         switch (__CAN_ID)
         {
@@ -147,13 +147,13 @@ uint8_t *allocate_tx_data(FDCAN_HandleTypeDef *hcan, Enum_LK_Motor_ID __CAN_ID)
  * @param __Omega_Max 最大速度, 调参助手设置
  * @param __Torque_Max 最大扭矩, 调参助手设置
  */
-void Class_LK_Motor::Init(FDCAN_HandleTypeDef *hcan, Enum_LK_Motor_ID __CAN_ID,  float __Omega_Max, int32_t __Position_Offset, float __Current_Max, Enum_LK_Motor_Control_Method __Control_Method,Enum_LK_Motor_Control_ID __Control_ID)
+void Class_LK_Motor::Init(CAN_HandleTypeDef *hcan, Enum_LK_Motor_ID __CAN_ID,  float __Omega_Max, int32_t __Position_Offset, float __Current_Max, Enum_LK_Motor_Control_Method __Control_Method,Enum_LK_Motor_Control_ID __Control_ID)
 {
-    if (hcan->Instance == FDCAN1)
+    if (hcan->Instance == CAN1)
     {
         CAN_Manage_Object = &CAN1_Manage_Object;
     }
-    else if (hcan->Instance == FDCAN2)
+    else if (hcan->Instance == CAN2)
     {
         CAN_Manage_Object = &CAN2_Manage_Object;
     }
@@ -170,6 +170,8 @@ void Class_LK_Motor::Init(FDCAN_HandleTypeDef *hcan, Enum_LK_Motor_ID __CAN_ID, 
  * @brief 数据处理过程
  *
  */
+uint8_t test_reverse_old[2];
+uint8_t test_reverse[2];
 void Class_LK_Motor::Data_Process()
 {
     //数据处理过程
@@ -177,11 +179,11 @@ void Class_LK_Motor::Data_Process()
     uint16_t tmp_encoder, tmp_omega, tmp_current;
     Struct_LK_Motor_CAN_Rx_Data *tmp_buffer = (Struct_LK_Motor_CAN_Rx_Data *)CAN_Manage_Object->Rx_Buffer.Data;
     
-    //处理大小端
-    Math_Endian_Reverse_16((void *)&tmp_buffer->Encoder_Reverse, &tmp_encoder);
-    Math_Endian_Reverse_16((void *)&tmp_buffer->Omega_Reverse, &tmp_omega);
-    Math_Endian_Reverse_16((void *)&tmp_buffer->Current_Reverse, &tmp_current);
-
+		//处理大小端，arm是小端
+	tmp_encoder=tmp_buffer->Encoder_Reverse;
+	tmp_omega=tmp_buffer->Omega_Reverse;
+	tmp_current=tmp_buffer->Current_Reverse;
+    
     //计算圈数与总角度值
     if(Start_Flag==0)
     {

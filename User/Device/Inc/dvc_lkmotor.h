@@ -144,7 +144,7 @@ public:
     // 力矩环
     Class_PID PID_Torque;
 
-    void Init(FDCAN_HandleTypeDef *hcan, Enum_LK_Motor_ID __CAN_ID, float __Omega_Max=200, int32_t __Position_Offset = 0, float __Current_Max = 33.0f ,Enum_LK_Motor_Control_Method __Control_Method = LK_Motor_Control_Method_ANGLE,Enum_LK_Motor_Control_ID __Control_ID=LK_Motor_Control_Omega);
+    void Init(CAN_HandleTypeDef *hcan, Enum_LK_Motor_ID __CAN_ID, float __Omega_Max=200, int32_t __Position_Offset = 0, float __Current_Max = 33.0f ,Enum_LK_Motor_Control_Method __Control_Method = LK_Motor_Control_Method_ANGLE,Enum_LK_Motor_Control_ID __Control_ID=LK_Motor_Control_Omega);
 
 		//Omega_Max是由调参助手决定的,这里只是定义但并没有使用
     inline Enum_LK_Motor_Control_Status Get_LK_Motor_Control_Status();
@@ -202,7 +202,7 @@ protected:
     
     float Current_Max;
     
-    const int16_t Current_Max_Cmd = 262144;//外环速度环262144限幅
+    const int16_t Current_Max_Cmd = 50000;//外环速度环262144限幅
     
     float Out = 0.0f;
     

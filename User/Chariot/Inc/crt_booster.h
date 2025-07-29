@@ -81,6 +81,13 @@ public:
     void Reload_TIM_Status_PeriodElapsedCallback();
 };
 
+enum Enum_Booster_User_Control_Type
+{
+    Booster_User_Control_Type_SINGLE=0,
+    Booster_User_Control_Type_MULTI, // 连发
+};
+
+
 /**
  * @brief Specialized, 发射机构类
  *

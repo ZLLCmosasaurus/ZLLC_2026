@@ -202,12 +202,22 @@ typedef struct
 	uint8_t robot_id;
 	uint8_t Chassis_Control_Type;
 	uint8_t Bullet_Status;
-	uint8_t Minipc_Satus;
+	uint8_t Minipc_Status;
 	uint8_t MiniPC_Aim_Status;
 	uint8_t Fric_Status;
 	uint8_t Supercap_Energy;
-	uint8_t Supercap_Voltage;
+	uint8_t Supercap_State;
+	uint8_t Radar_Double_Damage_Flag;
+	uint8_t Minipc_Mode;
+	uint8_t Antispin_Type;
+	uint8_t Gimbal_Control_Type; // 添加云台控制状态字段
+	uint8_t Booster_User_Control_Type;
+	uint16_t booster_fric_omega_left;
+	uint16_t booster_fric_omega_right;
+	uint16_t Booster_bullet_num;
+	float Supercap_Voltage;
 	float Pitch_Angle;
+	float Chassis_Gimbal_Diff;	
 } JudgeReceive_t;
 
 void JudgementDataSend(void);
