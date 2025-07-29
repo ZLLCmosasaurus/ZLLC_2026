@@ -80,6 +80,16 @@ enum Enum_MiniPC_Type : uint8_t
     MiniPC_Type_Windmill,       //风车
 };
 
+/**
+ * @brief 反小陀螺状态
+ *
+ */
+enum Enum_Antispin_Type : uint8_t
+{
+    Antispin_Off=0,
+    Antispin_On,
+};
+
 
 /**
  * @brief 迷你主机状态
@@ -493,7 +503,7 @@ protected:
     //绑定的串口
     Struct_UART_Manage_Object *UART_Manage_Object;
     //绑定的CAN
-    Struct_CAN_Manage_Object *CAN_Manage_Object;
+    Struct_CAN_Manage_Object *CAN_Manage_Object =&CAN1_Manage_Object;//MiniPC绑定CAN1
     //数据包头标
     uint8_t Frame_Header;
     //数据包尾标

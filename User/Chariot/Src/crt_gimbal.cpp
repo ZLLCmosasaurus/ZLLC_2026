@@ -116,7 +116,180 @@ void Class_Gimbal::Output()
         }
     }
 }
+void Class_Gimbal_Pitch_Motor_GM6020::TIM_PID_PeriodElapsedCallback()
+{
+    switch (DJI_Motor_Control_Method)
+    {
+    case (DJI_Motor_Control_Method_OPENLOOP):
+    {
+        // 默认开环
+        Out = Out;
+    }
+    break;
+    case (DJI_Motor_Control_Method_TORQUE):
+    {
+        // 力矩环
+        PID_Torque.Set_Target(Target_Torque);
+        PID_Torque.Set_Now(Data.Now_Torque);
+        PID_Torque.TIM_Adjust_PeriodElapsedCallback();
 
+        Set_Out(PID_Torque.Get_Out());
+    }
+    break;
+    case (DJI_Motor_Control_Method_IMU_OMEGA):
+    {
+        // 角速度环
+
+        //			if(True_Angle_Pitch>=15){
+        //			Target_Omega_Angle=-test_omega;
+        //			}
+        //			if(True_Angle_Pitch<=-15){
+        //				Target_Omega_Angle=test_omega;
+        //			}
+
+        if (IMU->Get_IMU_Status() == IMU_Status_DISABLE)
+        {
+            PID_Omega.Set_Now(Data.Now_Omega_Angle);
+        }
+        else
+        {
+            PID_Omega.Set_Now(True_Gyro_Pitch * 180.f / PI);
+        }
+        PID_Omega.TIM_Adjust_PeriodElapsedCallback();
+
+        Target_Torque = PID_Omega.Get_Out();
+        Set_Out(PID_Omega.Get_Out());
+    }
+    break;
+    case (DJI_Motor_Control_Method_IMU_ANGLE):
+    {
+        // PID_Angle.Set_Target(-m_angle);
+        PID_Angle.Set_Target(-Target_Angle);
+        if (IMU->Get_IMU_Status() != IMU_Status_DISABLE)
+        {
+            // 角度环
+            PID_Angle.Set_Now(True_Angle_Pitch);
+            PID_Angle.TIM_Adjust_PeriodElapsedCallback();
+
+            Target_Omega_Angle = PID_Angle.Get_Out();
+
+            // 速度环
+            PID_Omega.Set_Target(Target_Omega_Angle);
+            PID_Omega.Set_Now(True_Gyro_Pitch * 57.3);
+        }
+        else
+        {
+            // 角度环
+            PID_Angle.Set_Now(Data.Now_Angle);
+            PID_Angle.TIM_Adjust_PeriodElapsedCallback();
+
+            Target_Omega_Angle = PID_Angle.Get_Out();
+
+            // 速度环
+            PID_Omega.Set_Target(Target_Omega_Angle);
+            PID_Omega.Set_Now(Data.Now_Omega_Angle);
+        }
+        PID_Omega.TIM_Adjust_PeriodElapsedCallback();
+
+        Target_Torque = -PID_Omega.Get_Out();
+        Set_Out(-PID_Omega.Get_Out() + Gravity_Compensate);
+    }
+    break;
+    default:
+    {
+        Set_Out(0.0f);
+    }
+    break;
+    }
+    Output();	
+}
+void Class_Gimbal_Yaw_Motor_GM6020::TIM_PID_PeriodElapsedCallback()
+{
+    switch (DJI_Motor_Control_Method)
+    {
+    case (DJI_Motor_Control_Method_OPENLOOP):
+    {
+        // 默认开环
+        Out = Out;
+    }
+    break;
+    case (DJI_Motor_Control_Method_TORQUE):
+    {
+        // 力矩环
+        PID_Torque.Set_Target(Target_Torque);
+        PID_Torque.Set_Now(Data.Now_Torque);
+        PID_Torque.TIM_Adjust_PeriodElapsedCallback();
+
+        Set_Out(PID_Torque.Get_Out());
+    }
+    break;
+    case (DJI_Motor_Control_Method_IMU_OMEGA):
+    {
+        // 角速度环
+
+        //			if(True_Angle_Pitch>=15){
+        //			Target_Omega_Angle=-test_omega;
+        //			}
+        //			if(True_Angle_Pitch<=-15){
+        //				Target_Omega_Angle=test_omega;
+        //			}
+
+        if (IMU->Get_IMU_Status() == IMU_Status_DISABLE)
+        {
+            PID_Omega.Set_Now(Data.Now_Omega_Angle);
+        }
+        else
+        {
+            PID_Omega.Set_Now(True_Gyro_Yaw * 180.f / PI);
+        }
+        PID_Omega.TIM_Adjust_PeriodElapsedCallback();
+
+        Target_Torque = PID_Omega.Get_Out();
+        Set_Out(PID_Omega.Get_Out());
+    }
+    break;
+    case (DJI_Motor_Control_Method_IMU_ANGLE):
+    {
+        // PID_Angle.Set_Target(-m_angle);
+        PID_Angle.Set_Target(-Target_Angle);
+        if (IMU->Get_IMU_Status() != IMU_Status_DISABLE)
+        {
+            // 角度环
+            PID_Angle.Set_Now(True_Angle_Yaw);
+            PID_Angle.TIM_Adjust_PeriodElapsedCallback();
+
+            Target_Omega_Angle = PID_Angle.Get_Out();
+
+            // 速度环
+            PID_Omega.Set_Target(Target_Omega_Angle);
+            PID_Omega.Set_Now(True_Gyro_Yaw * 57.3);
+        }
+        else
+        {
+            // 角度环
+            PID_Angle.Set_Now(Data.Now_Angle);
+            PID_Angle.TIM_Adjust_PeriodElapsedCallback();
+
+            Target_Omega_Angle = PID_Angle.Get_Out();
+
+            // 速度环
+            PID_Omega.Set_Target(Target_Omega_Angle);
+            PID_Omega.Set_Now(Data.Now_Omega_Angle);
+        }
+        PID_Omega.TIM_Adjust_PeriodElapsedCallback();
+
+        Target_Torque = -PID_Omega.Get_Out();
+        Set_Out(-PID_Omega.Get_Out());
+    }
+    break;
+    default:
+    {
+        Set_Out(0.0f);
+    }
+    break;
+    }
+    Output();	
+}
 /**
  * @brief TIM定时器中断计算回调函数
  *

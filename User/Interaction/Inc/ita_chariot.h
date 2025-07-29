@@ -180,8 +180,11 @@ public:
         void TIM1msMod50_Gimbal_Communicate_Alive_PeriodElapsedCallback();
         inline void Set_Gimbal_Status(Enum_Gimbal_Status __Gimbal_Status);
         inline Enum_Gimbal_Status Get_Gimbal_Status();
-
-    #elif defined(GIMBAL)
+				uint16_t Booster_fric_omega_left = 0;
+				uint16_t Booster_fric_omega_right = 0;
+				uint16_t Booster_bullet_num_before=0;
+				uint16_t Booster_bullet_num=0;
+				#elif defined(GIMBAL)
 
         inline void DR16_Offline_Cnt_Plus();
 
@@ -225,6 +228,9 @@ public:
     Enum_MiniPC_Status MiniPC_Status = MiniPC_Status_DISABLE;
     //裁判系统UI刷新状态
     Enum_Referee_UI_Refresh_Status Referee_UI_Refresh_Status = Referee_UI_Refresh_Status_DISABLE;
+    Enum_Booster_User_Control_Type Booster_User_Control_Type = Booster_User_Control_Type_SINGLE;
+    Enum_MiniPC_Type MiniPC_Type = MiniPC_Type_Nomal;
+		Enum_Antispin_Type Antispin_Type=Antispin_On;		
     //底盘云台通讯数据
     float Gimbal_Tx_Pitch_Angle = 0;
 

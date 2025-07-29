@@ -470,7 +470,7 @@ void CharChange(uint8_t Init_Flag)
 	}
 	else
 	{
-		switch (JudgeReceiveData.Minipc_Satus)
+		switch (JudgeReceiveData.Minipc_Status)
 		{
 		case 1:
 			Char_Draw(0, Op_Change, 0.9 * SCREEN_LENGTH, 0.45 * SCREEN_WIDTH, 20, sizeof(AutoOn), 2, Green, AutoChangeName, AutoOn);
