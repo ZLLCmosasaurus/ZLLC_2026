@@ -567,22 +567,60 @@ int Booster_Sign = 0;
 #ifdef GIMBAL
 void Class_Chariot::Control_Booster()
 {
-    static uint8_t booster_sign = 0;
-    volatile int DR16_Left_Switch_Status = DR16.Get_Left_Switch();
-    switch(DR16_Left_Switch_Status){
-        case(DR16_Switch_Status_MIDDLE): // 左中 失能
+
+    if (Get_DR16_Control_Type() == DR16_Control_Type_REMOTE)
+    {
+        // 右上 开启摩擦轮和发射机构
+        if (DR16.Get_Right_Switch() == DR16_Switch_Status_UP)
         {
-            Booster.Set_Booster_Control_Type(Booster_Control_Type_DISABLE);
-            Booster.Set_Friction_Control_Type(Friction_Control_Type_DISABLE);
-            break;
+            // 设置单发模式
+            Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+            Booster.Set_Friction_Control_Type(Friction_Control_Type_ENABLE);
+
+            if (DR16.Get_Yaw() < 0.2 && DR16.Get_Yaw() > -0.2)
+            {
+                Shoot_Flag = 0;
+            }
+            else if (DR16.Get_Yaw() > 0.8 && Shoot_Flag == 0)
+            {
+                Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                Shoot_Flag = 1;
+            }
         }
-        case(DR16_Switch_Status_DOWN):  // 左下 上位机
+        else
         {
-            
+            Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+            Booster.Set_Friction_Control_Type(Friction_Control_Type_DISABLE);
         }
     }
-
-
+    /************************************键鼠控制逻辑*********************************************/
+    else if (Get_DR16_Control_Type() == DR16_Control_Type_KEYBOARD)
+    {
+        // 鼠标左键单点控制开火 单发
+        if ((DR16.Get_Mouse_Left_Key() == DR16_Key_Status_TRIG_FREE_PRESSED) &&
+            abs(Booster.Fric[0].Get_Now_Omega_Rpm()) > Booster.Get_Friction_Omega_Threshold() &&
+            abs(Booster.Fric[2].Get_Now_Omega_Rpm()) > Booster.Get_Friction_Omega_Threshold())
+        {
+            // 单发
+            Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+        }
+        else
+        {
+            Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+        }
+        // CTRL键控制摩擦轮
+        if (DR16.Get_Keyboard_Key_Ctrl() == DR16_Key_Status_TRIG_FREE_PRESSED)
+        {
+            if (Booster.Get_Friction_Control_Type() == Friction_Control_Type_ENABLE)
+            {
+                Booster.Set_Friction_Control_Type(Friction_Control_Type_DISABLE);
+            }
+            else
+            {
+                Booster.Set_Friction_Control_Type(Friction_Control_Type_ENABLE);
+            }
+        }
+    }
 }
 #endif
 
@@ -629,7 +667,34 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
 #ifdef GIMBAL
 void Class_Chariot::Judge_DR16_Control_Type()
 {
-    DR16_Control_Type = DR16_Control_Type_REMOTE;
+    if (DR16.Get_Left_X() != 0 ||
+        DR16.Get_Left_Y() != 0 ||
+        DR16.Get_Right_X() != 0 ||
+        DR16.Get_Right_Y() != 0)
+    {
+        DR16_Control_Type = DR16_Control_Type_REMOTE;
+    }
+    else if (DR16.Get_Mouse_X() != 0 ||
+             DR16.Get_Mouse_Y() != 0 ||
+             DR16.Get_Mouse_Z() != 0 ||
+             DR16.Get_Keyboard_Key_A() != 0 ||
+             DR16.Get_Keyboard_Key_D() != 0 ||
+             DR16.Get_Keyboard_Key_W() != 0 ||
+             DR16.Get_Keyboard_Key_S() != 0 ||
+             DR16.Get_Keyboard_Key_Shift() != 0 ||
+             DR16.Get_Keyboard_Key_Ctrl() != 0 ||
+             DR16.Get_Keyboard_Key_Q() != 0 ||
+             DR16.Get_Keyboard_Key_E() != 0 ||
+             DR16.Get_Keyboard_Key_R() != 0 ||
+             DR16.Get_Keyboard_Key_F() != 0 ||
+             DR16.Get_Keyboard_Key_G() != 0 ||
+             DR16.Get_Keyboard_Key_Z() != 0 ||
+             DR16.Get_Keyboard_Key_C() != 0 ||
+             DR16.Get_Keyboard_Key_V() != 0 ||
+             DR16.Get_Keyboard_Key_B() != 0)
+    {
+        DR16_Control_Type = DR16_Control_Type_KEYBOARD;
+    }
 }
 #endif
 /**
@@ -733,8 +798,11 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
             Gimbal.Boardc_BMI.TIM1msMod50_Alive_PeriodElapsedCallback();
 
             Booster.Motor_Driver.TIM_Alive_PeriodElapsedCallback();
-            Booster.Motor_Friction_Left.TIM_Alive_PeriodElapsedCallback();
-            Booster.Motor_Friction_Right.TIM_Alive_PeriodElapsedCallback();
+            for (auto i = 0; i < 4; i++)
+            {
+                Booster.Fric[i].TIM_Alive_PeriodElapsedCallback();
+            }
+            
 						
 			MiniPC.TIM1msMod50_Alive_PeriodElapsedCallback();
 

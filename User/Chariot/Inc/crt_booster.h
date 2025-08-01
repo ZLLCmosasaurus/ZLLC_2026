@@ -81,6 +81,13 @@ public:
     void Reload_TIM_Status_PeriodElapsedCallback();
 };
 
+//摩擦轮电机类
+class Class_Fric_Motor : public Class_DJI_Motor_C620
+{
+public:
+    void TIM_PID_PeriodElapsedCallback();
+};
+
 /**
  * @brief Specialized, 发射机构类
  *
@@ -102,17 +109,14 @@ public:
     Class_MiniPC *MiniPC;
 
     //拨弹盘电机
-    Class_DJI_Motor_C610 Motor_Driver;
+    Class_DJI_Motor_C620 Motor_Driver;
 
-    //摩擦轮电机左
-    Class_DJI_Motor_C620 Motor_Friction_Left;
-    //摩擦轮电机右
-    Class_DJI_Motor_C620 Motor_Friction_Right;
+    //4*摩擦轮
+    Class_Fric_Motor Fric[4];
 
     void Init();
 
     inline float Get_Default_Driver_Omega();
-    inline float Get_Friction_Omega();
     inline float Get_Friction_Omega_Threshold();
     inline uint16_t Get_Heat();
     
@@ -122,7 +126,6 @@ public:
 
     inline void Set_Booster_Control_Type(Enum_Booster_Control_Type __Booster_Control_Type);
     inline void Set_Friction_Control_Type(Enum_Friction_Control_Type __Friction_Control_Type);
-    inline void Set_Friction_Omega(float __Friction_Omega);
     inline void Set_Driver_Omega(float __Driver_Omega);
     inline void Set_Booster_Type(Enum_Booster_Type __Booster_Type);
     inline void Set_Heat(uint16_t __Heat);
@@ -139,11 +142,11 @@ protected:
     uint16_t Cooling_Value = 80;
     float Heat_Consumption = 10.f;
     //拨弹盘堵转扭矩阈值, 超出被认为卡弹
-    uint16_t Driver_Torque_Threshold = 8500;
+    uint16_t Driver_Torque_Threshold = 13000;
     //摩擦轮单次判定发弹阈值, 超出被认为发射子弹
-    uint16_t Friction_Torque_Threshold = 2000;
+    uint16_t Friction_Torque_Threshold = 3300;
     //摩擦轮速度判定发弹阈值, 超出则说明已经开机
-    float Friction_Omega_Threshold = 600;
+    float Friction_Omega_Threshold = 4500;
 
     //内部变量
     uint16_t Heat;
@@ -163,11 +166,13 @@ protected:
     Enum_Friction_Control_Type Friction_Control_Type = Friction_Control_Type_DISABLE;
     Enum_Booster_Type Booster_Type;
     //摩擦轮角速度
-    float Friction_Omega = 650.0f;
+    int16_t Fric_High_Rpm = 4975;
+    int16_t Fric_Low_Rpm = 4825;
+    int16_t Fric_Transform_Rpm = -140;
     //拨弹盘实际的目标速度, 一圈八发子弹
     float Driver_Omega = -2.0f * PI * 2;
     //拨弹轮目标绝对角度 加圈数
-    float Driver_Angle = 0.0f;
+    float Drvier_Angle = 0.0f;
     //读写变量
 
     //内部函数
@@ -191,16 +196,6 @@ uint16_t Class_Booster::Get_Heat()
 float Class_Booster::Get_Default_Driver_Omega()
 {
     return (Default_Driver_Omega);
-}
-
-/**
- * @brief 获取摩擦轮默认速度,
- *
- * @return float 获取摩擦轮默认速度
- */
-float Class_Booster::Get_Friction_Omega()
-{
-    return (Friction_Omega);
 }
 
 /**
@@ -260,16 +255,6 @@ Enum_Friction_Control_Type Class_Booster::Get_Friction_Control_Type()
 {
     return (Friction_Control_Type);
 
-}
-
-/**
- * @brief 设定摩擦轮角速度
- *
- * @param __Friction_Omega 摩擦轮角速度
- */
-void Class_Booster::Set_Friction_Omega(float __Friction_Omega)
-{
-    Friction_Omega = __Friction_Omega;
 }
 
 /**
