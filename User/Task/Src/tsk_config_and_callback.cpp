@@ -273,8 +273,12 @@ void Device_SPI2_Callback(uint8_t *Tx_Buffer, uint8_t *Rx_Buffer, uint16_t Lengt
 void DR16_UART5_Callback(uint8_t *Buffer, uint16_t Length)
 {
     chariot.DR16.DR16_UART_RxCpltCallback(Buffer);
-    //底盘 云台 发射机构 的控制策略
-    chariot.TIM_Control_Callback();
+
+    // 底盘 云台 发射机构 的控制策略
+    if (chariot.DR16.Get_Image_Status() == Image_Status_DISABLE)
+    {
+        chariot.TIM_Control_Callback();
+    }
 }
 #endif
 /**
@@ -291,6 +295,26 @@ void VT13_UART_Callback(uint8_t *Buffer, uint16_t Length)
     //底盘 云台 发射机构 的控制策略
     chariot.TIM_Control_Callback();
 }
+#endif
+
+/**
+ * @brief UART9图传回调函数
+ *
+ * @param Buffer UART9收到的消息
+ * @param Length 长度
+ */
+#ifdef GIMBAL
+void Image_UART9_Callback(uint8_t *Buffer, uint16_t Length)
+{
+    chariot.DR16.Image_UART_RxCpltCallback(Buffer);
+
+    //底盘 云台 发射机构 的控制策略
+    if(Buffer[0] == 0xA9 && Buffer[1] == 0x53)
+    {
+        chariot.TIM_Control_Callback(); 
+    }
+}
+
 #endif
 
 /**
@@ -520,7 +544,7 @@ extern "C" void Task_Init()
         //遥控器接收
         #ifdef USE_DR16
         UART_Init(&huart5, DR16_UART5_Callback, 18);
-		UART_Init(&huart6, Image_UART6_Callback, 40);
+		UART_Init(&huart9, Image_UART9_Callback, 40);
         #elif defined(USE_VT13)
         UART_Init(&huart9, VT13_UART_Callback, 30);
         #endif

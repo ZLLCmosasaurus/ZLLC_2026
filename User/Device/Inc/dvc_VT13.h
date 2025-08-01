@@ -124,7 +124,7 @@ struct Struct_VT13_Data{
 };
 
 static uint16_t get_crc16_check_sum(uint8_t *p_msg, uint16_t len, uint16_t crc16);
-
+bool verify_crc16_check_sum(uint8_t *p_msg, uint16_t len);
 static uint16_t crc16_init = 0xffff;
 static const uint16_t crc16_tab[256] =
 {

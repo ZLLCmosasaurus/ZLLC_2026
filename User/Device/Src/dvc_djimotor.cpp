@@ -692,6 +692,7 @@ void Class_DJI_Motor_C620::Data_Process()
     Data.Now_Angle = (float)Data.Total_Encoder / (float)Encoder_Num_Per_Round * 360.f / Gearbox_Rate;
     Data.Now_Omega_Radian = (float)tmp_omega * RPM_TO_RADPS / Gearbox_Rate;
     Data.Now_Omega_Angle = (float)tmp_omega * RPM_TO_DEG / Gearbox_Rate;
+    Data.Now_Omega_Rpm = tmp_omega / Gearbox_Rate;
     Data.Now_Torque = tmp_torque;
     Data.Now_Temperature = tmp_temperature + CELSIUS_TO_KELVIN;
 
