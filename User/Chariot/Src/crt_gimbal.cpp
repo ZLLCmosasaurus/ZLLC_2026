@@ -71,7 +71,7 @@ void Class_FSM_Yaw_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
         break;
         case (4)://正常控制流程
         {
-            Gimbal->TIM_Calculate_PeriodElapsedCallback();
+            Gimbal->Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
         }
         break;
     }
@@ -111,10 +111,24 @@ void Class_Gimbal::Output()
     if (Gimbal_Control_Type == Gimbal_Control_Type_DISABLE)
     {
         // 云台失能
+        Motor_Yaw.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_TORQUE);
+        Motor_Pitch_L.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_TORQUE);
+        Motor_Pitch_R.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_TORQUE);
 
+        Motor_Yaw.Set_Target_Torque(0.0f);
+        Motor_Pitch_L.Set_Target_Torque(0.0f);
+        Motor_Pitch_R.Set_Target_Torque(0.0f);
+
+        Motor_Yaw.Set_Out(0.f);
+        Motor_Pitch_L.Set_Out(0.f);
+        Motor_Pitch_R.Set_Out(0.f);
 
     }
-    else // 非失能模式
+    else if(Gimbal_Control_Type == Gimbal_Control_Type_YAW_CALIBRATION)// 非失能模式
+    {
+        
+    }
+    else if(Gimbal_Control_Type == Gimbal_Control_Type_NORMAL)
     {
         
     }
@@ -126,6 +140,9 @@ void Class_Gimbal::Output()
  */
 void Class_Gimbal::TIM_Calculate_PeriodElapsedCallback()
 {
+
+    FSM_Yaw_Calibration.Reload_TIM_Status_PeriodElapsedCallback();
+
     //控制模式
     Output();
 

@@ -449,7 +449,7 @@ void Class_DJI_Motor_GM6020::TIM_SMC_PeriodElapsedCallback()
             SMC_Control.Set_Target(Target_Angle);
             SMC_Control.Set_Now(Transform_Angle, Transform_Omega);                   
 
-            SMC_Control.TIM_Adjust_PeriodElapsedCallback();
+            //SMC_Control.TIM_Adjust_PeriodElapsedCallback();
             Out = SMC_Control.Get_Out();
             //Out = Test_Out;
             Output();

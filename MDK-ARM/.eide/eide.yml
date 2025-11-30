@@ -70,7 +70,6 @@ virtualFolder:
         - path: ../User/Algorithm/Src/PID.cpp
         - path: ../User/Algorithm/Src/QuaternionEKF.cpp
         - path: ../User/Algorithm/Src/user_lib.cpp
-        - path: ../User/Algorithm/Src/alg_SMC_Control.cpp
       folders: []
     - name: Application
       files: []
@@ -337,7 +336,6 @@ targets:
         - ../User/Driver/Inc
         - ../User/Algorithm/Inc
         - ../Drivers/CMSIS/Include
-        - .cmsis/include
         - RTE/_ZLLC_2026
         - ../DSP/Include
       libList: []
@@ -353,27 +351,20 @@ targets:
           afterBuildTasks: []
           asm-compiler:
             $use: asm-auto
-            misc-controls: ""
+            misc-controls: --diag_suppress=1950
           beforeBuildTasks: []
           c/cpp-compiler:
             language-c: c99
             language-cpp: c++11
-            link-time-optimization: false
             one-elf-section-per-function: true
             optimization: level-0
             short-enums#wchar: true
             warnings: no-warnings
           global:
             output-debug-info: enable
-            use-microLIB: false
           linker:
-            $outputTaskExcludes:
-              - .bin
             misc-controls: --diag_suppress=L6329
             output-format: elf
-            ro-base: ""
-            rw-base: ""
-            xo-base: ""
         scatterFilePath: ""
         storageLayout:
           RAM:

@@ -33,6 +33,7 @@ enum Enum_Gimbal_Control_Type :uint8_t
     Gimbal_Control_Type_DISABLE = 0,
     Gimbal_Control_Type_NORMAL,
     Gimbal_Control_Type_MINIPC,
+    Gimbal_Control_Type_YAW_CALIBRATION,
 };
 
 /**

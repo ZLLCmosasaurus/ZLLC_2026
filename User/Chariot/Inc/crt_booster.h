@@ -52,6 +52,18 @@ public:
 };
 
 /**
+ * @brief Specialized, 发射策略有限自动机
+ *
+ */
+class Class_FSM_Push_Calibration  : public Class_FSM
+{
+public:
+    Class_Booster *Booster;
+
+    void Reload_TIM_Status_PeriodElapsedCallback();
+};
+
+/**
  * @brief Specialized, 发射机构类
  *
  */
@@ -63,6 +75,10 @@ public:
     Class_FSM_Shooting FSM_Shooting;
     friend class Class_FSM_Shooting;
 
+    //皮筋电机校准
+    Class_FSM_Push_Calibration FSM_Push_Calibration;
+    friend class Class_FSM_Push_Calibration;
+
     //裁判系统
     Class_Referee *Referee;
     //上位机
@@ -70,6 +86,9 @@ public:
 
     //发射电机
     Class_DJI_Motor_C610 Motor_Pull;
+
+    Class_DJI_Motor_C620 Motor_Push_L;
+    Class_DJI_Motor_C620 Motor_Push_R;
 
     void Init();
 
@@ -87,6 +106,7 @@ protected:
     //初始化相关常量
 
     //常量
+    int Target_Tension = 0;
 
     //内部变量
 
