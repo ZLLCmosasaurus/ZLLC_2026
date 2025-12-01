@@ -401,30 +401,34 @@ void Class_Chariot::Control_Gimbal()
     tmp_gimbal_yaw -= dr16_y * DR16_Yaw_Angle_Resolution;
     tmp_gimbal_pitch -= dr16_r_y * DR16_Pitch_Angle_Resolution;
     // 限制角度范围 处理yaw轴180度问题
-    if ((tmp_gimbal_yaw ) > 180.0f)
+    if ((tmp_gimbal_yaw ) > 10.0f)
     {
-        tmp_gimbal_yaw -= (360.0f);
+        tmp_gimbal_yaw = 10.0f;
     }
-    else if ((tmp_gimbal_yaw) < -180.0f)
+    else if ((tmp_gimbal_yaw) < -10.0f)
     {
-        tmp_gimbal_yaw += (360.0f);
+        tmp_gimbal_yaw = -10.0f;
     }
 
-    if(tmp_gimbal_pitch > 18.0f)tmp_gimbal_pitch = 18.0f;
+    if(tmp_gimbal_pitch > 0.0f)tmp_gimbal_pitch = 0.0f;
     if(tmp_gimbal_pitch < -25.0f)tmp_gimbal_pitch = -25.0f;
 
     if (DR16.Get_Left_Switch() == DR16_Switch_Status_DOWN) // 左下 上位机
     {
         Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_MINIPC);
     }
-    else // 其余位置都是遥控器控制
+    else if(DR16.Get_Left_Switch() == DR16_Switch_Status_MIDDLE)// 其余位置都是遥控器控制
     {
         // 中间遥控模式
-        Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
+        //Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
 
         // 设定角度
         Gimbal.Set_Target_Yaw_Angle(tmp_gimbal_yaw);
         Gimbal.Set_Target_Pitch_Angle(tmp_gimbal_pitch);
+    }
+    else if(DR16.Get_Left_Switch() == DR16_Switch_Status_UP)// 校准模式
+    {
+        Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_YAW_CALIBRATION);
     }
 }
 #endif

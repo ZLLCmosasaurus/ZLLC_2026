@@ -29,22 +29,22 @@ void Class_FSM_Shooting::Reload_TIM_Status_PeriodElapsedCallback()
     //自己接着编写状态转移函数
     switch (Now_Status_Serial)
     {
-        case (0)://向左堵转
+        case (0)://向前堵转
         {
 
         }
         break;
-        case (1)://左侧检测
+        case (1)://前侧检测
         {
 
         }
         break;
-        case (2)://向右堵转
+        case (2)://向后堵转
         {
 
         }
         break;
-        case (3)://右侧检测
+        case (3)://后侧检测
         {
 
         }
@@ -54,6 +54,88 @@ void Class_FSM_Shooting::Reload_TIM_Status_PeriodElapsedCallback()
 
         }
         break;
+    }
+}
+
+void Class_FSM_Push_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
+{
+    Status[Now_Status_Serial].Time++;
+
+    //自己接着编写状态转移函数
+    switch (Now_Status_Serial)
+    {
+        case (0)://向前堵转
+        {
+            Booster->Motor_Push_L.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
+            Booster->Motor_Push_R.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
+
+            Booster->Motor_Push_L.Set_Target_Omega_Radian(2.0f);
+            Booster->Motor_Push_R.Set_Target_Omega_Radian(2.0f);
+            
+            
+            if(abs(Booster->Motor_Push_L.Get_Now_Torque()) > Torque_Threshold){
+                Set_Status(1);
+            }
+            else if(abs(Booster->Motor_Push_R.Get_Now_Torque()) > Torque_Threshold){
+                Set_Status(1);
+            }
+        }
+        break;
+        case (1)://前侧检测
+        {
+            if(Status[Now_Status_Serial].Time > 100){
+                Angle_Forward_L = Booster->Motor_Push_L.Get_Now_Angle();
+                Angle_Forward_R = Booster->Motor_Push_R.Get_Now_Angle();
+                Set_Status(2);
+            }
+            else{
+                Set_Status(0);
+            }
+        }
+        break;
+        case (2)://向后堵转
+        {
+            Booster->Motor_Push_L.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
+            Booster->Motor_Push_R.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
+
+            Booster->Motor_Push_L.Set_Target_Omega_Radian(-2.0f);
+            Booster->Motor_Push_R.Set_Target_Omega_Radian(-2.0f);
+
+            if(abs(Booster->Motor_Push_L.Get_Now_Torque()) > Torque_Threshold){
+                Set_Status(3);
+            }
+            else if(abs(Booster->Motor_Push_R.Get_Now_Torque()) > Torque_Threshold){
+                Set_Status(3);
+            }
+        }
+        break;
+        case (3)://后侧检测
+        {
+            if(Status[Now_Status_Serial].Time > 100){
+                Angle_Backward_L = Booster->Motor_Push_L.Get_Now_Angle();
+                Angle_Backward_R = Booster->Motor_Push_R.Get_Now_Angle();
+                Set_Status(4);
+            }
+            else{
+                Set_Status(2);
+            }
+        }
+        break;
+        case (4)://正常控制流程
+        {
+            Booster->Motor_Push_L.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
+            Booster->Motor_Push_R.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
+
+            
+        }
+        break;
+        case (5)://校准检测
+        {
+            Booster->Motor_Push_L.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_TORQUE);
+            Booster->Motor_Push_R.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_TORQUE);
+
+            Booster->Motor_Push_L.Set_Target_Torque(0.f);
+        }
     }
 }
 
@@ -68,7 +150,7 @@ void Class_Booster::Init()
     FSM_Shooting.Init(9, 0);
 
     FSM_Push_Calibration.Booster = this;
-    FSM_Push_Calibration.Init(4, 0);
+    FSM_Push_Calibration.Init(6, 0);
 
     //拉力电机
     Motor_Pull.PID_Angle.Init(25.0f, 0.f, 0.0f, 0.0f, 5.0f * PI, 5.0f * PI);
@@ -119,6 +201,13 @@ void Class_Booster::Output()
  */
 void Class_Booster::TIM_Calculate_PeriodElapsedCallback()
 {     
+    //皮筋校准
+    FSM_Push_Calibration.Reload_TIM_Status_PeriodElapsedCallback();
+    //发射状态机
+    FSM_Shooting.Reload_TIM_Status_PeriodElapsedCallback();
+
+    Output();
+
     //PID输出
     Motor_Pull.TIM_PID_PeriodElapsedCallback();
     Motor_Push_L.TIM_PID_PeriodElapsedCallback();

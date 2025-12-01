@@ -60,6 +60,12 @@ class Class_FSM_Push_Calibration  : public Class_FSM
 public:
     Class_Booster *Booster;
 
+    float Torque_Threshold = 7000.0f;
+    float Angle_Forward_L = 0.0f;
+    float Angle_Backward_L = 0.0f;
+    float Angle_Forward_R = 0.0f;
+    float Angle_Backward_R = 0.0f;
+
     void Reload_TIM_Status_PeriodElapsedCallback();
 };
 

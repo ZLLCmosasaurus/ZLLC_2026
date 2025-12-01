@@ -24,6 +24,7 @@
 /* Function prototypes -------------------------------------------------------*/
 void Class_FSM_Yaw_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
 {
+    
     Status[Now_Status_Serial].Time++;
 
     //自己接着编写状态转移函数
@@ -72,6 +73,15 @@ void Class_FSM_Yaw_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
         case (4)://正常控制流程
         {
             Gimbal->Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
+            Set_Status(5);
+        }
+        break;
+        case (5)://检测是否重新校准
+        {
+
+            if(Gimbal->Get_Gimbal_Control_Type() == Gimbal_Control_Type_YAW_CALIBRATION && Status[Now_Status_Serial].Time > 2000){
+                Set_Status(0);
+            }
         }
         break;
     }
@@ -85,7 +95,7 @@ void Class_Gimbal::Init()
     // imu初始化
     Boardc_BMI.Init();
 
-    FSM_Yaw_Calibration.Init(5,0);
+    FSM_Yaw_Calibration.Init(6,0);
 
     Motor_Pitch_L.PID_Angle.Init(25.0f, 0.f, 0.0f, 0.0f, 5.0f * PI, 5.0f * PI);
     Motor_Pitch_L.PID_Omega.Init(3000.0f, 10.0f, 0.001f, 0.0f, Motor_Pitch_L.Get_Output_Max(), Motor_Pitch_L.Get_Output_Max());
@@ -130,7 +140,13 @@ void Class_Gimbal::Output()
     }
     else if(Gimbal_Control_Type == Gimbal_Control_Type_NORMAL)
     {
-        
+        Motor_Yaw.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
+        Motor_Pitch_L.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
+        Motor_Pitch_R.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
+
+        Motor_Yaw.Set_Target_Angle(Target_Yaw_Angle);
+        Motor_Pitch_L.Set_Target_Angle(Target_Pitch_Angle);
+        Motor_Pitch_R.Set_Target_Angle(Target_Pitch_Angle);
     }
 }
 
