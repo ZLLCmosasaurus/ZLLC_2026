@@ -41,7 +41,7 @@ void Class_FSM_Shooting::Reload_TIM_Status_PeriodElapsedCallback()
         break;
         case (2)://向后堵转
         {
-
+    
         }
         break;
         case (3)://后侧检测
@@ -157,12 +157,12 @@ void Class_Booster::Init()
     Motor_Pull.PID_Omega.Init(3000.0f, 10.0f, 0.001f, 0.0f, Motor_Pull.Get_Output_Max(), Motor_Pull.Get_Output_Max());
     Motor_Pull.Init(&hfdcan1, DJI_Motor_ID_0x201, DJI_Motor_Control_Method_OMEGA);
 
-    Motor_Push_L.PID_Angle.Init(25.0f, 0.f, 0.0f, 0.0f, 5.0f * PI, 5.0f * PI);
-    Motor_Push_L.PID_Omega.Init(3000.0f, 10.0f, 0.001f, 0.0f, Motor_Push_L.Get_Output_Max(), Motor_Push_L.Get_Output_Max());
+    Motor_Push_L.PID_Angle.Init(0.0f, 0.f, 0.0f, 0.0f, 5.0f * PI, 5.0f * PI);
+    Motor_Push_L.PID_Omega.Init(0.0f, 0.0f, 0.00f, 0.0f, Motor_Push_L.Get_Output_Max(), Motor_Push_L.Get_Output_Max());
     Motor_Push_L.Init(&hfdcan1, DJI_Motor_ID_0x202, DJI_Motor_Control_Method_OMEGA);
 
-    Motor_Push_R.PID_Angle.Init(25.0f, 0.f, 0.0f, 0.0f, 5.0f * PI, 5.0f * PI);
-    Motor_Push_R.PID_Omega.Init(3000.0f, 10.0f, 0.001f, 0.0f, Motor_Push_R.Get_Output_Max(), Motor_Push_R.Get_Output_Max());
+    Motor_Push_R.PID_Angle.Init(0.0f, 0.f, 0.0f, 0.0f, 5.0f * PI, 5.0f * PI);
+    Motor_Push_R.PID_Omega.Init(0.0f, 0.0f, 0.00f, 0.0f, Motor_Push_R.Get_Output_Max(), Motor_Push_R.Get_Output_Max());
     Motor_Push_R.Init(&hfdcan1, DJI_Motor_ID_0x203, DJI_Motor_Control_Method_OMEGA);
 
 }
