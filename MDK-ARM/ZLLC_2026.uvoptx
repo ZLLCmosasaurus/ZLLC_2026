@@ -120,7 +120,6 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>DLGUARM</Key>
-          <Name>?</Name>
         </SetRegEntry>
         <SetRegEntry>
           <Number>0</Number>
@@ -154,6 +153,11 @@
           <count>0</count>
           <WinNumber>1</WinNumber>
           <ItemText>chariot,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>1</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>CAN2_0x200_Tx_Data</ItemText>
         </Ww>
       </WatchWindow1>
       <Tracepoint>

@@ -291,6 +291,8 @@ public:
     inline void Set_Target_Omega_Angle(float __Target_Omega_Angle);
     inline void Set_Target_Omega_Radian(float __Target_Omega_Radian);
     inline void Set_Target_Torque(float __Target_Torque);
+    inline void Set_Transform_Angle(float __Transform_Angle);
+    inline void Set_Transform_Omega(float __Transform_Omega);
     
     inline void Set_Out(float __Out);
 
@@ -353,6 +355,9 @@ protected:
     //输出量
     float Out = 0.0f;
 
+    float Transform_Angle = 0.f;
+    float Transform_Omega = 0.f;
+
     //内部函数
 
     void Data_Process();
@@ -399,6 +404,8 @@ public:
     inline void Set_Target_Omega_Radian(float __Target_Omega_Radian);
     inline void Set_Target_Torque(float __Target_Torque);
     inline void Set_Out(float __Out);
+    inline void Set_Transform_Angle(float __Transform_Angle);
+    inline void Set_Transform_Omega(float __Transform_Omega);
 
     void CAN_RxCpltCallback(uint8_t *Rx_Data);
     void TIM_Alive_PeriodElapsedCallback();
@@ -464,6 +471,9 @@ protected:
     float Target_Torque = 0.0f;
     //输出量
     float Out = 0.0f;
+
+    float Transform_Angle = 0.f;
+    float Transform_Omega = 0.f;
 
     //内部函数
 
@@ -1008,6 +1018,16 @@ void Class_DJI_Motor_C610::Set_Out(float __Out)
     Output();
 }
 
+void Class_DJI_Motor_C610::Set_Transform_Angle(float __Transform_Angle)
+{
+    Transform_Angle = __Transform_Angle;
+}
+
+void Class_DJI_Motor_C610::Set_Transform_Omega(float __Transform_Omega)
+{
+    Transform_Omega = __Transform_Omega;
+}
+
 
 /**
  * @brief 获取最大输出电流
@@ -1228,6 +1248,16 @@ void Class_DJI_Motor_C620::Set_Out(float __Out)
 {
     Out = __Out;
     Output();
+}
+
+void Class_DJI_Motor_C620::Set_Transform_Angle(float __Transform_Angle)
+{
+    Transform_Angle = __Transform_Angle;
+}
+
+void Class_DJI_Motor_C620::Set_Transform_Omega(float __Transform_Omega)
+{
+    Transform_Omega = __Transform_Omega;
 }
 
 inline float Class_DJI_Motor_C620_Steer::Get_Now_Zero_Offset_Radian(){

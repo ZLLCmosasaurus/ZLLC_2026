@@ -34,6 +34,7 @@ enum Enum_Gimbal_Control_Type :uint8_t
     Gimbal_Control_Type_NORMAL,
     Gimbal_Control_Type_MINIPC,
     Gimbal_Control_Type_YAW_CALIBRATION,
+    Gimbal_Control_Type_PITCH_CALIBRATION,
 };
 
 /**
@@ -45,9 +46,36 @@ class Class_FSM_Yaw_Calibration : public Class_FSM
 public:
     Class_Gimbal *Gimbal;
 
-    float Torque_Threshold = 0.0f;
+    float Torque_Threshold = 600.0f;
+    float speed = 0.5f;
+
     float Angle_Left = 0.0f;
     float Angle_Right = 0.0f;
+
+    void Reload_TIM_Status_PeriodElapsedCallback();
+};
+
+/**
+ * @brief Specialized, Yaw轴校准有限自动机
+ *
+ */
+class Class_FSM_Pitch_Calibration : public Class_FSM
+{
+public:
+    Class_Gimbal *Gimbal;
+
+    float Torque_Threshold = 600.0f;
+    float speed = 0.5f;
+
+    float Angle_Upside_L = 0.0f;
+    float Angle_Downside_L = 0.0f;
+    float Angle_Upside_R = 0.0f;
+    float Angle_Downside_R = 0.0f;
+
+    int Up_Flag_L = 0;
+    int Down_Flag_L = 0;
+    int Up_Flag_R = 0;
+    int Down_Flag_R = 0;
 
     void Reload_TIM_Status_PeriodElapsedCallback();
 };
@@ -66,7 +94,10 @@ public:
     Class_MiniPC *MiniPC;
 
     Class_FSM_Yaw_Calibration FSM_Yaw_Calibration;
+    Class_FSM_Pitch_Calibration FSM_Pitch_Calibration;
+
     friend class Class_FSM_Yaw_Calibration;
+    friend class Class_FSM_Pitch_Calibration;
 
     Class_DJI_Motor_C610 Motor_Pitch_L;
     Class_DJI_Motor_C610 Motor_Pitch_R;
@@ -84,6 +115,7 @@ public:
 
 
     void TIM_Calculate_PeriodElapsedCallback();
+    float Calculate_Linear(float now_enc, float up_enc, float down_enc);
 
 protected:
     //初始化相关常量
@@ -101,9 +133,9 @@ protected:
     float Yaw_Half_Turns;
 
     // pitch轴最小值
-    float Min_Pitch_Angle = -15.0f;
+    float Min_Pitch_Angle = -25.0f;
     // pitch轴最大值
-    float Max_Pitch_Angle = 25.0f ; //多10°
+    float Max_Pitch_Angle = -10.0f ; //多10°
 
     //内部变量 
 

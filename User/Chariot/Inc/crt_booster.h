@@ -37,6 +37,7 @@ class Class_Booster;
 enum Enum_Booster_Control_Type
 {
     Booster_Control_Type_DISABLE = 0,
+    Booster_Control_Type_NORMAL,
 };
 
 /**
@@ -66,7 +67,13 @@ public:
     float Angle_Forward_R = 0.0f;
     float Angle_Backward_R = 0.0f;
 
+    int forward_flag_L = 0;
+    int forward_flag_R = 0;
+    int backward_flag_L = 0;
+    int backward_flag_R = 0;
+
     void Reload_TIM_Status_PeriodElapsedCallback();
+    float Linear_Map_Position(float curr_angle, float angle_start, float angle_end, float max_length);
 };
 
 /**

@@ -487,7 +487,7 @@ void Task1ms_TIM5_Callback()
     if(start_flag==1)
     {
         #ifdef GIMBAL
-        chariot.FSM_Alive_Control.Reload_TIM_Status_PeriodElapsedCallback();
+        //chariot.FSM_Alive_Control.Reload_TIM_Status_PeriodElapsedCallback();
         #endif
         chariot.TIM_Calculate_PeriodElapsedCallback();
         

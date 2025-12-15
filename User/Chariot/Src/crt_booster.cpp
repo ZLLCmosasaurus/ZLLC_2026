@@ -56,6 +56,34 @@ void Class_FSM_Shooting::Reload_TIM_Status_PeriodElapsedCallback()
         break;
     }
 }
+/**
+ * @brief  将当前角度线性映射到目标行程
+ * @param  curr_angle   当前电机角度
+ * @param  angle_start  起始点角度（通常是 Backward 角度）
+ * @param  angle_end    结束点角度（通常是 Forward 角度）
+ * @param  max_length   物理最大行程（例如 1.0 表示百分比，或者 200.0 表示 mm）
+ * @return 映射后的位置值
+ */
+float Class_FSM_Push_Calibration::Linear_Map_Position(float curr_angle, float angle_start, float angle_end, float max_length)
+{
+    // 防止分母为0（极其罕见的情况，但为了安全）
+    if (fabs(angle_end - angle_start) < 0.001f) {
+        return 0.0f;
+    }
+
+    // 1. 计算归一化比例 (Ratio 0.0 ~ 1.0)
+    // 公式: (x - min) / (max - min)
+    float ratio = (curr_angle - angle_start) / (angle_end - angle_start);
+
+    // 2. 安全限幅 (Clamping)
+    // 这一步非常重要：如果当前角度因为惯性稍微超过了校准值，
+    // 不限幅会导致 PID 计算出的误差反向剧增，引发震荡。
+    if (ratio < 0.0f) ratio = 0.0f;
+    if (ratio > 1.0f) ratio = 1.0f;
+
+    // 3. 映射到物理长度
+    return ratio * max_length;
+}
 
 void Class_FSM_Push_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
 {
@@ -72,11 +100,8 @@ void Class_FSM_Push_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
             Booster->Motor_Push_L.Set_Target_Omega_Radian(2.0f);
             Booster->Motor_Push_R.Set_Target_Omega_Radian(2.0f);
             
-            
-            if(abs(Booster->Motor_Push_L.Get_Now_Torque()) > Torque_Threshold){
-                Set_Status(1);
-            }
-            else if(abs(Booster->Motor_Push_R.Get_Now_Torque()) > Torque_Threshold){
+            if(fabs(Booster->Motor_Push_L.Get_Now_Torque()) > Torque_Threshold &&
+                fabs(Booster->Motor_Push_R.Get_Now_Torque()) > Torque_Threshold){
                 Set_Status(1);
             }
         }
@@ -85,11 +110,26 @@ void Class_FSM_Push_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
         {
             if(Status[Now_Status_Serial].Time > 100){
                 Angle_Forward_L = Booster->Motor_Push_L.Get_Now_Angle();
-                Angle_Forward_R = Booster->Motor_Push_R.Get_Now_Angle();
-                Set_Status(2);
+                Booster->Motor_Push_L.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_TORQUE);
+                Booster->Motor_Push_L.Set_Target_Torque(0.f);
+                Booster->Motor_Push_L.Set_Out(0.f);
+                forward_flag_L = 1;
             }
-            else{
+            else if (fabs(Booster->Motor_Push_L.Get_Now_Torque()) < Torque_Threshold){
                 Set_Status(0);
+            }
+            if(Status[Now_Status_Serial].Time > 100){
+                Angle_Forward_R = Booster->Motor_Push_R.Get_Now_Angle();
+                Booster->Motor_Push_R.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_TORQUE);
+                Booster->Motor_Push_R.Set_Target_Torque(0.f);
+                Booster->Motor_Push_R.Set_Out(0.f);
+                forward_flag_R = 1;
+            }
+            else if (fabs(Booster->Motor_Push_R.Get_Now_Torque()) < Torque_Threshold){
+                Set_Status(0);
+            }
+            if(forward_flag_L == 1 && forward_flag_R == 1){
+                Set_Status(2);
             }
         }
         break;
@@ -101,10 +141,8 @@ void Class_FSM_Push_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
             Booster->Motor_Push_L.Set_Target_Omega_Radian(-2.0f);
             Booster->Motor_Push_R.Set_Target_Omega_Radian(-2.0f);
 
-            if(abs(Booster->Motor_Push_L.Get_Now_Torque()) > Torque_Threshold){
-                Set_Status(3);
-            }
-            else if(abs(Booster->Motor_Push_R.Get_Now_Torque()) > Torque_Threshold){
+            if(fabs(Booster->Motor_Push_L.Get_Now_Torque()) > Torque_Threshold && 
+                fabs(Booster->Motor_Push_R.Get_Now_Torque()) > Torque_Threshold){
                 Set_Status(3);
             }
         }
@@ -113,18 +151,33 @@ void Class_FSM_Push_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
         {
             if(Status[Now_Status_Serial].Time > 100){
                 Angle_Backward_L = Booster->Motor_Push_L.Get_Now_Angle();
-                Angle_Backward_R = Booster->Motor_Push_R.Get_Now_Angle();
-                Set_Status(4);
+                Booster->Motor_Push_L.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_TORQUE);
+                Booster->Motor_Push_L.Set_Target_Torque(0.f);
+                Booster->Motor_Push_L.Set_Out(0.f);
+                backward_flag_L = 1;
             }
-            else{
+            else if (fabs(Booster->Motor_Push_L.Get_Now_Torque()) < Torque_Threshold){
                 Set_Status(2);
+            }
+            
+            if(Status[Now_Status_Serial].Time > 100){
+                Angle_Backward_R = Booster->Motor_Push_R.Get_Now_Angle();
+                Booster->Motor_Push_R.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_TORQUE);
+                Booster->Motor_Push_R.Set_Target_Torque(0.f);
+                Booster->Motor_Push_R.Set_Out(0.f);
+                backward_flag_R = 1;
+            }
+            else if (fabs(Booster->Motor_Push_R.Get_Now_Torque()) < Torque_Threshold){
+                Set_Status(2);
+            }
+            if(backward_flag_L == 1 && backward_flag_R == 1){
+                Set_Status(4);
             }
         }
         break;
         case (4)://正常控制流程
         {
-            Booster->Motor_Push_L.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
-            Booster->Motor_Push_R.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
+
 
             
         }
@@ -191,6 +244,11 @@ void Class_Booster::Output()
             Motor_Push_R.Set_Out(0.f);
         }
         break;
+        case (Booster_Control_Type_NORMAL):
+        {
+
+        }
+        break;
     }
 
 }
@@ -204,7 +262,7 @@ void Class_Booster::TIM_Calculate_PeriodElapsedCallback()
     //皮筋校准
     FSM_Push_Calibration.Reload_TIM_Status_PeriodElapsedCallback();
     //发射状态机
-    FSM_Shooting.Reload_TIM_Status_PeriodElapsedCallback();
+    //FSM_Shooting.Reload_TIM_Status_PeriodElapsedCallback();
 
     Output();
 
