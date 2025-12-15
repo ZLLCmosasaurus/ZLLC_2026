@@ -115,7 +115,7 @@ public:
 
 
     void TIM_Calculate_PeriodElapsedCallback();
-    float Calculate_Linear(float now_enc, float up_enc, float down_enc);
+    float Calculate_Linear(float max,float min,float now_enc, float up_enc, float down_enc);
 
 protected:
     //初始化相关常量

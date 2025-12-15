@@ -82,9 +82,11 @@ void Class_FSM_Yaw_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
             if(Gimbal->Get_Gimbal_Control_Type() == Gimbal_Control_Type_YAW_CALIBRATION && Status[Now_Status_Serial].Time > 2000){
                 Set_Status(0);
             }
-            float yaw = Gimbal->Calculate_Linear(Gimbal->Motor_Pitch_L.Get_Now_Angle(), 
-                                                Angle_Left, 
-                                                Angle_Right);
+            float yaw = Gimbal->Calculate_Linear(Gimbal->Max_Yaw_Angle,
+                                                 Gimbal->Min_Yaw_Angle,
+                                                 Gimbal->Motor_Pitch_L.Get_Now_Angle(), 
+                                                 Angle_Left, 
+                                                 Angle_Right);
             Gimbal->Motor_Yaw.Set_Transform_Angle(yaw);
         }
         break;
@@ -105,7 +107,7 @@ void Class_FSM_Pitch_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
             Gimbal->Motor_Pitch_L.Set_Target_Omega_Radian(speed);
             Gimbal->Motor_Pitch_R.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
             Gimbal->Motor_Pitch_R.Set_Target_Omega_Radian(-speed);
-            if(fabs(Gimbal->Motor_Pitch_L.Get_Now_Torque()) > Torque_Threshold && 
+            if(fabs(Gimbal->Motor_Pitch_L.Get_Now_Torque()) > Torque_Threshold && //都堵转
                 fabs(Gimbal->Motor_Pitch_R.Get_Now_Torque()) > Torque_Threshold){
                 Set_Status(1);
             }
@@ -122,6 +124,8 @@ void Class_FSM_Pitch_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
             }
             else if(fabs(Gimbal->Motor_Pitch_L.Get_Now_Torque()) < Torque_Threshold){
                 Set_Status(0);
+                Up_Flag_L = 0;
+                Up_Flag_R = 0;
             }
             if(Status[Now_Status_Serial].Time > 100){
                 Angle_Upside_R = Gimbal->Motor_Pitch_R.Get_Now_Angle();
@@ -132,8 +136,10 @@ void Class_FSM_Pitch_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
             }
             else if(fabs(Gimbal->Motor_Pitch_R.Get_Now_Torque()) < Torque_Threshold){
                 Set_Status(0);
+                Up_Flag_L = 0;
+                Up_Flag_R = 0;
             }
-            if(Up_Flag_L ==1 && Up_Flag_R == 1){
+            if(Up_Flag_L == 1 && Up_Flag_R == 1){
                 Set_Status(2);
             }
         }
@@ -161,6 +167,8 @@ void Class_FSM_Pitch_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
             }
             else if(fabs(Gimbal->Motor_Pitch_L.Get_Now_Torque()) < Torque_Threshold){
                 Set_Status(2);
+                Down_Flag_L = 0;
+                Down_Flag_R = 0;
             }
             if(Status[Now_Status_Serial].Time > 100){
                 Angle_Downside_R = Gimbal->Motor_Pitch_R.Get_Now_Angle();
@@ -171,6 +179,8 @@ void Class_FSM_Pitch_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
             }
             else if(fabs(Gimbal->Motor_Pitch_R.Get_Now_Torque()) < Torque_Threshold){
                 Set_Status(2);
+                Down_Flag_L = 0;
+                Down_Flag_R = 0;
             }
             if(Down_Flag_L ==1 && Down_Flag_R == 1){
                 Set_Status(4);
@@ -193,12 +203,16 @@ void Class_FSM_Pitch_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
                 Down_Flag_L = 0;
                 Down_Flag_R = 0;
             }
-            float pitch_l = Gimbal->Calculate_Linear(Gimbal->Motor_Pitch_L.Get_Now_Angle(), 
-                                                            Angle_Upside_L, 
-                                                            Angle_Downside_L);
-            float pitch_r = Gimbal->Calculate_Linear(Gimbal->Motor_Pitch_R.Get_Now_Angle(),
-                                                            Angle_Upside_R, 
-                                                            Angle_Downside_R);
+            float pitch_l = Gimbal->Calculate_Linear(Gimbal->Max_Pitch_Angle,
+                                                     Gimbal->Min_Pitch_Angle,
+                                                     Gimbal->Motor_Pitch_L.Get_Now_Angle(), 
+                                                     Angle_Upside_L, 
+                                                     Angle_Downside_L);
+            float pitch_r = Gimbal->Calculate_Linear(Gimbal->Max_Pitch_Angle,
+                                                     Gimbal->Min_Pitch_Angle,
+                                                     Gimbal->Motor_Pitch_R.Get_Now_Angle(),
+                                                     Angle_Upside_R, 
+                                                     Angle_Downside_R);
             float now_pitch = (pitch_l + pitch_r) / 2.0f;
 
             Gimbal->Motor_Pitch_L.Set_Transform_Angle(-now_pitch * PI / 180.0f);
@@ -223,7 +237,7 @@ void Class_FSM_Pitch_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
  * @param down_enc 校准记录的下边界编码器值
  * @return float   映射后的Pitch角度
  */
-float Class_Gimbal::Calculate_Linear(float now_enc, float up_enc, float down_enc)
+float Class_Gimbal::Calculate_Linear(float max,float min,float now_enc, float up_enc, float down_enc)
 {
     // 安全保护：防止未校准或数据异常导致除0
     if (abs(down_enc - up_enc) < 0.001f) {
@@ -233,8 +247,8 @@ float Class_Gimbal::Calculate_Linear(float now_enc, float up_enc, float down_enc
     // 线性插值公式：Y = Y_up + (X - X_up) * Slope
     // Slope = (Y_down - Y_up) / (X_down - X_up)
     
-    float slope = (Max_Pitch_Angle - Min_Pitch_Angle) / (down_enc - up_enc);
-    float angle = Min_Pitch_Angle + (now_enc - up_enc) * slope;
+    float slope = (max - min) / (down_enc - up_enc);
+    float angle = min + (now_enc - up_enc) * slope;
 
     return angle;
 }
@@ -319,6 +333,8 @@ void Class_Gimbal::TIM_Calculate_PeriodElapsedCallback()
 
     //FSM_Yaw_Calibration.Reload_TIM_Status_PeriodElapsedCallback();
     FSM_Pitch_Calibration.Reload_TIM_Status_PeriodElapsedCallback();
+
+
 
     //控制模式
     Output();

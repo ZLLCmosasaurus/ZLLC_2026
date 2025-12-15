@@ -77,6 +77,23 @@ public:
 };
 
 /**
+ * @brief Specialized, 发射策略有限自动机
+ *
+ */
+class Class_FSM_Pull_Calibration  : public Class_FSM
+{
+public:
+    Class_Booster *Booster;
+
+    float Torque_Threshold = 7000.0f;
+    float Angle_Forward = 0.0f;
+    float Angle_Backward = 0.0f;
+
+    void Reload_TIM_Status_PeriodElapsedCallback();
+    float Linear_Map_Position(float curr_angle, float angle_start, float angle_end, float max_length);
+};
+
+/**
  * @brief Specialized, 发射机构类
  *
  */
@@ -91,6 +108,10 @@ public:
     //皮筋电机校准
     Class_FSM_Push_Calibration FSM_Push_Calibration;
     friend class Class_FSM_Push_Calibration;
+
+    //拉力电机校准
+    Class_FSM_Pull_Calibration FSM_Pull_Calibration;
+    friend class Class_FSM_Pull_Calibration;
 
     //裁判系统
     Class_Referee *Referee;
