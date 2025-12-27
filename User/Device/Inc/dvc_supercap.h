@@ -16,8 +16,8 @@
 
 #include "drv_math.h"
 #include "drv_can.h"
+#include "dvc_referee.h"
 #include "drv_uart.h"
-#include "dvc_minipc.h"
 /* Exported macros -----------------------------------------------------------*/
 
 /* Exported types ------------------------------------------------------------*/
@@ -30,6 +30,16 @@ enum Enum_Supercap_Status
 {
     Supercap_Status_DISABLE = 0,
     Supercap_Status_ENABLE,
+};
+
+/**
+ * @brief 超电开关
+ *
+ */
+enum Enum_Supercap_Mode : uint8_t
+{
+    Supercap_DISABLE = 0,
+    Supercap_ENABLE,
 };
 
 /**
@@ -104,6 +114,8 @@ struct Supercap_Rx_Data_B
 class Class_Supercap
 {
 public:
+    friend class Class_Chariot;
+
     void Init(FDCAN_HandleTypeDef *__hcan, float __Limit_Power_Max = 45);
     void Init_UART(UART_HandleTypeDef *__huart, uint8_t __fame_header = '*', uint8_t __fame_tail = ';', float __Limit_Power_Max = 45.0f);
 

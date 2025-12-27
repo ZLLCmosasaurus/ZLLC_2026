@@ -28,6 +28,7 @@
 /* Exported macros -----------------------------------------------------------*/
 class Class_Chariot;
 /* Exported types ------------------------------------------------------------*/
+#define CHASSIS_SPIN_OMEGA  2.0f
 
 /**
  * @brief 云台Pitch状态枚举
@@ -138,9 +139,10 @@ class Class_Chariot
 public:
     #ifdef CHASSIS
     
-        //获取yaw电机编码器值 用于底盘和云台坐标系的转换
+        //获取yaw电机编码器值 用于底盘和云台坐标系的转换 不进行控制
         //底盘随动PID环
-        Class_DJI_Motor_GM6020 Motor_Yaw;
+        // LK电机 大Yaw
+        Class_LK_Motor Motor_Main_Yaw;
         Class_PID PID_Chassis_Fllow;
 
     #endif 
@@ -200,6 +202,8 @@ public:
         inline Enum_DR16_Control_Type Get_DR16_Control_Type();
         inline Enum_VT13_Control_Type Get_VT13_Control_Type();
 
+        void MiniPC_Data_Updata();
+
         void CAN_Gimbal_Rx_Chassis_Callback();
         void CAN_Gimbal_Tx_Chassis_Callback();
         
@@ -243,12 +247,11 @@ protected:
     Struct_CAN_Manage_Object *CAN_Manage_Object = &CAN3_Manage_Object;
 
     #ifdef CHASSIS
-        //底盘标定参考正方向角度(数据来源yaw电机)
+        //底盘标定参考正方向角度(数据来源yaw电机)       注意如果更改了Encoder_offset，这里的数值也会变化
         float Reference_Angle = 0.520019531f;
         //小陀螺云台坐标系稳定偏转角度 用于矫正
         float Offset_Angle = 0.0f;  //7.5°
-        //底盘转换后的角度（数据来源yaw电机）
-        float Chassis_Angle;
+
         //写变量
         uint32_t Gimbal_Alive_Flag = 0;
         uint32_t Pre_Gimbal_Alive_Flag = 0;
@@ -314,7 +317,6 @@ protected:
         //DR16控制数据来源
         Enum_DR16_Control_Type DR16_Control_Type = DR16_Control_Type_REMOTE;
         Enum_VT13_Control_Type VT13_Control_Type = VT13_Control_Type_NONE;
-        //内部函数
 
         // void Judge_DR16_Control_Type();
 

@@ -16,6 +16,7 @@
 
 #include "dvc_djimotor.h"
 #include "dvc_minipc.h"
+#include "dvc_external_imu.h"
 #include "dvc_imu.h"
 #include "dvc_lkmotor.h"
 
@@ -23,6 +24,14 @@
 
 /* Exported types ------------------------------------------------------------*/
 
+
+//Yaw轴的编码器偏移值
+#define YAW_ENCODER_OFFSET  3400
+#define MAIN_YAW_ENCODER_OFFSET 2048
+
+#define CRUISE_PITCH_SPEED 70.0f
+#define CRUISE_YAW_SPEED   100.0f
+#define LIMIT_YAW_ANGLE    50.0f
 
 /**
  * @brief 云台控制类型
@@ -225,9 +234,14 @@ public:
     //imu对象
     Class_IMU Boardc_BMI;
 
+    Class_External_IMU External_IMU;
+
     Class_MiniPC *MiniPC;
 
     /*后期yaw pitch这两个类要换成其父类，大疆电机类*/
+
+    // LK电机 大Yaw
+    Class_LK_Motor Motor_Main_Yaw;
 
     // yaw轴电机
     Class_DJI_Motor_GM6020 Motor_Yaw;

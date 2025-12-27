@@ -118,7 +118,7 @@ void UART_Init(UART_HandleTypeDef *huart, UART_Call_Back Callback_Function, uint
  */
 uint8_t UART_Send_Data(UART_HandleTypeDef *huart, uint8_t *Data, uint16_t Length)
 {
-    return (HAL_UART_Transmit_DMA(huart, Data, Length));
+    
 }
 
 /**
@@ -127,8 +127,7 @@ uint8_t UART_Send_Data(UART_HandleTypeDef *huart, uint8_t *Data, uint16_t Length
  */
 void TIM_UART_PeriodElapsedCallback()
 {
-    //上位机通讯
-    UART_Send_Data(&huart8, UART8_Manage_Object.Tx_Buffer, 56);
+    
 }
 
 /**

@@ -26,9 +26,9 @@ void Class_IMU::Init()
     IMU_MahonyAHRS.init(INS_Quat);
  
     //EKF初始化
-    IMU_QuaternionEKF_Init(10, 0.001, 10000000, 1, 0 ,&QEKF_INS);
+    IMU_QuaternionEKF_Init(10, 0.001, 10000000, 1, 0, 0.0f, &QEKF_INS);
 
-    INS.AccelLPF = 0.0085;
+    INS.AccelLPF = 0.09f;
 
     //初始化温控pid参数 积分和输出限幅是一周期满占空比的计数240M/24/10000=1000
     PID_IMU_Tempture.Init(200, 300, 0, 0.0, 250, 500);
@@ -36,7 +36,7 @@ void Class_IMU::Init()
 
 }
 
-float tmp_gravity_b[3];
+static float tmp_gravity_b[3];
 
 void Class_IMU::TIM_Calculate_PeriodElapsedCallback(void)
 {

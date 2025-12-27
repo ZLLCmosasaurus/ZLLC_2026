@@ -176,18 +176,15 @@ void Class_Booster::Init()
     //拨弹盘电机
     Motor_Driver.PID_Angle.Init(25.0f, 0.0f, 0.0f, 0.0f, 5.0f * PI, 5.0f * PI);
     Motor_Driver.PID_Omega.Init(2500.0f, 500.0f, 0.0f, 0.0f, Motor_Driver.Get_Output_Max(), Motor_Driver.Get_Output_Max());
-    Motor_Driver.Init(&hfdcan3, DJI_Motor_ID_0x202, DJI_Motor_Control_Method_OMEGA);
+    Motor_Driver.Init(&hfdcan2, DJI_Motor_ID_0x202, DJI_Motor_Control_Method_OMEGA);
 
-    //注意初始化ID 此版本6020为电流环版本 可能会有ID冲突
     //摩擦轮电机左
     Motor_Friction_Left.PID_Omega.Init(80.0f, 0.0f, 0.f, 0.0f, 2000.0f, Motor_Friction_Left.Get_Output_Max());
-    Motor_Friction_Left.Init(&hfdcan2, DJI_Motor_ID_0x207, DJI_Motor_Control_Method_OMEGA, 1.0f);
+    Motor_Friction_Left.Init(&hfdcan1, DJI_Motor_ID_0x201, DJI_Motor_Control_Method_OMEGA, 1.0f);
     
     //摩擦轮电机右
     Motor_Friction_Right.PID_Omega.Init(80.0f, 0.0f, 0.f, 0.0f, 2000.0f, Motor_Friction_Right.Get_Output_Max());
-    Motor_Friction_Right.Init(&hfdcan2, DJI_Motor_ID_0x208, DJI_Motor_Control_Method_OMEGA, 1.0f);
-
-
+    Motor_Friction_Right.Init(&hfdcan1, DJI_Motor_ID_0x202, DJI_Motor_Control_Method_OMEGA, 1.0f);
 }
 
 /**
@@ -205,8 +202,8 @@ void Class_Booster::Output()
         {
             // 发射机构失能
             Motor_Driver.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OPENLOOP);
-            Motor_Friction_Left.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
-            Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
+            Motor_Friction_Left.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OPENLOOP);
+            Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OPENLOOP);
 
             // 关闭摩擦轮
             Set_Friction_Control_Type(Friction_Control_Type_DISABLE);
@@ -216,9 +213,9 @@ void Class_Booster::Output()
             Motor_Friction_Left.PID_Angle.Set_Integral_Error(0.0f);
             Motor_Friction_Right.PID_Angle.Set_Integral_Error(0.0f);
 
-            Motor_Driver.Set_Out(0.0f);
-            Motor_Friction_Left.Set_Out(0.0f);
-            Motor_Friction_Right.Set_Out(0.0f);
+            Motor_Driver.Set_Target_Torque(0.0f);
+            Motor_Friction_Left.Set_Target_Torque(0.0f);
+            Motor_Friction_Right.Set_Target_Torque(0.0f);
 
             shoot_time = 0;
         }
@@ -226,21 +223,15 @@ void Class_Booster::Output()
         case (Booster_Control_Type_CEASEFIRE):
         {
             // 停火
+            Set_Friction_Control_Type(Friction_Control_Type_ENABLE);
             if (Motor_Driver.Get_Control_Method() == DJI_Motor_Control_Method_ANGLE)
             {
-               // Motor_Driver.Set_Target_Radian(Motor_Driver.Get_Now_Radian());
             }
             else if (Motor_Driver.Get_Control_Method() == DJI_Motor_Control_Method_OMEGA)
             {
-                Motor_Driver.Set_Target_Omega_Radian(0.0f);
-                Motor_Driver.Set_Out(0.f);               
-            }
-            else
-            {
-                Motor_Driver.Set_Out(0.f);
+                Motor_Driver.Set_Target_Omega_Radian(0.0f);         
             }
             shoot_time = 0;
-            Set_Friction_Control_Type(Friction_Control_Type_ENABLE);
         }
         break;
         case (Booster_Control_Type_SINGLE):
@@ -273,92 +264,65 @@ void Class_Booster::Output()
         break;
         case (Booster_Control_Type_REPEATED):
         {
-            float max_speed = 30.f;
-            float speed_x = fabs((float)(MiniPC->Get_Chassis_Target_Velocity_X() / 100.f));
-            float speed_y = fabs((float)(MiniPC->Get_Chassis_Target_Velocity_Y() / 100.f));
-            float max_sum = sqrt(speed_x * speed_x + speed_y * speed_y);
-
             // 连发模式
             Motor_Driver.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
             Motor_Friction_Left.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
             Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
 
             // 根据冷却计算拨弹盘默认速度, 此速度下与冷却均衡
-            Default_Driver_Omega = - 80.f / 10.0f / 8.0f * 2.0f * PI;
+            Default_Driver_Omega = -80.f / 10.0f / 8.0f * 2.0f * PI;
             Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega);
-            if(max_sum > 0.f && max_sum <= 0.75f)
+
+            // 冷却时间获取
+            if (Referee->Get_Referee_Status() == Referee_Status_DISABLE)
             {
-                max_speed = 30.f;
+                Cooling_Value = 80;                                     //裁判系统没反馈用默认速度
             }
-            else if(max_sum > 0.75f && max_sum <= 4.f)
+            else
             {
-                max_speed = 8.f;
+                Cooling_Value = Referee->Get_Booster_17mm_Heat_CD();
             }
-            else if(max_sum > 4.f && max_sum <= 9.f)
-            {
-                max_speed = 4.f;
-            }
-            else if(max_sum > 9.f && max_sum <= 16.f)
-            {
-                max_speed = 2.f;
-            }
-            else if(max_sum > 16.f)
-            {
-                max_speed = 1.f;
-            }
-            // 热量控制
-            Cooling_Value = CAN3_Chassis_Rx_Data_B.cooling_value;
-            if(Heat == 0 && (uint16_t)FSM_Heat_Detect.Heat != 0)
-            {
-                Heat = (uint16_t)FSM_Heat_Detect.Heat;
-            }
-            if(shoot_time == 0)
+
+            if (shoot_time == 0)
             {
                 ShootTime = ((Heat_Max - Heat) + 2 * Cooling_Value) * 10;
-                if(Heat_Max - Heat < 100){
+                if (Heat_Max - Heat < 100)
+                {
                     shoot_speed = (10 * (Heat_Max - Heat) - Cooling_Value - 3 * Heat_Consumption) / (Heat_Consumption * (ShootTime / 100.f)) + Cooling_Value / Heat_Consumption;
                 }
-                else{
+                else
+                {
                     shoot_speed = (10 * (Heat_Max - Heat) - Cooling_Value - 5 * Heat_Consumption) / (Heat_Consumption * (ShootTime / 100.f)) + Cooling_Value / Heat_Consumption;
                 }
-            }               
-            else if(0 < shoot_time && shoot_time < ShootTime)
+            }
+            else if (0 < shoot_time && shoot_time < ShootTime)
             {
                 Driver_Omega = shoot_speed * 2 * PI / 7.f;
-                Math_Constrain(&Driver_Omega, 0.0f, max_speed);
+                Math_Constrain(&Driver_Omega, 0.0f, 18.0f);
                 Motor_Driver.Set_Target_Omega_Radian(-Driver_Omega);
             }
             else
             {
                 shoot_speed = (Cooling_Value / Heat_Consumption);
                 Driver_Omega = shoot_speed * 2 * PI / 7.f;
-                Math_Constrain(&Driver_Omega, 0.0f, max_speed);
+                Math_Constrain(&Driver_Omega, 0.0f, 18.0f);
                 Motor_Driver.Set_Target_Omega_Radian(-Driver_Omega);
             }
-            if(shoot_time < ShootTime)
+            if (shoot_time < ShootTime)
             {
                 shoot_time++;
             }
-            //Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega * 2.5f);//测试用 平常注释
-            //裁判系统正常模式
-            if(Heat > 340)
+
+            // Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega * 2.5f);//测试用 平常注释
+            if (Heat > 300)
             {
                 Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega * 0.4f);
             }
-            if(Heat > 370)
+            if (Heat > 340)
             {
                 Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega * 0.25f);
             }
-            //离线保守模式
-            if(Heat > 300)
-            {
-                Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega * 0.4f);
-            }
-            if(Heat > 350)
-            {
-                Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega * 0.25f);
-            }
-            
+
             Set_Friction_Control_Type(Friction_Control_Type_ENABLE);
         }
         break;  
@@ -383,7 +347,6 @@ void Class_Booster::Output()
  */
 void Class_Booster::TIM_Calculate_PeriodElapsedCallback()
 {     
-    
     //无需裁判系统的热量控制计算
     FSM_Heat_Detect.Reload_TIM_Status_PeriodElapsedCallback();
     //卡弹处理

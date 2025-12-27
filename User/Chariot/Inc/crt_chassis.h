@@ -379,14 +379,24 @@ float Class_Tricycle_Chassis::Get_Target_Wheel_Power()
     return (Target_Wheel_Power);
 }
 
+/**
+ * @brief 获取云台底盘相对角度
+ * @return 
+ */
 float Class_Tricycle_Chassis::Get_Relative_Angle()
 {
     return (Relative_Angle);
 }
+
+/**
+ * @brief 获取超电控制状态（是否启用）
+ * @return 
+ */
 Enum_Supercap_Mode Class_Tricycle_Chassis::Get_Supercap_Mode()
 {
     return (Supercap_Mode);
 }
+
 /**
  * @brief 设定底盘控制方法
  *
@@ -477,10 +487,21 @@ void Class_Tricycle_Chassis::Set_Velocity_X_Max(float __Velocity_X_Max)
     Velocity_X_Max = __Velocity_X_Max;
 }
 
+
+/**
+ * @brief 设置云台底盘相对角度
+ * @param __Relative_Angle 
+ */
 void Class_Tricycle_Chassis::Set_Relative_Angle(float __Relative_Angle)
 {
     Relative_Angle = __Relative_Angle;
 }
+
+
+/**
+ * @brief 设置超电控制状态
+ * @param __Supercap_Mode 
+ */
 void Class_Tricycle_Chassis::Set_Supercap_Mode(Enum_Supercap_Mode __Supercap_Mode)
 {
     Supercap_Mode = __Supercap_Mode;

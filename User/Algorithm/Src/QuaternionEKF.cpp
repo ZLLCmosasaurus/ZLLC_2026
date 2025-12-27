@@ -51,7 +51,7 @@ void (*temp_func_1)(struct kf_t *kf) = IMU_QuaternionEKF_Observe;
  * @param[in] lambda         fading coefficient          0.9996
  * @param[in] lpf            lowpass filter coefficient  0
  */
-void IMU_QuaternionEKF_Init(float process_noise1, float process_noise2, float measure_noise, float lambda, float lpf, QEKF_INS_t *QEKF_INS)
+void IMU_QuaternionEKF_Init(float process_noise1, float process_noise2, float measure_noise, float lambda, float lpf, float yaw_offset, QEKF_INS_t *QEKF_INS)
 {
     QEKF_INS->Initialized = 1;
     QEKF_INS->Q1 = process_noise1;
@@ -61,6 +61,7 @@ void IMU_QuaternionEKF_Init(float process_noise1, float process_noise2, float me
     QEKF_INS->ConvergeFlag = 0;
     QEKF_INS->ErrorCount = 0;
     QEKF_INS->UpdateCount = 0;
+    QEKF_INS->yaw_offset = yaw_offset;
     if (lambda > 1)
     {
         lambda = 1;
@@ -98,7 +99,6 @@ void IMU_QuaternionEKF_Init(float process_noise1, float process_noise2, float me
  * @param[in]       accel x y z in m/s²
  * @param[in]       update period in s
  */
-float yaw_offset = -0.0025;
 void IMU_QuaternionEKF_Update(float gx, float gy, float gz, float ax, float ay, float az, float dt, QEKF_INS_t *QEKF_INS)
 {
     // 0.5(Ohm-Ohm^bias)*deltaT,用于更新工作点处的状态转移F矩阵
@@ -106,7 +106,7 @@ void IMU_QuaternionEKF_Update(float gx, float gy, float gz, float ax, float ay, 
     static float accelInvNorm;
     if (!QEKF_INS->Initialized)
     {
-        IMU_QuaternionEKF_Init(10, 0.001, 1000000 * 10, 0.9996 * 0 + 1, 0 , QEKF_INS);
+        IMU_QuaternionEKF_Init(10, 0.001, 1000000 * 10, 0.9996 * 0 + 1, 0 , 0, QEKF_INS);
     }
 
     /*   F, number with * represent vals to be set
@@ -205,7 +205,7 @@ void IMU_QuaternionEKF_Update(float gx, float gy, float gz, float ax, float ay, 
     QEKF_INS->q[3] = QEKF_INS->IMU_QuaternionEKF.FilteredValue[3];
     QEKF_INS->GyroBias[0] = QEKF_INS->IMU_QuaternionEKF.FilteredValue[4];
     QEKF_INS->GyroBias[1] = QEKF_INS->IMU_QuaternionEKF.FilteredValue[5];
-    QEKF_INS->GyroBias[2] = yaw_offset; // 大部分时候z轴通天,无法观测yaw的漂移
+    QEKF_INS->GyroBias[2] = QEKF_INS->yaw_offset; // 大部分时候z轴通天,无法观测yaw的漂移
 
     // 利用四元数反解欧拉角
     QEKF_INS->Yaw = atan2f(2.0f * (QEKF_INS->q[0] * QEKF_INS->q[3] + QEKF_INS->q[1] * QEKF_INS->q[2]), 2.0f * (QEKF_INS->q[0] * QEKF_INS->q[0] + QEKF_INS->q[1] * QEKF_INS->q[1]) - 1.0f) * 57.295779513f;

@@ -180,7 +180,6 @@ public:
     float Pre_Yaw;
     float temp_radian;
 
-    float t_yaw = 0.0f;
     float rpm = 1.0f;
 
     int invert_flag = 0; //正反转标志位
@@ -400,6 +399,8 @@ public:
     inline void Set_Target_Omega_Radian(float __Target_Omega_Radian);
     inline void Set_Target_Torque(float __Target_Torque);
     inline void Set_Out(float __Out);
+
+    void Disable();
 
     void CAN_RxCpltCallback(uint8_t *Rx_Data);
     void TIM_Alive_PeriodElapsedCallback();
@@ -1228,7 +1229,6 @@ void Class_DJI_Motor_C620::Set_Target_Torque(float __Target_Torque)
 void Class_DJI_Motor_C620::Set_Out(float __Out)
 {
     Out = __Out;
-    Output();
 }
 
 inline float Class_DJI_Motor_C620_Steer::Get_Now_Zero_Offset_Radian(){

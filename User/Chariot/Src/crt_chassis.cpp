@@ -57,13 +57,13 @@ void Class_Tricycle_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max
     {
         Motor_Wheel[i].PID_Omega.Init(1000.0f, 0.0f, 0.0f, 0.0f, Motor_Wheel[i].Get_Output_Max(), Motor_Wheel[i].Get_Output_Max());
     }
+
+    Motor_Wheel[0].Init(&hfdcan1, DJI_Motor_ID_0x201);
+    Motor_Wheel[1].Init(&hfdcan1, DJI_Motor_ID_0x202);
+    Motor_Wheel[2].Init(&hfdcan1, DJI_Motor_ID_0x203);
+    Motor_Wheel[3].Init(&hfdcan1, DJI_Motor_ID_0x204);
+
     #ifdef AGV
-    //轮向电机ID初始化
-    Motor_Wheel[0].Init(&hfdcan2, DJI_Motor_ID_0x201);
-    Motor_Wheel[1].Init(&hfdcan2, DJI_Motor_ID_0x202);
-    Motor_Wheel[2].Init(&hfdcan2, DJI_Motor_ID_0x203);
-    Motor_Wheel[3].Init(&hfdcan2, DJI_Motor_ID_0x204);
-    
     //舵向电机PID初始化
 
     Motor_Steer[0].PID_Angle.Init(10.f, 0.0f, 0.0f, 0.0f, Motor_Steer[0].Get_Output_Max(), Motor_Steer[0].Get_Output_Max());
@@ -80,22 +80,15 @@ void Class_Tricycle_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max
 
 
     //舵向电机ID初始化
-    Motor_Steer[0].Init(&hfdcan2, DJI_Motor_ID_0x205);
-    Motor_Steer[1].Init(&hfdcan2, DJI_Motor_ID_0x206);
-    Motor_Steer[2].Init(&hfdcan2, DJI_Motor_ID_0x207);
-    Motor_Steer[3].Init(&hfdcan2, DJI_Motor_ID_0x208);
+    Motor_Steer[0].Init(&hfdcan1, DJI_Motor_ID_0x205);
+    Motor_Steer[1].Init(&hfdcan1, DJI_Motor_ID_0x206);
+    Motor_Steer[2].Init(&hfdcan1, DJI_Motor_ID_0x207);
+    Motor_Steer[3].Init(&hfdcan1, DJI_Motor_ID_0x208);
     //舵向电机零点位置初始化
-    Motor_Steer[0].Set_Zero_Position(1.76999998);               //应该是轮子朝向的正方向
+    Motor_Steer[0].Set_Zero_Position(1.76999998);               //应该是轮子朝向的正方向，行进轮超前，并且顺时针转动为正方向的角度
     Motor_Steer[1].Set_Zero_Position(2.38000011);
     Motor_Steer[2].Set_Zero_Position(2.16000009);
     Motor_Steer[3].Set_Zero_Position(2.6400001);
-    #endif
-
-    #ifdef OMNI_WHEEL
-        Motor_Wheel[0].Init(&hfdcan1, DJI_Motor_ID_0x203);
-        Motor_Wheel[1].Init(&hfdcan1, DJI_Motor_ID_0x201);
-        Motor_Wheel[2].Init(&hfdcan1, DJI_Motor_ID_0x204);
-        Motor_Wheel[3].Init(&hfdcan1, DJI_Motor_ID_0x202);
     #endif
 
     //底盘控制方式初始化
@@ -115,14 +108,8 @@ void Class_Tricycle_Chassis::Speed_Resolution(){
         case(Chassis_Control_Type_DISABLE):
         {
             for(int i = 0; i < 4;i++){
-                Motor_Wheel[i].Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OPENLOOP);
-                Motor_Wheel[i].PID_Omega.Set_Integral_Error(0.0f);
-                Motor_Wheel[i].Set_Out(0.0f);
-
-                Motor_Steer[i].Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OPENLOOP);
-                Motor_Steer[i].PID_Omega.Set_Integral_Error(0.0f);
-                Motor_Steer[i].PID_Angle.Set_Integral_Error(0.0f);
-                Motor_Steer[i].Set_Out(0.0f);
+                Motor_Wheel[i].Disable();
+                Motor_Steer[i].Disable();
             }
             break;
         }
@@ -180,6 +167,7 @@ void Class_Tricycle_Chassis::Speed_Resolution(){
                 Lock_Time = 0;
             }
 
+            //轮子 0 1 2 3  转向 4 5 6 7 左前 右前 右后 左后 逆时针
             //0 1 2 3 左前 右前 右后 左后 逆时针    前X左Y坐标系   基于编码器0度朝前，逆时针为正角度   确保轮子正转的是朝前的速度，不然得单独加负号
             float True_Vx[4], True_Vy[4], True_Target_Angle_Radian[4];
             
@@ -381,25 +369,29 @@ void Class_Tricycle_Chassis::TIM_Calculate_PeriodElapsedCallback(Enum_Sprint_Sta
     
     //速度解算
     Speed_Resolution();    
+
+
+    //超电策略和功率限制还没写
+    float Limit_Power = 0.0f, Chassis_Energy_Power = 0.0f;
+    if(Referee->Get_Referee_Status() == Referee_Status_DISABLE){
+        Limit_Power = 100.0f;
+        Chassis_Energy_Power = 0.0f;
+    }
+    else{
+        Limit_Power = Referee->Get_Chassis_Power_Max();
+        Chassis_Energy_Power = Referee->Get_Chassis_Energy_Buffer();
+    }
     /***************************超级电容*********************************/
-    Supercap.Set_Limit_Power(Referee->Get_Chassis_Power_Max());
+    Supercap.Set_Limit_Power(Limit_Power);
     Supercap.Set_Supercap_Mode(Get_Supercap_Mode());
     Supercap.TIM_Supercap_PeriodElapsedCallback();
 
     #if POWER_CONTROL == 1
     /*************************功率限制策略*******************************/
     //Power_Limit_Update();
-    Power_Limit.Set_Motor(Motor_Wheel);//添加四个电机的控制电流和当前转速
-    Power_Limit.Set_Power_Limit(Referee->Get_Chassis_Power_Max());
-    if(Referee->Get_Game_Stage() == Referee_Game_Status_Stage_BATTLE)
-    {
-        if(Supercap.Get_Consuming_Power() <= 200.f)
-        {
-            Power_Limit.Set_Power_Limit(Referee->Get_Chassis_Power_Max()/3.0f);
-            Supercap.Set_Limit_Power(Referee->Get_Chassis_Power_Max()/3.0f);
-        }
-    }
-    Power_Limit.Set_Chassis_Buffer(Referee->Get_Chassis_Energy_Buffer());
+    Power_Limit.Set_Motor(Motor_Wheel);                         //添加四个电机的控制电流和当前转速
+    Power_Limit.Set_Power_Limit(Limit_Power);
+    Power_Limit.Set_Chassis_Buffer(Chassis_Energy_Power);
     Power_Limit.TIM_Adjust_PeriodElapsedCallback(Motor_Wheel);
     #endif
 }

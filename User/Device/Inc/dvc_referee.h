@@ -230,7 +230,7 @@ enum Enum_Referee_Command_ID : uint16_t
     Referee_Command_ID_ROBOT_Radar_Info = 0x020E,
     Referee_Command_ID_INTERACTION = 0x0301,
     Referee_Command_ID_INTERACTION_CUSTOM_CONTROLLER,
-    Referee_Command_ID_INTERACTION_RADAR_SEND,
+    Referee_Command_ID_INTERACTION_MAP_COMMAND,
     Referee_Command_ID_INTERACTION_REMOTE_CONTROL,
     Referee_Command_ID_INTERACTION_Client_RECEIVE,
 };
@@ -1116,7 +1116,7 @@ struct Struct_Referee_Tx_Data_Interaction_Custom_Controller
  * @brief 裁判系统接收的数据, 0x0303雷达发送小地图交互信息, 用户自主最高30Hz发送
  *
  */
-struct Struct_Referee_Tx_Data_Interaction_Radar_Send
+struct Struct_Referee_Tx_Data_Interaction_Map_Command
 {
     float Coordinate_X;
     float Coordinate_Y;
@@ -1195,7 +1195,7 @@ struct Struct_Sentry_cmd_t
 } __attribute__((packed));
 
 /**
- * @brief 裁判系统发送的数据, 0x200雷达接收小地图交互信息, 用户自主最高30Hz发送
+ * @brief 向雷达通信的交互数据，0x0301下的子数据包0x0200
  *
  */
 struct Struct_Sentry_To_Radar_t
@@ -1209,12 +1209,6 @@ struct Struct_Sentry_To_Radar_t
     uint16_t Robot_Position_Y;
 } __attribute__((packed));
 
-struct Struct_CAN_Referee_Rx_Data_t //0x195
-{
-    uint32_t Sentry_cmd;
-    uint16_t Robot_Position_X;
-    uint16_t Robot_Position_Y;
-} __attribute__((packed));
 /**
  * @brief Specialized, 裁判系统
  *
@@ -1222,6 +1216,9 @@ struct Struct_CAN_Referee_Rx_Data_t //0x195
 class Class_Referee
 {
 public:
+    //友元声明
+    friend class Class_Chariot;
+
     void Init(UART_HandleTypeDef *huart, uint8_t __Frame_Header = 0xa5);
 
     inline uint16_t Get_Circle_Index(uint16_t index){return (index%UART_Manage_Object->Rx_Buffer_Length);}
@@ -1297,8 +1294,8 @@ public:
     inline uint16_t Get_Dart_Change_Target_Timestamp();
     inline uint16_t Get_Dart_Last_Confirm_Timestamp();
     inline Enum_Referee_Data_Robots_ID Get_Radar_Send_Robot_ID();
-    inline float Get_Radar_Send_Coordinate_X();
-    inline float Get_Radar_Send_Coordinate_Y();
+    inline float Get_Map_Command_Coordinate_X();
+    inline float Get_Map_Command_Coordinate_Y();
     inline uint32_t Get_Central_Data();
     inline uint16_t Get_Hero_Position_X();
     inline uint16_t Get_Hero_Position_Y();
@@ -1428,8 +1425,8 @@ protected:
     Struct_Referee_Tx_Data_Interaction_Graphic_7 Interaction_Graphic_7;
     //画字符图形交互信息
     Struct_Referee_Tx_Data_Interaction_Graphic_String Interaction_Graphic_String;
-    //雷达发送小地图交互信息
-    Struct_Referee_Tx_Data_Interaction_Radar_Send Interaction_Radar_Send;
+    //云台手发送小地图交互信息
+    Struct_Referee_Tx_Data_Interaction_Map_Command Interaction_Map_Command;
     //哨兵自主决策
     Struct_Sentry_cmd_t Sentry_cmd;
     //哨兵发送雷达位置
@@ -2319,13 +2316,13 @@ uint16_t Class_Referee::Get_Dart_Last_Confirm_Timestamp()
 // }
 
 /**
- * @brief 获取雷达发送目标机器人位置x
+ * @brief 云台手发送的目标点位
  *
- * @return float 雷达发送目标机器人位置x
+ * @return float 云台手发送的目标点位
  */
-float Class_Referee::Get_Radar_Send_Coordinate_X()
+float Class_Referee::Get_Map_Command_Coordinate_X()
 {
-    return (Interaction_Radar_Send.Coordinate_X);
+    return (Interaction_Map_Command.Coordinate_X);
 }
 
 /**
@@ -2333,9 +2330,9 @@ float Class_Referee::Get_Radar_Send_Coordinate_X()
  *
  * @return float 雷达发送目标机器人位置y
  */
-float Class_Referee::Get_Radar_Send_Coordinate_Y()
+float Class_Referee::Get_Map_Command_Coordinate_Y()
 {
-    return (Interaction_Radar_Send.Coordinate_Y);
+    return (Interaction_Map_Command.Coordinate_Y);
 }
 uint16_t Class_Referee::Get_Hero_Position_X()
 {

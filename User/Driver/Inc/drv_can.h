@@ -127,6 +127,7 @@ extern uint8_t CAN3_0xxf8_Tx_Data[];
 extern uint8_t CAN_Supercap_Tx_Data[];
 extern uint8_t CAN3_Gimbal_Tx_Chassis_Data[];  //云台给底盘发送缓冲区
 extern uint8_t CAN3_Sentry_CMD_Data[];     //哨兵自主决策缓冲区
+extern uint8_t CAN_Chassis_Tx_Data[];      //底盘给云台发送的消息
 extern uint8_t CAN3_Chassis_Tx_Data_A[];   //底盘给云台发送缓冲区
 extern uint8_t CAN3_Chassis_Tx_Data_B[];   //底盘给云台发送缓冲区
 extern uint8_t CAN3_Chassis_Tx_Data_C[];   //底盘给云台发送缓冲区
@@ -134,10 +135,6 @@ extern uint8_t CAN3_Chassis_Tx_Data_D[];   //底盘给云台发送缓冲区
 extern uint8_t CAN3_Chassis_Tx_Data_E[];   //底盘给云台发送缓冲区
 extern uint8_t CAN3_Chassis_Tx_Data_F[];   //底盘给云台发送缓冲区
 extern uint8_t CAN3_Chassis_Tx_Data_G[];   //底盘给云台发送缓冲区
-extern uint8_t CAN3_MiniPC_Tx_Data_A[];   //下位机发送缓冲区
-extern uint8_t CAN3_MiniPC_Tx_Data_B[];   //下位机发送缓冲区
-extern uint8_t CAN3_MiniPC_Tx_Data_C[];   //下位机发送缓冲区
-extern uint8_t CAN3_MiniPC_Tx_Data_D[];   //下位机发送缓冲区
 
 /*********LK电机 控制缓冲区***********/
 extern uint8_t CAN1_0x141_Tx_Data[8];

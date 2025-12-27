@@ -299,13 +299,13 @@ void Class_Referee::Data_Process()
                         buffer_index += sizeof(Struct_Referee_Tx_Data_Interaction_Robot_Receive) + 7;
                     }
                     break;
-                    case (Referee_Command_ID_INTERACTION_RADAR_SEND):
+                    case (Referee_Command_ID_INTERACTION_MAP_COMMAND):
                     {
                         for (int i = 0; i < data_length + 2; i++)
                         {
-                            reinterpret_cast<uint8_t *>(&Interaction_Radar_Send)[i] = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 7 + i)];
+                            reinterpret_cast<uint8_t *>(&Interaction_Map_Command)[i] = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 7 + i)];
                         }
-                        buffer_index += sizeof(Struct_Referee_Tx_Data_Interaction_Radar_Send) + 7;
+                        buffer_index += sizeof(Struct_Referee_Tx_Data_Interaction_Map_Command) + 7;
                     }
                     break;
                     }
@@ -349,12 +349,12 @@ void Class_Referee::TIM1msMod50_Alive_PeriodElapsedCallback()
     }
     Pre_Flag = Flag;
 }
+
 /**
- * @brief UART定时发送函数
+ * @brief UART定时发送函数，发送与雷达通信数据
  *
  * @param 
  */
-extern Struct_CAN_Referee_Rx_Data_t CAN_Referee_Rx_Data;
 void Class_Referee::TIM_UART_Tx_PeriodElapsedCallback()
 {
     //雷达发送
@@ -367,18 +367,21 @@ void Class_Referee::TIM_UART_Tx_PeriodElapsedCallback()
     {
         Sentry_To_Radar.Receiver = Referee_Data_Robots_ID_BLUE_RADAR_9;
     }
-    Sentry_To_Radar.Robot_Position_X = CAN_Referee_Rx_Data.Robot_Position_X;
-    Sentry_To_Radar.Robot_Position_Y = CAN_Referee_Rx_Data.Robot_Position_Y;
     Referee_UI_Packed_Data(&Sentry_To_Radar);
-    HAL_UART_Transmit(UART_Manage_Object->UART_Handler, UART_Manage_Object->Tx_Buffer, UART_Manage_Object->Tx_Length,10);
+    HAL_UART_Transmit_IT(UART_Manage_Object->UART_Handler, UART_Manage_Object->Tx_Buffer, UART_Manage_Object->Tx_Length);
 }
+
+/**
+ * @brief UART定时发送函数，发送哨兵自主决策命令数据
+ *
+ * @param 
+ */
 void Class_Referee::Sentry_Auto_cmd_Transmit()
 {
     //哨兵自主决策
     Sentry_cmd.Sender = Get_ID();
-    Sentry_cmd.sentry_cmd = CAN_Referee_Rx_Data.Sentry_cmd;
     Referee_UI_Packed_Data(&Sentry_cmd);
-    HAL_UART_Transmit(UART_Manage_Object->UART_Handler, UART_Manage_Object->Tx_Buffer, UART_Manage_Object->Tx_Length,10);
+    HAL_UART_Transmit_IT(UART_Manage_Object->UART_Handler, UART_Manage_Object->Tx_Buffer, UART_Manage_Object->Tx_Length);
 }
 
 unsigned char Get_CRC8_Check_Sum(unsigned  char  *pchMessage,unsigned  int dwLength,unsigned char ucCRC8)
