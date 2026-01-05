@@ -478,3 +478,26 @@ static void H_K_R_Adjustment(KalmanFilter_t *kf)
     kf->K.numCols = kf->MeasurementValidNum;
     kf->z.numRows = kf->MeasurementValidNum;
 }
+
+// 初始化卡尔曼滤波器
+void kalman_init(KalmanFilter *kf, float initial_value) {
+    kf->Q = 0.25f;  // 过程噪声协方差
+    kf->R = 1.25f;  // 观测噪声协方差
+    kf->A = 1.0f;  // 状态转移矩阵
+    kf->H = 1.0f;  // 观测矩阵
+    
+    kf->x = initial_value;  // 初始估计值
+    kf->P = 1000.0;  // 初始误差协方差，较大值表示初始的不确定性
+}
+
+// 卡尔曼滤波更新函数
+void kalman_update(KalmanFilter *kf, float measurement) {
+    // 预测步骤
+    float x_pred = kf->A * kf->x;  // 预测的值
+    float P_pred = kf->A * kf->P * kf->A + kf->Q;  // 预测的协方差
+
+    // 更新步骤
+    kf->K = P_pred * kf->H / (kf->H * P_pred * kf->H + kf->R);  // 计算卡尔曼增益
+    kf->x = x_pred + kf->K * (measurement - kf->H * x_pred);  // 更新估计值
+    kf->P = (1 - kf->K * kf->H) * P_pred;  // 更新协方差
+}

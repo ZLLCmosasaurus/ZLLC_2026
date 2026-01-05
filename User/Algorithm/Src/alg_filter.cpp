@@ -122,12 +122,12 @@ void Class_Filter_Fourier::TIM_Adjust_PeriodElapsedCallback()
  * @param __Value 当前值
  * @param __Error_Estimate 估计误差
  */
-void Class_Filter_Kalman::Init(float __Error_Measure, float __Now, float __Error_Estimate)
+void Class_Filter_Kalman::Init(float __Error_Measure, float __Error_Estimate,float __X, float __P)
 {
     Error_Measure = __Error_Measure;
-
-    Now = __Now;
     Error_Estimate = __Error_Estimate;
+    X   = __X;
+    P   = __P; 
 }
 
 /**
@@ -136,11 +136,17 @@ void Class_Filter_Kalman::Init(float __Error_Measure, float __Now, float __Error
  */
 void Class_Filter_Kalman::Recv_Adjust_PeriodElapsedCallback()
 {
-    Kalman_Gain = Error_Estimate / (Error_Estimate + Error_Measure);
+    X_hat = X;                  //最普通的估计方式 直接令本次模型估计值等于上次  A = 1, U = 0;
+    P_hat = P + Error_Estimate;
 
-    Out = Out + Kalman_Gain * (Now - Out);
+    //省略了Now 与 X 测量值的转移，因为H = 1
 
-    Error_Estimate = (1.0f - Kalman_Gain) * Error_Estimate;
+    Kalman_Gain = P_hat / (P_hat + Error_Measure);              //因为 H 和 A 等于1退化
+
+    X = X + Kalman_Gain * (Now - X);
+    P = (1.0f - Kalman_Gain) * P_hat;
+
+    Out = X;
 }
 
 // 初始化滤波器

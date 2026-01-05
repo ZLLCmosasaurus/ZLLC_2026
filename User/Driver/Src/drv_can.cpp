@@ -28,6 +28,7 @@ uint8_t CAN1_0x1ff_Tx_Data[8];
 uint8_t CAN1_0x1fe_Tx_Data[8];
 uint8_t CAN1_0x200_Tx_Data[8];
 uint8_t CAN1_0x2ff_Tx_Data[8];
+uint8_t CAN1_0x2fe_Tx_Data[8];
 uint8_t CAN1_0xxf1_Tx_Data[8];
 uint8_t CAN1_0xxf2_Tx_Data[8];
 uint8_t CAN1_0xxf3_Tx_Data[8];
@@ -41,6 +42,7 @@ uint8_t CAN2_0x1ff_Tx_Data[8];
 uint8_t CAN2_0x1fe_Tx_Data[8];
 uint8_t CAN2_0x200_Tx_Data[8];
 uint8_t CAN2_0x2ff_Tx_Data[8];
+uint8_t CAN2_0x2fe_Tx_Data[8];
 uint8_t CAN2_0xxf1_Tx_Data[8];
 uint8_t CAN2_0xxf2_Tx_Data[8];
 uint8_t CAN2_0xxf3_Tx_Data[8];
@@ -331,12 +333,13 @@ void TIM_CAN_PeriodElapsedCallback()
         mod5 = 0;
         //3508    
         CAN_Send_Data(&hfdcan1, 0x200, CAN1_0x200_Tx_Data, 8);
+        CAN_Send_Data(&hfdcan2, 0x200, CAN2_0x200_Tx_Data, 8);
         #ifdef AGV
         //6020
         CAN_Send_Data(&hfdcan2, 0x1fe, CAN2_0x1fe_Tx_Data, 8);
         #endif
     }
-    
+
     if (mod100 == 10) //10Hz
     {
         CAN_Send_Data(&hfdcan3, 0x191, CAN3_Chassis_Tx_Data_G, 8);
@@ -352,7 +355,7 @@ void TIM_CAN_PeriodElapsedCallback()
         CAN_Send_Data(&hfdcan3, 0x198, CAN3_Chassis_Tx_Data_D, 8);
         CAN_Send_Data(&hfdcan3, 0x196, CAN3_Chassis_Tx_Data_F, 8);
         //超电
-        CAN_Send_Data(&hfdcan2, 0x66, CAN_Supercap_Tx_Data, 8);
+        //CAN_Send_Data(&hfdcan2, 0x66, CAN_Supercap_Tx_Data, 8);
         mod20 = 0;
     }
     #elif defined (GIMBAL)
@@ -366,7 +369,7 @@ void TIM_CAN_PeriodElapsedCallback()
     {
         mod5 = 0;
         CAN_Send_Data(&hfdcan2, 0x1fe, CAN2_0x1fe_Tx_Data, 8); //GM6020  按照0x1fe ID 发送 可控制多个电机
-        CAN_Send_Data(&hfdcan2, 0x1ff, CAN2_0x1ff_Tx_Data, 8); //摩擦轮 按照0x1ff ID 发送 可控制多个电机
+      CAN_Send_Data(&hfdcan2, 0x1ff, CAN2_0x1ff_Tx_Data, 8); //摩擦轮 按照0x1ff ID 发送 可控制多个电机
 
         //  CAN3  下板       
         CAN_Send_Data(&hfdcan3, 0x200, CAN3_0x200_Tx_Data, 8); //拨弹盘  按照0x200 ID 发送 可控制多个电机

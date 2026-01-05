@@ -292,6 +292,11 @@ void Class_Supercap::Set_Supercap_Mode(Enum_Supercap_Mode __Supercap_Mode)
     Supercap_Mode = __Supercap_Mode;
 }
 
+void Class_Supercap::Set_Now_Power(float __Now_Power)
+{
+    Chassis_Power = __Now_Power;
+}
+
 #endif
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

@@ -12,9 +12,6 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "drv_math.h"
-
-
-
 /* Private macros ------------------------------------------------------------*/
 
 /* Private types -------------------------------------------------------------*/
@@ -183,6 +180,32 @@ float Math_Int_To_Float(int32_t x, int32_t Int_Min, int32_t Int_Max, float Float
     float tmp = (float)(x - Int_Min) / (float)(Int_Max - Int_Min);
     float out = tmp * (Float_Max - Float_Min) + Float_Min;
     return (out);
+}
+
+/**
+ * @brief 将任意角度归一化到 -PI 到 PI  可用于处理-180于180的突变 Rad
+ * @param Angle_Radian 
+ * @return 
+ */
+float Normalize_Angle_Radian_PI_to_PI(float Angle_Radian){
+    while (Angle_Radian > PI)
+        Angle_Radian -= 2.0f * PI;
+    while (Angle_Radian < -PI)
+        Angle_Radian += 2.0f * PI;
+    return Angle_Radian;
+}
+
+/**
+ * @brief 将任意角度归一化到 0 到 2PI   Rad
+ * @param Angle_Radian 
+ * @return 
+ */
+float Normalize_Angle_Radian_0_to_2PI(float Angle_Radian){
+    while (Angle_Radian >= 2.0f * PI)
+        Angle_Radian -= 2.0f * PI;
+    while (Angle_Radian < 0.0f)
+        Angle_Radian += 2.0f * PI;
+    return Angle_Radian;
 }
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

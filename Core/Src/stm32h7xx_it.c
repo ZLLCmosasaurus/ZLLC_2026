@@ -437,7 +437,7 @@ void TIM5_IRQHandler(void)
 void UART5_IRQHandler(void)
 {
   /* USER CODE BEGIN UART5_IRQn 0 */
-		UART_IDLEHandler();
+  
   /* USER CODE END UART5_IRQn 0 */
   HAL_UART_IRQHandler(&huart5);
   /* USER CODE BEGIN UART5_IRQn 1 */
@@ -535,7 +535,6 @@ void UART9_IRQHandler(void)
 void USART10_IRQHandler(void)
 {
   /* USER CODE BEGIN USART10_IRQn 0 */
-  UART_IDLEHandler();
   
   /* USER CODE END USART10_IRQn 0 */
   HAL_UART_IRQHandler(&huart10);
@@ -559,64 +558,13 @@ void FDCAN3_IT0_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
-#define BUFFER_SIZE 18
-static uint8_t CurrentIndex = 0;
-uint8_t RxBuff[BUFFER_SIZE];
-uint8_t DataBuffer[BUFFER_SIZE];
-volatile uint8_t RxLen;
-volatile uint8_t RxClp=0;
-
-void UART_IDLEHandler(void)
-{
-	uint32_t temp;
-	uint8_t Len = 0;
-
-	if((__HAL_UART_GET_FLAG(&huart5,UART_FLAG_IDLE) != RESET))
-	{
-		__HAL_UART_CLEAR_IDLEFLAG(&huart5);
-		temp = huart5.Instance->ISR;
-		temp = huart5.Instance->RDR;
-		//HAL_UART_DMAStop(&huart4);
-		temp = 0;
-		Len =  BUFFER_SIZE - __HAL_DMA_GET_COUNTER(&hdma_uart5_rx);
-		while(temp!= Len)
-		{
-			DataBuffer[temp++] = RxBuff[CurrentIndex++];
-			if(CurrentIndex >= BUFFER_SIZE)
-				CurrentIndex = 0;
-		}
-		RxLen = temp;
-		HAL_UART_Receive_DMA(&huart5,(uint8_t *)RxBuff,BUFFER_SIZE);
-	}
-  else if((__HAL_UART_GET_FLAG(&huart10,UART_FLAG_IDLE) != RESET))
-	{
-		__HAL_UART_CLEAR_IDLEFLAG(&huart10);
-		temp = huart10.Instance->ISR;
-		temp = huart10.Instance->RDR;
-		//HAL_UART_DMAStop(&huart4);
-		temp = 0;
-		Len =  BUFFER_SIZE - __HAL_DMA_GET_COUNTER(&hdma_usart10_rx);
-		while(temp!= Len)
-		{
-			DataBuffer[temp++] = RxBuff[CurrentIndex++];
-			if(CurrentIndex >= BUFFER_SIZE)
-				CurrentIndex = 0;
-		}
-	}
-
-}
-
 
 
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
 	if (huart->Instance == UART5)
     {
-      if(__HAL_UART_GET_FLAG(huart,UART_FLAG_ORE) != RESET) 
-			{
-        __HAL_UART_CLEAR_OREFLAG(huart);
-				HAL_UART_Receive_DMA(huart, RxBuff, 18);
-			}
+
 		}
 }
 

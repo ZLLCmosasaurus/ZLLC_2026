@@ -1670,7 +1670,7 @@ typedef struct {
 #define HRTIM_CHOPPER_DUTYCYCLE_250  (HRTIM_CHPR_CARDTY_1)                                             /*!< Duty cycle of the carrier signal is 25 % */
 #define HRTIM_CHOPPER_DUTYCYCLE_375  (HRTIM_CHPR_CARDTY_1 | HRTIM_CHPR_CARDTY_0)                       /*!< Duty cycle of the carrier signal is 37.5 % */
 #define HRTIM_CHOPPER_DUTYCYCLE_500  (HRTIM_CHPR_CARDTY_2)                                             /*!< Duty cycle of the carrier signal is 50 % */
-#define HRTIM_CHOPPER_DUTYCYCLE_625  (HRTIM_CHPR_CARDTY_2 | HRTIM_CHPR_CARDTY_0)                       /*!< Duty cycle of the carrier signal is 62.5 % */
+#define HRTIM_CHOPPER_DUTYCYCLE_600  (HRTIM_CHPR_CARDTY_2 | HRTIM_CHPR_CARDTY_0)                       /*!< Duty cycle of the carrier signal is 62.5 % */
 #define HRTIM_CHOPPER_DUTYCYCLE_750  (HRTIM_CHPR_CARDTY_2 | HRTIM_CHPR_CARDTY_1)                       /*!< Duty cycle of the carrier signal is 75 % */
 #define HRTIM_CHOPPER_DUTYCYCLE_875  (HRTIM_CHPR_CARDTY_2 | HRTIM_CHPR_CARDTY_1 | HRTIM_CHPR_CARDTY_0) /*!< Duty cycle of the carrier signal is 87.5 % */                                                                 /*!< fCHPFRQ = fHRTIM / 16  */
 
@@ -1680,7 +1680,7 @@ typedef struct {
                          ((DUTYCYCLE) == HRTIM_CHOPPER_DUTYCYCLE_250)  || \
                          ((DUTYCYCLE) == HRTIM_CHOPPER_DUTYCYCLE_375)  || \
                          ((DUTYCYCLE) == HRTIM_CHOPPER_DUTYCYCLE_500)  || \
-                         ((DUTYCYCLE) == HRTIM_CHOPPER_DUTYCYCLE_625)  || \
+                         ((DUTYCYCLE) == HRTIM_CHOPPER_DUTYCYCLE_600)  || \
                          ((DUTYCYCLE) == HRTIM_CHOPPER_DUTYCYCLE_750)  || \
                          ((DUTYCYCLE) == HRTIM_CHOPPER_DUTYCYCLE_875))
 /**

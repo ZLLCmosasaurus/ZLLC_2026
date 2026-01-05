@@ -198,7 +198,7 @@ void Class_DM_Motor_J4310::Data_Process()
     Data.Total_Position = Data.Total_Round * Position_Max + tmp_position + Position_Offset;
 
     //计算电机本身信息
-    Data.Now_Angle = (float)Data.Total_Position / (float)Position_Max * 2.0f * PI;
+    Data.Now_Angle = (float)tmp_position / (float)Position_Max * 2.0f * PI;     //计算出的是radian
     Data.Now_Omega = Math_Int_To_Float(tmp_omega, 0, (1 << 12) - 1, -Omega_Max, Omega_Max);
     Data.Now_Torque = Math_Int_To_Float(tmp_torque, 0, (1 << 12) - 1, -Torque_Max, Torque_Max);
     Data.Now_MOS_Temperature = tmp_buffer->MOS_Temperature + CELSIUS_TO_KELVIN;

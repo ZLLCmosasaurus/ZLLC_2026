@@ -10,7 +10,7 @@
       <TargetName>ZLLC_2026</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
-      <pCCUsed>6190000::V6.19::ARMCLANG</pCCUsed>
+      <pCCUsed>6240000::V6.24::ARMCLANG</pCCUsed>
       <uAC6>1</uAC6>
       <TargetOption>
         <TargetCommonOption>
@@ -81,7 +81,7 @@
           </BeforeMake>
           <AfterMake>
             <RunUserProg1>0</RunUserProg1>
-            <RunUserProg2>0</RunUserProg2>
+            <RunUserProg2>1</RunUserProg2>
             <UserProg1Name></UserProg1Name>
             <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
@@ -403,17 +403,15 @@
         </Group>
         <Group>
           <GroupName>Interaction</GroupName>
+        </Group>
+        <Group>
+          <GroupName>Chariot</GroupName>
           <Files>
             <File>
               <FileName>ita_chariot.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\User\Interaction\Src\ita_chariot.cpp</FilePath>
             </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>Chariot</GroupName>
-          <Files>
             <File>
               <FileName>crt_booster.cpp</FileName>
               <FileType>8</FileType>
@@ -428,6 +426,16 @@
               <FileName>crt_gimbal.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\User\Chariot\Src\crt_gimbal.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>arm_model.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User\Chariot\Src\arm_model.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>crt_force_control_chassis.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User\Chariot\Src\crt_force_control_chassis.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -508,6 +516,11 @@
               <FileName>dvc_buzzer.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\User\Device\Src\dvc_buzzer.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>dvc_motor_dji.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User\Device\Src\dvc_motor_dji.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -619,6 +632,31 @@
               <FileType>8</FileType>
               <FilePath>..\User\Algorithm\Src\user_lib.cpp</FilePath>
             </File>
+            <File>
+              <FileName>alg_SMC_Control.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User\Algorithm\Src\alg_SMC_Control.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>utils.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User\Algorithm\Src\utils.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>robotics.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User\Algorithm\Src\robotics.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>matrix.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User\Algorithm\Src\matrix.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>alg_new_power_limit.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User\Algorithm\Src\alg_new_power_limit.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -699,11 +737,6 @@
                   </Cads>
                 </FileArmAds>
               </FileOption>
-            </File>
-            <File>
-              <FileName>memorymap.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>../Core/Src/memorymap.c</FilePath>
             </File>
             <File>
               <FileName>spi.c</FileName>

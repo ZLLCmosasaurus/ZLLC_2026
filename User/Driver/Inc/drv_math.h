@@ -63,6 +63,8 @@ float Math_Sinc(float x);
 
 int32_t Math_Float_To_Int(float x, float Float_Min, float Float_Max, int32_t Int_Min, int32_t Int_Max);
 float Math_Int_To_Float(int32_t x, int32_t Int_Min, int32_t Int_Max, float Float_Min, float Float_Max);
+float Normalize_Angle_Radian_0_to_2PI(float Angle_Radian);
+float Normalize_Angle_Radian_PI_to_PI(float Angle_Radian);
 
 /**
  * @brief 限幅函数
@@ -97,6 +99,10 @@ Type Math_Abs(Type x)
 {
     return ((x > 0) ? x : -x);
 }
+
+
+
+
 
 #endif
 

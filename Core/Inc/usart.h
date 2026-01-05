@@ -46,6 +46,11 @@ extern UART_HandleTypeDef huart10;
 
 /* USER CODE BEGIN Private defines */
 
+extern DMA_HandleTypeDef hdma_uart5_rx;
+extern DMA_HandleTypeDef hdma_uart7_rx;
+extern DMA_HandleTypeDef hdma_uart8_rx;
+extern DMA_HandleTypeDef hdma_uart9_rx;
+
 /* USER CODE END Private defines */
 
 void MX_UART5_Init(void);
