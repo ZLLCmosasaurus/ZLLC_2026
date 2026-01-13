@@ -99,17 +99,17 @@ void Chassis_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
         }
         case (0x206):
         {
-            chariot.Chassis.Motor_Steer[0].CAN_RxCpltCallback(CAN_RxMessage->Data);
+            chariot.Chassis.Motor_Steer[1].CAN_RxCpltCallback(CAN_RxMessage->Data);
             break;
         }
         case (0x207):
         {
-            chariot.Chassis.Motor_Steer[0].CAN_RxCpltCallback(CAN_RxMessage->Data);
+            chariot.Chassis.Motor_Steer[2].CAN_RxCpltCallback(CAN_RxMessage->Data);
             break;
         }
         case (0x208):
         {
-            chariot.Chassis.Motor_Steer[0].CAN_RxCpltCallback(CAN_RxMessage->Data);
+            chariot.Chassis.Motor_Steer[3].CAN_RxCpltCallback(CAN_RxMessage->Data);
             break;
         }
         #endif
@@ -185,6 +185,8 @@ void Chassis_Device_CAN3_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage){
  * @param CAN_RxMessage CAN1收到的消息
  */
 #ifdef GIMBAL
+uint32_t CNTTT = 0, Y_CNTT;
+float Dt = 0.0f, Y_Dt;
 void Gimbal_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
     switch (CAN_RxMessage->Header.Identifier)
@@ -201,11 +203,13 @@ void Gimbal_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
         }
         case(0x205):
         {
+            Y_Dt = DWT_GetDeltaT(&Y_CNTT);
             chariot.Gimbal.Motor_Yaw.CAN_RxCpltCallback(CAN_RxMessage->Data);
             break;
         }
         case(0x206):
         {
+            Dt = DWT_GetDeltaT(&CNTTT);
             chariot.Gimbal.Motor_Pitch.CAN_RxCpltCallback(CAN_RxMessage->Data);
             break;
         }
@@ -366,7 +370,7 @@ void SuperCAP_UART1_Callback(uint8_t *Buffer, uint16_t Length)
  */
 
 #ifdef GIMBAL
-void IMUB_USART1_Callback(uint8_t *Buffer, uint16_t Length)
+void IMUB_USART7_Callback(uint8_t *Buffer, uint16_t Length)
 {
     chariot.Gimbal.External_IMU.UART_BMI_Data_Process(Buffer);
 }
@@ -403,6 +407,8 @@ void MiniPC_UART_Callback(uint8_t *Buffer, uint16_t Length)
  *
  */
 extern Referee_Rx_A_t CAN3_Chassis_Rx_Data_A;
+uint32_t imu_cnt = 0;
+float IMU_Dt;
 void Task100us_TIM4_Callback()
 {
     #ifdef CHASSIS
@@ -410,8 +416,10 @@ void Task100us_TIM4_Callback()
 
     #elif defined(GIMBAL)
         // 单给IMU消息开的定时器 ims
+        DWT_GetDeltaT(&imu_cnt);
         chariot.Gimbal.Boardc_BMI.TIM_Calculate_PeriodElapsedCallback();
-        chariot.Gimbal.External_IMU.TIM1msMod50_Alive_PeriodElapsedCallback();
+        IMU_Dt = DWT_GetDeltaT(&imu_cnt);
+        chariot.Gimbal.External_IMU.TIM_Calculate_PeriodElapsedCallback();
 
         if(chariot.Referee.Get_Game_Stage() == Referee_Game_Status_Stage_BATTLE){                               //比赛开始状态
             chariot.DR16.Set_Left_Switch(DR16_Switch_Status_DOWN);                  //保险 强制上位机
@@ -421,7 +429,8 @@ void Task100us_TIM4_Callback()
         else{                                                                       //非比赛状态
             chariot.FSM_Alive_Control.Reload_TIM_Status_PeriodElapsedCallback();    //遥控器离线失能保护
 
-            if(chariot.DR16.Get_DR16_Status() == DR16_Status_ENABLE){               //如果遥控器不在线也跑，就会和FSM抢状态，车子不能正确失能了
+            if(chariot.DR16.Get_DR16_Status() == DR16_Status_ENABLE && 
+                chariot.Gimbal.External_IMU.Get_IMU_Status() == IMU_Status_ENABLE){               //如果遥控器不在线也跑，就会和FSM抢状态，车子不能正确失能了
                 chariot.TIM_Control_Callback();
             }
         }
@@ -541,8 +550,8 @@ extern "C" void Task_Init()
 
         UART_Init(&huart10, Referee_UART10_Callback, 128);
 
-        //外置IMU串口
-        UART_Init(&huart1, IMUB_USART1_Callback, 14);
+        //外置IMU串口   接收长度14，但是串口空闲中断刚好接满14的时候不会进入空闲事件中断，只进入接收满中断
+        UART_Init(&huart7, IMUB_USART7_Callback, 14 * 2);           
 
     #endif
 

@@ -559,13 +559,4 @@ void FDCAN3_IT0_IRQHandler(void)
 
 /* USER CODE BEGIN 1 */
 
-
-void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
-{
-	if (huart->Instance == UART5)
-    {
-
-		}
-}
-
 /* USER CODE END 1 */

@@ -1,8 +1,23 @@
 #include "dvc_external_imu.h"
 
+void Class_External_IMU::TIM1msMod50_Alive_PeriodElapsedCallback(void)
+{
+    if(imu_start_flag)  //陀螺仪已经开启通讯
+    {
+        if(Flag == Pre_Flag)  //判断陀螺仪是否掉线
+        {
+            IMU_Status = IMU_Status_DISABLE;
+        }
+        else IMU_Status = IMU_Status_ENABLE;
+
+        Pre_Flag = Flag;
+    }
+}
+
 void Class_External_IMU::UART_BMI_Data_Process(uint8_t *Buffer){
 	
   if(Buffer[0] == 0xA5 && Buffer[13] == 0xB5){
+    Flag ++;
     BMI088_Raw_Data.Accel[0] = (float)((int16_t)(Buffer[1] << 8) | (Buffer[2])) / 100.0f;
     BMI088_Raw_Data.Accel[1] = (float)((int16_t)(Buffer[3] << 8) | (Buffer[4])) / 100.0f;
     BMI088_Raw_Data.Accel[2] = (float)((int16_t)(Buffer[5] << 8) | (Buffer[6])) / 100.0f;

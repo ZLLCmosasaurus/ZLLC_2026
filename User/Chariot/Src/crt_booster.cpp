@@ -246,6 +246,9 @@ void Class_Booster::Output()
             Motor_Driver.Set_Target_Radian(Driver_Angle);
 
             Set_Friction_Control_Type(Friction_Control_Type_ENABLE);
+            
+            //执行一次就停火
+            Booster_Control_Type = Booster_Control_Type_CEASEFIRE;
         }
         break;
         case (Booster_Control_Type_MULTI):
@@ -260,6 +263,9 @@ void Class_Booster::Output()
             Motor_Driver.Set_Target_Radian(Driver_Angle);
 
             Set_Friction_Control_Type(Friction_Control_Type_ENABLE);
+
+            //执行一次就停火
+            Booster_Control_Type = Booster_Control_Type_CEASEFIRE;
         }
         break;
         case (Booster_Control_Type_REPEATED):

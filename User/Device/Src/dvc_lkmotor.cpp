@@ -239,7 +239,16 @@ void Class_LK_Motor::Data_Process()
     
     //计算电机本身信息
     Data.CMD_ID = tmp_buffer->CMD_ID;
-    Data.Now_Angle = (float)tmp_encoder / (float)Position_Max *360.0f; 
+    Data.Now_Angle = (float)tmp_encoder / (float)Position_Max * 360.0f; 
+
+    //因为加上了Position_Offset，角度可能大于360
+    if(Data.Now_Angle > 360.0f){
+        Data.Now_Angle -= 360.0f;
+    }
+    else if(Data.Now_Angle < 0.0f){
+        Data.Now_Angle += 360.0f;
+    }
+
     Data.Now_Radian = Data.Now_Angle * DEG_TO_RAD;
     Data.Now_Omega_Angle = tmp_omega ;
     Data.Now_Omega_Radian = tmp_omega *DEG_TO_RAD; 

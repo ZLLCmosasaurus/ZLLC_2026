@@ -556,16 +556,7 @@ void Class_Chariot::Control_Gimbal()
 
     // 遥控器操作逻辑
     tmp_gimbal_yaw -= dr16_y * DR16_Yaw_Angle_Resolution;
-    tmp_gimbal_pitch -= dr16_r_y * DR16_Pitch_Angle_Resolution;
-    // 限制角度范围 处理yaw轴180度问题
-    if ((tmp_gimbal_yaw ) > 180.0f)
-    {
-        tmp_gimbal_yaw -= (360.0f);
-    }
-    else if ((tmp_gimbal_yaw) < -180.0f)
-    {
-        tmp_gimbal_yaw += (360.0f);
-    }
+    tmp_gimbal_pitch += dr16_r_y * DR16_Pitch_Angle_Resolution;
 
     if(tmp_gimbal_pitch > 18.0f)tmp_gimbal_pitch = 18.0f;
     if(tmp_gimbal_pitch < -25.0f)tmp_gimbal_pitch = -25.0f;
@@ -781,6 +772,7 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
             }          
             if(mod50_mod3%3 == 0)
             {
+                Motor_Main_Yaw.TIM_Alive_PeriodElapsedCallback();
                 TIM1msMod50_Gimbal_Communicate_Alive_PeriodElapsedCallback();
                 mod50_mod3 = 0;
             }
@@ -798,7 +790,8 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
             {
                 //判断底盘通讯在线状态
                 TIM1msMod50_Chassis_Communicate_Alive_PeriodElapsedCallback();    
-                DR16.TIM1msMod50_Alive_PeriodElapsedCallback();	   
+                DR16.TIM1msMod50_Alive_PeriodElapsedCallback();
+                Gimbal.External_IMU.TIM1msMod50_Alive_PeriodElapsedCallback();	   
                 mod50_mod3 = 0;         
             }
             
@@ -808,7 +801,6 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
             Gimbal.Motor_Yaw.TIM_Alive_PeriodElapsedCallback();
             Gimbal.Boardc_BMI.TIM1msMod50_Alive_PeriodElapsedCallback();
             Gimbal.Motor_Main_Yaw.TIM_Alive_PeriodElapsedCallback();
-            Gimbal.External_IMU.TIM1msMod50_Alive_PeriodElapsedCallback();
 
             Booster.Motor_Driver.TIM_Alive_PeriodElapsedCallback();
             Booster.Motor_Friction_Left.TIM_Alive_PeriodElapsedCallback();
@@ -941,13 +933,14 @@ void Class_FSM_Alive_Control::Reload_TIM_Status_PeriodElapsedCallback()
             }
 
             //转移为 在线状态
-            if(Chariot->DR16.Get_DR16_Status() == DR16_Status_ENABLE)
+            if(Chariot->DR16.Get_DR16_Status() == DR16_Status_ENABLE && 
+                Chariot->Gimbal.External_IMU.Get_IMU_Status() == IMU_Status_ENABLE)
             {             
                 Status[Now_Status_Serial].Time = 0;
                 Set_Status(2);
             }
 
-            //超过一秒的遥控器离线 跳转到 遥控器关闭状态
+            //超过一秒的离线 跳转到 关闭状态
             if(Status[Now_Status_Serial].Time > 1000)
             {
                 Status[Now_Status_Serial].Time = 0;
@@ -963,7 +956,8 @@ void Class_FSM_Alive_Control::Reload_TIM_Status_PeriodElapsedCallback()
             Chariot->Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_DISABLE);
             Chariot->Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
 
-            if(Chariot->DR16.Get_DR16_Status() == DR16_Status_ENABLE)
+            if(Chariot->DR16.Get_DR16_Status() == DR16_Status_ENABLE && 
+                Chariot->Gimbal.External_IMU.Get_IMU_Status() == IMU_Status_ENABLE)
             {
                 Chariot->Chassis.Set_Chassis_Control_Type(Chariot->Get_Pre_Chassis_Control_Type());
                 Chariot->Gimbal.Set_Gimbal_Control_Type(Chariot->Get_Pre_Gimbal_Control_Type());
@@ -984,7 +978,8 @@ void Class_FSM_Alive_Control::Reload_TIM_Status_PeriodElapsedCallback()
         case (2):
         {
             //转移为 刚离线状态
-            if(Chariot->DR16.Get_DR16_Status() == DR16_Status_DISABLE)
+            if(Chariot->DR16.Get_DR16_Status() == DR16_Status_DISABLE || 
+                Chariot->Gimbal.External_IMU.Get_IMU_Status() == IMU_Status_DISABLE)
             {
                 Status[Now_Status_Serial].Time = 0;
                 Set_Status(3);

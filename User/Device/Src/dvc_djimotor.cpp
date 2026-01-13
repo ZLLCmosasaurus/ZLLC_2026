@@ -289,7 +289,16 @@ void Class_DJI_Motor_GM6020::Data_Process()
 
     //计算电机本身信息
     Data.Now_Angle = (float)tmp_encoder / (float)Encoder_Num_Per_Round * 360.0f;
-    Data.Now_Radian = (float)tmp_encoder / (float)Encoder_Num_Per_Round * 2.0f * PI;
+
+    //因为加上了Encoder_Offset，角度可能大于360
+    if(Data.Now_Angle > 360.0f){
+        Data.Now_Angle -= 360.0f;
+    }
+    else if(Data.Now_Angle < 0.0f){
+        Data.Now_Angle += 360.0f;
+    }
+
+    Data.Now_Radian = Data.Now_Angle * DEG_TO_RAD;
     // Data.Now_Omega_Angle = (float)(Data.Total_Encoder - Data.Pre_Total_Encoder)/8191.0f*60.0f*1000.0f;  //rpm
     Data.Now_Omega_Radian = (float)tmp_omega * RPM_TO_RADPS;
     Data.Now_Omega_Angle = (float)tmp_omega * RPM_TO_DEG;  

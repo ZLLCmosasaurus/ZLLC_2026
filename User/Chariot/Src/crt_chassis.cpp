@@ -151,6 +151,21 @@ void Class_Tricycle_Chassis::Speed_Resolution(){
                         }
                         delta_Angle = Normalize_Angle_Radian_PI_to_PI(delta_Angle);
 
+                        if (delta_Angle > PI / 2.0f)                        //做的是180度以内的最优角度选择，而不是以前的优劣弧处理，优劣弧不一定路径最短
+                        {
+                            delta_Angle = delta_Angle - PI;
+
+                        }
+                        else if (delta_Angle < -PI / 2.0f)
+                        {
+                            delta_Angle = delta_Angle + PI;
+
+                        }
+                        else
+                        {
+                            // 不需要处理角度
+                        }
+
                         Motor_Steer[i].Set_Target_Radian(Transform_Radian + delta_Angle);
                         Motor_Steer[i].Set_Transform_Radian(Transform_Radian);
                         // Motor_Steer[i].Set_Out(0.0f);
@@ -203,7 +218,7 @@ void Class_Tricycle_Chassis::Speed_Resolution(){
                     True_Target_Angle_Radian[i] = atan2f(True_Vy[i], True_Vx[i]);           //-PI -- PI   会自动处理Vx = 0;
                 }
                 
-                //角度优化处理
+                //角度优化处理         180度内最短路径选择   不是选优劣弧   已经顺便处理了跳变点
                 delta_Angle = True_Target_Angle_Radian[i] - Motor_Steer[i].Get_Now_Zero_Offset_Radian();     // -2PI -- 2PI  
                 delta_Angle = Normalize_Angle_Radian_PI_to_PI(delta_Angle);                 // 处理重叠的角度（-20 = 340），归一化到 -PI --- PI
                 if(delta_Angle > PI/2.0f){
@@ -218,7 +233,7 @@ void Class_Tricycle_Chassis::Speed_Resolution(){
                     //不需要处理角度
                 }
                 
-                //处理-180 - 180的突变问题    同时还有优劣弧处理
+                //处理-180 - 180的突变问题    同时还有优劣弧处理   似乎不需要
                 delta_Angle = True_Target_Angle_Radian[i] - Motor_Steer[i].Get_Now_Zero_Offset_Radian();
                 True_Target_Angle_Radian[i] = Motor_Steer[i].Get_Now_Zero_Offset_Radian() + Normalize_Angle_Radian_PI_to_PI(delta_Angle);
                 
