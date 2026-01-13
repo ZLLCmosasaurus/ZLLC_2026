@@ -85,8 +85,8 @@ void Class_Tricycle_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max
     Motor_Steer[2].Init(&hfdcan1, DJI_Motor_ID_0x207);
     Motor_Steer[3].Init(&hfdcan1, DJI_Motor_ID_0x208);
     //舵向电机零点位置初始化
-    Motor_Steer[0].Set_Zero_Position(1.76999998);               //应该是轮子朝向的正方向，行进轮超前，并且顺时针转动为正方向的角度
-    Motor_Steer[1].Set_Zero_Position(2.38000011);
+    Motor_Steer[0].Set_Zero_Position(-0.5600000f);               //应该是轮子朝向的正方向，行进轮超前，并且顺时针转动为正方向的角度
+    Motor_Steer[1].Set_Zero_Position(2.75999999f);
     Motor_Steer[2].Set_Zero_Position(2.16000009);
     Motor_Steer[3].Set_Zero_Position(2.6400001);
     #endif
@@ -134,20 +134,20 @@ void Class_Tricycle_Chassis::Speed_Resolution(){
                         Motor_Wheel[i].Set_Target_Omega_Radian(0.0f);
                     }
 
-                    Motor_Steer[0].Set_Target_Radian(-PI / 4.0f);
-                    Motor_Steer[1].Set_Target_Radian( PI / 4.0f);
-                    Motor_Steer[2].Set_Target_Radian(-PI / 4.0f);
-                    Motor_Steer[3].Set_Target_Radian( PI / 4.0f);
+                    Motor_Steer[0].Set_Target_Radian( PI / 4.0f);
+                    Motor_Steer[1].Set_Target_Radian(-PI / 4.0f);
+                    Motor_Steer[2].Set_Target_Radian( PI / 4.0f);
+                    Motor_Steer[3].Set_Target_Radian(-PI / 4.0f);
                     for (int i = 0; i < 4; i++)
                     {
                         Transform_Radian = Motor_Steer[i].Get_Now_Zero_Offset_Radian();
 
                         //优劣弧处理
                         if((i % 2) == 0){
-                            delta_Angle = - PI / 4.0f - Transform_Radian;
+                            delta_Angle =  PI / 4.0f - Transform_Radian;
                         }
                         else{
-                            delta_Angle = PI / 4.0f - Transform_Radian;
+                            delta_Angle = -PI / 4.0f - Transform_Radian;
                         }
                         delta_Angle = Normalize_Angle_Radian_PI_to_PI(delta_Angle);
 
@@ -230,12 +230,9 @@ void Class_Tricycle_Chassis::Speed_Resolution(){
                     temp_Target_Omega *= -1.0f;
                 }
                 else{
+                    True_Target_Angle_Radian[i] = Motor_Steer[i].Get_Now_Zero_Offset_Radian() + delta_Angle;
                     //不需要处理角度
                 }
-                
-                //处理-180 - 180的突变问题    同时还有优劣弧处理   似乎不需要
-                delta_Angle = True_Target_Angle_Radian[i] - Motor_Steer[i].Get_Now_Zero_Offset_Radian();
-                True_Target_Angle_Radian[i] = Motor_Steer[i].Get_Now_Zero_Offset_Radian() + Normalize_Angle_Radian_PI_to_PI(delta_Angle);
                 
                 Motor_Steer[i].Set_Target_Radian(True_Target_Angle_Radian[i]);
                 Motor_Wheel[i].Set_Target_Omega_Radian(temp_Target_Omega);
@@ -383,32 +380,35 @@ void Class_Tricycle_Chassis::TIM_Calculate_PeriodElapsedCallback(Enum_Sprint_Sta
     Slope_Omega.TIM_Calculate_PeriodElapsedCallback();
     
     //速度解算
-    Speed_Resolution();    
+    Speed_Resolution();
+
+    Motor_Steer[2].Disable();
+    Motor_Steer[3].Disable();
 
 
-    //超电策略和功率限制还没写
-    float Limit_Power = 0.0f, Chassis_Energy_Power = 0.0f;
-    if(Referee->Get_Referee_Status() == Referee_Status_DISABLE){
-        Limit_Power = 100.0f;
-        Chassis_Energy_Power = 0.0f;
-    }
-    else{
-        Limit_Power = Referee->Get_Chassis_Power_Max();
-        Chassis_Energy_Power = Referee->Get_Chassis_Energy_Buffer();
-    }
-    /***************************超级电容*********************************/
-    Supercap.Set_Limit_Power(Limit_Power);
-    Supercap.Set_Supercap_Mode(Get_Supercap_Mode());
-    Supercap.TIM_Supercap_PeriodElapsedCallback();
+    // //超电策略和功率限制还没写
+    // float Limit_Power = 0.0f, Chassis_Energy_Power = 0.0f;
+    // if(Referee->Get_Referee_Status() == Referee_Status_DISABLE){
+    //     Limit_Power = 100.0f;
+    //     Chassis_Energy_Power = 0.0f;
+    // }
+    // else{
+    //     Limit_Power = Referee->Get_Chassis_Power_Max();
+    //     Chassis_Energy_Power = Referee->Get_Chassis_Energy_Buffer();
+    // }
+    // /***************************超级电容*********************************/
+    // Supercap.Set_Limit_Power(Limit_Power);
+    // Supercap.Set_Supercap_Mode(Get_Supercap_Mode());
+    // Supercap.TIM_Supercap_PeriodElapsedCallback();
 
-    #if POWER_CONTROL == 1
-    /*************************功率限制策略*******************************/
-    //Power_Limit_Update();
-    Power_Limit.Set_Motor(Motor_Wheel);                         //添加四个电机的控制电流和当前转速
-    Power_Limit.Set_Power_Limit(Limit_Power);
-    Power_Limit.Set_Chassis_Buffer(Chassis_Energy_Power);
-    Power_Limit.TIM_Adjust_PeriodElapsedCallback(Motor_Wheel);
-    #endif
+    // #if POWER_CONTROL == 1
+    // /*************************功率限制策略*******************************/
+    // //Power_Limit_Update();
+    // Power_Limit.Set_Motor(Motor_Wheel);                         //添加四个电机的控制电流和当前转速
+    // Power_Limit.Set_Power_Limit(Limit_Power);
+    // Power_Limit.Set_Chassis_Buffer(Chassis_Energy_Power);
+    // Power_Limit.TIM_Adjust_PeriodElapsedCallback(Motor_Wheel);
+    // #endif
 }
 
 void Class_Tricycle_Chassis::Power_Limit_Update()

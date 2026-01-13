@@ -267,8 +267,8 @@ void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback(uint8_t *Rx_Data)
             chassis_omega = Math_Int_To_Float(tmp_omega, -200, 200, -4.f, 4.f);
             chassis_control_type = (Enum_Chassis_Control_Type)control_type;
 
-            float Chassis_Angle = Motor_Main_Yaw.Get_Now_Radian();
-            float delta_angle = Reference_Angle - Chassis_Angle + Offset_Angle;
+            float Chassis_Rad = Motor_Main_Yaw.Get_Now_Radian();
+            float delta_angle = -(Reference_Angle - Chassis_Rad) + Offset_Angle;
 
             delta_angle = delta_angle < 0 ? (delta_angle + 2 * PI) : delta_angle;
 
@@ -705,6 +705,8 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
 
             Chassis.Set_Target_Omega(PID_Chassis_Fllow.Get_Out());
         }
+        
+        Chassis.Set_Target_Omega(0.0f);
 
         Chassis.TIM_Calculate_PeriodElapsedCallback(Sprint_Status);
 
@@ -933,8 +935,7 @@ void Class_FSM_Alive_Control::Reload_TIM_Status_PeriodElapsedCallback()
             }
 
             //转移为 在线状态
-            if(Chariot->DR16.Get_DR16_Status() == DR16_Status_ENABLE && 
-                Chariot->Gimbal.External_IMU.Get_IMU_Status() == IMU_Status_ENABLE)
+            if(Chariot->DR16.Get_DR16_Status() == DR16_Status_ENABLE)
             {             
                 Status[Now_Status_Serial].Time = 0;
                 Set_Status(2);
@@ -956,8 +957,7 @@ void Class_FSM_Alive_Control::Reload_TIM_Status_PeriodElapsedCallback()
             Chariot->Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_DISABLE);
             Chariot->Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
 
-            if(Chariot->DR16.Get_DR16_Status() == DR16_Status_ENABLE && 
-                Chariot->Gimbal.External_IMU.Get_IMU_Status() == IMU_Status_ENABLE)
+            if(Chariot->DR16.Get_DR16_Status() == DR16_Status_ENABLE)
             {
                 Chariot->Chassis.Set_Chassis_Control_Type(Chariot->Get_Pre_Chassis_Control_Type());
                 Chariot->Gimbal.Set_Gimbal_Control_Type(Chariot->Get_Pre_Gimbal_Control_Type());
@@ -978,8 +978,7 @@ void Class_FSM_Alive_Control::Reload_TIM_Status_PeriodElapsedCallback()
         case (2):
         {
             //转移为 刚离线状态
-            if(Chariot->DR16.Get_DR16_Status() == DR16_Status_DISABLE || 
-                Chariot->Gimbal.External_IMU.Get_IMU_Status() == IMU_Status_DISABLE)
+            if(Chariot->DR16.Get_DR16_Status() == DR16_Status_DISABLE)
             {
                 Status[Now_Status_Serial].Time = 0;
                 Set_Status(3);

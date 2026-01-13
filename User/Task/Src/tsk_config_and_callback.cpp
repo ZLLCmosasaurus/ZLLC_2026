@@ -429,8 +429,7 @@ void Task100us_TIM4_Callback()
         else{                                                                       //非比赛状态
             chariot.FSM_Alive_Control.Reload_TIM_Status_PeriodElapsedCallback();    //遥控器离线失能保护
 
-            if(chariot.DR16.Get_DR16_Status() == DR16_Status_ENABLE && 
-                chariot.Gimbal.External_IMU.Get_IMU_Status() == IMU_Status_ENABLE){               //如果遥控器不在线也跑，就会和FSM抢状态，车子不能正确失能了
+            if(chariot.DR16.Get_DR16_Status() == DR16_Status_ENABLE){               //如果遥控器不在线也跑，就会和FSM抢状态，车子不能正确失能了
                 chariot.TIM_Control_Callback();
             }
         }

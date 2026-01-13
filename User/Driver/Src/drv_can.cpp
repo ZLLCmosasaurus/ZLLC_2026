@@ -324,7 +324,7 @@ void TIM_CAN_PeriodElapsedCallback()
     static uint8_t mod5 = 0,mod100 = 0,mod20 = 0;
     mod5++, mod100++,mod20++;
 
-    //CAN_Send_Data(&hfdcan1, 0x200, CAN1_0x200_Tx_Data, 8);              //行进电机
+    CAN_Send_Data(&hfdcan1, 0x200, CAN1_0x200_Tx_Data, 8);              //行进电机
     CAN_Send_Data(&hfdcan1, 0x1ff, CAN1_0x1ff_Tx_Data, 8);              //转向电机
 
     if (mod5 == 5)  //200Hz

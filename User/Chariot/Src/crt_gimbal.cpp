@@ -61,6 +61,7 @@ void Class_Gimbal::Init()
 
 void Class_Gimbal::Output()
 {
+    float Main_Diff_Angle = 0.0f;               //大Yaw角度优化处理的相差角度
     static float pre_yaw_angle = 0.0f, pre_pitch_angle = 0.0f, pre_main_yaw_angle = 0.0f;
 
     if (Gimbal_Control_Type == Gimbal_Control_Type_DISABLE)
@@ -94,14 +95,7 @@ void Class_Gimbal::Output()
             Motor_Main_Yaw.Set_LK_Motor_Control_Method(LK_Motor_Control_Method_ANGLE);
 
             //对于大Yaw控制的突变点与优劣弧处理       0--2*PI
-            while ((Target_Yaw_Angle - Motor_Main_Yaw.Get_Now_Angle()) > 360.0f)
-            {
-                Target_Yaw_Angle -= (360.0f);
-            }
-            while ((Target_Yaw_Angle - Motor_Main_Yaw.Get_Now_Angle()) < 0.0f)
-            {
-                Target_Yaw_Angle += (360.0f);
-            }
+            Main_Diff_Angle = Normalize_Angle_Radian_PI_to_PI(Target_Yaw_Angle - Boardc_BMI.Get_Angle_Yaw());
 
             // 限制角度
             Math_Constrain(&Target_Pitch_Angle, Min_Pitch_Angle, Max_Pitch_Angle);
@@ -109,7 +103,7 @@ void Class_Gimbal::Output()
             // 设置目标角度    Motor_Yaw的角度是以偏置零点为原点，改Encoder_offset实现校准
             Motor_Yaw.Set_Target_Angle(0.0f);                       //可能可以加前馈
             Motor_Pitch.Set_Target_Angle(Target_Pitch_Angle);
-            Motor_Main_Yaw.Set_Target_Angle(Target_Yaw_Angle);
+            Motor_Main_Yaw.Set_Target_Angle(Target_Yaw_Angle + Main_Diff_Angle);
 
             pre_yaw_angle      = 0.0f;
             pre_pitch_angle    = Motor_Pitch.Get_Now_Angle();
@@ -172,10 +166,13 @@ void Class_Gimbal::Output()
             }
 
             // 大yaw控制逻辑   由上位机控制是否转动
+            Target_Yaw_Angle = Boardc_BMI.Get_Angle_Yaw();                  //角度一直更新防止切回手动控制Target还是上一次的数据
             if(fabs(MiniPC->Get_Rx_Target_Omega_Yaw_Main()) < 0.01f){
                 Motor_Main_Yaw.Set_LK_Motor_Control_Method(LK_Motor_Control_Method_ANGLE);
+                Main_Diff_Angle = Normalize_Angle_Radian_PI_to_PI(pre_main_yaw_angle - Boardc_BMI.Get_Angle_Yaw());
+                Motor_Main_Yaw.Set_Target_Angle(pre_main_yaw_angle + Main_Diff_Angle);
                 Motor_Main_Yaw.Set_Target_Omega_Angle(0.0f);
-                Motor_Main_Yaw.Set_Target_Angle(pre_main_yaw_angle);
+                
             }
             else{
                 Motor_Main_Yaw.Set_LK_Motor_Control_Method(LK_Motor_Control_Method_OMEGA);
@@ -186,18 +183,22 @@ void Class_Gimbal::Output()
         }
         else if ((Get_Gimbal_Control_Type() == Gimbal_Control_Type_MINIPC) && (MiniPC->Get_MiniPC_Status() == MiniPC_Status_DISABLE))
         {
+            Target_Yaw_Angle = Boardc_BMI.Get_Angle_Yaw();
+
             Motor_Yaw.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
             Motor_Pitch.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
             Motor_Main_Yaw.Set_LK_Motor_Control_Method(LK_Motor_Control_Method_ANGLE);
 
+            Main_Diff_Angle = Normalize_Angle_Radian_PI_to_PI(pre_main_yaw_angle - Boardc_BMI.Get_Angle_Yaw());
+
             // 限制角度
             Math_Constrain(&Target_Pitch_Angle, Min_Pitch_Angle, Max_Pitch_Angle);
-            Math_Constrain(&Target_Yaw_Angle,-LIMIT_YAW_ANGLE, LIMIT_YAW_ANGLE);
+            //Math_Constrain(&Target_Yaw_Angle,-LIMIT_YAW_ANGLE, LIMIT_YAW_ANGLE);            //有问题！！！！！
 
             // 设置目标角度
             Motor_Yaw.Set_Target_Angle(pre_yaw_angle);
             Motor_Pitch.Set_Target_Angle(pre_pitch_angle);
-            Motor_Main_Yaw.Set_Target_Angle(pre_main_yaw_angle);
+            Motor_Main_Yaw.Set_Target_Angle(pre_main_yaw_angle + Main_Diff_Angle);
 
         }
     }
@@ -217,7 +218,7 @@ void Class_Gimbal::TIM_Calculate_PeriodElapsedCallback()
     Motor_Yaw.Set_Transform_Angle(Motor_Yaw.Get_Now_Angle());
 
     Motor_Main_Yaw.Set_Transform_Omega(Boardc_BMI.Get_Gyro_Yaw());
-    Motor_Main_Yaw.Set_Transform_Angle(Motor_Main_Yaw.Get_Now_Angle());
+    Motor_Main_Yaw.Set_Transform_Angle(Boardc_BMI.Get_Angle_Yaw());
 
     Motor_Pitch.Set_Transform_Omega(External_IMU.Get_Gyro_Pitch());
     Motor_Pitch.Set_Transform_Angle(External_IMU.Get_Angle_Pitch());

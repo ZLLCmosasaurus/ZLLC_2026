@@ -244,11 +244,11 @@ protected:
     //初始化相关常量
 
     //绑定的CAN
-    Struct_CAN_Manage_Object *CAN_Manage_Object = &CAN3_Manage_Object;
+    Struct_CAN_Manage_Object *CAN_Manage_Object = &CAN2_Manage_Object;
 
     #ifdef CHASSIS
         //底盘标定参考正方向角度(数据来源yaw电机)       注意如果更改了Encoder_offset，这里的数值也会变化
-        float Reference_Angle = 0.520019531f;
+        float Reference_Angle = 1.9975611f;
         //小陀螺云台坐标系稳定偏转角度 用于矫正
         float Offset_Angle = 0.0f;  //7.5°
 
@@ -273,9 +273,9 @@ protected:
         float DR16_Keyboard_Chassis_Speed_Resolution_Big = 0.01f;
 
         //DR16云台yaw灵敏度系数(0.001PI表示yaw速度最大时为1rad/s)
-        float DR16_Yaw_Angle_Resolution = 0.00008f * PI * 57.29577951308232;
+        float DR16_Yaw_Angle_Resolution = 0.0008f * PI * 57.29577951308232;
         //DR16云台pitch灵敏度系数(0.001PI表示pitch速度最大时为1rad/s)
-        float DR16_Pitch_Angle_Resolution = 0.00003f * PI * 57.29577951308232;
+        float DR16_Pitch_Angle_Resolution = 0.0003f * PI * 57.29577951308232;
 
         //DR16云台yaw灵敏度系数(0.001PI表示yaw速度最大时为1rad/s)
         float DR16_Yaw_Resolution = 0.003f * PI;

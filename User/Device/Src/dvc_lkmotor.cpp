@@ -251,7 +251,7 @@ void Class_LK_Motor::Data_Process()
 
     Data.Now_Radian = Data.Now_Angle * DEG_TO_RAD;
     Data.Now_Omega_Angle = tmp_omega ;
-    Data.Now_Omega_Radian = tmp_omega *DEG_TO_RAD; 
+    Data.Now_Omega_Radian = tmp_omega * DEG_TO_RAD; 
     //Data.Now_Current = Math_Int_To_Float(tmp_current, -2048, 2048, -16.5, 16.5); 
     Data.Now_Current = tmp_current;
     Data.Now_Temperature = CAN_Manage_Object->Rx_Buffer.Data[1];  
@@ -300,6 +300,10 @@ void Class_LK_Motor::Output(void)
  */
 void Class_LK_Motor::CAN_RxCpltCallback(uint8_t *Rx_Data)
 {
+    if(Rx_Data[1] == 0){
+        return;
+    }
+
     //滑动窗口, 判断电机是否在线
     this->Flag += 1;
 
