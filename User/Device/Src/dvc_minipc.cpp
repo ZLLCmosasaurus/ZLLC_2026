@@ -48,42 +48,11 @@ void Class_MiniPC::Data_Process(Enum_MiniPC_Data_Source Data_Source)
 {
   if (Data_Source == USB)
   {
-    if(!Verify_CRC16_Check_Sum(USB_Manage_Object->Rx_Buffer,USB_Manage_Object->Rx_Buffer_Length)) return;
-    memcpy(&Data_NUC_To_MCU, USB_Manage_Object->Rx_Buffer, PACKET_LEN);
-    //转发下板发给裁判系统
-    memcpy(&CAN3_Sentry_CMD_Data, &Data_NUC_To_MCU.Sentry_cmd, sizeof(uint32_t));
-    memcpy(&CAN3_Sentry_CMD_Data[4], &Data_NUC_To_MCU.Robot_Position_X, sizeof(uint16_t));
-    memcpy(&CAN3_Sentry_CMD_Data[6], &Data_NUC_To_MCU.Robot_Position_Y, sizeof(uint16_t));
-    //自瞄解算
-    bullet_v = 28.f;
-    Auto_aim(float(Data_NUC_To_MCU.Gimbal_Target_X / 100.f), float(Data_NUC_To_MCU.Gimbal_Target_Y / 100.f), float(Data_NUC_To_MCU.Gimbal_Target_Z / 100.f), &Rx_Angle_Yaw, &Rx_Angle_Pitch, &Distance);
+
   }
   else if (Data_Source == UART)
   {
-    // 解包部分
-    int Header_Flag = -1;
-    for (int step = 0; step < 128; step++) {
-        int i = (head + step) % 128;
-        if (UART_Manage_Object->Rx_Buffer[i] == 0xA5) {
-            Header_Flag = i;
-            break;
-        }
-    }
-    if (Header_Flag < 0) return;// 没找到包头
-    for(int k = 0; k < sizeof(Struct_MiniPC_Rx_Data); k++)
-    {
-      temp_data[k] = UART_Manage_Object->Rx_Buffer[(Header_Flag + k) % 128];
-    }    
-    if(!Verify_CRC16_Check_Sum(temp_data, sizeof(Struct_MiniPC_Rx_Data))) return;
-    memcpy(&Data_NUC_To_MCU, temp_data, sizeof(Struct_MiniPC_Rx_Data));
-    head = (Header_Flag + PACKET_LEN) % 128;
 
-    //转发下板发给裁判系统
-    memcpy(&CAN3_Sentry_CMD_Data, &Data_NUC_To_MCU.Sentry_cmd, sizeof(uint32_t));
-    memcpy(&CAN3_Sentry_CMD_Data[4], &Data_NUC_To_MCU.Robot_Position_X, sizeof(uint16_t));
-    memcpy(&CAN3_Sentry_CMD_Data[6], &Data_NUC_To_MCU.Robot_Position_Y, sizeof(uint16_t));
-
-    Auto_aim(float(Data_NUC_To_MCU.Gimbal_Target_X / 100.f), float(Data_NUC_To_MCU.Gimbal_Target_Y / 100.f), float(Data_NUC_To_MCU.Gimbal_Target_Z / 100.f), &Rx_Angle_Yaw, &Rx_Angle_Pitch, &Distance);
   }
   else if (Data_Source == CAN)
   {
@@ -124,9 +93,9 @@ void Class_MiniPC::Data_Process(Enum_MiniPC_Data_Source Data_Source)
         }
     }
     //转发下板发给裁判系统
-    memcpy(&CAN3_Sentry_CMD_Data, &Data_NUC_To_MCU.Sentry_cmd, sizeof(uint32_t));
-    memcpy(&CAN3_Sentry_CMD_Data[4], &Data_NUC_To_MCU.Robot_Position_X, sizeof(uint16_t));
-    memcpy(&CAN3_Sentry_CMD_Data[6], &Data_NUC_To_MCU.Robot_Position_Y, sizeof(uint16_t));
+    // memcpy(&CAN3_Sentry_CMD_Data, &Data_NUC_To_MCU.Sentry_cmd, sizeof(uint32_t));
+    // memcpy(&CAN3_Sentry_CMD_Data[4], &Data_NUC_To_MCU.Robot_Position_X, sizeof(uint16_t));
+    // memcpy(&CAN3_Sentry_CMD_Data[6], &Data_NUC_To_MCU.Robot_Position_Y, sizeof(uint16_t));
   }
 }
 
@@ -134,101 +103,101 @@ void Class_MiniPC::Data_Process(Enum_MiniPC_Data_Source Data_Source)
  * @brief 迷你主机发送数据输出到usb发送缓冲区
  *
  */
-extern Referee_Rx_A_t CAN3_Chassis_Rx_Data_A;
-extern Referee_Rx_B_t CAN3_Chassis_Rx_Data_B;
-extern Referee_Rx_C_t CAN3_Chassis_Rx_Data_C;
-extern Referee_Rx_D_t CAN3_Chassis_Rx_Data_D;
-extern Referee_Rx_E_t CAN3_Chassis_Rx_Data_E;
-extern Referee_Rx_F_t CAN3_Chassis_Rx_Data_F;
-extern Referee_Rx_G_t CAN3_Chassis_Rx_Data_G;
+// extern Referee_Rx_A_t CAN3_Chassis_Rx_Data_A;
+// extern Referee_Rx_B_t CAN3_Chassis_Rx_Data_B;
+// extern Referee_Rx_C_t CAN3_Chassis_Rx_Data_C;
+// extern Referee_Rx_D_t CAN3_Chassis_Rx_Data_D;
+// extern Referee_Rx_E_t CAN3_Chassis_Rx_Data_E;
+// extern Referee_Rx_F_t CAN3_Chassis_Rx_Data_F;
+// extern Referee_Rx_G_t CAN3_Chassis_Rx_Data_G;
 volatile int index = 0;
 uint8_t  test_p = 0; 
 void Class_MiniPC::Output()
 {
-	Data_MCU_To_NUC.header                         = Frame_Header;
-  Data_MCU_To_NUC.Gimbal_Now_Pitch_Angle         = int16_t((Now_Angle_Pitch) * 100);
-  Data_MCU_To_NUC.Gimbal_Now_Yaw_Angle           = int16_t( Now_Angle_Yaw * 100);
-  Data_MCU_To_NUC.Chassis_Now_yaw_Angle          = int16_t((IMU->Get_Angle_Yaw() + Now_Angle_Relative) * 100);
-  Data_MCU_To_NUC.Game_process                   = CAN3_Chassis_Rx_Data_A.game_process;
-  Data_MCU_To_NUC.Self_blood                     = CAN3_Chassis_Rx_Data_A.self_blood;
-  Data_MCU_To_NUC.Self_Outpost_HP                = CAN3_Chassis_Rx_Data_A.self_outpost_HP;
-  Data_MCU_To_NUC.Remaining_Time                 = CAN3_Chassis_Rx_Data_A.remaining_time;
-  Data_MCU_To_NUC.Oppo_Outpost_HP                = CAN3_Chassis_Rx_Data_B.oppo_outpost_HP;
-  Data_MCU_To_NUC.Self_Base_HP                   = CAN3_Chassis_Rx_Data_B.self_base_HP;   
-  Data_MCU_To_NUC.Color_Invincible_State         = CAN3_Chassis_Rx_Data_A.color_invincible_state << 7 | CAN3_Chassis_Rx_Data_A.color_invincible_state << 5;
-  Data_MCU_To_NUC.Projectile_allowance           = CAN3_Chassis_Rx_Data_B.projectile_allowance_17mm;
-  Data_MCU_To_NUC.Remaining_Energy               = CAN3_Chassis_Rx_Data_C.Remaining_Energy;
-  Data_MCU_To_NUC.Supercap_Proportion            = CAN3_Chassis_Rx_Data_C.Supercap_Proportion;
-  Data_MCU_To_NUC.Target_Position_X              = CAN3_Chassis_Rx_Data_G.Target_Position_X;
-  Data_MCU_To_NUC.Target_Position_Y              = CAN3_Chassis_Rx_Data_G.Target_Position_Y;
-  Data_MCU_To_NUC.Dart_Target                    = CAN3_Chassis_Rx_Data_C.Dart_Target;
+	// Data_MCU_To_NUC.header                         = Frame_Header;
+  // Data_MCU_To_NUC.Gimbal_Now_Pitch_Angle         = int16_t((Now_Angle_Pitch) * 100);
+  // Data_MCU_To_NUC.Gimbal_Now_Yaw_Angle           = int16_t( Now_Angle_Yaw * 100);
+  // Data_MCU_To_NUC.Chassis_Now_yaw_Angle          = int16_t((IMU->Get_Angle_Yaw() + Now_Angle_Relative) * 100);
+  // Data_MCU_To_NUC.Game_process                   = CAN3_Chassis_Rx_Data_A.game_process;
+  // Data_MCU_To_NUC.Self_blood                     = CAN3_Chassis_Rx_Data_A.self_blood;
+  // Data_MCU_To_NUC.Self_Outpost_HP                = CAN3_Chassis_Rx_Data_A.self_outpost_HP;
+  // Data_MCU_To_NUC.Remaining_Time                 = CAN3_Chassis_Rx_Data_A.remaining_time;
+  // Data_MCU_To_NUC.Oppo_Outpost_HP                = CAN3_Chassis_Rx_Data_B.oppo_outpost_HP;
+  // Data_MCU_To_NUC.Self_Base_HP                   = CAN3_Chassis_Rx_Data_B.self_base_HP;   
+  // Data_MCU_To_NUC.Color_Invincible_State         = CAN3_Chassis_Rx_Data_A.color_invincible_state << 7 | CAN3_Chassis_Rx_Data_A.color_invincible_state << 5;
+  // Data_MCU_To_NUC.Projectile_allowance           = CAN3_Chassis_Rx_Data_B.projectile_allowance_17mm;
+  // Data_MCU_To_NUC.Remaining_Energy               = CAN3_Chassis_Rx_Data_C.Remaining_Energy;
+  // Data_MCU_To_NUC.Supercap_Proportion            = CAN3_Chassis_Rx_Data_C.Supercap_Proportion;
+  // Data_MCU_To_NUC.Target_Position_X              = CAN3_Chassis_Rx_Data_G.Target_Position_X;
+  // Data_MCU_To_NUC.Target_Position_Y              = CAN3_Chassis_Rx_Data_G.Target_Position_Y;
+  // Data_MCU_To_NUC.Dart_Target                    = CAN3_Chassis_Rx_Data_C.Dart_Target;
 
-  //顺序发送版本
-  switch(index)
-  {
-    case 0:
-    {
-      Data_MCU_To_NUC.Robot_Position_X = 0x00 << 14 | CAN3_Chassis_Rx_Data_D.Hero_Position_X;
-      Data_MCU_To_NUC.Robot_Position_Y = 0x00 << 14 | CAN3_Chassis_Rx_Data_D.Hero_Position_Y;
-      break;
-    }
-    case 1:
-    {
-      Data_MCU_To_NUC.Robot_Position_X = 0x01 << 14 | CAN3_Chassis_Rx_Data_F.Infantry_3_Position_X;
-      Data_MCU_To_NUC.Robot_Position_Y = 0x01 << 14 | CAN3_Chassis_Rx_Data_F.Infantry_3_Position_Y;
-      break;
-    }
-    case 2:
-    {
-      Data_MCU_To_NUC.Robot_Position_X = 0x02 << 14 | CAN3_Chassis_Rx_Data_F.Infantry_4_Position_X;
-      Data_MCU_To_NUC.Robot_Position_Y = 0x02 << 14 | CAN3_Chassis_Rx_Data_F.Infantry_4_Position_Y;
-      break;
-    }
-    case 3:
-    {
-      Data_MCU_To_NUC.Robot_Position_X = 0x03 << 14 | CAN3_Chassis_Rx_Data_D.Sentry_Position_X;
-      Data_MCU_To_NUC.Robot_Position_Y = 0x03 << 14 | CAN3_Chassis_Rx_Data_D.Sentry_Position_Y;
-      break;
-    }
-  }
-  Data_MCU_To_NUC.crc16                          = 0xffff;
+  // //顺序发送版本
+  // switch(index)
+  // {
+  //   case 0:
+  //   {
+  //     Data_MCU_To_NUC.Robot_Position_X = 0x00 << 14 | CAN3_Chassis_Rx_Data_D.Hero_Position_X;
+  //     Data_MCU_To_NUC.Robot_Position_Y = 0x00 << 14 | CAN3_Chassis_Rx_Data_D.Hero_Position_Y;
+  //     break;
+  //   }
+  //   case 1:
+  //   {
+  //     Data_MCU_To_NUC.Robot_Position_X = 0x01 << 14 | CAN3_Chassis_Rx_Data_F.Infantry_3_Position_X;
+  //     Data_MCU_To_NUC.Robot_Position_Y = 0x01 << 14 | CAN3_Chassis_Rx_Data_F.Infantry_3_Position_Y;
+  //     break;
+  //   }
+  //   case 2:
+  //   {
+  //     Data_MCU_To_NUC.Robot_Position_X = 0x02 << 14 | CAN3_Chassis_Rx_Data_F.Infantry_4_Position_X;
+  //     Data_MCU_To_NUC.Robot_Position_Y = 0x02 << 14 | CAN3_Chassis_Rx_Data_F.Infantry_4_Position_Y;
+  //     break;
+  //   }
+  //   case 3:
+  //   {
+  //     Data_MCU_To_NUC.Robot_Position_X = 0x03 << 14 | CAN3_Chassis_Rx_Data_D.Sentry_Position_X;
+  //     Data_MCU_To_NUC.Robot_Position_Y = 0x03 << 14 | CAN3_Chassis_Rx_Data_D.Sentry_Position_Y;
+  //     break;
+  //   }
+  // }
+  // Data_MCU_To_NUC.crc16                          = 0xffff;
 
-  //USB通信
-	memcpy(USB_Manage_Object->Tx_Buffer, &Data_MCU_To_NUC, sizeof(Struct_MiniPC_Tx_Data));
-  USB_Manage_Object->Tx_Buffer_Length = sizeof(Struct_MiniPC_Tx_Data);
-  //crc16 校验
-  Append_CRC16_Check_Sum(USB_Manage_Object->Tx_Buffer, sizeof(Struct_MiniPC_Tx_Data));
+  // //USB通信
+	// memcpy(USB_Manage_Object->Tx_Buffer, &Data_MCU_To_NUC, sizeof(Struct_MiniPC_Tx_Data));
+  // USB_Manage_Object->Tx_Buffer_Length = sizeof(Struct_MiniPC_Tx_Data);
+  // //crc16 校验
+  // Append_CRC16_Check_Sum(USB_Manage_Object->Tx_Buffer, sizeof(Struct_MiniPC_Tx_Data));
 
-  //UART通信
-  memcpy(UART_Manage_Object->Tx_Buffer, &Data_MCU_To_NUC, sizeof(Struct_MiniPC_Tx_Data));
-  UART_Manage_Object->Tx_Buffer_Length = sizeof(Struct_MiniPC_Tx_Data);
-  //crc校验
-  Append_CRC16_Check_Sum(UART_Manage_Object->Tx_Buffer, sizeof(Struct_MiniPC_Tx_Data));
+  // //UART通信
+  // memcpy(UART_Manage_Object->Tx_Buffer, &Data_MCU_To_NUC, sizeof(Struct_MiniPC_Tx_Data));
+  // UART_Manage_Object->Tx_Buffer_Length = sizeof(Struct_MiniPC_Tx_Data);
+  // //crc校验
+  // Append_CRC16_Check_Sum(UART_Manage_Object->Tx_Buffer, sizeof(Struct_MiniPC_Tx_Data));
 
-  //CAN通信
-  Tx_A.Gimbal_Now_Pitch_Angle = Data_MCU_To_NUC.Gimbal_Now_Pitch_Angle;
-  Tx_A.Gimbal_Now_Yaw_Angle   = Data_MCU_To_NUC.Gimbal_Now_Yaw_Angle;
-  Tx_B.Chassis_Now_yaw_Angle    = Data_MCU_To_NUC.Chassis_Now_yaw_Angle;
-  Tx_B.Self_blood               = Data_MCU_To_NUC.Self_blood;
-  Tx_B.Self_Outpost_HP          = Data_MCU_To_NUC.Self_Outpost_HP;
-  Tx_C.Oppo_Outpost_HP          = Data_MCU_To_NUC.Oppo_Outpost_HP;
-  Tx_C.Projectile_allowance     = Data_MCU_To_NUC.Projectile_allowance;
-  Tx_C.Remaining_Time           = Data_MCU_To_NUC.Remaining_Time;  
-  Tx_C.Self_Base_HP             = Data_MCU_To_NUC.Self_Base_HP;
-  Tx_D.Color_Invincible_State   = Data_MCU_To_NUC.Color_Invincible_State;
-  Tx_D.Robot_Position_X         = Data_MCU_To_NUC.Robot_Position_X;
-  Tx_D.Robot_Position_Y         = Data_MCU_To_NUC.Robot_Position_Y;
-  Tx_D.Game_process             = Data_MCU_To_NUC.Game_process;  
-  Tx_D.Remaining_Energy         = Data_MCU_To_NUC.Remaining_Energy;
-  Tx_D.Supercap_Proportion      = Data_MCU_To_NUC.Supercap_Proportion;
-  memcpy(CAN3_MiniPC_Tx_Data_A, &Tx_A, sizeof(MiniPC_Tx_A_t));
-  memcpy(CAN3_MiniPC_Tx_Data_B, &Tx_B, sizeof(MiniPC_Tx_B_t));
-  memcpy(CAN3_MiniPC_Tx_Data_C, &Tx_C, sizeof(MiniPC_Tx_C_t));
-  memcpy(CAN3_MiniPC_Tx_Data_D, &Tx_D, sizeof(MiniPC_Tx_D_t));
+  // //CAN通信
+  // Tx_A.Gimbal_Now_Pitch_Angle = Data_MCU_To_NUC.Gimbal_Now_Pitch_Angle;
+  // Tx_A.Gimbal_Now_Yaw_Angle   = Data_MCU_To_NUC.Gimbal_Now_Yaw_Angle;
+  // Tx_B.Chassis_Now_yaw_Angle    = Data_MCU_To_NUC.Chassis_Now_yaw_Angle;
+  // Tx_B.Self_blood               = Data_MCU_To_NUC.Self_blood;
+  // Tx_B.Self_Outpost_HP          = Data_MCU_To_NUC.Self_Outpost_HP;
+  // Tx_C.Oppo_Outpost_HP          = Data_MCU_To_NUC.Oppo_Outpost_HP;
+  // Tx_C.Projectile_allowance     = Data_MCU_To_NUC.Projectile_allowance;
+  // Tx_C.Remaining_Time           = Data_MCU_To_NUC.Remaining_Time;  
+  // Tx_C.Self_Base_HP             = Data_MCU_To_NUC.Self_Base_HP;
+  // Tx_D.Color_Invincible_State   = Data_MCU_To_NUC.Color_Invincible_State;
+  // Tx_D.Robot_Position_X         = Data_MCU_To_NUC.Robot_Position_X;
+  // Tx_D.Robot_Position_Y         = Data_MCU_To_NUC.Robot_Position_Y;
+  // Tx_D.Game_process             = Data_MCU_To_NUC.Game_process;  
+  // Tx_D.Remaining_Energy         = Data_MCU_To_NUC.Remaining_Energy;
+  // Tx_D.Supercap_Proportion      = Data_MCU_To_NUC.Supercap_Proportion;
+  // memcpy(CAN3_MiniPC_Tx_Data_A, &Tx_A, sizeof(MiniPC_Tx_A_t));
+  // memcpy(CAN3_MiniPC_Tx_Data_B, &Tx_B, sizeof(MiniPC_Tx_B_t));
+  // memcpy(CAN3_MiniPC_Tx_Data_C, &Tx_C, sizeof(MiniPC_Tx_C_t));
+  // memcpy(CAN3_MiniPC_Tx_Data_D, &Tx_D, sizeof(MiniPC_Tx_D_t));
 
-  //重新排序
-  index++;
-  if(index == 4)index = 0;
+  // //重新排序
+  // index++;
+  // if(index == 4)index = 0;
 }
 
 /**

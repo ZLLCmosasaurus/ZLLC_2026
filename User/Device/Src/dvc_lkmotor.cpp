@@ -2,10 +2,10 @@
  * @file dvc_LKmotor.cpp
  * @author lez
  * @brief lk电机配置与操作
- * @version 0.1
- * @date 2024-07-1 0.1 24赛季定稿
+ * @version 0.11
+ * @date 2025-12-05 0.1 26赛季定稿
  *
- * @copyright ZLLC 2024
+ * @copyright ZLLC 2026
  *
  */
 
@@ -18,15 +18,6 @@
 /* Private types -------------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
-
-//清除电机错误信息
-uint8_t LK_Motor_CAN_Message_Clear_Error[8] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfb};
-//使能电机
-uint8_t LK_Motor_CAN_Message_Enter[8] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfc};
-//失能电机
-uint8_t LK_Motor_CAN_Message_Exit[8] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfd};
-//保存当前电机位置为零点
-uint8_t LK_Motor_CAN_Message_Save_Zero[8] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe};
 
 /* Private function declarations ---------------------------------------------*/
 
@@ -42,7 +33,7 @@ uint8_t LK_Motor_CAN_Message_Save_Zero[8] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 uint8_t *allocate_tx_data(FDCAN_HandleTypeDef *hcan, Enum_LK_Motor_ID __CAN_ID)
 {
     uint8_t *tmp_tx_data_ptr;
-    if (hcan == &hfdcan2)
+    if (hcan == &hfdcan1)
     {
         switch (__CAN_ID)
         {
@@ -169,50 +160,52 @@ void Class_LK_Motor::Init(FDCAN_HandleTypeDef *hcan, Enum_LK_Motor_ID __CAN_ID, 
 /**
  * @brief 数据处理过程
  *
+ *********************************************************************
+ * DATA[0]  |  命令字节（回复按照点击状态2解包）          
+ * DATA[1]  |  电机温度（int8_t 类型，1℃/LSB）
+ * DATA[2]  |  转矩电流低字节（int16_t 类型，MG 电机 iq 分辨率为(66/4096 A) / LSB；MF 电机 iq 分辨率为(33/4096 A) / LSB。MS 电机 power 范围-1000~1000
+ * DATA[3]  |  转矩电流高字节
+ * DATA[4]  |  电机速度低字节（int16_t 类型，1dps/LSB）
+ * DATA[5]  |  电机速度高字节
+ * DATA[6]  |  编码器位置低字节（uint16_t 类型，14bit 编码器的数值范围 0~16383，15bit 编码器的数值范围0~32767，16bit和18bit 编码器的数值范围 0~65535）
+ * DATA[7]  |  编码器位置高字节
  */
-uint8_t test_reverse_old[2];
-uint8_t test_reverse[2];
 void Class_LK_Motor::Data_Process()
 {
     //数据处理过程
     int32_t delta_encoder;
     uint16_t tmp_encoder, tmp_omega, tmp_current;
     Struct_LK_Motor_CAN_Rx_Data *tmp_buffer = (Struct_LK_Motor_CAN_Rx_Data *)CAN_Manage_Object->Rx_Buffer.Data;
-    
 		//处理大小端，arm是小端
 	tmp_encoder=tmp_buffer->Encoder_Reverse;
 	tmp_omega=tmp_buffer->Omega_Reverse;
-	tmp_current=tmp_buffer->Current_Reverse;
+    tmp_current=tmp_buffer->Current_Reverse;
     
     //计算圈数与总角度值
-    if(Start_Flag==0)
-    {
         delta_encoder = tmp_encoder - Data.Pre_Encoder;
-        if (delta_encoder < -(Position_Max / 2))
-        {
-            //正方向转过了一圈
-            Data.Total_Round++;
-        }
-        else if (delta_encoder > (Position_Max / 2))
+        if (delta_encoder < -(int)(Position_Max)/2)
         {
             //反方向转过了一圈
+            Data.Total_Round++;
+        }
+        else if (delta_encoder > (int)Position_Max/2)
+        {
+            //正方向转过了一圈
             Data.Total_Round--;
         }        
-    }
     Data.Total_Encoder = Data.Total_Round * Position_Max + tmp_encoder + Position_Offset;
 
     //计算电机本身信息
     Data.CMD_ID = tmp_buffer->CMD_ID;
-    Data.Now_Angle = (float)Data.Total_Encoder / (float)Position_Max *360.0f; 
+    Data.Now_Angle = (float)Data.Total_Encoder / (float)Position_Max * 360.0f; 
     Data.Now_Radian = Data.Now_Angle * DEG_TO_RAD;
-    Data.Now_Omega_Angle = tmp_omega * RPM_TO_DEG;
-    Data.Now_Omega_Radian = tmp_omega *RPM_TO_RADPS; 
-    Data.Now_Current = Math_Int_To_Float(tmp_current, 0, (1 << 12) - 1, -Current_Max, Current_Max); 
+    Data.Now_Omega_Angle = (int16_t)(tmp_omega);
+    Data.Now_Omega_Radian = (int16_t)(tmp_omega) *DEG_TO_RAD; 
+    Data.Now_Current = Math_Int_To_Float(tmp_current, 0, (1 << 12) - 1, 0.0f, Current_Max * 2); 
     Data.Now_Temperature = tmp_buffer->Temperature_Centigrade;  
 
     //存储预备信息
     Data.Pre_Encoder = tmp_encoder;
-    if(Start_Flag==0)   Start_Flag = 1;
 }
 
 void Class_LK_Motor::Output(void)
@@ -221,8 +214,92 @@ void Class_LK_Motor::Output(void)
     {
         case(LK_Motor_Control_Torque):
             CAN_Tx_Data[0] = LK_Motor_Control_Torque;
-            CAN_Tx_Data[4] = (int16_t)Out; 
-            CAN_Tx_Data[5] = (int16_t)Out >> 8;
+            CAN_Tx_Data[4] = *(uint8_t *)(&Out); 
+            CAN_Tx_Data[5] = *((uint8_t *)(&Out) + 1);
+        break;
+		case(LK_Motor_Control_Omega):
+		{
+		    CAN_Tx_Data[0] = LK_Motor_Control_Omega;
+            CAN_Tx_Data[2] = *(uint8_t *)(&Iq_Control);
+            CAN_Tx_Data[3] = *((uint8_t *)(&Iq_Control)+1);
+			CAN_Tx_Data[4] = *(uint8_t *)(&Out);
+			CAN_Tx_Data[5] = *((uint8_t *)(&Out)+1);
+			CAN_Tx_Data[6] = *((uint8_t *)(&Out)+2);
+			CAN_Tx_Data[7] = *((uint8_t *)(&Out)+3);
+		}
+		break;
+		case(LK_Motor_Control_Multi_Location):
+        {
+		    CAN_Tx_Data[0] = LK_Motor_Control_Multi_Location;
+			CAN_Tx_Data[4] = *(uint8_t *)(&Out);
+			CAN_Tx_Data[5] = *((uint8_t *)(&Out)+1);
+			CAN_Tx_Data[6] = *((uint8_t *)(&Out)+2);
+			CAN_Tx_Data[7] = *((uint8_t *)(&Out)+3);         
+        }
+        break;
+		case(LK_Motor_Control_Multi_Location_And_Speed_Limit):
+        {
+		    CAN_Tx_Data[0] = LK_Motor_Control_Multi_Location_And_Speed_Limit;
+            CAN_Tx_Data[2] = *(uint8_t *)(&Speed_Limit);
+            CAN_Tx_Data[3] = *((uint8_t *)(&Speed_Limit)+1);
+			CAN_Tx_Data[4] = *(uint8_t *)(&Out);
+			CAN_Tx_Data[5] = *((uint8_t *)(&Out)+1);
+			CAN_Tx_Data[6] = *((uint8_t *)(&Out)+2);
+			CAN_Tx_Data[7] = *((uint8_t *)(&Out)+3);             
+        }
+        break;
+		case(LK_Motor_Control_Single_Location):
+        {
+		    CAN_Tx_Data[0] = LK_Motor_Control_Single_Location;
+            CAN_Tx_Data[1] = 0x00;//0x00表示顺时针，0x01表示逆时针
+			CAN_Tx_Data[4] = *(uint8_t *)(&Out);
+			CAN_Tx_Data[5] = *((uint8_t *)(&Out)+1);
+			CAN_Tx_Data[6] = *((uint8_t *)(&Out)+2);
+			CAN_Tx_Data[7] = *((uint8_t *)(&Out)+3);             
+        }        
+        break;
+		case(LK_Motor_Control_Single_Location_And_Speed_Limit):
+        {
+		    CAN_Tx_Data[0] = LK_Motor_Control_Single_Location_And_Speed_Limit;
+            CAN_Tx_Data[1] = 0x00;//0x00表示顺时针，0x01表示逆时针
+            CAN_Tx_Data[2] = *(uint8_t *)(&Speed_Limit);
+            CAN_Tx_Data[3] = *((uint8_t *)(&Speed_Limit)+1);          
+			CAN_Tx_Data[4] = *(uint8_t *)(&Out);//速度上限由上位机设置
+			CAN_Tx_Data[5] = *((uint8_t *)(&Out)+1);
+			CAN_Tx_Data[6] = *((uint8_t *)(&Out)+2);
+			CAN_Tx_Data[7] = *((uint8_t *)(&Out)+3);             
+        }
+        break;
+		case(Lk_Motor_Control_Delta_Location):
+        {
+		    CAN_Tx_Data[0]=Lk_Motor_Control_Delta_Location;
+			CAN_Tx_Data[4] = *(uint8_t *)(&Out);
+			CAN_Tx_Data[5] = *((uint8_t *)(&Out)+1);
+			CAN_Tx_Data[6] = *((uint8_t *)(&Out)+2);
+			CAN_Tx_Data[7] = *((uint8_t *)(&Out)+3);             
+        }
+        break;
+        case(LK_Motor_Control_Delta_Location_And_Speed_Limit):
+        {
+		    CAN_Tx_Data[0] = LK_Motor_Control_Delta_Location_And_Speed_Limit;
+            CAN_Tx_Data[2] = *(uint8_t *)(&Speed_Limit);
+            CAN_Tx_Data[3] = *((uint8_t *)(&Speed_Limit)+1);            
+			CAN_Tx_Data[4] = *(uint8_t *)(&Out);
+			CAN_Tx_Data[5] = *((uint8_t *)(&Out)+1);
+			CAN_Tx_Data[6] = *((uint8_t *)(&Out)+2);
+			CAN_Tx_Data[7] = *((uint8_t *)(&Out)+3);             
+        }  
+        case(LK_Motor_Control_Read_Status):
+            CAN_Tx_Data[0] = LK_Motor_Control_Read_Status;
+        break; 
+        case(LK_Motor_Control_Clean_Status):
+            CAN_Tx_Data[0] = LK_Motor_Control_Clean_Status;
+        break; 
+        case(LK_Motor_Control_Read_Motor_Data):
+            CAN_Tx_Data[0] = LK_Motor_Control_Read_Motor_Data;
+        break;
+        case(LK_Motor_Control_Read_Motor_Iq):
+            CAN_Tx_Data[0] = LK_Motor_Control_Read_Motor_Iq;
         break;
         case(LK_Motor_Control_Run):
             CAN_Tx_Data[0] = LK_Motor_Control_Run;
@@ -232,79 +309,7 @@ void Class_LK_Motor::Output(void)
         break;
         case(LK_Motor_Control_Shut_Down):
             CAN_Tx_Data[0] = LK_Motor_Control_Shut_Down;
-        break;
-		case(LK_Motor_Control_Omega):
-		{
-		    CAN_Tx_Data[0]=LK_Motor_Control_Omega;
-            CAN_Tx_Data[2]=(uint8_t)Iq_Control;
-            CAN_Tx_Data[3]=(uint8_t)(Iq_Control>>8);
-			CAN_Tx_Data[4]=(int32_t)Out;
-			CAN_Tx_Data[5]=(int32_t)Out>>8;
-			CAN_Tx_Data[6]=(int32_t)Out>>16;
-			CAN_Tx_Data[7]=(int32_t)Out>>24;
-		}
-		break;
-		case(LK_Motor_Control_Multi_Location):
-        {
-		    CAN_Tx_Data[0]=LK_Motor_Control_Multi_Location;
-			CAN_Tx_Data[4]=(int32_t)Out;
-			CAN_Tx_Data[5]=(int32_t)Out>>8;
-			CAN_Tx_Data[6]=(int32_t)Out>>16;
-			CAN_Tx_Data[7]=(int32_t)Out>>24;            
-        }
-        break;
-		case(LK_Motor_Control_Multi_Location_And_Speed_Limit):
-        {
-		    CAN_Tx_Data[0]=LK_Motor_Control_Multi_Location_And_Speed_Limit;
-            CAN_Tx_Data[2]=(uint8_t)Speed_Limit;
-            CAN_Tx_Data[3]=(uint8_t)(Speed_Limit>>8);
-			CAN_Tx_Data[4]=(int32_t)Out;
-			CAN_Tx_Data[5]=(int32_t)Out>>8;
-			CAN_Tx_Data[6]=(int32_t)Out>>16;
-			CAN_Tx_Data[7]=(int32_t)Out>>24;            
-        }
-        break;
-		case(LK_Motor_Control_Single_Location):
-        {
-		    CAN_Tx_Data[0]=LK_Motor_Control_Single_Location;
-            CAN_Tx_Data[1]=0x00;//0x00表示顺时针，0x01表示逆时针
-			CAN_Tx_Data[4]=(int32_t)Out;
-			CAN_Tx_Data[5]=(int32_t)Out>>8;
-			CAN_Tx_Data[6]=(int32_t)Out>>16;
-			CAN_Tx_Data[7]=(int32_t)Out>>24;            
-        }        
-        break;
-		case(LK_Motor_Control_Single_Location_And_Speed_Limit):
-        {
-		    CAN_Tx_Data[0]=LK_Motor_Control_Single_Location_And_Speed_Limit;
-            CAN_Tx_Data[1]=0x00;//0x00表示顺时针，0x01表示逆时针
-            CAN_Tx_Data[2]=(uint8_t)Speed_Limit;
-            CAN_Tx_Data[3]=(uint8_t)(Speed_Limit>>8);            
-			CAN_Tx_Data[4]=(int32_t)Out;//速度限制由上位机软件限制
-			CAN_Tx_Data[5]=(int32_t)Out>>8;
-			CAN_Tx_Data[6]=(int32_t)Out>>16;
-			CAN_Tx_Data[7]=(int32_t)Out>>24;            
-        }
-        break;
-		case(Lk_Motor_Control_Delta_Location):
-        {
-		    CAN_Tx_Data[0]=Lk_Motor_Control_Delta_Location;
-			CAN_Tx_Data[4]=(int32_t)Out;
-			CAN_Tx_Data[5]=(int32_t)Out>>8;
-			CAN_Tx_Data[6]=(int32_t)Out>>16;
-			CAN_Tx_Data[7]=(int32_t)Out>>24;            
-        }
-        break;
-        case(LK_Motor_Control_Delta_Location_And_Speed_Limit):
-        {
-		    CAN_Tx_Data[0]=LK_Motor_Control_Delta_Location_And_Speed_Limit;
-            CAN_Tx_Data[2]=(uint8_t)Speed_Limit;
-            CAN_Tx_Data[3]=(uint8_t)(Speed_Limit>>8);            
-			CAN_Tx_Data[4]=(int32_t)Out;
-			CAN_Tx_Data[5]=(int32_t)Out>>8;
-			CAN_Tx_Data[6]=(int32_t)Out>>16;
-			CAN_Tx_Data[7]=(int32_t)Out>>24;            
-        }                                                
+        break;                                             
         default:
         break;
     }   
@@ -370,7 +375,7 @@ void Class_LK_Motor::TIM_PID_PeriodElapsedCallback()
             PID_Omega.Set_Now(Data.Now_Omega_Radian);
             PID_Omega.TIM_Adjust_PeriodElapsedCallback();
 
-            Out = PID_Omega.Get_Out();
+            Out = (int16_t)(PID_Omega.Get_Out());
 
         }
         break;
@@ -380,24 +385,25 @@ void Class_LK_Motor::TIM_PID_PeriodElapsedCallback()
             PID_Angle.Set_Now(Data.Now_Angle);
             PID_Angle.TIM_Adjust_PeriodElapsedCallback();
 
-            Out = PID_Angle.Get_Out();
-			Set_Iq_Control(Iq_Control);//因为代码默认瓴控内部已经有速度环，这里只使用角度环
-            if(LK_Motor_Control_ID==LK_Motor_Control_Torque)//MS电机不可以使用此模式，如果想要改成瓴控内部扭矩环，就走此逻辑
-            {
-                Target_Omega_Angle = PID_Angle.Get_Out();
+            Target_Omega_Angle = PID_Angle.Get_Out();
+            PID_Omega.Set_Target(Target_Omega_Angle);
+            PID_Omega.Set_Now(Data.Now_Omega_Radian);
+            PID_Omega.TIM_Adjust_PeriodElapsedCallback();
 
-                PID_Omega.Set_Target(Target_Omega_Angle);
-                PID_Omega.Set_Now(Data.Now_Omega_Angle);
-                PID_Omega.TIM_Adjust_PeriodElapsedCallback();
+            Out = (int16_t)(PID_Omega.Get_Out());
 
-                Target_Torque = PID_Omega.Get_Out();
+            // Out = PID_Angle.Get_Out();
+			// Set_Iq_Control(Iq_Control);//因为代码默认瓴控内部已经有速度环，这里只使用角度环
+            // if(LK_Motor_Control_ID==LK_Motor_Control_Torque)//MS电机不可以使用此模式，如果想要改成瓴控内部扭矩环，就走此逻辑
+            // {
+            //     Target_Omega_Angle = PID_Angle.Get_Out();
 
-                PID_Torque.Set_Target(Target_Torque);
-                PID_Torque.Set_Now(Data.Now_Current);
-                PID_Torque.TIM_Adjust_PeriodElapsedCallback();
+            //     PID_Omega.Set_Target(Target_Omega_Angle);
+            //     PID_Omega.Set_Now(Data.Now_Omega_Angle);
+            //     PID_Omega.TIM_Adjust_PeriodElapsedCallback();
 
-                Out = PID_Torque.Get_Out();                
-            }
+            //     Out = PID_Omega.Get_Out();             
+            // }
 
         }
         break;
@@ -420,6 +426,7 @@ void Class_LK_Motor::TIM_PID_PeriodElapsedCallback()
     }
     else
     {
+
         Output();
     }	
 

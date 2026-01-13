@@ -24,9 +24,13 @@
 #include "crt_chassis.h"
 #include "config.h"
 #include "alg_filter.h"
+#include "dvc_dmimu.h"
 
 /* Exported macros -----------------------------------------------------------*/
 class Class_Chariot;
+//云台折叠互斥锁
+extern uint16_t gimbal_lock;
+extern uint16_t run_time;
 /* Exported types ------------------------------------------------------------*/
 
 /**
@@ -108,6 +112,18 @@ enum Enum_VT13_Control_Type
     VT13_Control_Type_KEYBOARD,
     VT13_Control_Type_NONE,
 };
+
+/**
+ * @brief 活动控制器类型
+ *
+ */
+enum Enum_Active_Controller
+{
+    Controller_NONE = 0,
+    Controller_DR16,
+    Controller_VT13
+};
+
 /**
  * @brief 机器人是否离线 控制模式有限自动机
  *
@@ -140,7 +156,7 @@ public:
     
         //获取yaw电机编码器值 用于底盘和云台坐标系的转换
         //底盘随动PID环
-        Class_DM_Motor_J4310 Motor_Yaw;
+        Class_LK_Motor Motor_Yaw;
         Class_PID PID_Chassis_Follow;
 
     #endif 
@@ -148,14 +164,8 @@ public:
         //裁判系统
         Class_Referee Referee;
         //底盘
-        Class_Tricycle_Chassis Chassis;
+        Class_Steering_Wheel_Chassis Chassis;
 
-    #ifdef TEST
-    Class_DR16 DR16;
-    Class_FSM_Alive_Control FSM_Alive_Control;
-    friend class Class_FSM_Alive_Control;
-    #endif
-        
     #ifdef GIMBAL
         //遥控器
         Class_DR16 DR16;
@@ -195,7 +205,7 @@ public:
             uint16_t Booster_bullet_num_before=0;
             uint16_t Booster_bullet_num=0;
 
-        #elif defined(GIMBAL)
+    #elif defined(GIMBAL)
 
         inline void DR16_Offline_Cnt_Plus();
 
@@ -211,19 +221,19 @@ public:
         inline void Set_Pre_Booster_Control_Type(Enum_Booster_Control_Type __Booster_Control_Type);
 
         inline Enum_Chassis_Status Get_Chassis_Status();
-        inline Enum_DR16_Control_Type Get_DR16_Control_Type();
-        inline Enum_VT13_Control_Type Get_VT13_Control_Type();
+        // inline Enum_DR16_Control_Type Get_DR16_Control_Type();
+        // inline Enum_VT13_Control_Type Get_VT13_Control_Type();
 
         void CAN_Gimbal_Rx_Chassis_Callback();
         void CAN_Gimbal_Tx_Chassis_Callback();
         
         void TIM_Control_Callback();
+        void Contorl_Fold_Pitch();
+        void Contorl_Stretch_Pitch();
 
         void TIM1msMod50_Chassis_Communicate_Alive_PeriodElapsedCallback();
     #endif
-		#ifdef TEST
-     void TIM_Control_Callback();		
-		#endif
+
     void TIM_Calculate_PeriodElapsedCallback();
     void TIM_Unline_Protect_PeriodElapsedCallback();
     void TIM1msMod50_Alive_PeriodElapsedCallback();
@@ -247,14 +257,10 @@ public:
     //底盘云台通讯数据
     float Gimbal_Tx_Pitch_Angle = 0;
 
-    void Judge_DR16_Control_Type();
-
-    void Control_Chassis();
-
-    #ifdef TEST
-    void Control_Chassis_Test();
-    #endif
 protected:
+
+    //遥控器拨动的死区, 0~1
+    float DR16_Dead_Zone;
 
     //pitch控制状态 锁定和自由控制
     Enum_Pitch_Control_Status  Pitch_Control_Status = Pitch_Status_Control_Free;
@@ -266,10 +272,10 @@ protected:
 
     #ifdef CHASSIS
         //底盘标定参考正方向角度(数据来源yaw电机)
-        float Reference_Angle = -70.3f;
-				float Reference_Radian = -1.02441156;
+        float Reference_Angle = -2.8729248f;
+		float Reference_Radian = Reference_Angle * PI / 180.f;
         //小陀螺云台坐标系稳定偏转角度 用于矫正
-        float Offset_Angle = -1.1105063f;  //7.5°
+        float Offset_Angle = -0.0f;  //7.5°
         //底盘转换后的角度（数据来源yaw电机）
         float Chassis_Angle;
         //写变量
@@ -280,19 +286,13 @@ protected:
         Enum_Chassis_Status Chassis_Status = Chassis_Status_DISABLE;
         //底盘 云台 发射机构 前一帧控制类型
         Enum_Chassis_Control_Type Pre_Chassis_Control_Type = Chassis_Control_Type_DISABLE;
-        Enum_Gimbal_Control_Type Pre_Gimbal_Control_Type = Gimbal_Control_Type_NORMAL;        
-
-        #ifdef TEST
+        Enum_Gimbal_Control_Type Pre_Gimbal_Control_Type = Gimbal_Control_Type_NORMAL;
         
-        //遥控器拨动的死区, 0~1
-        float DR16_Dead_Zone;
-        Enum_DR16_Control_Type DR16_Control_Type = DR16_Control_Type_REMOTE;
-        #endif
+        //云台还没出，先放在底盘里的东西
+        void Control_Chassis_Test();
     #endif
 
     #ifdef GIMBAL
-        //遥控器拨动的死区, 0~1
-        float DR16_Dead_Zone;
         //常量
         //键鼠模式按住shift 最大速度缩放系数
         float DR16_Mouse_Chassis_Shift = 2.0f;
@@ -346,13 +346,25 @@ protected:
         //单发连发标志位
         uint8_t Shoot_Flag = 0;
         //DR16控制数据来源
-        Enum_DR16_Control_Type DR16_Control_Type = DR16_Control_Type_REMOTE;
+        Enum_DR16_Control_Type DR16_Control_Type = DR16_Control_Type_NONE;
         Enum_VT13_Control_Type VT13_Control_Type = VT13_Control_Type_NONE;
+        // 当前活动的控制器
+        Enum_Active_Controller Active_Controller = Controller_NONE;
         //内部函数
 
-        // void Judge_DR16_Control_Type();
+        // 判断当前活动的控制器
+        void Judge_Active_Controller();
+        // 获取当前活动的控制器类型
+        Enum_Active_Controller Get_Active_Controller();
+        // 获取DR16控制类型
+        Enum_DR16_Control_Type Get_DR16_Control_Type();
+        // 获取VT13控制类型
+        Enum_VT13_Control_Type Get_VT13_Control_Type();
 
-        // void Control_Chassis();
+        void Judge_DR16_Control_Type();
+        void Judge_VT13_Control_Type();
+
+        void Control_Chassis();
         void Control_Gimbal();
         void Control_Booster();
 
@@ -377,25 +389,25 @@ protected:
         return (Chassis_Status);
     }
 
-    /**
-     * @brief 获取DR16控制数据来源
-     * 
-     * @return Enum_DR16_Control_Type DR16控制数据来源
-     */
+    // /**
+    //  * @brief 获取DR16控制数据来源
+    //  * 
+    //  * @return Enum_DR16_Control_Type DR16控制数据来源
+    //  */
 
-    Enum_DR16_Control_Type Class_Chariot::Get_DR16_Control_Type()
-    {
-        return (DR16_Control_Type);
-    }
-      /**
-     * @brief 获取VT13控制数据来源
-     * 
-     * @return VT13_Control_Type
-     */
-    inline Enum_VT13_Control_Type Class_Chariot::Get_VT13_Control_Type()
-    {
-      return (VT13_Control_Type);
-    }
+    // Enum_DR16_Control_Type Class_Chariot::Get_DR16_Control_Type()
+    // {
+    //     return (DR16_Control_Type);
+    // }
+    //   /**
+    //  * @brief 获取VT13控制数据来源
+    //  * 
+    //  * @return VT13_Control_Type
+    //  */
+    // inline Enum_VT13_Control_Type Class_Chariot::Get_VT13_Control_Type()
+    // {
+    //   return (VT13_Control_Type);
+    // }
 
     /**
      * @brief 获取前一帧底盘控制类型

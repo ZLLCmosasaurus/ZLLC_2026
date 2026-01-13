@@ -47,10 +47,10 @@
 
 // ���ֶ��޸�
 #if INFANTRY_ID == 0
-#define GxOFFSET 0.00247530174f
-#define GyOFFSET 0.000393082853f
-#define GzOFFSET 0.000393082853f
-#define gNORM 9.69293118f
+#define GxOFFSET -1.7754408e-05
+#define GyOFFSET 1.02975564e-05
+#define GzOFFSET 3.19579317e-06
+#define gNORM 9.75f
 #elif INFANTRY_ID == 1
 #define GxOFFSET 0.0007222f
 #define GyOFFSET -0.001786f

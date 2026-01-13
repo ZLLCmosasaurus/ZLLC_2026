@@ -17,7 +17,7 @@
 #include <string.h>
 #include "main.h"
 #include "drv_usb.h"
-#include "dvc_imu.h"
+#include "dvc_dmimu.h"
 #include "dvc_referee.h"
 #include "math.h"
 #include "drv_uart.h"
@@ -491,7 +491,7 @@ public:
     void TIM1msMod50_Alive_PeriodElapsedCallback();
     void TIM_Write_PeriodElapsedCallback();
 
-    Class_IMU *IMU;
+    Class_DM_IMU *IMU;
     Class_Referee *Referee;
 
 protected:

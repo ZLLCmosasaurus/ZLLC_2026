@@ -194,7 +194,6 @@ void Class_Booster::Init()
  * @brief 输出到电机
  *
  */
-extern Referee_Rx_B_t CAN3_Chassis_Rx_Data_B;
 void Class_Booster::Output()
 {
     Now_Angle = Motor_Driver.Get_Now_Radian();
@@ -286,78 +285,78 @@ void Class_Booster::Output()
             // 根据冷却计算拨弹盘默认速度, 此速度下与冷却均衡
             Default_Driver_Omega = - 80.f / 10.0f / 8.0f * 2.0f * PI;
             Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega);
-            if(max_sum > 0.f && max_sum <= 0.75f)
-            {
-                max_speed = 30.f;
-            }
-            else if(max_sum > 0.75f && max_sum <= 4.f)
-            {
-                max_speed = 8.f;
-            }
-            else if(max_sum > 4.f && max_sum <= 9.f)
-            {
-                max_speed = 4.f;
-            }
-            else if(max_sum > 9.f && max_sum <= 16.f)
-            {
-                max_speed = 2.f;
-            }
-            else if(max_sum > 16.f)
-            {
-                max_speed = 1.f;
-            }
-            // 热量控制
-            Cooling_Value = CAN3_Chassis_Rx_Data_B.cooling_value;
-            if(Heat == 0 && (uint16_t)FSM_Heat_Detect.Heat != 0)
-            {
-                Heat = (uint16_t)FSM_Heat_Detect.Heat;
-            }
-            if(shoot_time == 0)
-            {
-                ShootTime = ((Heat_Max - Heat) + 2 * Cooling_Value) * 10;
-                if(Heat_Max - Heat < 100){
-                    shoot_speed = (10 * (Heat_Max - Heat) - Cooling_Value - 3 * Heat_Consumption) / (Heat_Consumption * (ShootTime / 100.f)) + Cooling_Value / Heat_Consumption;
-                }
-                else{
-                    shoot_speed = (10 * (Heat_Max - Heat) - Cooling_Value - 5 * Heat_Consumption) / (Heat_Consumption * (ShootTime / 100.f)) + Cooling_Value / Heat_Consumption;
-                }
-            }               
-            else if(0 < shoot_time && shoot_time < ShootTime)
-            {
-                Driver_Omega = shoot_speed * 2 * PI / 7.f;
-                Math_Constrain(&Driver_Omega, 0.0f, max_speed);
-                Motor_Driver.Set_Target_Omega_Radian(-Driver_Omega);
-            }
-            else
-            {
-                shoot_speed = (Cooling_Value / Heat_Consumption);
-                Driver_Omega = shoot_speed * 2 * PI / 7.f;
-                Math_Constrain(&Driver_Omega, 0.0f, max_speed);
-                Motor_Driver.Set_Target_Omega_Radian(-Driver_Omega);
-            }
-            if(shoot_time < ShootTime)
-            {
-                shoot_time++;
-            }
-            //Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega * 2.5f);//测试用 平常注释
-            //裁判系统正常模式
-            if(Heat > 340)
-            {
-                Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega * 0.4f);
-            }
-            if(Heat > 370)
-            {
-                Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega * 0.25f);
-            }
-            //离线保守模式
-            if(Heat > 300)
-            {
-                Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega * 0.4f);
-            }
-            if(Heat > 350)
-            {
-                Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega * 0.25f);
-            }
+            // if(max_sum > 0.f && max_sum <= 0.75f)
+            // {
+            //     max_speed = 30.f;
+            // }
+            // else if(max_sum > 0.75f && max_sum <= 4.f)
+            // {
+            //     max_speed = 8.f;
+            // }
+            // else if(max_sum > 4.f && max_sum <= 9.f)
+            // {
+            //     max_speed = 4.f;
+            // }
+            // else if(max_sum > 9.f && max_sum <= 16.f)
+            // {
+            //     max_speed = 2.f;
+            // }
+            // else if(max_sum > 16.f)
+            // {
+            //     max_speed = 1.f;
+            // }
+            // // 热量控制
+            // Cooling_Value = CAN3_Chassis_Rx_Data_B.cooling_value;
+            // if(Heat == 0 && (uint16_t)FSM_Heat_Detect.Heat != 0)
+            // {
+            //     Heat = (uint16_t)FSM_Heat_Detect.Heat;
+            // }
+            // if(shoot_time == 0)
+            // {
+            //     ShootTime = ((Heat_Max - Heat) + 2 * Cooling_Value) * 10;
+            //     if(Heat_Max - Heat < 100){
+            //         shoot_speed = (10 * (Heat_Max - Heat) - Cooling_Value - 3 * Heat_Consumption) / (Heat_Consumption * (ShootTime / 100.f)) + Cooling_Value / Heat_Consumption;
+            //     }
+            //     else{
+            //         shoot_speed = (10 * (Heat_Max - Heat) - Cooling_Value - 5 * Heat_Consumption) / (Heat_Consumption * (ShootTime / 100.f)) + Cooling_Value / Heat_Consumption;
+            //     }
+            // }               
+            // else if(0 < shoot_time && shoot_time < ShootTime)
+            // {
+            //     Driver_Omega = shoot_speed * 2 * PI / 7.f;
+            //     Math_Constrain(&Driver_Omega, 0.0f, max_speed);
+            //     Motor_Driver.Set_Target_Omega_Radian(-Driver_Omega);
+            // }
+            // else
+            // {
+            //     shoot_speed = (Cooling_Value / Heat_Consumption);
+            //     Driver_Omega = shoot_speed * 2 * PI / 7.f;
+            //     Math_Constrain(&Driver_Omega, 0.0f, max_speed);
+            //     Motor_Driver.Set_Target_Omega_Radian(-Driver_Omega);
+            // }
+            // if(shoot_time < ShootTime)
+            // {
+            //     shoot_time++;
+            // }
+            // //Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega * 2.5f);//测试用 平常注释
+            // //裁判系统正常模式
+            // if(Heat > 340)
+            // {
+            //     Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega * 0.4f);
+            // }
+            // if(Heat > 370)
+            // {
+            //     Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega * 0.25f);
+            // }
+            // //离线保守模式
+            // if(Heat > 300)
+            // {
+            //     Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega * 0.4f);
+            // }
+            // if(Heat > 350)
+            // {
+            //     Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega * 0.25f);
+            // }
             
             Set_Friction_Control_Type(Friction_Control_Type_ENABLE);
         }

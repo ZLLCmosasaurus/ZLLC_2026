@@ -38,6 +38,8 @@ extern "C" {
 
 //deg换算到rad
 #define DEG_TO_RAD (PI / 180.0f)
+//rad换算到deg
+#define RAD_TO_DEG (180.0f / PI)
 //摄氏度换算到开氏度
 #define CELSIUS_TO_KELVIN (273.15f)
 //重力加速度

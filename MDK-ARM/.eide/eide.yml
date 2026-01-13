@@ -1,13 +1,13 @@
 version: "4.1"
 name: ZLLC_2026
 type: ARM
-deviceName: STM32H723VGTx
-packDir: .pack/Keil/STM32H7xx_DFP.4.0.0
+deviceName: null
+packDir: null
 srcDirs: []
 virtualFolder:
   name: <virtual_root>
   files:
-    - path: .cmsis/libdsp/arm/arm_cortexM7l_math.lib
+    - path: ../Src/arm_cortexM7l_math.lib
   folders:
     - name: Config
       files:
@@ -44,6 +44,7 @@ virtualFolder:
         - path: ../User/Device/Src/dvc_TensionMeter.cpp
         - path: ../User/Device/Src/dvc_servo.cpp
         - path: ../User/Device/Src/dvc_buzzer.cpp
+        - path: ../User/Device/Src/dvc_dmimu.cpp
       folders: []
     - name: Driver
       files:
@@ -64,12 +65,12 @@ virtualFolder:
         - path: ../User/Algorithm/Src/alg_fsm.cpp
         - path: ../User/Algorithm/Src/alg_MahonyAHRS.cpp
         - path: ../User/Algorithm/Src/alg_pid.cpp
-        - path: ../User/Algorithm/Src/alg_power_limit.cpp
         - path: ../User/Algorithm/Src/alg_slope.cpp
         - path: ../User/Algorithm/Src/kalman_filter.cpp
         - path: ../User/Algorithm/Src/PID.cpp
         - path: ../User/Algorithm/Src/QuaternionEKF.cpp
         - path: ../User/Algorithm/Src/user_lib.cpp
+        - path: ../User/Algorithm/Src/alg_new_power_limit.cpp
       folders: []
     - name: Application
       files: []
@@ -84,7 +85,6 @@ virtualFolder:
                 - path: ../Core/Src/dma.c
                 - path: ../Core/Src/fdcan.c
                 - path: ../Core/Src/iwdg.c
-                - path: ../Core/Src/memorymap.c
                 - path: ../Core/Src/spi.c
                 - path: ../Core/Src/tim.c
                 - path: ../Core/Src/usart.c
@@ -320,7 +320,6 @@ targets:
         - ARM_MATH_CM7
         - USE_PWR_LDO_SUPPLY
       incList:
-        - .
         - ../Core/Inc
         - ../Drivers/STM32H7xx_HAL_Driver/Inc
         - ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy
@@ -337,6 +336,9 @@ targets:
         - ../User/Driver/Inc
         - ../User/Algorithm/Inc
         - ../Drivers/CMSIS/Include
+        - ../DSP
+        - ../Drivers/CMSIS/DSP/Include
+        - .cmsis/include
         - RTE/_ZLLC_2026
         - ../DSP/Include
       libList: []
@@ -351,21 +353,28 @@ targets:
           version: 3
           afterBuildTasks: []
           asm-compiler:
-            $use: asm-auto
-            misc-controls: --diag_suppress=1950
+            $use: asm
+            misc-controls: ""
           beforeBuildTasks: []
           c/cpp-compiler:
             language-c: c99
             language-cpp: c++11
+            link-time-optimization: false
             one-elf-section-per-function: true
             optimization: level-0
             short-enums#wchar: true
             warnings: no-warnings
           global:
             output-debug-info: enable
+            use-microLIB: true
           linker:
+            $outputTaskExcludes:
+              - .bin
             misc-controls: --diag_suppress=L6329
             output-format: elf
+            ro-base: ""
+            rw-base: ""
+            xo-base: ""
         scatterFilePath: ""
         storageLayout:
           RAM:

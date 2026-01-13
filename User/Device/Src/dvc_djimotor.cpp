@@ -793,8 +793,6 @@ void Class_DJI_Motor_C620::TIM_PID_PeriodElapsedCallback()
     case(DJI_Motor_Control_Method_AGV_MODE):
     {               //注意，直接用大疆电机的数据和用磁编的数据角度范围什么的是不一样的
         PID_Angle.Set_Target(Target_Radian);
-        #ifdef TEST
-        #endif
         PID_Angle.Set_Now(Transform_Radian);
         PID_Angle.TIM_Adjust_PeriodElapsedCallback();
 

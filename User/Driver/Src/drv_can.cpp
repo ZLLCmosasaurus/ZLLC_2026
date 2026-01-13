@@ -49,6 +49,7 @@ uint8_t CAN2_0xxf5_Tx_Data[8];
 uint8_t CAN2_0xxf6_Tx_Data[8];
 uint8_t CAN2_0xxf7_Tx_Data[8];
 uint8_t CAN2_0xxf8_Tx_Data[8];
+uint8_t CAN2_Gimbal_Tx_Chassis_Data[8];  //云台给底盘发送缓冲区
 uint8_t CAN2_Chassis_Tx_Gimbal_Data[8];
 
 uint8_t CAN3_0x1ff_Tx_Data[8];
@@ -76,8 +77,6 @@ uint8_t CAN3_MiniPC_Tx_Data_A[8];   //下位机发送缓冲区
 uint8_t CAN3_MiniPC_Tx_Data_B[8];   //下位机发送缓冲区
 uint8_t CAN3_MiniPC_Tx_Data_C[8];   //下位机发送缓冲区
 uint8_t CAN3_MiniPC_Tx_Data_D[8];   //下位机发送缓冲区
-uint8_t CAN3_Gimbal_Tx_Chassis_Data[8];  //云台给底盘发送缓冲区
-uint8_t CAN3_Sentry_CMD_Data[8];   //云台给底盘发送缓冲区
 
 /*********LK电机 控制缓冲区***********/
 uint8_t CAN1_0x141_Tx_Data[8];
@@ -358,6 +357,8 @@ void TIM_CAN_PeriodElapsedCallback()
         mod20 = 0;
     }
     #elif defined (GIMBAL)
+    
+        //CAN_Send_Data(&hfdcan2, 0xf1, CAN2_0xxf1_Tx_Data, 8);
 
     static uint8_t mod5 = 0,mod4 = 0,mod20 = 0;
     mod5++;
@@ -367,16 +368,20 @@ void TIM_CAN_PeriodElapsedCallback()
     if(mod5 == 5)
     {
         mod5 = 0;
-        CAN_Send_Data(&hfdcan2, 0x1fe, CAN2_0x1fe_Tx_Data, 8); //GM6020  按照0x1fe ID 发送 可控制多个电机
-        CAN_Send_Data(&hfdcan2, 0x1ff, CAN2_0x1ff_Tx_Data, 8); //摩擦轮 按照0x1ff ID 发送 可控制多个电机
+        //CAN_Send_Data(&hfdcan2, 0x1fe, CAN2_0x1fe_Tx_Data, 8); //GM6020  按照0x1fe ID 发送 可控制多个电机
+        //CAN_Send_Data(&hfdcan2, 0x1ff, CAN2_0x1ff_Tx_Data, 8); //摩擦轮 按照0x1ff ID 发送 可控制多个电机
+        // CAN_Send_Data(&hfdcan2, 0x141, CAN2_0x141_Tx_Data, 8);
 
-        //  CAN3  下板       
-        CAN_Send_Data(&hfdcan3, 0x200, CAN3_0x200_Tx_Data, 8); //拨弹盘  按照0x200 ID 发送 可控制多个电机
-        CAN_Send_Data(&hfdcan3, 0x77, CAN3_Gimbal_Tx_Chassis_Data, 8); //给底盘发送控制命令 按照0x77 ID 发送
+        // //  CAN3  下板       
+        // CAN_Send_Data(&hfdcan3, 0x200, CAN3_0x200_Tx_Data, 8); //拨弹盘  按照0x200 ID 发送 可控制多个电机
+        CAN_Send_Data(&hfdcan2, 0x77, CAN2_Gimbal_Tx_Chassis_Data, 8); //给底盘发送控制命令 按照0x77 ID 发送
+
+        CAN_Send_Data(&hfdcan2, 0xf1, CAN2_0xxf1_Tx_Data, 8);
         
     }
     if(mod4 == 4)
     {
+        CAN_Send_Data(&hfdcan2, 0x141, CAN2_0x141_Tx_Data, 8);
         mod4 = 0;
     }   
     if (mod20 == 20) //50Hz

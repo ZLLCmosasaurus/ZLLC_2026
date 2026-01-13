@@ -110,6 +110,7 @@ extern uint8_t CAN2_0xxf5_Tx_Data[];
 extern uint8_t CAN2_0xxf6_Tx_Data[];
 extern uint8_t CAN2_0xxf7_Tx_Data[];
 extern uint8_t CAN2_0xxf8_Tx_Data[];
+extern uint8_t CAN2_Gimbal_Tx_Chassis_Data[];  //云台给底盘发送缓冲区
 extern uint8_t CAN2_Chassis_Tx_Gimbal_Data[8];
 
 extern uint8_t CAN3_0x1ff_Tx_Data[];
@@ -126,8 +127,6 @@ extern uint8_t CAN3_0xxf7_Tx_Data[];
 extern uint8_t CAN3_0xxf8_Tx_Data[];
 
 extern uint8_t CAN_Supercap_Tx_Data[];
-extern uint8_t CAN3_Gimbal_Tx_Chassis_Data[];  //云台给底盘发送缓冲区
-extern uint8_t CAN3_Sentry_CMD_Data[];     //哨兵自主决策缓冲区
 extern uint8_t CAN3_Chassis_Tx_Data_A[];   //底盘给云台发送缓冲区
 extern uint8_t CAN3_Chassis_Tx_Data_B[];   //底盘给云台发送缓冲区
 extern uint8_t CAN3_Chassis_Tx_Data_C[];   //底盘给云台发送缓冲区
