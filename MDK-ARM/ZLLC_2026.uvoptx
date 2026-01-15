@@ -120,7 +120,7 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>DLGUARM</Key>
-          <Name>G</Name>
+          <Name>*</Name>
         </SetRegEntry>
         <SetRegEntry>
           <Number>0</Number>
@@ -214,6 +214,11 @@
           <count>12</count>
           <WinNumber>1</WinNumber>
           <ItemText>hfdcan2</ItemText>
+        </Ww>
+        <Ww>
+          <count>13</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>Count_F,0x0A</ItemText>
         </Ww>
       </WatchWindow1>
       <Tracepoint>
