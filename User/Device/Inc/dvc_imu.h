@@ -125,6 +125,8 @@ class Class_IMU
 
     void BodyFrameToEarthFrame(const float *vecBF, float *vecEF, float *q);
     void EarthFrameToBodyFrame(const float *vecEF, float *vecBF, float *q);
+
+    float invSqrt(float x);
 };
 
 //---------------------------------------------------------------------------------------------------

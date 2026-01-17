@@ -51,7 +51,7 @@ void Class_External_IMU::TIM_Calculate_PeriodElapsedCallback(void)
     INS.Gyro[2] = BMI088_Raw_Data.Gyro[2];
 
     // 核心函数,EKF更新四元数
-    IMU_QuaternionEKF_Update(INS.Gyro[0], INS.Gyro[1], INS.Gyro[2], INS.Accel[0], INS.Accel[1], INS.Accel[2], INS_DWT_Dt ,&QEKF_INS);
+    IMU_QuaternionEKF_Update(INS.Gyro[0], INS.Gyro[1], INS.Gyro[2], INS.Accel[0], INS.Accel[1], INS.Accel[2], INS_DWT_Dt, &QEKF_INS);
 
     memcpy(INS.q, QEKF_INS.q, sizeof(QEKF_INS.q));
 

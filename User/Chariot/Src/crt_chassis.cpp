@@ -66,16 +66,16 @@ void Class_Tricycle_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max
     #ifdef AGV
     //舵向电机PID初始化
 
-    Motor_Steer[0].PID_Angle.Init(10.f, 0.0f, 0.0f, 0.0f, Motor_Steer[0].Get_Output_Max(), Motor_Steer[0].Get_Output_Max());
+    Motor_Steer[0].PID_Angle.Init(12.f, 0.0f, 0.0f, 0.0f, Motor_Steer[0].Get_Output_Max(), Motor_Steer[0].Get_Output_Max());
     Motor_Steer[0].PID_Omega.Init(1000.0f, 0.0f, 0.0f, 0.0f, 8000, Motor_Steer[0].Get_Output_Max());
     
-    Motor_Steer[1].PID_Angle.Init(10.f, 0.0f, 0.0f, 0.0f, Motor_Steer[1].Get_Output_Max(), Motor_Steer[1].Get_Output_Max());
+    Motor_Steer[1].PID_Angle.Init(12.f, 0.0f, 0.0f, 0.0f, Motor_Steer[1].Get_Output_Max(), Motor_Steer[1].Get_Output_Max());
     Motor_Steer[1].PID_Omega.Init(1000.0f, 0.0f, 0.0f, 0.0f, 8000, Motor_Steer[1].Get_Output_Max());
 
-    Motor_Steer[2].PID_Angle.Init(10.f, 0.0f, 0.0f, 0.0f, Motor_Steer[2].Get_Output_Max(), Motor_Steer[2].Get_Output_Max());
+    Motor_Steer[2].PID_Angle.Init(12.f, 0.0f, 0.0f, 0.0f, Motor_Steer[2].Get_Output_Max(), Motor_Steer[2].Get_Output_Max());
     Motor_Steer[2].PID_Omega.Init(1000.0f, 0.0f, 0.0f, 0.0f, 8000, Motor_Steer[2].Get_Output_Max());
 
-    Motor_Steer[3].PID_Angle.Init(10.f, 0.0f, 0.0f, 0.0f, Motor_Steer[3].Get_Output_Max(), Motor_Steer[3].Get_Output_Max());
+    Motor_Steer[3].PID_Angle.Init(12.f, 0.0f, 0.0f, 0.0f, Motor_Steer[3].Get_Output_Max(), Motor_Steer[3].Get_Output_Max());
     Motor_Steer[3].PID_Omega.Init(1000.0f, 0.0f, 0.0f, 0.0f, 8000, Motor_Steer[3].Get_Output_Max());
 
 
@@ -86,9 +86,9 @@ void Class_Tricycle_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max
     Motor_Steer[3].Init(&hfdcan1, DJI_Motor_ID_0x208);
     //舵向电机零点位置初始化
     Motor_Steer[0].Set_Zero_Position(-0.5600000f);               //应该是轮子朝向的正方向，行进轮超前，并且顺时针转动为正方向的角度
-    Motor_Steer[1].Set_Zero_Position(2.75999999f);
-    Motor_Steer[2].Set_Zero_Position(2.16000009);
-    Motor_Steer[3].Set_Zero_Position(2.6400001);
+    Motor_Steer[1].Set_Zero_Position(0.47999999f);
+    Motor_Steer[2].Set_Zero_Position(-1.5f);
+    Motor_Steer[3].Set_Zero_Position(-2.58999991f);
     #endif
 
     //底盘控制方式初始化
@@ -187,18 +187,18 @@ void Class_Tricycle_Chassis::Speed_Resolution(){
             float True_Vx[4], True_Vy[4], True_Target_Angle_Radian[4];
             
             //斜坡处理
-            True_Vx[0] = True_Vx[3] = Slope_Velocity_X.Get_Out() - sqrt(2) * Slope_Omega.Get_Out() *  CHASSIS_RADIUS/ 2;
-            True_Vx[1] = True_Vx[2] = Slope_Velocity_X.Get_Out() + sqrt(2) * Slope_Omega.Get_Out() *  CHASSIS_RADIUS/ 2;
+            // True_Vx[0] = True_Vx[3] = Slope_Velocity_X.Get_Out() - sqrt(2) * Slope_Omega.Get_Out() *  CHASSIS_RADIUS/ 2;
+            // True_Vx[1] = True_Vx[2] = Slope_Velocity_X.Get_Out() + sqrt(2) * Slope_Omega.Get_Out() *  CHASSIS_RADIUS/ 2;
 
-            True_Vy[0] = True_Vy[1] = Slope_Velocity_Y.Get_Out() + sqrt(2) * Slope_Omega.Get_Out() *  CHASSIS_RADIUS/ 2;
-            True_Vy[2] = True_Vy[3] = Slope_Velocity_Y.Get_Out() - sqrt(2) * Slope_Omega.Get_Out() *  CHASSIS_RADIUS/ 2;
+            // True_Vy[0] = True_Vy[1] = Slope_Velocity_Y.Get_Out() + sqrt(2) * Slope_Omega.Get_Out() *  CHASSIS_RADIUS/ 2;
+            // True_Vy[2] = True_Vy[3] = Slope_Velocity_Y.Get_Out() - sqrt(2) * Slope_Omega.Get_Out() *  CHASSIS_RADIUS/ 2;
             
 
-            // True_Vx[0] = True_Vx[3] = Target_Velocity_X - sqrt(2) * Target_Omega *  CHASSIS_RADIUS/ 2;
-            // True_Vx[1] = True_Vx[2] = Target_Velocity_X + sqrt(2) * Target_Omega *  CHASSIS_RADIUS/ 2;
+            True_Vx[0] = True_Vx[3] = Target_Velocity_X + sqrt(2) * Target_Omega *  CHASSIS_RADIUS/ 2;
+            True_Vx[1] = True_Vx[2] = Target_Velocity_X - sqrt(2) * Target_Omega *  CHASSIS_RADIUS/ 2;
 
-            // True_Vy[0] = True_Vy[1] = Target_Velocity_Y + sqrt(2) * Target_Omega *  CHASSIS_RADIUS/ 2;
-            // True_Vy[2] = True_Vy[3] = Target_Velocity_Y - sqrt(2) * Target_Omega *  CHASSIS_RADIUS/ 2;
+            True_Vy[0] = True_Vy[1] = Target_Velocity_Y + sqrt(2) * Target_Omega *  CHASSIS_RADIUS/ 2;
+            True_Vy[2] = True_Vy[3] = Target_Velocity_Y - sqrt(2) * Target_Omega *  CHASSIS_RADIUS/ 2;
 
             //舵轮转动角度的优化处理
             for(int i = 0;i<4;i++){
@@ -381,10 +381,6 @@ void Class_Tricycle_Chassis::TIM_Calculate_PeriodElapsedCallback(Enum_Sprint_Sta
     
     //速度解算
     Speed_Resolution();
-
-    Motor_Steer[2].Disable();
-    Motor_Steer[3].Disable();
-
 
     // //超电策略和功率限制还没写
     // float Limit_Power = 0.0f, Chassis_Energy_Power = 0.0f;

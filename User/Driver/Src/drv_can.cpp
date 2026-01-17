@@ -354,7 +354,7 @@ void TIM_CAN_PeriodElapsedCallback()
     #elif defined (GIMBAL)
 
     CAN_Send_Data(&hfdcan1, 0x1ff, CAN1_0x1ff_Tx_Data, 8);          // Yaw Pitch 6020
-    //CAN_Send_Data(&hfdcan1, 0x200, CAN1_0x200_Tx_Data, 8);          // 摩擦轮电机
+    CAN_Send_Data(&hfdcan1, 0x200, CAN1_0x200_Tx_Data, 8);          // 摩擦轮电机
 
     //  CAN3  下板
     CAN_Send_Data(&hfdcan2, 0x200, CAN2_0x200_Tx_Data, 8);         // 拨弹盘电机
@@ -376,7 +376,7 @@ void TIM_CAN_PeriodElapsedCallback()
     }   
     if (mod20 == 20) //50Hz
     {
-        CAN_Send_Data(&hfdcan2, 0x95, CAN3_Sentry_CMD_Data, 8); //给底盘转发自主决策命令和雷达信息 按照0x95 ID 发送
+        //CAN_Send_Data(&hfdcan2, 0x95, CAN3_Sentry_CMD_Data, 8); //给底盘转发自主决策命令和雷达信息 按照0x95 ID 发送
         mod20 = 0;
     }
     #endif

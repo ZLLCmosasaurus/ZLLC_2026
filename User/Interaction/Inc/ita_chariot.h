@@ -248,7 +248,7 @@ protected:
 
     #ifdef CHASSIS
         //底盘标定参考正方向角度(数据来源yaw电机)       注意如果更改了Encoder_offset，这里的数值也会变化
-        float Reference_Angle = 1.9975611f;
+        float Reference_Angle = 2.53158617;
         //小陀螺云台坐标系稳定偏转角度 用于矫正
         float Offset_Angle = 0.0f;  //7.5°
 

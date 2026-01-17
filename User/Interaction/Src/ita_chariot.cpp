@@ -36,7 +36,7 @@ void Class_Chariot::Init(float __DR16_Dead_Zone)
 
         Motor_Main_Yaw.Init(&hfdcan2, LK_Motor_ID_0x141, LK_Motor_Control_Method_ANGLE, MAIN_YAW_ENCODER_OFFSET);
 
-        PID_Chassis_Fllow.Init(0.0f, 0.0f, 0.0f, 0.0f, 5.0f, 5.0f);
+        PID_Chassis_Fllow.Init(4.0f, 0.0f, 0.07f, 0.0f, 3.0f, 3.0f);
 
         //底盘
         Chassis.Referee = &Referee;
@@ -551,7 +551,7 @@ void Class_Chariot::Control_Gimbal()
     dr16_y = (Math_Abs(DR16.Get_Right_X()) > DR16_Dead_Zone) ? DR16.Get_Right_X() : 0;
     dr16_r_y = (Math_Abs(DR16.Get_Right_Y()) > DR16_Dead_Zone) ? DR16.Get_Right_Y() : 0;
 
-    tmp_gimbal_yaw = Gimbal.Get_Target_Yaw_Angle();
+    tmp_gimbal_yaw = Gimbal.Get_Target_Main_Yaw_Angle();
     tmp_gimbal_pitch = Gimbal.Motor_Pitch.Get_Target_Angle();
 
     // 遥控器操作逻辑
@@ -560,6 +560,9 @@ void Class_Chariot::Control_Gimbal()
 
     if(tmp_gimbal_pitch > 18.0f)tmp_gimbal_pitch = 18.0f;
     if(tmp_gimbal_pitch < -25.0f)tmp_gimbal_pitch = -25.0f;
+
+    if(tmp_gimbal_yaw > 180.0f) tmp_gimbal_yaw -= 360.0f;
+    else if(tmp_gimbal_yaw < -180.0f) tmp_gimbal_yaw += 360.0f;
 
     if (DR16.Get_Left_Switch() == DR16_Switch_Status_DOWN) // 左下 上位机
     {
@@ -571,7 +574,7 @@ void Class_Chariot::Control_Gimbal()
         Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
 
         // 设定角度
-        Gimbal.Set_Target_Yaw_Angle(tmp_gimbal_yaw);
+        Gimbal.Set_Target_Main_Yaw_Angle(tmp_gimbal_yaw);
         Gimbal.Set_Target_Pitch_Angle(tmp_gimbal_pitch);
     }
 }
@@ -699,14 +702,12 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
 
             Delta_Radian = Normalize_Angle_Radian_PI_to_PI(Delta_Radian);
 
-            PID_Chassis_Fllow.Set_Target(Reference_Angle);
-            PID_Chassis_Fllow.Set_Now(Delta_Radian + Chassis_Radian);
+            PID_Chassis_Fllow.Set_Target(Reference_Angle + Delta_Radian);
+            PID_Chassis_Fllow.Set_Now(Chassis_Radian);
             PID_Chassis_Fllow.TIM_Adjust_PeriodElapsedCallback();
 
-            Chassis.Set_Target_Omega(PID_Chassis_Fllow.Get_Out());
+            Chassis.Set_Target_Omega(-PID_Chassis_Fllow.Get_Out());
         }
-        
-        Chassis.Set_Target_Omega(0.0f);
 
         Chassis.TIM_Calculate_PeriodElapsedCallback(Sprint_Status);
 

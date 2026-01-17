@@ -235,10 +235,10 @@ const float WHEEL_AZIMUTH[3] = {0.0f, atan2f(-FRONT_TO_FRONT_CENTER_DISTANCE, -F
 const float WHELL_DIAMETER = 0.13f;	
 
 //底盘半宽 单位m
-const float HALF_WIDTH = 0.281f;		
+const float HALF_WIDTH = 0.356f;		
 
 //底盘半长 单位m
-const float HALF_LENGTH = 0.281f;	
+const float HALF_LENGTH = 0.356f;	
 
 //底盘中心到每个轮子轴心投影距离
 const float CHASSIS_RADIUS = sqrt(HALF_LENGTH * HALF_LENGTH + HALF_WIDTH * HALF_WIDTH);

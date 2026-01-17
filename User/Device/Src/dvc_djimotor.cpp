@@ -305,6 +305,8 @@ void Class_DJI_Motor_GM6020::Data_Process()
     Data.Now_Torque = tmp_torque;
     Data.Now_Temperature = tmp_temperature + CELSIUS_TO_KELVIN;			
 
+    Zero_Offset_Radian = Normalize_Angle_Radian_PI_to_PI(Data.Now_Radian - Zero_Position);
+
     //存储预备信息
     Data.Pre_Encoder = tmp_encoder;
     Data.Pre_Total_Encoder = Data.Total_Encoder;

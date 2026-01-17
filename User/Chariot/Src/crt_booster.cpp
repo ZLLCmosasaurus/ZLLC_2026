@@ -174,8 +174,8 @@ void Class_Booster::Init()
     FSM_Antijamming.Init(4, 0);
 
     //拨弹盘电机
-    Motor_Driver.PID_Angle.Init(25.0f, 0.0f, 0.0f, 0.0f, 5.0f * PI, 5.0f * PI);
-    Motor_Driver.PID_Omega.Init(2500.0f, 500.0f, 0.0f, 0.0f, Motor_Driver.Get_Output_Max(), Motor_Driver.Get_Output_Max());
+    Motor_Driver.PID_Angle.Init(28.0f, 0.0f, 0.0f, 0.0f, 5.0f * PI, 5.0f * PI);
+    Motor_Driver.PID_Omega.Init(3200.0f, 0.0f, 0.0f, 0.0f, Motor_Driver.Get_Output_Max(), Motor_Driver.Get_Output_Max());
     Motor_Driver.Init(&hfdcan2, DJI_Motor_ID_0x202, DJI_Motor_Control_Method_OMEGA);
 
     //摩擦轮电机左
@@ -202,8 +202,10 @@ void Class_Booster::Output()
         {
             // 发射机构失能
             Motor_Driver.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OPENLOOP);
-            Motor_Friction_Left.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OPENLOOP);
-            Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OPENLOOP);
+            // Motor_Friction_Left.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OPENLOOP);
+            // Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OPENLOOP);
+            Motor_Friction_Left.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
+            Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
 
             // 关闭摩擦轮
             Set_Friction_Control_Type(Friction_Control_Type_DISABLE);
@@ -241,7 +243,7 @@ void Class_Booster::Output()
             Motor_Friction_Left.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
             Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
 
-            Driver_Angle = Now_Angle - 2.0f * PI / 8.0f;
+            Driver_Angle = Now_Angle + 2.0f * PI / 8.0f;
             // Driver_Angle -= 2.0f * PI / 8.0f;
             Motor_Driver.Set_Target_Radian(Driver_Angle);
 
@@ -258,7 +260,7 @@ void Class_Booster::Output()
             Motor_Friction_Left.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
             Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
 
-            Driver_Angle = Now_Angle - 2.0f * PI / 8.0f * 5.0f; //五连发5
+            Driver_Angle = Now_Angle + 2.0f * PI / 8.0f * 5.0f; //五连发5
             // Driver_Angle -= 2.0f * PI / 8.0f * 5.0f; //五连发
             Motor_Driver.Set_Target_Radian(Driver_Angle);
 
@@ -276,7 +278,7 @@ void Class_Booster::Output()
             Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
 
             // 根据冷却计算拨弹盘默认速度, 此速度下与冷却均衡
-            Default_Driver_Omega = -80.f / 10.0f / 8.0f * 2.0f * PI;
+            Default_Driver_Omega = 80.f / 10.0f / 8.0f * 2.0f * PI;
             Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega);
 
             // 冷却时间获取
@@ -305,14 +307,14 @@ void Class_Booster::Output()
             {
                 Driver_Omega = shoot_speed * 2 * PI / 7.f;
                 Math_Constrain(&Driver_Omega, 0.0f, 18.0f);
-                Motor_Driver.Set_Target_Omega_Radian(-Driver_Omega);
+                Motor_Driver.Set_Target_Omega_Radian(Driver_Omega);
             }
             else
             {
                 shoot_speed = (Cooling_Value / Heat_Consumption);
                 Driver_Omega = shoot_speed * 2 * PI / 7.f;
                 Math_Constrain(&Driver_Omega, 0.0f, 18.0f);
-                Motor_Driver.Set_Target_Omega_Radian(-Driver_Omega);
+                Motor_Driver.Set_Target_Omega_Radian(Driver_Omega);
             }
             if (shoot_time < ShootTime)
             {

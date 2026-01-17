@@ -145,6 +145,7 @@ public:
     inline float Get_Now_Torque();
     inline float Get_Now_Temperature();
     inline float Get_Zero_Position();
+    inline float Get_Zero_Offset_Radian();
     inline Enum_DJI_Motor_Control_Method Get_Control_Method();
     inline float Get_Target_Angle();
     inline float Get_Target_Radian();
@@ -175,17 +176,6 @@ public:
     void TIM_PID_PeriodElapsedCallback();
     void TIM_SMC_PeriodElapsedCallback();
 
-    float Yaw;
-    float init_Yaw;
-    float Pre_Yaw;
-    float temp_radian;
-
-    float rpm = 1.0f;
-
-    int invert_flag = 0; //正反转标志位
-
-
-    SpikeFilter filter;
 protected:
     //初始化相关变量
 
@@ -201,7 +191,9 @@ protected:
     float Omega_Max;
 
     //常量
-    float Zero_Position;//rad
+    float Zero_Position = 5.80611706f;             //rad
+    float Zero_Offset_Radian = 0.0f;        //rad -PI -- PI
+
     //电机上电第一帧标志位
     uint8_t Start_Falg = 0;
     //一圈编码器刻度
@@ -210,7 +202,6 @@ protected:
     uint16_t Output_Max = 16000;
 
     //内部变量
-    float zero_position = 0.0f;
     float Transform_Angle = 0.0f;
     float Transform_Omega = 0.0f;
     float Transform_Torque = 0.0f;
@@ -670,6 +661,16 @@ float Class_DJI_Motor_GM6020::Get_Out()
 float Class_DJI_Motor_GM6020::Get_Zero_Position()
 {
     return (Zero_Position);
+}
+
+/**
+ * @brief 获取相对软件设置零点的角度
+ *
+ * @return float -PI --- PI
+ */
+inline float Class_DJI_Motor_GM6020::Get_Zero_Offset_Radian()
+{
+  return Zero_Offset_Radian;
 }
 
 float Class_DJI_Motor_GM6020::Get_Transform_Angle()

@@ -252,12 +252,12 @@ public:
 
     void Init();
 
-    inline float Get_Target_Yaw_Angle();
+    inline float Get_Target_Main_Yaw_Angle();
     inline float Get_Target_Pitch_Angle();
     inline Enum_Gimbal_Control_Type Get_Gimbal_Control_Type();
 
     inline void Set_Gimbal_Control_Type(Enum_Gimbal_Control_Type __Gimbal_Control_Type);
-    inline void Set_Target_Yaw_Angle(float __Target_Yaw_Angle);
+    inline void Set_Target_Main_Yaw_Angle(float __Target_Yaw_Angle);
     inline void Set_Target_Pitch_Angle(float __Target_Pitch_Angle);
 
 
@@ -295,7 +295,10 @@ protected:
 
     //读写变量
 
-    // yaw轴角度
+    // Main_Yaw轴角度
+    float Target_Main_Yaw_Angle = 0.0f;
+
+    // 小Yaw目标角度
     float Target_Yaw_Angle = 0.0f;
 
     // pitch轴角度
@@ -317,9 +320,9 @@ protected:
  *
  * @return float yaw轴角度
  */
-float Class_Gimbal::Get_Target_Yaw_Angle()
+float Class_Gimbal::Get_Target_Main_Yaw_Angle()
 {
-    return (Target_Yaw_Angle);
+    return (Target_Main_Yaw_Angle);
 }
 /**
  * @brief 获取yaw轴角度
@@ -354,9 +357,9 @@ void Class_Gimbal::Set_Gimbal_Control_Type(Enum_Gimbal_Control_Type __Gimbal_Con
  * @brief 设定yaw轴角度
  *
  */
-void Class_Gimbal::Set_Target_Yaw_Angle(float __Target_Yaw_Angle)
+void Class_Gimbal::Set_Target_Main_Yaw_Angle(float __Target_Main_Yaw_Angle)
 {
-    Target_Yaw_Angle = __Target_Yaw_Angle;
+    Target_Main_Yaw_Angle = __Target_Main_Yaw_Angle;
 }
 /**
  * @brief 设定pitch轴角度

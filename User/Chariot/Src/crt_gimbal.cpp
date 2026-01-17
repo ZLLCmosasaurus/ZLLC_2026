@@ -23,6 +23,26 @@
 
 /* Function prototypes -------------------------------------------------------*/
 
+
+/**
+ * @brief 对于电机角度控制时的突变点处理
+ * @param Target_Angle 
+ * @param Now_Angle 
+ */
+void Angle_Continuity_Process(float* Target_Angle, float Now_Angle){
+    float Diff_Angle = *Target_Angle - Now_Angle;
+    while (Diff_Angle > 180.0f)
+    {
+        *Target_Angle -= (2 * 180.0f);
+        Diff_Angle = *Target_Angle - Now_Angle;
+    }
+    while (Diff_Angle < -180.0f)
+    {
+        *Target_Angle += (2 * 180.0f);
+        Diff_Angle = *Target_Angle - Now_Angle;
+    }
+}
+
 /**
  * @brief 云台初始化
  *
@@ -35,20 +55,20 @@ void Class_Gimbal::Init()
     External_IMU.Init(0.0);
 
     // main电机
-    Motor_Main_Yaw.PID_Angle.Init(0.0f, 0.0f, 0.0f, 0.0f, 3, 15);
-    Motor_Main_Yaw.PID_Omega.Init(0.0f, 0.0f, 0.0f, 0.0f, 400.0f, 2048.0f);
+    Motor_Main_Yaw.PID_Angle.Init(0.4f, 0.0f, 0.0f, 0.0f, 3, 15);
+    Motor_Main_Yaw.PID_Omega.Init(230.0f, 0.0f, 0.0f, 0.0f, 400.0f, 2048.0f);
     Motor_Main_Yaw.PID_Torque.Init(0.f, 0.0f, 0.0f, 0.0f, Motor_Main_Yaw.Get_Output_Max(), Motor_Main_Yaw.Get_Output_Max());            //这样一直输出的都是0，失能
     Motor_Main_Yaw.Init(&hfdcan2, LK_Motor_ID_0x141, LK_Motor_Control_Method_ANGLE, MAIN_YAW_ENCODER_OFFSET);
 
     // yaw轴电机
-    Motor_Yaw.PID_Angle.Init(0.f, 0.0f, 0.0f, 0.0f, 500, 500);
-    Motor_Yaw.PID_Omega.Init(0.0f, 0.0f, 0.0f, 0.0f, 6000, Motor_Yaw.Get_Output_Max(), 10.f, 50.f);
+    Motor_Yaw.PID_Angle.Init(7.f, 0.0f, 0.0f, 0.0f, 500, 500);
+    Motor_Yaw.PID_Omega.Init(5000.0f, 0.0f, 0.0f, 0.0f, 6000, Motor_Yaw.Get_Output_Max());
     Motor_Yaw.PID_Torque.Init(0.f, 0.0f, 0.0f, 0.0f, Motor_Yaw.Get_Output_Max(), Motor_Yaw.Get_Output_Max());
     Motor_Yaw.Init(&hfdcan1, DJI_Motor_ID_0x205, DJI_Motor_Control_Method_ANGLE, YAW_ENCODER_OFFSET);
     
     // pitch轴电机
     Motor_Pitch.PID_Angle.Init(0.f, 0.0f, 0.0f, 0.0f, 50.f, 100.f);
-    Motor_Pitch.PID_Omega.Init(0.0f, 0.0f, 0.0f, 0.0f, 6000, Motor_Pitch.Get_Output_Max(),0.f,0.f,40.f);
+    Motor_Pitch.PID_Omega.Init(0.0f, 0.0f, 0.0f, 0.0f, 6000, Motor_Pitch.Get_Output_Max());
     Motor_Pitch.PID_Torque.Init(0.f, 0.0f, 0.0f, 0.0f, Motor_Pitch.Get_Output_Max(), Motor_Pitch.Get_Output_Max());
     Motor_Pitch.Init(&hfdcan1, DJI_Motor_ID_0x206, DJI_Motor_Control_Method_ANGLE, 3413);
 }
@@ -61,7 +81,6 @@ void Class_Gimbal::Init()
 
 void Class_Gimbal::Output()
 {
-    float Main_Diff_Angle = 0.0f;               //大Yaw角度优化处理的相差角度
     static float pre_yaw_angle = 0.0f, pre_pitch_angle = 0.0f, pre_main_yaw_angle = 0.0f;
 
     if (Gimbal_Control_Type == Gimbal_Control_Type_DISABLE)
@@ -94,16 +113,19 @@ void Class_Gimbal::Output()
             Motor_Pitch.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
             Motor_Main_Yaw.Set_LK_Motor_Control_Method(LK_Motor_Control_Method_ANGLE);
 
+            Target_Yaw_Angle = 0.0f;
+
             //对于大Yaw控制的突变点与优劣弧处理       0--2*PI
-            Main_Diff_Angle = Normalize_Angle_Radian_PI_to_PI(Target_Yaw_Angle - Boardc_BMI.Get_Angle_Yaw());
+            Angle_Continuity_Process(&Target_Main_Yaw_Angle, Boardc_BMI.Get_Angle_Yaw());
+            Angle_Continuity_Process(&Target_Yaw_Angle, Motor_Yaw.Get_Zero_Offset_Radian() * 180.0f / 3.14159f);
 
             // 限制角度
             Math_Constrain(&Target_Pitch_Angle, Min_Pitch_Angle, Max_Pitch_Angle);
 
             // 设置目标角度    Motor_Yaw的角度是以偏置零点为原点，改Encoder_offset实现校准
-            Motor_Yaw.Set_Target_Angle(0.0f);                       //可能可以加前馈
+            Motor_Yaw.Set_Target_Angle(Target_Yaw_Angle);                       //可能可以加前馈
             Motor_Pitch.Set_Target_Angle(Target_Pitch_Angle);
-            Motor_Main_Yaw.Set_Target_Angle(Target_Yaw_Angle + Main_Diff_Angle);
+            Motor_Main_Yaw.Set_Target_Angle(Target_Main_Yaw_Angle);
 
             pre_yaw_angle      = 0.0f;
             pre_pitch_angle    = Motor_Pitch.Get_Now_Angle();
@@ -145,8 +167,13 @@ void Class_Gimbal::Output()
                 if(MiniPC->Get_Rx_Yaw_Angle() == 0.0f && MiniPC->Get_Rx_Pitch_Angle() == 0.0f)
                 {
                     //这里并不是上一个目标点而是丢失目标后的最后当前点
-                    Motor_Yaw.Set_Target_Angle(pre_yaw_angle);
-                    Motor_Pitch.Set_Target_Angle(pre_pitch_angle);
+                    Target_Yaw_Angle   = pre_yaw_angle;
+                    Target_Pitch_Angle = pre_pitch_angle;
+
+                    Angle_Continuity_Process(&Target_Yaw_Angle, Motor_Yaw.Get_Zero_Offset_Radian() * 180.0f / 3.14159f);
+
+                    Motor_Yaw.Set_Target_Angle(Target_Yaw_Angle);
+                    Motor_Pitch.Set_Target_Angle(Target_Pitch_Angle);
                 }
                 else
                 {
@@ -157,8 +184,13 @@ void Class_Gimbal::Output()
                     Math_Constrain(&MiniPC_Target_Yaw, -LIMIT_YAW_ANGLE, LIMIT_YAW_ANGLE);
                     Math_Constrain(&MiniPC_Target_Pitch, Min_Pitch_Angle, Max_Pitch_Angle);
 
-                    Motor_Yaw.Set_Target_Angle(MiniPC_Target_Yaw);
-                    Motor_Pitch.Set_Target_Angle(MiniPC_Target_Pitch);
+                    Target_Yaw_Angle   = MiniPC_Target_Yaw;
+                    Target_Pitch_Angle = MiniPC_Target_Pitch;
+
+                    Angle_Continuity_Process(&Target_Yaw_Angle, Motor_Yaw.Get_Zero_Offset_Radian() * 180.0f / 3.14159f);
+
+                    Motor_Yaw.Set_Target_Angle(Target_Yaw_Angle);
+                    Motor_Pitch.Set_Target_Angle(Target_Pitch_Angle);
 
                     pre_yaw_angle = Motor_Yaw.Get_Now_Angle();
                     pre_pitch_angle = Motor_Pitch.Get_Now_Angle();
@@ -166,15 +198,18 @@ void Class_Gimbal::Output()
             }
 
             // 大yaw控制逻辑   由上位机控制是否转动
-            Target_Yaw_Angle = Boardc_BMI.Get_Angle_Yaw();                  //角度一直更新防止切回手动控制Target还是上一次的数据
             if(fabs(MiniPC->Get_Rx_Target_Omega_Yaw_Main()) < 0.01f){
                 Motor_Main_Yaw.Set_LK_Motor_Control_Method(LK_Motor_Control_Method_ANGLE);
-                Main_Diff_Angle = Normalize_Angle_Radian_PI_to_PI(pre_main_yaw_angle - Boardc_BMI.Get_Angle_Yaw());
-                Motor_Main_Yaw.Set_Target_Angle(pre_main_yaw_angle + Main_Diff_Angle);
+
+                Target_Main_Yaw_Angle = pre_main_yaw_angle;
+                Angle_Continuity_Process(&Target_Main_Yaw_Angle, Boardc_BMI.Get_Angle_Yaw());
+
+                Motor_Main_Yaw.Set_Target_Angle(Target_Main_Yaw_Angle);
                 Motor_Main_Yaw.Set_Target_Omega_Angle(0.0f);
                 
             }
             else{
+                Target_Main_Yaw_Angle = Boardc_BMI.Get_Angle_Yaw();                  //角度一直更新防止切回手动控制Target还是上一次的数据
                 Motor_Main_Yaw.Set_LK_Motor_Control_Method(LK_Motor_Control_Method_OMEGA);
                 Motor_Main_Yaw.Set_Target_Omega_Angle(MiniPC->Get_Rx_Target_Omega_Yaw_Main());     //实际上单位是rad
                 pre_main_yaw_angle = Boardc_BMI.Get_Angle_Yaw();                                   //不能像其他变量一样一直更新，不然目标角度会一直变化，会有问题         
@@ -183,22 +218,24 @@ void Class_Gimbal::Output()
         }
         else if ((Get_Gimbal_Control_Type() == Gimbal_Control_Type_MINIPC) && (MiniPC->Get_MiniPC_Status() == MiniPC_Status_DISABLE))
         {
-            Target_Yaw_Angle = Boardc_BMI.Get_Angle_Yaw();
-
             Motor_Yaw.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
             Motor_Pitch.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
             Motor_Main_Yaw.Set_LK_Motor_Control_Method(LK_Motor_Control_Method_ANGLE);
 
-            Main_Diff_Angle = Normalize_Angle_Radian_PI_to_PI(pre_main_yaw_angle - Boardc_BMI.Get_Angle_Yaw());
+            Target_Yaw_Angle      = pre_yaw_angle;
+            Target_Pitch_Angle    = pre_pitch_angle;
+            Target_Main_Yaw_Angle = pre_main_yaw_angle;
+            Angle_Continuity_Process(&Target_Main_Yaw_Angle, Boardc_BMI.Get_Angle_Yaw());
+            Angle_Continuity_Process(&Target_Yaw_Angle, Motor_Yaw.Get_Zero_Offset_Radian() * 180.0f / 3.14159f);
 
             // 限制角度
+            Math_Constrain(&Target_Yaw_Angle,-LIMIT_YAW_ANGLE, LIMIT_YAW_ANGLE);            
             Math_Constrain(&Target_Pitch_Angle, Min_Pitch_Angle, Max_Pitch_Angle);
-            //Math_Constrain(&Target_Yaw_Angle,-LIMIT_YAW_ANGLE, LIMIT_YAW_ANGLE);            //有问题！！！！！
 
             // 设置目标角度
-            Motor_Yaw.Set_Target_Angle(pre_yaw_angle);
-            Motor_Pitch.Set_Target_Angle(pre_pitch_angle);
-            Motor_Main_Yaw.Set_Target_Angle(pre_main_yaw_angle + Main_Diff_Angle);
+            Motor_Yaw.Set_Target_Angle(Target_Yaw_Angle);
+            Motor_Pitch.Set_Target_Angle(Target_Pitch_Angle);
+            Motor_Main_Yaw.Set_Target_Angle(Target_Main_Yaw_Angle);
 
         }
     }
@@ -215,7 +252,7 @@ void Class_Gimbal::TIM_Calculate_PeriodElapsedCallback()
 
     //数据传输更新        记得对方向
     Motor_Yaw.Set_Transform_Omega(External_IMU.Get_Gyro_Yaw());
-    Motor_Yaw.Set_Transform_Angle(Motor_Yaw.Get_Now_Angle());
+    Motor_Yaw.Set_Transform_Angle(Motor_Yaw.Get_Zero_Offset_Radian());
 
     Motor_Main_Yaw.Set_Transform_Omega(Boardc_BMI.Get_Gyro_Yaw());
     Motor_Main_Yaw.Set_Transform_Angle(Boardc_BMI.Get_Angle_Yaw());

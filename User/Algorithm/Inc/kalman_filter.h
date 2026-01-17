@@ -99,13 +99,13 @@ typedef struct kf_t
     int8_t MatStatus;
 
     // 用户定义函数,可以替换或扩展基准KF的功能
-    void (*User_Func0_f)(struct kf_t *kf);
-    void (*User_Func1_f)(struct kf_t *kf);
-    void (*User_Func2_f)(struct kf_t *kf);
-    void (*User_Func3_f)(struct kf_t *kf);
-    void (*User_Func4_f)(struct kf_t *kf);
-    void (*User_Func5_f)(struct kf_t *kf);
-    void (*User_Func6_f)(struct kf_t *kf);
+    void (*User_Func0_f)(struct kf_t *kf, void* Para1);
+    void (*User_Func1_f)(struct kf_t *kf, void* Para1);
+    void (*User_Func2_f)(struct kf_t *kf, void* Para1);
+    void (*User_Func3_f)(struct kf_t *kf, void* Para1);
+    void (*User_Func4_f)(struct kf_t *kf, void* Para1);
+    void (*User_Func5_f)(struct kf_t *kf, void* Para1);
+    void (*User_Func6_f)(struct kf_t *kf, void* Para1);
     
     // 矩阵存储空间指针
     float *xhat_data, *xhatminus_data;
@@ -130,6 +130,6 @@ void Kalman_Filter_PminusUpdate(KalmanFilter_t *kf);
 void Kalman_Filter_SetK(KalmanFilter_t *kf);
 void Kalman_Filter_xhatUpdate(KalmanFilter_t *kf);
 void Kalman_Filter_P_Update(KalmanFilter_t *kf);
-float *Kalman_Filter_Update(KalmanFilter_t *kf);
+float *Kalman_Filter_Update(KalmanFilter_t *kf, void* Para1);
 
 #endif //__KALMAN_FILTER_H

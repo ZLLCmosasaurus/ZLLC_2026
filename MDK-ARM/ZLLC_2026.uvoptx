@@ -120,7 +120,6 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>DLGUARM</Key>
-          <Name>*</Name>
         </SetRegEntry>
         <SetRegEntry>
           <Number>0</Number>
@@ -219,6 +218,11 @@
           <count>13</count>
           <WinNumber>1</WinNumber>
           <ItemText>Count_F,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>14</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>Target_Yaw_Angle</ItemText>
         </Ww>
       </WatchWindow1>
       <Tracepoint>
