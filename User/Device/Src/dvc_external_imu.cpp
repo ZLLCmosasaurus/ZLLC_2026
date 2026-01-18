@@ -2,16 +2,14 @@
 
 void Class_External_IMU::TIM1msMod50_Alive_PeriodElapsedCallback(void)
 {
-    if(imu_start_flag)  //陀螺仪已经开启通讯
+    if (Flag == Pre_Flag) // 判断陀螺仪是否掉线
     {
-        if(Flag == Pre_Flag)  //判断陀螺仪是否掉线
-        {
-            IMU_Status = IMU_Status_DISABLE;
-        }
-        else IMU_Status = IMU_Status_ENABLE;
-
-        Pre_Flag = Flag;
+        IMU_Status = IMU_Status_DISABLE;
     }
+    else
+        IMU_Status = IMU_Status_ENABLE;
+
+    Pre_Flag = Flag;
 }
 
 void Class_External_IMU::UART_BMI_Data_Process(uint8_t *Buffer){

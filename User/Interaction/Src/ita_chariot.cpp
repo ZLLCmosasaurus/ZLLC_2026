@@ -276,6 +276,15 @@ void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback(uint8_t *Rx_Data)
             chassis_velocity_x = 1.0f * ((float)(gimbal_velocity_x * cos(delta_angle) - gimbal_velocity_y * sin(delta_angle)));
             chassis_velocity_y = 1.0f * ((float)(gimbal_velocity_x * sin(delta_angle) + gimbal_velocity_y * cos(delta_angle)));
 
+            if(Motor_Main_Yaw.Get_LK_Motor_Status() == LK_Motor_Status_DISABLE){
+                return;
+            }
+            for(auto steer:Chassis.Motor_Steer){
+                if(steer.Get_MA600_Status() == MA600_Status_DISABLE){
+                    return;
+                }
+            }
+
             //设定底盘控制类型
             Chassis.Set_Chassis_Control_Type(chassis_control_type);
             //设定底盘目标速度
@@ -474,7 +483,7 @@ void Class_Chariot::Control_Chassis()
                 Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SPIN);
                 gimbal_velocity_x = 0.0f;
                 gimbal_velocity_y = 0.0f;
-                chassis_omega     = CHASSIS_SPIN_OMEGA;
+                chassis_omega     = 1.0f;//CHASSIS_SPIN_OMEGA;
                 break;
             }
 
@@ -772,6 +781,7 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
             }
             for (auto& steer : Chassis.Motor_Steer) {
                 steer.TIM_Alive_PeriodElapsedCallback();
+                steer.MA600_TIM_Alive_PeriodElapsedCallback();
             }          
             if(mod50_mod3%3 == 0)
             {
@@ -787,6 +797,15 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
                 Chassis.Set_Target_Velocity_Y(0);
                 Chassis.Set_Target_Omega(0);
             }   
+            for (auto& steer : Chassis.Motor_Steer) {
+                if(steer.Get_MA600_Status() == MA600_Status_DISABLE){
+                    Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
+                    Chassis.Set_Target_Velocity_X(0);
+                    Chassis.Set_Target_Velocity_Y(0);
+                    Chassis.Set_Target_Omega(0);
+                }
+            } 
+
         #elif defined(GIMBAL)
 
             if(mod50_mod3%3==0)

@@ -28,7 +28,7 @@
 /* Exported macros -----------------------------------------------------------*/
 class Class_Chariot;
 /* Exported types ------------------------------------------------------------*/
-#define CHASSIS_SPIN_OMEGA  2.0f
+#define CHASSIS_SPIN_OMEGA  3.0f
 
 /**
  * @brief 云台Pitch状态枚举
@@ -273,7 +273,7 @@ protected:
         float DR16_Keyboard_Chassis_Speed_Resolution_Big = 0.01f;
 
         //DR16云台yaw灵敏度系数(0.001PI表示yaw速度最大时为1rad/s)
-        float DR16_Yaw_Angle_Resolution = 0.0008f * PI * 57.29577951308232;
+        float DR16_Yaw_Angle_Resolution = 0.0016f * PI * 57.29577951308232;
         //DR16云台pitch灵敏度系数(0.001PI表示pitch速度最大时为1rad/s)
         float DR16_Pitch_Angle_Resolution = 0.0003f * PI * 57.29577951308232;
 

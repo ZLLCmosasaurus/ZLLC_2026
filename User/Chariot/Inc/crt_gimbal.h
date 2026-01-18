@@ -29,8 +29,8 @@
 #define YAW_ENCODER_OFFSET  3400
 #define MAIN_YAW_ENCODER_OFFSET 2048
 
-#define CRUISE_PITCH_SPEED 70.0f
-#define CRUISE_YAW_SPEED   100.0f
+#define CRUISE_PITCH_SPEED 1.0f                 //rad
+#define CRUISE_YAW_SPEED   1.0f                 //rad
 #define LIMIT_YAW_ANGLE    50.0f
 
 /**
@@ -249,6 +249,7 @@ public:
     // pitch轴电机
     Class_DJI_Motor_GM6020 Motor_Pitch;
 
+    Class_Filter_Kalman External_IMU_Gyro_Yaw;
 
     void Init();
 
@@ -283,8 +284,10 @@ protected:
     // pitch轴最大值
     float Max_Pitch_Angle = 25.0f ; //多10°
 
-    //内部变量 
+    float Yaw_Compensite_KF = 150.0f;
+    float Yaw_Compensite_Output = 0.0f;
 
+    //内部变量 
 
     //读变量
 

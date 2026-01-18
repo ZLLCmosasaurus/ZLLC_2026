@@ -40,6 +40,16 @@ enum Enum_DJI_Motor_Status
 };
 
 /**
+ * @brief 磁编状态
+ *
+ */
+enum Enum_MA600_Status
+{
+    MA600_Status_DISABLE = 0,
+    MA600_Status_ENABLE,
+};
+
+/**
  * @brief 大疆电机的ID枚举类型
  *
  */
@@ -146,6 +156,7 @@ public:
     inline float Get_Now_Temperature();
     inline float Get_Zero_Position();
     inline float Get_Zero_Offset_Radian();
+    inline float Get_Zero_Offset_Angle();
     inline Enum_DJI_Motor_Control_Method Get_Control_Method();
     inline float Get_Target_Angle();
     inline float Get_Target_Radian();
@@ -176,6 +187,8 @@ public:
     void TIM_PID_PeriodElapsedCallback();
     void TIM_SMC_PeriodElapsedCallback();
 
+    void Compensite_Output(float Compensite_Value);
+
 protected:
     //初始化相关变量
 
@@ -193,13 +206,14 @@ protected:
     //常量
     float Zero_Position = 5.80611706f;             //rad
     float Zero_Offset_Radian = 0.0f;        //rad -PI -- PI
+    float Zero_Offset_Angle = 0.0f;
 
     //电机上电第一帧标志位
     uint8_t Start_Falg = 0;
     //一圈编码器刻度
     uint16_t Encoder_Num_Per_Round = 8192;
     //最大输出电压
-    uint16_t Output_Max = 16000;
+    uint16_t Output_Max = 25000;
 
     //内部变量
     float Transform_Angle = 0.0f;
@@ -227,7 +241,7 @@ protected:
     Enum_DJI_Motor_Control_Method DJI_Motor_Control_Method = DJI_Motor_Control_Method_IMU_ANGLE;
     //目标的角度, °
     float Target_Angle = 0.0f;
-    //目标的速度, °/s
+    //目标的速度, rad
     float Target_Omega_Angle = 0.0f;
     //目标的角度, rad
     float Target_Radian = 0.0f;
@@ -467,6 +481,7 @@ protected:
 class Class_DJI_Motor_C620_Steer : public Class_DJI_Motor_C620{
 
 public:
+    inline Enum_MA600_Status Get_MA600_Status();
     inline float Get_Now_Zero_Offset_Radian();
     inline float Get_Zero_Position();
 
@@ -477,6 +492,7 @@ public:
     void MA600_Data_Process(Struct_CAN_Rx_Buffer *CAN_RxMessage);
 
     void TIM_PID_PeriodElapsedCallback();
+    void MA600_TIM_Alive_PeriodElapsedCallback();
 
 protected :
     struct {
@@ -484,6 +500,11 @@ protected :
         float Multi_Radian;
         float Omega;
     } MA600_Data;
+
+    Enum_MA600_Status MA600_Status = MA600_Status_DISABLE;
+
+    int MA600_Flag = 0;
+    int MA600_Pre_Flag = 0;
 
     float Transform_Radian = 0.0f;
     float Transform_Radian_Omega = 0.0f;
@@ -673,6 +694,16 @@ inline float Class_DJI_Motor_GM6020::Get_Zero_Offset_Radian()
   return Zero_Offset_Radian;
 }
 
+/**
+ * @brief 获取相对软件设置零点的角度
+ *
+ * @return float -180 --- 180
+ */
+inline float Class_DJI_Motor_GM6020::Get_Zero_Offset_Angle()
+{
+  return Zero_Offset_Angle;
+}
+
 float Class_DJI_Motor_GM6020::Get_Transform_Angle()
 {
     return (Transform_Angle);
@@ -731,9 +762,9 @@ void Class_DJI_Motor_GM6020::Set_Target_Omega_Radian(float __Target_Omega_Radian
 }
 
 /**
- * @brief 设定目标的速度, °/s
+ * @brief 设定目标的速度, rad
  *
- * @param __Target_Omega 目标的速度, °/s
+ * @param __Target_Omega 目标的速度, rad
  */
 void Class_DJI_Motor_GM6020::Set_Target_Omega_Angle(float __Target_Omega_Angle)
 {
@@ -1232,8 +1263,17 @@ void Class_DJI_Motor_C620::Set_Out(float __Out)
     Out = __Out;
 }
 
-inline float Class_DJI_Motor_C620_Steer::Get_Now_Zero_Offset_Radian(){
-    return Zero_Offset_Radian;
+/**
+ * @brief 获取磁编状态
+ */
+inline Enum_MA600_Status Class_DJI_Motor_C620_Steer::Get_MA600_Status()
+{
+  return MA600_Status;
+}
+
+inline float Class_DJI_Motor_C620_Steer::Get_Now_Zero_Offset_Radian()
+{
+  return Zero_Offset_Radian;
 }
 
 inline float Class_DJI_Motor_C620_Steer::Get_Zero_Position(){

@@ -306,6 +306,7 @@ void Class_DJI_Motor_GM6020::Data_Process()
     Data.Now_Temperature = tmp_temperature + CELSIUS_TO_KELVIN;			
 
     Zero_Offset_Radian = Normalize_Angle_Radian_PI_to_PI(Data.Now_Radian - Zero_Position);
+    Zero_Offset_Angle  = Zero_Offset_Radian * 180.0f / 3.14159f;
 
     //存储预备信息
     Data.Pre_Encoder = tmp_encoder;
@@ -444,6 +445,16 @@ void Class_DJI_Motor_GM6020::TIM_SMC_PeriodElapsedCallback()
             break;
         }
     }
+}
+
+/**
+ * @brief 额外的力矩补偿
+ * @param Compensite_Value 
+ */
+void Class_DJI_Motor_GM6020::Compensite_Output(float Compensite_Value)
+{
+    Out += Compensite_Value;
+    Output();
 }
 
 /**
@@ -882,11 +893,31 @@ void Class_DJI_Motor_C620_Steer::TIM_PID_PeriodElapsedCallback()
     Output();
 }
 
+
+/**
+ * @brief 磁编存活判断函数
+ */
+void Class_DJI_Motor_C620_Steer::MA600_TIM_Alive_PeriodElapsedCallback()
+{
+    if (MA600_Flag == MA600_Pre_Flag)
+    {
+        MA600_Status = MA600_Status_DISABLE;
+    }
+    else
+    {
+        MA600_Status = MA600_Status_ENABLE;
+    }
+    MA600_Pre_Flag = MA600_Flag;
+}
+
 void Class_DJI_Motor_C620_Steer::MA600_Data_Process(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
      if(CAN_RxMessage->Data[0] != 0xA5 || CAN_RxMessage->Data[7] != 0xB5){
         return;
     }
+    
+    MA600_Flag ++;
+
     int16_t temp_Single_Radian = CAN_RxMessage->Data[2] << 8 | CAN_RxMessage->Data[1];
     int16_t temp_Multi_Radian  = CAN_RxMessage->Data[4] << 8 | CAN_RxMessage->Data[3];
     int16_t temp_Omega         = CAN_RxMessage->Data[6] << 8 | CAN_RxMessage->Data[5];

@@ -419,7 +419,6 @@ void Task100us_TIM4_Callback()
         DWT_GetDeltaT(&imu_cnt);
         chariot.Gimbal.Boardc_BMI.TIM_Calculate_PeriodElapsedCallback();
         IMU_Dt = DWT_GetDeltaT(&imu_cnt);
-        chariot.Gimbal.External_IMU.TIM_Calculate_PeriodElapsedCallback();
 
         if(chariot.Referee.Get_Game_Stage() == Referee_Game_Status_Stage_BATTLE){                               //比赛开始状态
             chariot.DR16.Set_Left_Switch(DR16_Switch_Status_DOWN);                  //保险 强制上位机
@@ -429,12 +428,24 @@ void Task100us_TIM4_Callback()
         else{                                                                       //非比赛状态
             chariot.FSM_Alive_Control.Reload_TIM_Status_PeriodElapsedCallback();    //遥控器离线失能保护
 
-            if(chariot.DR16.Get_DR16_Status() == DR16_Status_ENABLE){               //如果遥控器不在线也跑，就会和FSM抢状态，车子不能正确失能了
+            if(chariot.DR16.Get_DR16_Status() == DR16_Status_ENABLE && 
+                chariot.Gimbal.External_IMU.Get_IMU_Status() == IMU_Status_ENABLE){               //如果遥控器不在线也跑，就会和FSM抢状态，车子不能正确失能了
                 chariot.TIM_Control_Callback();
             }
         }
 
-    #endif
+        if (chariot.Gimbal.External_IMU.Get_IMU_Status() == IMU_Status_DISABLE)
+        { // IMU失能保护
+            chariot.Booster.Set_Booster_Control_Type(Booster_Control_Type_DISABLE);
+            chariot.Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_DISABLE);
+            chariot.Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
+        }
+        else
+        {
+            chariot.Gimbal.External_IMU.TIM_Calculate_PeriodElapsedCallback();
+        }
+
+#endif
 }
 
 

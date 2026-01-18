@@ -414,21 +414,21 @@ protected:
     Enum_Auto_aim_Status Auto_aim_Status = Auto_aim_Status_DISABLE;
 
 
-    float Rx_Chassis_Target_Omega;
-    float Rx_Chassis_Target_Velocity_X;
-    float Rx_Chassis_Target_Velocity_Y;
-    float Rx_Gimbal_Angular_Velocity_Yaw_Main;
+    float Rx_Chassis_Target_Omega = 0.0f;
+    float Rx_Chassis_Target_Velocity_X = 0.0f;
+    float Rx_Chassis_Target_Velocity_Y = 0.0f;
+    float Rx_Gimbal_Angular_Velocity_Yaw_Main = 0.0f;
 
-	float Now_Angle_Roll;
-    float Now_Angle_Pitch;
-    float Now_Angle_Yaw;
-    float Now_Angle_Main_Yaw;
+	float Now_Angle_Roll = 0.0f;
+    float Now_Angle_Pitch = 0.0f;
+    float Now_Angle_Yaw = 0.0f;
+    float Now_Angle_Main_Yaw = 0.0f;
 
-    float Now_Angle_Relative;                       //大Yaw电机的角度
+    float Now_Angle_Relative = 0.0f;                       //大Yaw电机的角度
 
-	float Rx_Angle_Roll;
-	float Rx_Angle_Pitch;
-	float Rx_Angle_Yaw;
+	float Rx_Angle_Roll = 0.0f;
+	float Rx_Angle_Pitch = 0.0f;
+	float Rx_Angle_Yaw = 0.0f;
 
     const float g = 9.8; // 重力加速度
     float bullet_v = 24.0; // 子弹速度
