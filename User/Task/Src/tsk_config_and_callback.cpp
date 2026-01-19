@@ -371,6 +371,18 @@ void Gimbal_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
         chariot.Gimbal.J3_Yaw_4340P.CAN_RxCpltCallback(CAN_RxMessage->Data);
     }
     break;
+
+    case (0xA5): // J4 - 4340P - Pitch
+    {
+        chariot.Gimbal.J4_Pitch_4340P.CAN_RxCpltCallback(CAN_RxMessage->Data);
+    }
+    break;
+    
+    case (0xA6): // J5 - 4340P - Yaw
+    {
+        chariot.Gimbal.J5_Yaw_4340P.CAN_RxCpltCallback(CAN_RxMessage->Data);
+    }
+    break;
     }
 }
 #endif
@@ -406,15 +418,6 @@ void Gimbal_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 
     switch (CAN_RxMessage->Header.Identifier)
     {
-    case (0xA5):  // J4 - 4340P - Pitch
-    {
-        chariot.Gimbal.J4_Pitch_4340P.CAN_RxCpltCallback(CAN_RxMessage->Data);
-        break;
-    }
-    case (0xA6): // J5 - 4340P - Yaw
-    {
-        chariot.Gimbal.J5_Yaw_4340P.CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
     case (0x206):
     {
         chariot.Gimbal.Motor_C610_Gripper.CAN_RxCpltCallback(CAN_RxMessage->Data);
@@ -653,7 +656,6 @@ void Task1ms_TIM5_Callback()
         {
             // 强制使能云台
             chariot.Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
-
         }
         else
 #endif

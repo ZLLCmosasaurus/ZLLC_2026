@@ -495,8 +495,8 @@ protected:
     float J3_Yaw_Min_Radian = -0.5f * PI;
     float J3_Yaw_Max_Radian = 0.5f * PI;
 
-    float J4_Pitch_Min_Radian = -0.5f * PI;
-    float J4_Pitch_Max_Radian = 0.5f * PI;
+    float J4_Pitch_Min_Radian = -0.77f * PI;
+    float J4_Pitch_Max_Radian = 0.77f * PI;
 
     float J5_Yaw_Min_Radian = -0.5f * PI;
     float J5_Yaw_Max_Radian = 0.5f * PI;

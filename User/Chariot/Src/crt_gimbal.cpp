@@ -88,9 +88,9 @@ void Class_Gimbal::Init()
     J0_Pitch_4340.Init(&hfdcan1, DM_Motor_ID_0xA1, DM_Motor_Control_Method_POSITION_OMEGA, 0, 20.0f, 20.0f);
     J1_Yaw_8009P.Init(&hfdcan1, DM_Motor_ID_0xA2, DM_Motor_Control_Method_POSITION_OMEGA, 0, 20.0f, 10.0f);
     J2_Yaw_4340P.Init(&hfdcan1, DM_Motor_ID_0xA3, DM_Motor_Control_Method_POSITION_OMEGA, 0, 20.0f, 10.0f);
-    J3_Yaw_4340P.Init(&hfdcan2, DM_Motor_ID_0xA4, DM_Motor_Control_Method_POSITION_OMEGA, 0, 20.0f, 10.0f);
-    J4_Pitch_4340P.Init(&hfdcan2, DM_Motor_ID_0xA5, DM_Motor_Control_Method_POSITION_OMEGA, 0, 20.0f, 20.0f);
-    J5_Yaw_4340P.Init(&hfdcan2, DM_Motor_ID_0xA6, DM_Motor_Control_Method_POSITION_OMEGA, 0, 20.0f, 10.0f);
+    J3_Yaw_4340P.Init(&hfdcan1, DM_Motor_ID_0xA4, DM_Motor_Control_Method_POSITION_OMEGA, 0, 20.0f, 10.0f);
+    J4_Pitch_4340P.Init(&hfdcan1, DM_Motor_ID_0xA5, DM_Motor_Control_Method_POSITION_OMEGA, 0, 20.0f, 20.0f);
+    J5_Yaw_4340P.Init(&hfdcan1, DM_Motor_ID_0xA6, DM_Motor_Control_Method_POSITION_OMEGA, 0, 20.0f, 10.0f);
 
     Motor_C610_Gripper.PID_Angle.Init(42.5f, 5.0f, 0.0f, 0.0f, 500, 500, 500);
     Motor_C610_Gripper.PID_Omega.Init(1800.0f, 0.0f, 0.0f, 0.0f, 2000, 4000, 10.f, 50.f); // 尝试把速度环的Ki禁用，用于夹爪夹紧
