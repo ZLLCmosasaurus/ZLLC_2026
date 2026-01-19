@@ -571,9 +571,9 @@ void MiniPC_UART_Callback(uint8_t *Buffer, uint16_t Length)
 extern Referee_Rx_A_t CAN3_Chassis_Rx_Data_A;
 void Task100us_TIM4_Callback()
 {
+#ifdef CHASSIS
     // 测试
     chariot.Force_Chassis.Boardc_BMI.TIM_Calculate_PeriodElapsedCallback();
-#ifdef CHASSIS
 
 #elif defined(GIMBAL)
     // 单给IMU消息开的定时器 ims
