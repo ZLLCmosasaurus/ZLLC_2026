@@ -454,6 +454,14 @@ void Class_DJI_Motor_GM6020::TIM_SMC_PeriodElapsedCallback()
 void Class_DJI_Motor_GM6020::Compensite_Output(float Compensite_Value)
 {
     Out += Compensite_Value;
+
+    if(Out > Output_Max){
+        Out = Output_Max;
+    }
+    else if(Out < -Output_Max){
+        Out = -Output_Max;
+    }
+
     Output();
 }
 
