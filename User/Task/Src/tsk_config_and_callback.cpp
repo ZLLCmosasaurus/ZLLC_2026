@@ -317,35 +317,6 @@ void Chassis_Device_CAN3_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 #ifdef GIMBAL
 void Gimbal_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
-#ifdef PUMA
-    switch (CAN_RxMessage->Header.Identifier)
-    {
-    case (0xA1): // J0 - DM4310 (Yaw)
-    {
-        chariot.Gimbal.Motor_DM_J0_Yaw.CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
-
-    case (0xA2): // J1 - DM8009P (Pitch)
-    {
-        chariot.Gimbal.Motor_DM_J1_Pitch.CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
-
-    case (0xA3): // J2 - 4340
-    {
-        chariot.Gimbal.Motor_DM_J2_Pitch_2.CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
-
-    case (0xA4): // J3 - 2325
-    {
-        chariot.Gimbal.Motor_DM_J3_Roll.CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
-    }
-#endif
-
     switch (CAN_RxMessage->Header.Identifier)
     {
     case (0xA1): // J0 - 4340 - Pitch
@@ -365,24 +336,6 @@ void Gimbal_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
         chariot.Gimbal.J2_Yaw_4340P.CAN_RxCpltCallback(CAN_RxMessage->Data);
     }
     break;
-
-    case (0xA4): // J3 - 4340P - Yaw
-    {
-        chariot.Gimbal.J3_Yaw_4340P.CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
-
-    case (0xA5): // J4 - 4340P - Pitch
-    {
-        chariot.Gimbal.J4_Pitch_4340P.CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
-    
-    case (0xA6): // J5 - 4340P - Yaw
-    {
-        chariot.Gimbal.J5_Yaw_4340P.CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
     }
 }
 #endif
@@ -395,29 +348,26 @@ void Gimbal_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 #ifdef GIMBAL
 void Gimbal_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
-#ifdef PUMA
     switch (CAN_RxMessage->Header.Identifier)
     {
-    case (0x205):
+    case (0xA4): // J3 - 4340P - Yaw
     {
-        chariot.Gimbal.Motor_6020_J5_Roll_2.CAN_RxCpltCallback(CAN_RxMessage->Data);
-        break;
-    }
-    case (0x206):
-    {
-        chariot.Gimbal.Motor_C610_Gripper.CAN_RxCpltCallback(CAN_RxMessage->Data);
-        break;
-    }
-    case (0xA5): // J4 - 4340
-    {
-        chariot.Gimbal.Motor_DM_J4_Pitch_3.CAN_RxCpltCallback(CAN_RxMessage->Data);
+        chariot.Gimbal.J3_Yaw_4340P.CAN_RxCpltCallback(CAN_RxMessage->Data);
     }
     break;
-    }
-#endif
 
-    switch (CAN_RxMessage->Header.Identifier)
+    case (0xA5): // J4 - 4340P - Pitch
     {
+        chariot.Gimbal.J4_Pitch_4340P.CAN_RxCpltCallback(CAN_RxMessage->Data);
+    }
+    break;
+
+    case (0xA6): // J5 - 4340P - Yaw
+    {
+        chariot.Gimbal.J5_Yaw_4340P.CAN_RxCpltCallback(CAN_RxMessage->Data);
+    }
+    break;
+    
     case (0x206):
     {
         chariot.Gimbal.Motor_C610_Gripper.CAN_RxCpltCallback(CAN_RxMessage->Data);
@@ -679,11 +629,13 @@ void Task1ms_TIM5_Callback()
         mod5++;
         mod100++;
         mod68++;
+#ifdef CHASSIS
         if (mod5 == 4)
         {
             chariot.Chassis.Track_Motor[0].TIM_Process_PeriodElapsedCallback();
             chariot.Chassis.Track_Motor[1].TIM_Process_PeriodElapsedCallback();
         }
+#endif
         if (mod5 == 5)
         {
             // 上位机

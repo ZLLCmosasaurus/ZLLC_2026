@@ -685,64 +685,57 @@ void Class_Chariot::Control_Gimbal()
     这里给一个新变量来存。由于夹爪的控制是通过遥控器/鼠标来进行控制的，不会有别的地方不使用last_gripper_value来对夹爪
     电机赋值，换句话说，在比赛中使用键鼠/遥控器操作时也是在last_gripper_value上进行增减，所以这里就先继续沿用这种方案。 */
     tmp_gripper_radian = last_gripper_value;
+    tmp_j0_pitch_radian = Gimbal.Get_Target_J0_Pitch_Radian();
+    tmp_j1_yaw_radian = Gimbal.Get_Target_J1_Yaw_Radian();
+    tmp_j2_yaw_radian = Gimbal.Get_Target_J2_Yaw_Radian();
+    tmp_j3_yaw_radian = Gimbal.Get_Target_J3_Yaw_Radian();
+    tmp_j4_pitch_radian = Gimbal.Get_Target_J4_Pitch_Radian();
+    tmp_j5_yaw_radian = Gimbal.Get_Target_J5_Yaw_Radian();
 
-    if (DR16.Get_Left_Switch() == DR16_Switch_Status_DOWN) // 左下 失能
+    if (DR16.Get_Left_Switch() == DR16_Switch_Status_UP) // 左上 失能
     {
         Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_DISABLE);
     }
     // 其余位置都是遥控器控制
-    else if (DR16.Get_Left_Switch() == DR16_Switch_Status_UP) // 左上，摇杆控制机械臂
+    else if (DR16.Get_Left_Switch() == DR16_Switch_Status_MIDDLE) // 左中，摇杆控制机械臂
     {
         Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
 
         switch (DR16.Get_Right_Switch())
         {
         case (DR16_Switch_Status_UP):
-            // 右上，左摇杆y轴控制pitch_2，x轴控制roll_1，右摇杆y轴控制pitch_3，x轴控制roll_2
+            // 右上，左摇杆y轴控制pitch_1，x轴控制yaw_1，右摇杆y轴控制yaw_3，x轴控制yaw_2
             {
-                tmp_arm_pitch2 += dr16_left_y * DR16_Pitch_2_Resolution;
-                tmp_arm_roll += dr16_left_x * DR16_Roll_Resolution;
-                tmp_arm_pitch3 -= dr16_right_y * DR16_Pitch_3_Resolution; // 由于装配上的设计，Pitch3角度减小是关节上抬，增大是关节下抬，这里让遥控器直观控制关节的运动
-                tmp_arm_roll_2 += dr16_right_x * DR16_Roll_2_Resolution;
+                tmp_j0_pitch_radian += dr16_left_y * DR16_J0_Pitch_Resolution;
+                tmp_j1_yaw_radian += dr16_left_x * DR16_J1_Yaw_Resolution;
+                tmp_j2_yaw_radian -= dr16_right_y * DR16_J2_Yaw_Resolution; // 由于装配上的设计，Pitch3角度减小是关节上抬，增大是关节下抬，这里让遥控器直观控制关节的运动
+                tmp_j3_yaw_radian += dr16_right_x * DR16_J3_Yaw_Resolution;
                 break;
             }
         case (DR16_Switch_Status_MIDDLE):
             // 右中，左摇杆y轴控制pitch_1，x轴控制yaw，右摇杆y轴控制pitch_2，x轴控制roll_1
             {
-                tmp_arm_yaw += dr16_left_x * DR16_Yaw_Resolution;
-                tmp_arm_pitch1 -= dr16_left_y * DR16_Pitch_1_Resolution;
-                tmp_arm_roll += dr16_right_x * DR16_Roll_Resolution;
-                tmp_arm_pitch2 += dr16_right_y * DR16_Pitch_2_Resolution;
+                tmp_j3_yaw_radian += dr16_left_x * DR16_J3_Yaw_Resolution;
+                tmp_j5_yaw_radian += dr16_right_x * DR16_J5_Yaw_Resolution;
+                tmp_j4_pitch_radian += dr16_right_y * DR16_J4_Pitch_Resolution;
                 break;
             }
         case (DR16_Switch_Status_DOWN):
             // 右下，暂时定为控制末端机构的平动和垂直运动，解算出的目标角度必须使用Gimbal对象中的Set函数，保持模式切换下数据的同步
             {
-#ifdef PUMA
-                // 暂定为测试roll_2的单圈设置函数
-                Gimbal.Set_Target_Roll_2_Radian_Single(single_radian);
-                tmp_arm_roll_2 = Gimbal.Get_Target_Roll_2_Radian();
-#endif
+
                 break;
             }
         }
-#ifdef PUMA
-        Math_Constrain(&tmp_arm_yaw, -PI, PI);
-        Math_Constrain(&tmp_arm_pitch1, 0.0f, 1.90f);
-        Math_Constrain(&tmp_arm_pitch2, 0.0f, 1.92f);
-        Math_Constrain(&tmp_arm_pitch3, -2.56f, 0.0f);
-        Math_Constrain(&tmp_arm_roll, Gimbal.Get_Roll_Min_Radian(), 300.0f + Gimbal.Get_Roll_Min_Radian()); // tmp_arm_roll是用来进行增量的角度，校准是逆时针校准，所以范围设置在0-300.0f
 
-        // 给各个关节赋角度
-        Gimbal.Set_Target_Yaw_Radian(tmp_arm_yaw);
-        Gimbal.Set_Target_Pitch_Radian(tmp_arm_pitch1);
-        Gimbal.Set_Target_Pitch_2_Radian(tmp_arm_pitch2);
-        Gimbal.Set_Target_Pitch_3_Radian(tmp_arm_pitch3);
-        Gimbal.Set_Target_Roll_Radian(tmp_arm_roll);
-        Gimbal.Set_Target_Roll_2_Radian(tmp_arm_roll_2);
-#endif
+        Gimbal.Set_Target_J0_Pitch_Radian(tmp_j0_pitch_radian);
+        Gimbal.Set_Target_J1_Yaw_Radian(tmp_j1_yaw_radian);
+        Gimbal.Set_Target_J2_Yaw_Radian(tmp_j2_yaw_radian);
+        Gimbal.Set_Target_J3_Yaw_Radian(tmp_j3_yaw_radian);
+        Gimbal.Set_Target_J4_Pitch_Radian(tmp_j4_pitch_radian);
+        Gimbal.Set_Target_J5_Yaw_Radian(tmp_j5_yaw_radian);
     }
-    else // 左中，摇杆控制底盘，机械臂保持原来的姿态
+    else // 左下，摇杆控制底盘，机械臂保持原来的姿态
     {
         Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
     }

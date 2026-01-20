@@ -495,8 +495,8 @@ protected:
     float J3_Yaw_Min_Radian = -0.5f * PI;
     float J3_Yaw_Max_Radian = 0.5f * PI;
 
-    float J4_Pitch_Min_Radian = -0.77f * PI;
-    float J4_Pitch_Max_Radian = 0.77f * PI;
+    float J4_Pitch_Min_Radian = -0.388f * PI;
+    float J4_Pitch_Max_Radian = 0.388f * PI;
 
     float J5_Yaw_Min_Radian = -0.5f * PI;
     float J5_Yaw_Max_Radian = 0.5f * PI;
@@ -543,24 +543,24 @@ protected:
     float Target_Roll_2_Omega = 1.5f * PI;
 #endif
 
-    // 不带减速比，Set函数中会自己乘减速比
+    // Set函数中会自己乘减速比
     float Target_J0_Pitch_Radian = 0.0f;
-    float Target_J0_Pitch_Omega = PI * PITCH_RATIO;
+    float Target_J0_Pitch_Omega = 0.5f * PI * PITCH_RATIO;
 
-    float Target_J1_Yaw_Radian = J1_Yaw_Max_Radian;
-    float Target_J1_Yaw_Omega = PI;
+    float Target_J1_Yaw_Radian = 0.0f;
+    float Target_J1_Yaw_Omega = 0.75f * PI;
 
-    float Target_J2_Yaw_Radian = J2_Yaw_Max_Radian;
-    float Target_J2_Yaw_Omega = PI;
+    float Target_J2_Yaw_Radian = 0.0f;
+    float Target_J2_Yaw_Omega = 0.75f * PI;
 
     float Target_J3_Yaw_Radian = 0.0f;
-    float Target_J3_Yaw_Omega = PI;
+    float Target_J3_Yaw_Omega = 0.75f * PI;
 
     float Target_J4_Pitch_Radian = 0.0f;
-    float Target_J4_Pitch_Omega = PI;
+    float Target_J4_Pitch_Omega = 1.0f * PI;
 
     float Target_J5_Yaw_Radian = 0.0f;
-    float Target_J5_Yaw_Omega = PI;
+    float Target_J5_Yaw_Omega = 1.0f * PI;
 
     // 夹爪角度，degree
     float Target_Gripper_Angle = 0.0f;
