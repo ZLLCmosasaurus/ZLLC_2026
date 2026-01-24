@@ -206,19 +206,24 @@ void Chassis_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
     }
     break;
 #else
-    case (0x202):
+    case (0x201):
     {
         chariot.Chassis.Uplift_Motor[0].CAN_RxCpltCallback(CAN_RxMessage->Data);
     }
     break;
-    case (0x203):
+    case (0x202):
     {
         chariot.Chassis.Uplift_Motor[1].CAN_RxCpltCallback(CAN_RxMessage->Data);
     }
     break;
-    case (0x204):
+    case (0x203):
     {
         chariot.Chassis.Uplift_Motor[2].CAN_RxCpltCallback(CAN_RxMessage->Data);
+    }
+    break;
+    case (0x204):
+    {
+        chariot.Chassis.Uplift_Motor[3].CAN_RxCpltCallback(CAN_RxMessage->Data);
     }
     break;
 
@@ -336,6 +341,7 @@ void Gimbal_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
         chariot.Gimbal.J2_Yaw_4340P.CAN_RxCpltCallback(CAN_RxMessage->Data);
     }
     break;
+    
     }
 }
 #endif
@@ -350,6 +356,7 @@ void Gimbal_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
     switch (CAN_RxMessage->Header.Identifier)
     {
+
     case (0xA4): // J3 - 4340P - Yaw
     {
         chariot.Gimbal.J3_Yaw_4340P.CAN_RxCpltCallback(CAN_RxMessage->Data);
@@ -383,6 +390,17 @@ void Gimbal_Device_CAN3_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
     switch (CAN_RxMessage->Header.Identifier)
     {
+    case (0x188):
+    case (0x199):
+    case (0x178):
+    case (0x198):
+    case (0x197):
+    case (0x196):
+    case (0x191):
+    {
+        chariot.CAN_Gimbal_Rx_Chassis_Callback();
+        break;
+    }
     }
 }
 #endif
@@ -465,6 +483,43 @@ void Ist8310_IIC3_Callback(uint8_t *Tx_Buffer, uint8_t *Rx_Buffer, uint16_t Tx_L
  * @param Length 长度
  */
 #ifdef CHASSIS
+void Referee_UART10_Callback(uint8_t *Buffer, uint16_t Length)
+{
+    chariot.Referee.UART_RxCpltCallback(Buffer, Length);
+}
+#endif
+
+#ifdef GIMBAL
+/**
+ * @brief 自定义控制器串口回调函数，直接通过串口连接主控板
+ *
+ * @param Buffer 串口收到的自定义控制器的消息
+ * @param Length 长度
+ */
+
+void Offline_Controller_UART1_Callback(uint8_t *Buffer, uint16_t Length)
+{
+    memcpy(chariot.UART1_Buffer, Buffer, 14);
+
+    uint8_t i;
+    for (i = 0; i++; i < 14)
+    {
+        if (chariot.UART1_Buffer[i] == 0xA5)
+        {
+            break;
+        }
+    }
+
+    if (chariot.UART1_Buffer[i + 12 % 14] == 0x11)
+    {
+        for (int i = 0; i < 6; i++)
+        {
+            int16_t temp = (Buffer[2 * i + 2] << 8) | Buffer[2 * i + 1];
+            chariot.Offline_Controller_Data.Angle[i] = temp / 100.f;
+        }
+    }
+}
+
 void Referee_UART10_Callback(uint8_t *Buffer, uint16_t Length)
 {
     chariot.Referee.UART_RxCpltCallback(Buffer, Length);
@@ -756,6 +811,8 @@ extern "C" void Task_Init()
     USB_Init(&MiniPC_USB_Manage_Object, MiniPC_USB_Callback);
     // 上位机串口
     UART_Init(&huart8, MiniPC_UART_Callback, 56);
+    // 离线状态自定义控制器
+    UART_Init(&huart1, Offline_Controller_UART1_Callback, 14);
 
 #endif
 

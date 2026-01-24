@@ -27,6 +27,7 @@ virtualFolder:
         - path: ../User/Chariot/Src/crt_chassis.cpp
         - path: ../User/Chariot/Src/crt_gimbal.cpp
         - path: ../User/Chariot/Src/arm_model.cpp
+        - path: ../User/Chariot/Src/dh_model.cpp
         - path: ../User/Chariot/Src/crt_force_control_chassis.cpp
       folders: []
     - name: Device
@@ -67,6 +68,7 @@ virtualFolder:
         - path: ../User/Algorithm/Src/alg_fsm.cpp
         - path: ../User/Algorithm/Src/alg_MahonyAHRS.cpp
         - path: ../User/Algorithm/Src/alg_pid.cpp
+        - path: ../User/Algorithm/Src/alg_power_limit.cpp
         - path: ../User/Algorithm/Src/alg_slope.cpp
         - path: ../User/Algorithm/Src/kalman_filter.cpp
         - path: ../User/Algorithm/Src/PID.cpp
@@ -77,7 +79,6 @@ virtualFolder:
         - path: ../User/Algorithm/Src/matrix.cpp
         - path: ../User/Algorithm/Src/robotics.cpp
         - path: ../User/Algorithm/Src/alg_new_power_limit.cpp
-        - path: ../User/Algorithm/Src/alg_power_limit.cpp
       folders: []
     - name: Application
       files: []
@@ -351,7 +352,6 @@ targets:
       libList: []
     excludeList:
       - ../DSP/libCMSISDSP.a
-      - <virtual_root>/Chariot/dh_model.cpp
     toolchain: AC6
     toolchainConfigMap:
       AC6:

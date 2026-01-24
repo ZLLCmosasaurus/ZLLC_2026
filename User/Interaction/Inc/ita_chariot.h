@@ -32,42 +32,6 @@ class Class_Chariot;
 /* Exported types ------------------------------------------------------------*/
 
 /**
- * @brief 云台Pitch状态枚举
- *
- */
-enum Enum_Pitch_Control_Status
-{
-    Pitch_Status_Control_Free = 0,
-    Pitch_Status_Control_Lock,
-};
-
-enum Enum_MinPC_Aim_Status
-{
-    MinPC_Aim_Status_DISABLE = 0,
-    MinPC_Aim_Status_ENABLE,
-};
-
-/**
- * @brief 摩擦轮状态
- *
- */
-enum Enum_Fric_Status : uint8_t
-{
-    Fric_Status_CLOSE = 0,
-    Fric_Status_OPEN,
-};
-
-/**
- * @brief 弹舱状态类型
- *
- */
-enum Enum_Bulletcap_Status : uint8_t
-{
-    Bulletcap_Status_CLOSE = 0,
-    Bulletcap_Status_OPEN,
-};
-
-/**
  * @brief 底盘通讯状态
  *
  */
@@ -129,6 +93,11 @@ public:
     void Reload_TIM_Status_PeriodElapsedCallback();
 };
 
+struct Struct_Offline_Controller_Data
+{
+  float Angle[6];
+}__attribute__((packed));
+
 /**
  * @brief 控制对象
  *
@@ -153,6 +122,11 @@ public:
     Class_Gimbal Gimbal;
     // 发射机构
     Class_Booster Booster;
+
+    // 离线状态下自定义控制器数据
+    Struct_Offline_Controller_Data Offline_Controller_Data;
+
+    uint8_t UART1_Buffer[14];
 
     // 遥控器离线保护控制状态机
     Class_FSM_Alive_Control FSM_Alive_Control;
@@ -231,12 +205,6 @@ public:
     // 底盘云台通讯变量
     // 冲刺
     Enum_Sprint_Status Sprint_Status = Sprint_Status_DISABLE;
-    // 弹仓开关
-    Enum_Bulletcap_Status Bulletcap_Status = Bulletcap_Status_CLOSE;
-    // 摩擦轮开关
-    Enum_Fric_Status Fric_Status = Fric_Status_CLOSE;
-    // 自瞄锁住状态
-    Enum_MinPC_Aim_Status MiniPC_Aim_Status = MinPC_Aim_Status_DISABLE;
     // 迷你主机状态
     Enum_MiniPC_Status MiniPC_Status = MiniPC_Status_DISABLE;
     // 裁判系统UI刷新状态
@@ -256,9 +224,6 @@ public:
     float dr16_right_x, dr16_right_y, dr16_left_x, dr16_left_y, dr16_yaw;
 
 protected:
-    // pitch控制状态 锁定和自由控制
-    Enum_Pitch_Control_Status Pitch_Control_Status = Pitch_Status_Control_Free;
-
     // 初始化相关常量
 
     // 绑定的CAN
@@ -281,12 +246,12 @@ protected:
     // 键鼠模式按住shift 最大速度缩放系数
     float DR16_Mouse_Chassis_Shift = 2.0f;
 
-    float DR16_J0_Pitch_Resolution = 0.00025f * PI;
-    float DR16_J1_Yaw_Resolution = 0.00025f * PI;
-    float DR16_J2_Yaw_Resolution = 0.00025f * PI;
-    float DR16_J3_Yaw_Resolution = 0.0005f * PI;
-    float DR16_J4_Pitch_Resolution = 0.0005f * PI;
-    float DR16_J5_Yaw_Resolution = 0.0005f * PI;
+    float DR16_J0_Pitch_Resolution = 0.001f * PI;
+    float DR16_J1_Yaw_Resolution = 0.00075f * PI;
+    float DR16_J2_Yaw_Resolution = 0.00075f * PI;
+    float DR16_J3_Yaw_Resolution = 0.0015f * PI;
+    float DR16_J4_Pitch_Resolution = 0.0015f * PI;
+    float DR16_J5_Yaw_Resolution = 0.0015f * PI;
 
     // DR16控制夹爪的速度，因为夹爪可移动范围是0.0 rad - 0.95 rad，所以现在给到0.05rad/s，
     float DR16_Gripper_Resolution = 0.005f * PI;

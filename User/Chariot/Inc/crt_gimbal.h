@@ -18,7 +18,7 @@
 #define PI 3.1415926535f
 #endif
 
-#define PITCH_RATIO (35.0f / 17.0f) // pitch轴减速比17:35
+#define PITCH_RATIO 2.0588f // pitch轴减速比17:35
 
 /* Includes ------------------------------------------------------------------*/
 
@@ -483,20 +483,20 @@ protected:
     float Max_gripper_Radian = gripper_cali_offset + 0.95f; // 最大角度，完全闭合时为0.95f
 
     /*SCARA臂*/
-    float J0_Pitch_Min_Radian = -1.0297f * PITCH_RATIO;
-    float J0_Pitch_Max_Radian = 0.5759f * PITCH_RATIO;
+    float J0_Pitch_Min_Radian = -2.1185f;
+    float J0_Pitch_Max_Radian = 1.1838f;
 
-    float J1_Yaw_Min_Radian = -0.8726f;
-    float J1_Yaw_Max_Radian = 0.8726f;
+    float J1_Yaw_Min_Radian = -0.882f;
+    float J1_Yaw_Max_Radian = 0.852f;
 
-    float J2_Yaw_Min_Radian = -2.0943f;
-    float J2_Yaw_Max_Radian = 2.0943f;
+    float J2_Yaw_Min_Radian = -2.094f;
+    float J2_Yaw_Max_Radian = 2.094f;
 
     float J3_Yaw_Min_Radian = -0.5f * PI;
     float J3_Yaw_Max_Radian = 0.5f * PI;
 
-    float J4_Pitch_Min_Radian = -0.388f * PI;
-    float J4_Pitch_Max_Radian = 0.388f * PI;
+    float J4_Pitch_Min_Radian = -0.85f * PI;
+    float J4_Pitch_Max_Radian = 0.85f * PI;
 
     float J5_Yaw_Min_Radian = -0.5f * PI;
     float J5_Yaw_Max_Radian = 0.5f * PI;
@@ -545,22 +545,22 @@ protected:
 
     // Set函数中会自己乘减速比
     float Target_J0_Pitch_Radian = 0.0f;
-    float Target_J0_Pitch_Omega = 0.5f * PI * PITCH_RATIO;
+    float Target_J0_Pitch_Omega = 0.75f * PI * PITCH_RATIO;
 
     float Target_J1_Yaw_Radian = 0.0f;
-    float Target_J1_Yaw_Omega = 0.75f * PI;
+    float Target_J1_Yaw_Omega = 0.65f * PI;
 
     float Target_J2_Yaw_Radian = 0.0f;
     float Target_J2_Yaw_Omega = 0.75f * PI;
 
     float Target_J3_Yaw_Radian = 0.0f;
-    float Target_J3_Yaw_Omega = 0.75f * PI;
+    float Target_J3_Yaw_Omega = 1.25f * PI;
 
     float Target_J4_Pitch_Radian = 0.0f;
-    float Target_J4_Pitch_Omega = 1.0f * PI;
+    float Target_J4_Pitch_Omega = 1.25f * PI;
 
     float Target_J5_Yaw_Radian = 0.0f;
-    float Target_J5_Yaw_Omega = 1.0f * PI;
+    float Target_J5_Yaw_Omega = 1.25f * PI;
 
     // 夹爪角度，degree
     float Target_Gripper_Angle = 0.0f;
@@ -911,7 +911,7 @@ float Class_Gimbal::Get_Target_J5_Yaw_Radian()
 
 void Class_Gimbal::Set_Target_J0_Pitch_Radian(float __Target_J0_Pitch_Radian)
 {
-    Target_J0_Pitch_Radian = __Target_J0_Pitch_Radian * PITCH_RATIO;
+    Target_J0_Pitch_Radian = __Target_J0_Pitch_Radian;
     Math_Constrain(&Target_J0_Pitch_Radian, J0_Pitch_Min_Radian, J0_Pitch_Max_Radian);
 }
 
