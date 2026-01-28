@@ -629,6 +629,11 @@
               <FileType>8</FileType>
               <FilePath>..\User\Algorithm\Src\alg_SMC_Control.cpp</FilePath>
             </File>
+            <File>
+              <FileName>alg_LESO.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User\Algorithm\Src\alg_LESO.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

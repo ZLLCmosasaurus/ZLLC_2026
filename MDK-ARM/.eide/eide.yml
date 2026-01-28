@@ -73,6 +73,7 @@ virtualFolder:
         - path: ../User/Algorithm/Src/user_lib.cpp
         - path: ../User/Algorithm/Src/alg_SMC_Control.cpp
         - path: ../User/Algorithm/Src/alg_new_power_limit.cpp
+        - path: ../User/Algorithm/Src/alg_LESO.cpp
       folders: []
     - name: Application
       files: []
