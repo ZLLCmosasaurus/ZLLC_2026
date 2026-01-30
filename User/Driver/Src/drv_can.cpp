@@ -353,7 +353,8 @@ void TIM_CAN_PeriodElapsedCallback()
     }
     #elif defined (GIMBAL)
 
-    CAN_Send_Data(&hfdcan1, 0x1ff, CAN1_0x1ff_Tx_Data, 8);          // Yaw Pitch 6020
+    // CAN_Send_Data(&hfdcan1, 0x1ff, CAN1_0x1ff_Tx_Data, 8);          // Yaw Pitch 6020
+    CAN_Send_Data(&hfdcan1, 0x1fe, CAN1_0x1fe_Tx_Data, 8);          // Yaw Pitch 6020
     CAN_Send_Data(&hfdcan1, 0x200, CAN1_0x200_Tx_Data, 8);          // 摩擦轮电机
 
     //  CAN3  下板

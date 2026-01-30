@@ -59,7 +59,7 @@ uint8_t *allocate_tx_data(FDCAN_HandleTypeDef *hcan, Enum_DJI_Motor_ID __CAN_ID)
         break;
         case (DJI_Motor_ID_0x205):
         {
-            tmp_tx_data_ptr = &(CAN1_0x1ff_Tx_Data[0]);
+            tmp_tx_data_ptr = &(CAN1_0x1fe_Tx_Data[0]);
         }
         break;
         case (DJI_Motor_ID_0x206):
@@ -436,7 +436,7 @@ void Class_DJI_Motor_GM6020::TIM_SMC_PeriodElapsedCallback()
         default:
         {
             SMC_Control.Set_Target(Target_Angle);
-            SMC_Control.Set_Now(Transform_Angle, Transform_Omega);                   
+            SMC_Control.Set_Now(Transform_Angle, Transform_Omega * 57.3f);                   
 
             SMC_Control.TIM_Adjust_PeriodElapsedCallback();
             Out = SMC_Control.Get_Out();

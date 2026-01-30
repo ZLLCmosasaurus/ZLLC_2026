@@ -61,11 +61,14 @@ void Class_Gimbal::Init()
     Motor_Main_Yaw.Init(&hfdcan2, LK_Motor_ID_0x141, LK_Motor_Control_Method_ANGLE, MAIN_YAW_ENCODER_OFFSET);
 
     // yaw轴电机
-    Motor_Yaw.PID_Angle.Init(0.95f, 0.0f, 0.002f, 0.0f, 25, 25);
+    Motor_Yaw.PID_Angle.Init(0.95f, 0.0f, 0.005f, 0.0f, 25, 25);
     //Kp给大容易因为大小Yaw联动的噪声出问题，达不到理想的想要，用大Ki补偿误差，还有Ki对抖动不敏感（积分，相位延迟）强制补偿掉，也可以尝试LESO，但他可能对噪声敏感一些（重在抗扰动）
     //Ki太大对阶跃信号抖动滞后，不用了
-    Motor_Yaw.PID_Omega.Init(4500.0f, 0.0f, 0.0f, 0.0f, Motor_Yaw.Get_Output_Max(), Motor_Yaw.Get_Output_Max());
+    Motor_Yaw.PID_Omega.Init(3700.0f, 0.0f, 0.0f, 0.0f, Motor_Yaw.Get_Output_Max(), Motor_Yaw.Get_Output_Max());
     Motor_Yaw.PID_Torque.Init(0.f, 0.0f, 0.0f, 0.0f, Motor_Yaw.Get_Output_Max(), Motor_Yaw.Get_Output_Max());
+
+    Motor_Yaw.SMC_Control.Init(0.005, 70.0, 43.0, 350.0);
+
     Motor_Yaw.Init(&hfdcan1, DJI_Motor_ID_0x205, DJI_Motor_Control_Method_ANGLE, YAW_ENCODER_OFFSET);
     
     // pitch轴电机
@@ -330,16 +333,22 @@ void Class_Gimbal::TIM_Calculate_PeriodElapsedCallback()
     Motor_Pitch_LESO.Set_Now_Omega(Motor_Pitch.Get_Transform_Omega());
     Motor_Pitch_LESO.TIM_Adjust_PeriodElapsedCallback();
 
+    // if(Motor_Yaw.Get_Control_Method() == DJI_Motor_Control_Method_ANGLE){
+    //     Motor_Yaw.TIM_SMC_PeriodElapsedCallback();
+    // }
+    // else{
+    //     Motor_Yaw.TIM_PID_PeriodElapsedCallback();
+    // }
+    
+    
+
     //PID输出
     Motor_Yaw.TIM_PID_PeriodElapsedCallback();
     Motor_Pitch.TIM_PID_PeriodElapsedCallback();
     Motor_Main_Yaw.TIM_Process_PeriodElapsedCallback();
 
     if(Get_Gimbal_Control_Type() != Gimbal_Control_Type_DISABLE){
-        Yaw_Compensite_Output =  0;
         Pitch_Compensite_Output = 0.20f * cosf(Motor_Pitch.Get_Transform_Angle() / 57.3f);
-
-        Motor_Yaw.Compensite_Output(Yaw_Compensite_Output);
         Motor_Pitch.Compensite_Out(Pitch_Compensite_Output);
     }
     else{

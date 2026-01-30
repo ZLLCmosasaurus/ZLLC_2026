@@ -47,9 +47,10 @@ class Class_SMC{
 
   float Out = 0.0f;
 
-  const float s_Delta = 3.0f;
+  const float s_Delta = 15.0f;
 
   void TIM_Data_Updata();
+  float Signal(float s);
   float Sat_Function(float s);    //饱和函数
 };
 
