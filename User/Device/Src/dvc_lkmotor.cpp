@@ -242,10 +242,10 @@ void Class_LK_Motor::Data_Process()
     Data.Now_Angle = (float)tmp_encoder / (float)Position_Max * 360.0f; 
 
     //因为加上了Position_Offset，角度可能大于360
-    if(Data.Now_Angle > 360.0f){
+    if(Data.Now_Angle > 180.0f){
         Data.Now_Angle -= 360.0f;
     }
-    else if(Data.Now_Angle < 0.0f){
+    else if(Data.Now_Angle < -180.0f){
         Data.Now_Angle += 360.0f;
     }
 

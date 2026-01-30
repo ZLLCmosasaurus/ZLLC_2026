@@ -3,6 +3,10 @@ MDK-ARM/RTE/
 MDK-ARM/ZLLC_2026/
 MDK-ARM/*.uvguix.*
 MDK-ARM/JLinkLog.txt
+MDK-ARM/output/
+MDK-ARM/.cmsis/
+MDK-ARM/.eide/
+MDK-ARM/.vscode/
 /build/
  # 忽略 Keil 工程编译生成的文件
 *.bak

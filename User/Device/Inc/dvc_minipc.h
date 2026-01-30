@@ -217,6 +217,7 @@ struct Struct_MiniPC_Rx_Data
     int16_t Gimbal_Angular_Velocity_Yaw_Main;                    // 目标角速度 w
     int16_t Gimbal_Angular_Velocity_Yaw;
     int16_t Gimbal_Angular_Velocity_Pitch;                       // 目标角速度 p   
+    uint8_t Camera_Id;                                           // 相机编号， 逆时针 海康为0
     int16_t Gimbal_Target_X;                                     // 装甲板在云台坐标系的 x 坐标
     int16_t Gimbal_Target_Y;                                     // 装甲板在云台坐标系的 y 坐标
     int16_t Gimbal_Target_Z;                                     // 装甲板在云台坐标系的 z 坐标
@@ -339,6 +340,7 @@ public:
     inline float Get_Now_Roll_Angle();
     inline float Get_Now_Relative_Angle();
     inline float Get_Gimbal_Angle_Yaw();
+    inline uint8_t Get_Camera_Id();
 
     inline uint8_t Get_Target_Invincible_State();
     inline Enum_MiniPC_Chassis_Control_Mode Get_Chassis_Control_Mode();
@@ -544,6 +546,10 @@ float Class_MiniPC::Get_Gimbal_Angle_Yaw()
 {
     return (Now_Angle_Yaw);
 }
+inline uint8_t Class_MiniPC::Get_Camera_Id()
+{
+  return (Data_NUC_To_MCU.Camera_Id);
+}
 /**
  * @brief 获取底盘移动控制模式
  *
@@ -605,7 +611,7 @@ void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
 /**
  * @brief 设置大Yaw的相对角度
  *
- * @param __Gimbal_Now_Relative_Angle 设置大Yaw的相对角度
+ * @param __Gimbal_Now_Relative_Angle 设置大Yaw的相对角度(Reference_Angle)
  */
 void Class_MiniPC::Set_Gimbal_Now_Relative_Angle(float __Gimbal_Now_Relative_Angle)
 {

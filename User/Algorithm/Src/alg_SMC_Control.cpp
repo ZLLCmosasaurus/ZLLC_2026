@@ -50,23 +50,6 @@ void Class_SMC::TIM_Adjust_PeriodElapsedCallback(){
   float I = Torque_ALL / GM6020_TORQUE_CONST;
   Out = I * GM6020_I_TO_OUT;
 
-  if (error > 0.1)
-  {
-    if (Out > 0)
-    {
-      Out += 1000;
-    }
-    else if (Out < 0)
-    {
-      Out -= 1000;
-    }
-
-    if (fabs(error) < 0.08)
-    {
-      Out = 0.0;
-    }
-  }
-
   if(Out > 16384.0f){
     Out = 16384.0f;
   }

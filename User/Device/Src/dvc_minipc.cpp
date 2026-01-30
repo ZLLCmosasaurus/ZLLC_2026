@@ -56,12 +56,17 @@ void Class_MiniPC::Data_Process(Enum_MiniPC_Data_Source Data_Source)
     memcpy(&CAN3_Sentry_CMD_Data[6], &Data_NUC_To_MCU.Robot_Position_Y, sizeof(uint16_t));
     //自瞄解算
     Auto_aim(float(Data_NUC_To_MCU.Gimbal_Target_X / 100.f), float(Data_NUC_To_MCU.Gimbal_Target_Y / 100.f), float(Data_NUC_To_MCU.Gimbal_Target_Z / 100.f), &Rx_Angle_Yaw, &Rx_Angle_Pitch, &Distance);
-    Math_Constrain(&Rx_Angle_Pitch, -25.0f, 16.0f);
+    Math_Constrain(&Rx_Angle_Pitch, -25.0f, 25.0f);
 
-    Rx_Chassis_Target_Omega               = Data_NUC_To_MCU.MiniPC_To_Chassis_Target_Omega / 100.0f;
-    Rx_Chassis_Target_Velocity_X          = Data_NUC_To_MCU.MiniPC_To_Chassis_Target_Velocity_X / 100.0f;
-    Rx_Chassis_Target_Velocity_Y          = Data_NUC_To_MCU.MiniPC_To_Chassis_Target_Velocity_Y / 100.0f;
-    Rx_Gimbal_Angular_Velocity_Yaw_Main   = Data_NUC_To_MCU.Gimbal_Angular_Velocity_Yaw_Main / 100.0f;
+    // Rx_Chassis_Target_Omega               = Data_NUC_To_MCU.MiniPC_To_Chassis_Target_Omega / 100.0f;
+    // Rx_Chassis_Target_Velocity_X          = Data_NUC_To_MCU.MiniPC_To_Chassis_Target_Velocity_X / 100.0f;
+    // Rx_Chassis_Target_Velocity_Y          = Data_NUC_To_MCU.MiniPC_To_Chassis_Target_Velocity_Y / 100.0f;
+    // Rx_Gimbal_Angular_Velocity_Yaw_Main   = Data_NUC_To_MCU.Gimbal_Angular_Velocity_Yaw_Main / 100.0f;
+
+    Rx_Chassis_Target_Omega               = 0.0f;
+    Rx_Chassis_Target_Velocity_X          = 0.0f;
+    Rx_Chassis_Target_Velocity_Y          = 0.0f;
+    Rx_Gimbal_Angular_Velocity_Yaw_Main   = 0.0f;
 
     Supercap_Mode                         = Enum_Supercap_Mode(Data_NUC_To_MCU.Device_Mode & 0x01);
     Outpost_Mode                          = Enum_Outpost_Mode(Data_NUC_To_MCU.Control_Type & 0x04);
@@ -81,7 +86,6 @@ extern Referee_Rx_E_t CAN3_Chassis_Rx_Data_E;
 extern Referee_Rx_F_t CAN3_Chassis_Rx_Data_F;
 extern Referee_Rx_G_t CAN3_Chassis_Rx_Data_G;
 volatile int index = 0;
-uint8_t  test_p = 0; 
 void Class_MiniPC::Output()
 {
   static uint8_t  Color = 0, Invincible_Flag[6];
@@ -146,7 +150,7 @@ void Class_MiniPC::Output()
   Data_MCU_To_NUC.Gimbal_Now_Yaw_Angle           = int16_t(Now_Angle_Yaw * 100.0f);
   Data_MCU_To_NUC.Gimbal_Now_Pitch_Angle         = int16_t(Now_Angle_Pitch * 100.0f);
   Data_MCU_To_NUC.Gimbal_Now_Yaw_Angle_Main      = int16_t(Now_Angle_Main_Yaw * 100.0f);
-  Data_MCU_To_NUC.Chassis_Now_Yaw_Angle          = int16_t((IMU->Get_Angle_Yaw() + Now_Angle_Relative) * 100.0f);
+  Data_MCU_To_NUC.Chassis_Now_Yaw_Angle          = int16_t((IMU->Get_Angle_Yaw() - Now_Angle_Relative) * 100.0f);
   Data_MCU_To_NUC.Game_process                   = (uint8_t)Referee->Get_Game_Stage();
   Data_MCU_To_NUC.Self_blood                     = Referee->Get_HP();
   Data_MCU_To_NUC.Self_Outpost_HP                = Self_Outpost_HP;

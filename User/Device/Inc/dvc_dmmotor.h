@@ -145,6 +145,7 @@ public:
     inline float Get_Target_Torque();
     inline float Get_Transform_Angle();
     inline float Get_Transform_Omega();
+    inline float Get_Output_Torque();
 
     inline void Set_DM_Motor_Control_Alg(Enum_DM_Motor_Control_Alg __DM_Motor_Control_Alg);
     inline void Set_DM_Motor_Control_Method(Enum_DM_Motor_Control_Method __DM_Motor_Control_Method);
@@ -160,6 +161,7 @@ public:
     void TIM_Alive_PeriodElapsedCallback();
     void TIM_Process_PeriodElapsedCallback();
     void TIM_PID_PeriodElapsedCallback();
+    void Compensite_Out(float Compensite_Value);
 
 protected:
     //初始化相关变量
@@ -175,7 +177,7 @@ protected:
     //最大速度, 调参助手设置, 推荐20.94359, 也就是最大转速200rpm
     float Omega_Max;
     //最大扭矩, 调参助手设置, 推荐7, 也就是最大输出7NM
-    float Torque_Max = 7.0f;
+    float Torque_Max = 4.0f;
 
     //常量
     
@@ -217,6 +219,7 @@ protected:
     //目标的扭矩
     float Target_Torque = 0.0f;
 
+    float Out = 0.0f;
     //要输出的角度
     float Output_Angle  = 0.0f;
     //要输出的速度
@@ -376,6 +379,11 @@ inline float Class_DM_Motor_J4310::Get_Transform_Angle()
 inline float Class_DM_Motor_J4310::Get_Transform_Omega()
 {
   return (Transform_Omega);
+}
+
+inline float Class_DM_Motor_J4310::Get_Output_Torque()
+{
+  return Output_Torque;
 }
 
 /**

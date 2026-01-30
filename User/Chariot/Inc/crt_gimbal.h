@@ -20,6 +20,7 @@
 #include "dvc_imu.h"
 #include "dvc_lkmotor.h"
 #include "dvc_dmmotor.h"
+#include "alg_LESO.h"
 
 /* Exported macros -----------------------------------------------------------*/
 
@@ -30,9 +31,9 @@
 #define YAW_ENCODER_OFFSET  3400
 #define MAIN_YAW_ENCODER_OFFSET 2048
 
-#define CRUISE_PITCH_SPEED 1.0f                 //rad
-#define CRUISE_YAW_SPEED   1.0f                 //rad
-#define LIMIT_YAW_ANGLE    50.0f
+#define CRUISE_PITCH_SPEED 3.0f                 //rad
+#define CRUISE_YAW_SPEED   1.5f                 //rad
+#define LIMIT_YAW_ANGLE    80.0f
 
 /**
  * @brief 云台控制类型
@@ -249,6 +250,7 @@ public:
 
     // pitch轴电机
     Class_DM_Motor_J4310 Motor_Pitch;
+    Class_LESO Motor_Pitch_LESO;
 
     Class_Filter_Kalman External_IMU_Gyro_Yaw;
     Class_Filter_Kalman External_IMU_Gyro_Pitch;
@@ -282,12 +284,13 @@ protected:
     float Yaw_Half_Turns;
 
     // pitch轴最小值
-    float Min_Pitch_Angle = -15.0f;
+    float Min_Pitch_Angle = -25.0f;
     // pitch轴最大值
     float Max_Pitch_Angle = 25.0f ; //多10°
 
     float Yaw_Compensite_KF = 150.0f;
     float Yaw_Compensite_Output = 0.0f;
+    float Pitch_Compensite_Output = 0.0f;
 
     //内部变量 
 

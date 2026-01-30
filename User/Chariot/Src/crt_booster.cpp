@@ -175,7 +175,7 @@ void Class_Booster::Init()
 
     //拨弹盘电机
     Motor_Driver.PID_Angle.Init(28.0f, 0.0f, 0.0f, 0.0f, 5.0f * PI, 5.0f * PI);
-    Motor_Driver.PID_Omega.Init(3200.0f, 0.0f, 0.0f, 0.0f, Motor_Driver.Get_Output_Max(), Motor_Driver.Get_Output_Max());
+    Motor_Driver.PID_Omega.Init(1500.0f, 0.0f, 0.0f, 0.0f, Motor_Driver.Get_Output_Max(), Motor_Driver.Get_Output_Max());
     Motor_Driver.Init(&hfdcan2, DJI_Motor_ID_0x202, DJI_Motor_Control_Method_OMEGA);
 
     //摩擦轮电机左

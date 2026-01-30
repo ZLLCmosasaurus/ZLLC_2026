@@ -386,7 +386,8 @@ void Class_DM_Motor_J4310::TIM_PID_PeriodElapsedCallback()
                 PID_Omega.Set_Target(Target_Omega);
                 PID_Omega.TIM_Adjust_PeriodElapsedCallback();
 
-                Output_Torque = PID_Omega.Get_Out();
+                Out = PID_Omega.Get_Out();
+                Output_Torque = Torque_Max / 2048.0f * Out;
             }
             else if(DM_Motor_Control_Alg == DM_PID_Angle){
                 PID_Angle.Set_Now(Transform_Angle);
@@ -398,9 +399,11 @@ void Class_DM_Motor_J4310::TIM_PID_PeriodElapsedCallback()
                 PID_Omega.Set_Target(Target_Omega);
                 PID_Omega.TIM_Adjust_PeriodElapsedCallback();
 
-                Output_Torque = PID_Omega.Get_Out();
+                Out = PID_Omega.Get_Out();
+                Output_Torque = Torque_Max / 2048.0f * Out;
             }
             else if(DM_Motor_Control_Alg == DM_Motor_DISANLE){
+                Out           = 0.0f;
                 Output_Angle  = 0.0f;
                 Output_Omega  = 0.0f;
                 Output_Torque = 0.0f;
@@ -409,13 +412,19 @@ void Class_DM_Motor_J4310::TIM_PID_PeriodElapsedCallback()
         }
         default:
         {
+            Out           = 0.0f;
             Output_Angle  = 0.0f;
             Output_Omega  = 0.0f;
             Output_Torque = 0.0f;
             break;
         }
-            
     }
+}
+
+void Class_DM_Motor_J4310::Compensite_Out(float Compensite_Value)
+{
+    Output_Torque += Compensite_Value;
+    Math_Constrain(&Output_Torque, -Torque_Max, Torque_Max);
 }
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

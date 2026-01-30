@@ -407,6 +407,8 @@ void MiniPC_UART_Callback(uint8_t *Buffer, uint16_t Length)
  *
  */
 extern Referee_Rx_A_t CAN3_Chassis_Rx_Data_A;
+float Sin_Single;
+uint32_t Single_Time;
 uint32_t imu_cnt = 0;
 float IMU_Dt;
 void Task100us_TIM4_Callback()
@@ -444,6 +446,10 @@ void Task100us_TIM4_Callback()
         {
             chariot.Gimbal.External_IMU.TIM_Calculate_PeriodElapsedCallback();
         }
+
+        //生成正弦信号测试
+        Single_Time ++;
+        Sin_Single = 15.0f * sinf(2.0f * PI * 3.0f * Single_Time / 1000.0f);
 
 #endif
 }
@@ -575,7 +581,7 @@ extern "C" void Task_Init()
 
     /********************************* 交互层初始化 *********************************/
 
-    chariot.Init();
+    chariot.Init(0.05);
 
     /********************************* 使能调度时钟 *********************************/
 
