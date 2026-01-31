@@ -58,16 +58,11 @@ void Class_MiniPC::Data_Process(Enum_MiniPC_Data_Source Data_Source)
     Auto_aim(float(Data_NUC_To_MCU.Gimbal_Target_X / 100.f), float(Data_NUC_To_MCU.Gimbal_Target_Y / 100.f), float(Data_NUC_To_MCU.Gimbal_Target_Z / 100.f), &Rx_Angle_Yaw, &Rx_Angle_Pitch, &Distance);
     Math_Constrain(&Rx_Angle_Pitch, -25.0f, 25.0f);
 
-    // Rx_Chassis_Target_Omega               = Data_NUC_To_MCU.MiniPC_To_Chassis_Target_Omega / 100.0f;
-    // Rx_Chassis_Target_Velocity_X          = Data_NUC_To_MCU.MiniPC_To_Chassis_Target_Velocity_X / 100.0f;
-    // Rx_Chassis_Target_Velocity_Y          = Data_NUC_To_MCU.MiniPC_To_Chassis_Target_Velocity_Y / 100.0f;
-    // Rx_Gimbal_Angular_Velocity_Yaw_Main   = Data_NUC_To_MCU.Gimbal_Angular_Velocity_Yaw_Main / 100.0f;
-
-    Rx_Chassis_Target_Omega               = 0.0f;
-    Rx_Chassis_Target_Velocity_X          = 0.0f;
-    Rx_Chassis_Target_Velocity_Y          = 0.0f;
-    Rx_Gimbal_Angular_Velocity_Yaw_Main   = 0.0f;
-
+    Rx_Chassis_Target_Omega               = Data_NUC_To_MCU.MiniPC_To_Chassis_Target_Omega / 100.0f;
+    Rx_Chassis_Target_Velocity_X          = Data_NUC_To_MCU.MiniPC_To_Chassis_Target_Velocity_X / 100.0f;
+    Rx_Chassis_Target_Velocity_Y          = Data_NUC_To_MCU.MiniPC_To_Chassis_Target_Velocity_Y / 100.0f;
+    Rx_Gimbal_Angular_Velocity_Yaw_Main   = Data_NUC_To_MCU.Gimbal_Angular_Velocity_Yaw_Main / 100.0f;
+    
     Supercap_Mode                         = Enum_Supercap_Mode(Data_NUC_To_MCU.Device_Mode & 0x01);
     Outpost_Mode                          = Enum_Outpost_Mode(Data_NUC_To_MCU.Control_Type & 0x04);
     Auto_aim_Status                       = Enum_Auto_aim_Status(Data_NUC_To_MCU.Control_Type & 0x03);

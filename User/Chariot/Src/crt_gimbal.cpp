@@ -67,7 +67,7 @@ void Class_Gimbal::Init()
     Motor_Yaw.PID_Omega.Init(3700.0f, 0.0f, 0.0f, 0.0f, Motor_Yaw.Get_Output_Max(), Motor_Yaw.Get_Output_Max());
     Motor_Yaw.PID_Torque.Init(0.f, 0.0f, 0.0f, 0.0f, Motor_Yaw.Get_Output_Max(), Motor_Yaw.Get_Output_Max());
 
-    Motor_Yaw.SMC_Control.Init(0.005, 70.0, 43.0, 350.0);
+    Motor_Yaw.SMC_Control.Init(0.005, 60.0, 70.0, 2.0);
 
     Motor_Yaw.Init(&hfdcan1, DJI_Motor_ID_0x205, DJI_Motor_Control_Method_ANGLE, YAW_ENCODER_OFFSET);
     
