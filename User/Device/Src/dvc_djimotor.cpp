@@ -59,7 +59,11 @@ uint8_t *allocate_tx_data(FDCAN_HandleTypeDef *hcan, Enum_DJI_Motor_ID __CAN_ID)
         break;
         case (DJI_Motor_ID_0x205):
         {
-            tmp_tx_data_ptr = &(CAN1_0x1fe_Tx_Data[0]);
+            #ifdef GIMBAL
+                tmp_tx_data_ptr = &(CAN1_0x1fe_Tx_Data[0]);
+            #else
+                tmp_tx_data_ptr = &(CAN1_0x1ff_Tx_Data[0]);
+            #endif
         }
         break;
         case (DJI_Motor_ID_0x206):

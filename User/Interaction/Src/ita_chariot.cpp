@@ -499,7 +499,7 @@ void Class_Chariot::Control_Chassis()
                 gimbal_velocity_y = MiniPC.Get_Chassis_Target_Velocity_Y();
             }
 
-            switch (MiniPC.Get_Chassis_Control_Mode())
+            switch (MiniPC.Get_Chassis_Control_Mode())                      //设置小陀螺速度/随动
             {
                 case(MiniPC_Chassis_Control_Mode_NORMAL):
                 {
@@ -519,13 +519,15 @@ void Class_Chariot::Control_Chassis()
                     break;
                 }
             }
-
             break;
         }
     }
    
     if(chassis_omega > 4.0f)chassis_omega = 4.0f;
     if(chassis_omega < -4.0f)chassis_omega = -4.0f;
+
+    Math_Constrain(&gimbal_velocity_x, -4.0f, 4.0f);
+    Math_Constrain(&gimbal_velocity_y, -4.0f, 4.0f);
 
     Chassis.Set_Target_Omega(chassis_omega);
     Chassis.Set_Target_Velocity_X(gimbal_velocity_x);
