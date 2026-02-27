@@ -323,6 +323,7 @@ void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback(uint8_t *Rx_Data)
 void Class_Chariot::MiniPC_Data_Updata()
 {
     MiniPC.Set_Gimbal_Now_Yaw_Angle(Gimbal.External_IMU.Get_Angle_Yaw());
+    MiniPC.Set_Gimbal_Now_Roll_Angle(Gimbal.External_IMU.Get_Angle_Roll());
     MiniPC.Set_Gimbal_Now_Pitch_Angle(Gimbal.External_IMU.Get_Angle_Pitch());
     MiniPC.Set_Gimbal_Now_Relative_Angle(Gimbal.Motor_Main_Yaw.Get_Now_Angle() - Reference_Angle * 57.3f);
     MiniPC.Set_Gimbal_Now_Main_Yaw_Angle(Gimbal.Boardc_BMI.Get_Angle_Yaw());

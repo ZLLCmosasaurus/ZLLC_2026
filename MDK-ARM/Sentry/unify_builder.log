@@ -1,0 +1,376 @@
+[2026-02-27 14:21:49]	[info] incremental build: 93 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\dma.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\fdcan.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\gpio.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\iwdg.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\main.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\spi.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\stm32h7xx_hal_msp.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\stm32h7xx_it.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\system_stm32h7xx.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\tim.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\usart.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_cortex.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_dma.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_dma_ex.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_exti.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_fdcan.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_flash.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_flash_ex.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_gpio.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_hsem.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_i2c.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_i2c_ex.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_iwdg.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_mdma.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_pcd.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_pcd_ex.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_pwr.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_pwr_ex.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_rcc.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_rcc_ex.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_spi.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_spi_ex.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_tim.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_tim_ex.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_uart.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_uart_ex.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_ll_usb.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Middlewares\ST\STM32_USB_Device_Library\Class\CDC\Src\usbd_cdc.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Middlewares\ST\STM32_USB_Device_Library\Core\Src\usbd_core.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Middlewares\ST\STM32_USB_Device_Library\Core\Src\usbd_ctlreq.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\Middlewares\ST\STM32_USB_Device_Library\Core\Src\usbd_ioreq.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\USB_DEVICE\App\usb_device.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\USB_DEVICE\App\usbd_cdc_if.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\USB_DEVICE\App\usbd_desc.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\USB_DEVICE\Target\usbd_conf.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\PID.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\QuaternionEKF.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\SignalGenerator.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_LESO.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_MahonyAHRS.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_SMC_Control.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_filter.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_fsm.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_new_power_limit.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_pid.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_power_limit.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_slope.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\kalman_filter.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\user_lib.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_booster.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Congfig\Src\config.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_GraphicsSendTask.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_TensionMeter.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_VT13.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_boardc_bmi088.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_buzzer.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_djimotor.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_dmmotor.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_dr16.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_dwt.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_external_imu.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_imu.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_lkmotor.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_minipc.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_referee.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_servo.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_supercap.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_adc.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_bsp-boarda.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_can.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_dwt.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_i2c.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_math.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_spi.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_tim.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_uart.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_usb.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\startup_stm32h723xx.s': object (.o) file not exist
+
+[2026-02-27 14:21:51]	compilation failed at : "c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp", exit code: 1
+command: 
+  "c:\Users\HLlll\AppData\Local\Keil_v5\ARM\ARMCLANG\bin\armclang.exe" --target=arm-arm-none-eabi -c -xc++ -std=c++11 -I. -I../Core/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I../USB_DEVICE/App -I../USB_DEVICE/Target -I../Middlewares/ST/STM32_USB_Device_Library/Core/Inc -I../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc -I../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I../User/Congfig/Inc -I../User/Task/Inc -I../User/Interaction/Inc -I../User/Chariot/Inc -I../User/Device/Inc -I../User/Driver/Inc -I../User/Algorithm/Inc -I../Drivers/CMSIS/Include -IRTE/_Sentry -I../DSP/Include -D"USE_HAL_DRIVER" -D"STM32H723xx" -D"__FPU_PRESENT=1" -D"__FPU_USED=1" -D"ARM_MATH_CM7" -mfloat-abi=hard -mfpu=fpv5-sp-d16 -mcpu=cortex-m7 -mlittle-endian -O0 -ffunction-sections -funsigned-char -fshort-enums -fshort-wchar -fno-rtti -w -g -o ./Sentry/.obj/__/User/Chariot/Src/crt_gimbal.o -MMD ./../User/Chariot/Src/crt_gimbal.cpp
+   at unify_builder.Program.compileByMulThread(Int32 thrNum, CmdInfo[] cmds_, List`1 errLogs)
+   at unify_builder.Program.Main(String[] args_)
+---
+In file included from ./../User/Chariot/Src/crt_booster.cpp:14:
+In file included from ../User/Chariot/Inc\crt_booster.h:25:
+../User/Device/Inc\dvc_minipc.h:356:17: error: class member cannot be redeclared
+  356 |     inline void Set_Gimbal_Now_Yaw_Angle(float __Gimbal_Now_Roll_Angle);
+      |                 ^
+../User/Device/Inc\dvc_minipc.h:355:17: note: previous declaration is here
+  355 |     inline void Set_Gimbal_Now_Yaw_Angle(float __Gimbal_Now_Yaw_Angle);
+      |                 ^
+../User/Device/Inc\dvc_minipc.h:638:20: error: redefinition of 'Set_Gimbal_Now_Roll_Angle'
+  638 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
+      |                    ^
+../User/Device/Inc\dvc_minipc.h:608:20: note: previous definition is here
+  608 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
+      |                    ^
+2 errors generated.
+In file included from ./../User/Device/Src/dvc_GraphicsSendTask.cpp:11:
+In file included from ../User/Device/Inc\dvc_GraphicsSendTask.h:15:
+In file included from ../User/Chariot/Inc\crt_chassis.h:29:
+../User/Device/Inc\dvc_minipc.h:356:17: error: class member cannot be redeclared
+  356 |     inline void Set_Gimbal_Now_Yaw_Angle(float __Gimbal_Now_Roll_Angle);
+      |                 ^
+../User/Device/Inc\dvc_minipc.h:355:17: note: previous declaration is here
+  355 |     inline void Set_Gimbal_Now_Yaw_Angle(float __Gimbal_Now_Yaw_Angle);
+      |                 ^
+../User/Device/Inc\dvc_minipc.h:638:20: error: redefinition of 'Set_Gimbal_Now_Roll_Angle'
+  638 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
+      |                    ^
+../User/Device/Inc\dvc_minipc.h:608:20: note: previous definition is here
+  608 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
+      |                    ^
+2 errors generated.
+In file included from ./../User/Chariot/Src/crt_chassis.cpp:20:
+In file included from ../User/Chariot/Inc\crt_chassis.h:29:
+../User/Device/Inc\dvc_minipc.h:356:17: error: class member cannot be redeclared
+  356 |     inline void Set_Gimbal_Now_Yaw_Angle(float __Gimbal_Now_Roll_Angle);
+      |                 ^
+../User/Device/Inc\dvc_minipc.h:355:17: note: previous declaration is here
+  355 |     inline void Set_Gimbal_Now_Yaw_Angle(float __Gimbal_Now_Yaw_Angle);
+      |                 ^
+../User/Device/Inc\dvc_minipc.h:638:20: error: redefinition of 'Set_Gimbal_Now_Roll_Angle'
+  638 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
+      |                    ^
+../User/Device/Inc\dvc_minipc.h:608:20: note: previous definition is here
+  608 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
+      |                    ^
+2 errors generated.
+In file included from ./../User/Chariot/Src/crt_gimbal.cpp:14:
+In file included from ../User/Chariot/Inc\crt_gimbal.h:18:
+../User/Device/Inc\dvc_minipc.h:356:17: error: class member cannot be redeclared
+  356 |     inline void Set_Gimbal_Now_Yaw_Angle(float __Gimbal_Now_Roll_Angle);
+      |                 ^
+../User/Device/Inc\dvc_minipc.h:355:17: note: previous declaration is here
+  355 |     inline void Set_Gimbal_Now_Yaw_Angle(float __Gimbal_Now_Yaw_Angle);
+      |                 ^
+../User/Device/Inc\dvc_minipc.h:638:20: error: redefinition of 'Set_Gimbal_Now_Roll_Angle'
+  638 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
+      |                    ^
+../User/Device/Inc\dvc_minipc.h:608:20: note: previous definition is here
+  608 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
+      |                    ^
+2 errors generated.
+
+[2026-02-27 14:22:09]	[info] incremental build: 23 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_booster.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_GraphicsSendTask.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_imu.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_lkmotor.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_minipc.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_referee.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_servo.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_supercap.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_adc.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_bsp-boarda.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_can.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_dwt.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_i2c.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_math.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_spi.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_tim.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_uart.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_usb.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\startup_stm32h723xx.s': object (.o) file not exist
+
+[2026-02-27 14:22:09]	compilation failed at : "c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_minipc.cpp", exit code: 1
+command: 
+  "c:\Users\HLlll\AppData\Local\Keil_v5\ARM\ARMCLANG\bin\armclang.exe" --target=arm-arm-none-eabi -c -xc++ -std=c++11 -I. -I../Core/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I../USB_DEVICE/App -I../USB_DEVICE/Target -I../Middlewares/ST/STM32_USB_Device_Library/Core/Inc -I../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc -I../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I../User/Congfig/Inc -I../User/Task/Inc -I../User/Interaction/Inc -I../User/Chariot/Inc -I../User/Device/Inc -I../User/Driver/Inc -I../User/Algorithm/Inc -I../Drivers/CMSIS/Include -IRTE/_Sentry -I../DSP/Include -D"USE_HAL_DRIVER" -D"STM32H723xx" -D"__FPU_PRESENT=1" -D"__FPU_USED=1" -D"ARM_MATH_CM7" -mfloat-abi=hard -mfpu=fpv5-sp-d16 -mcpu=cortex-m7 -mlittle-endian -O0 -ffunction-sections -funsigned-char -fshort-enums -fshort-wchar -fno-rtti -w -g -o ./Sentry/.obj/__/User/Device/Src/dvc_minipc.o -MMD ./../User/Device/Src/dvc_minipc.cpp
+   at unify_builder.Program.compileByMulThread(Int32 thrNum, CmdInfo[] cmds_, List`1 errLogs)
+   at unify_builder.Program.Main(String[] args_)
+---
+In file included from ./../User/Device/Src/dvc_GraphicsSendTask.cpp:11:
+In file included from ../User/Device/Inc\dvc_GraphicsSendTask.h:15:
+In file included from ../User/Chariot/Inc\crt_chassis.h:29:
+../User/Device/Inc\dvc_minipc.h:358:17: error: class member cannot be redeclared
+  358 |     inline void Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle);
+      |                 ^
+../User/Device/Inc\dvc_minipc.h:356:17: note: previous declaration is here
+  356 |     inline void Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle);
+      |                 ^
+../User/Device/Inc\dvc_minipc.h:638:20: error: redefinition of 'Set_Gimbal_Now_Roll_Angle'
+  638 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
+      |                    ^
+../User/Device/Inc\dvc_minipc.h:608:20: note: previous definition is here
+  608 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
+      |                    ^
+2 errors generated.
+In file included from ./../User/Chariot/Src/crt_booster.cpp:14:
+In file included from ../User/Chariot/Inc\crt_booster.h:25:
+../User/Device/Inc\dvc_minipc.h:358:17: error: class member cannot be redeclared
+  358 |     inline void Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle);
+      |                 ^
+../User/Device/Inc\dvc_minipc.h:356:17: note: previous declaration is here
+  356 |     inline void Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle);
+      |                 ^
+../User/Device/Inc\dvc_minipc.h:638:20: error: redefinition of 'Set_Gimbal_Now_Roll_Angle'
+  638 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
+      |                    ^
+../User/Device/Inc\dvc_minipc.h:608:20: note: previous definition is here
+  608 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
+      |                    ^
+2 errors generated.
+In file included from ./../User/Chariot/Src/crt_gimbal.cpp:14:
+In file included from ../User/Chariot/Inc\crt_gimbal.h:18:
+../User/Device/Inc\dvc_minipc.h:358:17: error: class member cannot be redeclared
+  358 |     inline void Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle);
+      |                 ^
+../User/Device/Inc\dvc_minipc.h:356:17: note: previous declaration is here
+  356 |     inline void Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle);
+      |                 ^
+../User/Device/Inc\dvc_minipc.h:638:20: error: redefinition of 'Set_Gimbal_Now_Roll_Angle'
+  638 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
+      |                    ^
+../User/Device/Inc\dvc_minipc.h:608:20: note: previous definition is here
+  608 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
+      |                    ^
+2 errors generated.
+In file included from ./../User/Chariot/Src/crt_chassis.cpp:20:
+In file included from ../User/Chariot/Inc\crt_chassis.h:29:
+../User/Device/Inc\dvc_minipc.h:358:17: error: class member cannot be redeclared
+  358 |     inline void Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle);
+      |                 ^
+../User/Device/Inc\dvc_minipc.h:356:17: note: previous declaration is here
+  356 |     inline void Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle);
+      |                 ^
+../User/Device/Inc\dvc_minipc.h:638:20: error: redefinition of 'Set_Gimbal_Now_Roll_Angle'
+  638 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
+      |                    ^
+../User/Device/Inc\dvc_minipc.h:608:20: note: previous definition is here
+  608 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
+      |                    ^
+2 errors generated.
+In file included from ./../User/Device/Src/dvc_minipc.cpp:14:
+../User/Device/Inc\dvc_minipc.h:358:17: error: class member cannot be redeclared
+  358 |     inline void Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle);
+      |                 ^
+../User/Device/Inc\dvc_minipc.h:356:17: note: previous declaration is here
+  356 |     inline void Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle);
+      |                 ^
+../User/Device/Inc\dvc_minipc.h:638:20: error: redefinition of 'Set_Gimbal_Now_Roll_Angle'
+  638 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
+      |                    ^
+../User/Device/Inc\dvc_minipc.h:608:20: note: previous definition is here
+  608 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
+      |                    ^
+2 errors generated.
+
+[2026-02-27 14:22:24]	[info] incremental build: 18 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_booster.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_GraphicsSendTask.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_minipc.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_adc.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_bsp-boarda.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_can.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_dwt.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_i2c.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_math.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_spi.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_tim.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_uart.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_usb.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\startup_stm32h723xx.s': object (.o) file not exist
+
+[2026-02-27 14:22:24]	compilation failed at : "c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_minipc.cpp", exit code: 1
+command: 
+  "c:\Users\HLlll\AppData\Local\Keil_v5\ARM\ARMCLANG\bin\armclang.exe" --target=arm-arm-none-eabi -c -xc++ -std=c++11 -I. -I../Core/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I../USB_DEVICE/App -I../USB_DEVICE/Target -I../Middlewares/ST/STM32_USB_Device_Library/Core/Inc -I../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc -I../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I../User/Congfig/Inc -I../User/Task/Inc -I../User/Interaction/Inc -I../User/Chariot/Inc -I../User/Device/Inc -I../User/Driver/Inc -I../User/Algorithm/Inc -I../Drivers/CMSIS/Include -IRTE/_Sentry -I../DSP/Include -D"USE_HAL_DRIVER" -D"STM32H723xx" -D"__FPU_PRESENT=1" -D"__FPU_USED=1" -D"ARM_MATH_CM7" -mfloat-abi=hard -mfpu=fpv5-sp-d16 -mcpu=cortex-m7 -mlittle-endian -O0 -ffunction-sections -funsigned-char -fshort-enums -fshort-wchar -fno-rtti -w -g -o ./Sentry/.obj/__/User/Device/Src/dvc_minipc.o -MMD ./../User/Device/Src/dvc_minipc.cpp
+   at unify_builder.Program.compileByMulThread(Int32 thrNum, CmdInfo[] cmds_, List`1 errLogs)
+   at unify_builder.Program.Main(String[] args_)
+---
+In file included from ./../User/Chariot/Src/crt_booster.cpp:14:
+In file included from ../User/Chariot/Inc\crt_booster.h:25:
+../User/Device/Inc\dvc_minipc.h:637:20: error: redefinition of 'Set_Gimbal_Now_Roll_Angle'
+  637 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
+      |                    ^
+../User/Device/Inc\dvc_minipc.h:607:20: note: previous definition is here
+  607 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
+      |                    ^
+1 error generated.
+In file included from ./../User/Device/Src/dvc_GraphicsSendTask.cpp:11:
+In file included from ../User/Device/Inc\dvc_GraphicsSendTask.h:15:
+In file included from ../User/Chariot/Inc\crt_chassis.h:29:
+../User/Device/Inc\dvc_minipc.h:637:20: error: redefinition of 'Set_Gimbal_Now_Roll_Angle'
+  637 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
+      |                    ^
+../User/Device/Inc\dvc_minipc.h:607:20: note: previous definition is here
+  607 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
+      |                    ^
+1 error generated.
+In file included from ./../User/Chariot/Src/crt_gimbal.cpp:14:
+In file included from ../User/Chariot/Inc\crt_gimbal.h:18:
+../User/Device/Inc\dvc_minipc.h:637:20: error: redefinition of 'Set_Gimbal_Now_Roll_Angle'
+  637 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
+      |                    ^
+../User/Device/Inc\dvc_minipc.h:607:20: note: previous definition is here
+  607 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
+      |                    ^
+1 error generated.
+In file included from ./../User/Chariot/Src/crt_chassis.cpp:20:
+In file included from ../User/Chariot/Inc\crt_chassis.h:29:
+../User/Device/Inc\dvc_minipc.h:637:20: error: redefinition of 'Set_Gimbal_Now_Roll_Angle'
+  637 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
+      |                    ^
+../User/Device/Inc\dvc_minipc.h:607:20: note: previous definition is here
+  607 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
+      |                    ^
+1 error generated.
+In file included from ./../User/Device/Src/dvc_minipc.cpp:14:
+../User/Device/Inc\dvc_minipc.h:637:20: error: redefinition of 'Set_Gimbal_Now_Roll_Angle'
+  637 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
+      |                    ^
+../User/Device/Inc\dvc_minipc.h:607:20: note: previous definition is here
+  607 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
+      |                    ^
+1 error generated.
+
+[2026-02-27 14:22:59]	[info] incremental build: 18 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_booster.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_GraphicsSendTask.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_minipc.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_adc.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_bsp-boarda.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_can.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_dwt.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_i2c.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_math.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_spi.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_tim.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_uart.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_usb.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\startup_stm32h723xx.s': object (.o) file not exist
+
+[2026-02-27 14:23:01]	[done]
+	build successfully !
+
+[2026-02-27 14:23:18]	[done]
+	build successfully !
+

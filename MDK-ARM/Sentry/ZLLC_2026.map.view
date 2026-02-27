@@ -1,0 +1,6 @@
+tool: AC6
+fileName: 'ZLLC_2026.map'
+elfName: 'ZLLC_2026.axf'
+compilerName: 'ARMCLANG 6'
+compilerFullName: 'ARMCLANG 6'
+compilerPath: 'c:\Users\HLlll\AppData\Local\Keil_v5\ARM\ARMCLANG\bin\armclang.exe'

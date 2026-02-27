@@ -143,6 +143,7 @@ void Class_MiniPC::Output()
 
   Data_MCU_To_NUC.header                         = Frame_Header;
   Data_MCU_To_NUC.Gimbal_Now_Yaw_Angle           = int16_t(Now_Angle_Yaw * 100.0f);
+  Data_MCU_To_NUC.Gimbal_Now_Roll_Angle          = int16_t(Now_Angle_Roll * 100.0f);
   Data_MCU_To_NUC.Gimbal_Now_Pitch_Angle         = int16_t(Now_Angle_Pitch * 100.0f);
   Data_MCU_To_NUC.Gimbal_Now_Yaw_Angle_Main      = int16_t(Now_Angle_Main_Yaw * 100.0f);
   Data_MCU_To_NUC.Chassis_Now_Yaw_Angle          = int16_t((IMU->Get_Angle_Yaw() - Now_Angle_Relative) * 100.0f);

@@ -203,6 +203,7 @@ targets:
     toolchain: AC6
     toolchainConfigMap:
       AC6:
+        archExtensions: ""
         cpuType: Cortex-M7
         floatingPointHardware: single
         options:

@@ -240,6 +240,7 @@ struct Struct_MiniPC_Tx_Data
     uint8_t header;                                     // 帧头
     int16_t Gimbal_Now_Yaw_Angle_Main;                  //云台大Yaw的角度
     int16_t Gimbal_Now_Yaw_Angle;                       // 云台yaw角度  
+    int16_t Gimbal_Now_Roll_Angle;                      // Roll角度
     int16_t Gimbal_Now_Pitch_Angle;                     // 云台pitch角度
     int16_t Chassis_Now_Yaw_Angle;                      // 当前底盘yaw角度
     uint8_t Game_process;                               // 比赛阶段
@@ -352,8 +353,8 @@ public:
     inline void Set_Game_Stage(Enum_MiniPC_Game_Stage __Game_Stage);
     inline void Set_Gimbal_Now_Main_Yaw_Angle(float __Gimbal_Now_Main_Yaw_Angle);
     inline void Set_Gimbal_Now_Yaw_Angle(float __Gimbal_Now_Yaw_Angle);
-    inline void Set_Gimbal_Now_Pitch_Angle(float __Gimbal_Now_Pitch_Angle);
     inline void Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle);
+    inline void Set_Gimbal_Now_Pitch_Angle(float __Gimbal_Now_Pitch_Angle);
     inline void Set_Gimbal_Now_Relative_Angle(float __Gimbal_Now_Relative_Angle);
     inline void Set_Armor_Attacked_ID(uint8_t __Armor_Attacked_ID);
     inline void Set_Armor_Attacked_Ammo_Status(Enum_MiniPC_Data_Status __Armor_Attacked_Ammo_Status);
@@ -599,16 +600,6 @@ void Class_MiniPC::Set_Gimbal_Now_Pitch_Angle(float __Gimbal_Now_Pitch_Angle)
 }
 
 /**
- * @brief 设定云台当前角度roll
- *
- * @param __Gimbal_Now_Roll_Angle 云台当前角度roll
- */
-void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
-{
-    Now_Angle_Roll = __Gimbal_Now_Roll_Angle;
-}
-
-/**
  * @brief 设置大Yaw的相对角度
  *
  * @param __Gimbal_Now_Relative_Angle 设置大Yaw的相对角度(Reference_Angle)
@@ -633,6 +624,10 @@ void Class_MiniPC::Set_Gimbal_Now_Yaw_Angle(float __Gimbal_Now_Yaw_Angle)
     Now_Angle_Yaw = __Gimbal_Now_Yaw_Angle;
 }
 
+void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
+{
+    Now_Angle_Roll = __Gimbal_Now_Roll_Angle;
+}
 
 #endif
 
