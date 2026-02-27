@@ -1,5 +1,6 @@
 MDK-ARM/DebugConfig/
 MDK-ARM/RTE/
+MDK-ARM/Sentry/
 MDK-ARM/ZLLC_2026/
 MDK-ARM/*.uvguix.*
 MDK-ARM/JLinkLog.txt
