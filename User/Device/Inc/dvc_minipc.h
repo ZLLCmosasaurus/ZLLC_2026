@@ -218,9 +218,9 @@ struct Struct_MiniPC_Rx_Data
     int16_t Gimbal_Angular_Velocity_Yaw;
     int16_t Gimbal_Angular_Velocity_Pitch;                       // 目标角速度 p   
     uint8_t Camera_Id;                                           // 相机编号， 逆时针 海康为0
-    int16_t Gimbal_Target_X;                                     // 装甲板在云台坐标系的 x 坐标
-    int16_t Gimbal_Target_Y;                                     // 装甲板在云台坐标系的 y 坐标
-    int16_t Gimbal_Target_Z;                                     // 装甲板在云台坐标系的 z 坐标
+    int16_t Target_Yaw_Angle;                                       // 小Yaw的目标角度yaw
+    int16_t Target_Pitch_Angle;                                     // 小Yaw的目标角度pitch
+    uint8_t Fire_Flag;                                                // 开火标志位
     Enum_MiniPC_Chassis_Control_Mode Chassis_Control_Mode;       // 底盘控制模式 随动/小陀螺
     uint8_t Control_Type;                                        // 云台控制模式     前三位自瞄，第四位是否击打前哨
     uint8_t Posture_Control_Mode;                                //姿态控制模式
@@ -329,9 +329,9 @@ public:
     inline float Get_Chassis_Target_Velocity_Y();
     inline float Get_Chassis_Target_Velocity_Omega();
     inline float Get_Rx_Target_Omega_Yaw_Main();
-    inline float Get_Gimbal_Target_Y();
-    inline float Get_Gimbal_Target_X();
-    inline float Get_Gimbal_Target_Z();
+    // inline float Get_Gimbal_Target_Y();
+    // inline float Get_Gimbal_Target_X();
+    // inline float Get_Gimbal_Target_Z();
     inline float Get_Gimbal_Error();
     inline float Get_Booster_Frequency();
     inline float Get_Rx_Pitch_Angle();
@@ -342,6 +342,7 @@ public:
     inline float Get_Now_Relative_Angle();
     inline float Get_Gimbal_Angle_Yaw();
     inline uint8_t Get_Camera_Id();
+    inline uint8_t Get_Fire_Flag();
 
     inline uint8_t Get_Target_Invincible_State();
     inline Enum_MiniPC_Chassis_Control_Mode Get_Chassis_Control_Mode();
@@ -551,6 +552,17 @@ inline uint8_t Class_MiniPC::Get_Camera_Id()
 {
   return (Data_NUC_To_MCU.Camera_Id);
 }
+
+/**
+ * @brief 是否可以开火标志位
+ *
+ * @return
+ */
+inline uint8_t Class_MiniPC::Get_Fire_Flag()
+{
+  return (Data_NUC_To_MCU.Fire_Flag);
+}
+
 /**
  * @brief 获取底盘移动控制模式
  *

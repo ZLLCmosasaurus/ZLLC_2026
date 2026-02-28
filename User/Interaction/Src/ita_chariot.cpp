@@ -620,8 +620,13 @@ void Class_Chariot::Control_Booster()
 
                 //当目标突然丢失0.5s以内，上位机会依然发送自瞄状态，下位机保持上一个瞄准的地方继续打弹
                 //MiniPC.Get_Rx_Yaw_Angle_A() == 0.f && MiniPC.Get_Rx_Pitch_Angle_A() == 0.f（相当于给了0.5s的误差）
+<<<<<<< HEAD
                 if((MiniPC.Get_Auto_aim_Status() == Auto_aim_Status_ENABLE) &&
                   (MiniPC.Get_Rx_Yaw_Angle() != 0.f || MiniPC.Get_Rx_Pitch_Angle() != 0.f))                 //后边的判断似乎是不需要的
+=======
+                if((MiniPC.Get_Auto_aim_Status() == Auto_aim_Status_ENABLE) && MiniPC.Get_Fire_Flag()==1 &&
+                  (MiniPC.Get_Rx_Yaw_Angle() != 0.f || MiniPC.Get_Rx_Pitch_Angle() != 0.f))
+>>>>>>> origin/M67
                     Booster.Set_Booster_Control_Type(Booster_Control_Type_REPEATED);
                     
                 else if (MiniPC.Get_Auto_aim_Status() == Auto_aim_Status_DISABLE)
