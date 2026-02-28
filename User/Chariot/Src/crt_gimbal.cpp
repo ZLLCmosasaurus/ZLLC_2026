@@ -61,10 +61,10 @@ void Class_Gimbal::Init()
     Motor_Main_Yaw.Init(&hfdcan2, LK_Motor_ID_0x141, LK_Motor_Control_Method_ANGLE, MAIN_YAW_ENCODER_OFFSET);
 
     // yaw轴电机
-    Motor_Yaw.PID_Angle.Init(0.95f, 0.0f, 0.005f, 0.0f, 25, 25);
+    Motor_Yaw.PID_Angle.Init(0.78f, 0.0f, 0.001f, 0.0f, 25, 25);
     //Kp给大容易因为大小Yaw联动的噪声出问题，达不到理想的想要，用大Ki补偿误差，还有Ki对抖动不敏感（积分，相位延迟）强制补偿掉，也可以尝试LESO，但他可能对噪声敏感一些（重在抗扰动）
     //Ki太大对阶跃信号抖动滞后，不用了
-    Motor_Yaw.PID_Omega.Init(3700.0f, 0.0f, 0.0f, 0.0f, Motor_Yaw.Get_Output_Max(), Motor_Yaw.Get_Output_Max());
+    Motor_Yaw.PID_Omega.Init(3000.0f, 0.0f, 0.0f, 0.0f, Motor_Yaw.Get_Output_Max(), Motor_Yaw.Get_Output_Max());
     Motor_Yaw.PID_Torque.Init(0.f, 0.0f, 0.0f, 0.0f, Motor_Yaw.Get_Output_Max(), Motor_Yaw.Get_Output_Max());
 
     Motor_Yaw.SMC_Control.Init(0.005, 60.0, 70.0, 2.0);
@@ -88,6 +88,7 @@ void Class_Gimbal::Init()
  * @brief 输出到电机
  *
  */
+float tmp_Target_Angle = 0.0f;
 extern float Sin_Single;
 void Class_Gimbal::Output()
 {
@@ -129,7 +130,7 @@ void Class_Gimbal::Output()
             Motor_Main_Yaw.Set_LK_Motor_Control_Method(LK_Motor_Control_Method_ANGLE);
             Motor_Pitch.Set_DM_Motor_Control_Alg(DM_PID_Angle);
 
-            Target_Yaw_Angle = 0.0f;
+            Target_Yaw_Angle = tmp_Target_Angle;
 
             //对于大Yaw控制的突变点与优劣弧处理       0--2*PI
             Angle_Continuity_Process(&Target_Main_Yaw_Angle, Boardc_BMI.Get_Angle_Yaw());
@@ -355,8 +356,6 @@ void Class_Gimbal::TIM_Calculate_PeriodElapsedCallback()
         Pitch_Compensite_Output = 0;
         Motor_Pitch.Compensite_Out(Pitch_Compensite_Output);
     }
-
-    Motor_Pitch.TIM_Process_PeriodElapsedCallback();
 
 }
 

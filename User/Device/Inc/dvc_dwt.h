@@ -12,6 +12,10 @@
 #ifndef DVC_DWT_H
 #define DVC_DWT_H
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 #include "drv_dwt.h"
 
 #define uint32_max 4294967295u
@@ -28,4 +32,9 @@ extern DWT_Time_t SysTime;
 extern uint32_t CPU_FREQ_Hz, CPU_FREQ_Hz_ms, CPU_FREQ_Hz_us;
 extern uint32_t CYCCNT_RountCount, CYCCNT_LAST;
 extern uint64_t CYCCNT64;
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

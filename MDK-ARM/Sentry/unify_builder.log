@@ -474,3 +474,240 @@ These source files will be recompiled
 [2026-02-28 11:01:46]	[done]
 	build successfully !
 
+[2026-02-28 11:27:29]	[info] incremental build: 8 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_booster.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_minipc.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_minipc.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_minipc.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_GraphicsSendTask.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_minipc.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_minipc.cpp': source file has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_can.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_minipc.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': source file has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_minipc.h' has been changed.
+
+[2026-02-28 11:27:31]	[done]
+	build successfully !
+
+[2026-02-28 11:27:57]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': source file has been changed.
+
+[2026-02-28 11:27:58]	[done]
+	build successfully !
+
+[2026-02-28 11:29:49]	[done]
+	build successfully !
+
+[2026-02-28 11:31:02]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': source file has been changed.
+
+[2026-02-28 11:31:02]	[done]
+	build successfully !
+
+[2026-02-28 11:32:20]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
+
+[2026-02-28 11:32:20]	[done]
+	build successfully !
+
+[2026-02-28 11:35:39]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': source file has been changed.
+
+[2026-02-28 11:35:40]	[done]
+	build successfully !
+
+[2026-02-28 11:38:55]	[done]
+	build successfully !
+
+[2026-02-28 11:45:36]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
+
+[2026-02-28 11:45:37]	[done]
+	build successfully !
+
+[2026-02-28 11:49:53]	[info] incremental build: 2 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': source file has been changed.
+
+[2026-02-28 11:49:54]	[done]
+	build successfully !
+
+[2026-02-28 14:11:09]	[info] incremental build: 2 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\stm32h7xx_it.c': source file has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': source file has been changed.
+
+[2026-02-28 14:11:09]	compilation failed at : "c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\stm32h7xx_it.c", exit code: 1
+command: 
+  "c:\Users\HLlll\AppData\Local\Keil_v5\ARM\ARMCLANG\bin\armclang.exe" --target=arm-arm-none-eabi -c -xc -std=c99 -I. -I../Core/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I../USB_DEVICE/App -I../USB_DEVICE/Target -I../Middlewares/ST/STM32_USB_Device_Library/Core/Inc -I../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc -I../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I../User/Congfig/Inc -I../User/Task/Inc -I../User/Interaction/Inc -I../User/Chariot/Inc -I../User/Device/Inc -I../User/Driver/Inc -I../User/Algorithm/Inc -I../Drivers/CMSIS/Include -IRTE/_Sentry -I../DSP/Include -D"USE_HAL_DRIVER" -D"STM32H723xx" -D"__FPU_PRESENT=1" -D"__FPU_USED=1" -D"ARM_MATH_CM7" -mfloat-abi=hard -mfpu=fpv5-sp-d16 -mcpu=cortex-m7 -mlittle-endian -O0 -ffunction-sections -funsigned-char -fshort-enums -fshort-wchar -fno-rtti -w -g -o ./Sentry/.obj/__/Core/Src/stm32h7xx_it.o -MMD ./../Core/Src/stm32h7xx_it.c
+   at unify_builder.Program.Main(String[] args_)
+---
+./../Core/Src/stm32h7xx_it.c:498:10: error: call to undeclared function 'DWT_GetDeltaT'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
+  498 | IMU_Dt = DWT_GetDeltaT(&imu_cnt);
+      |          ^
+1 error generated.
+
+[2026-02-28 14:11:27]	[info] incremental build: 2 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\stm32h7xx_it.c': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': source file has been changed.
+
+[2026-02-28 14:11:27]	link failed !, exit code: 1
+   at unify_builder.Program.Main(String[] args_)
+---
+Error: L6218E: Undefined symbol DWT_GetDeltaT (referred from stm32h7xx_it.o).
+Not enough information to list image symbols.
+Finished: 1 information, 0 warning and 1 error messages.
+
+
+[2026-02-28 14:13:11]	[info] incremental build: 19 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\stm32h7xx_it.c': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\PID.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_SMC_Control.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_new_power_limit.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_power_limit.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_booster.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_GraphicsSendTask.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_boardc_bmi088.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_djimotor.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_dwt.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_external_imu.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_imu.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_minipc.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_can.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_uart.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
+
+[2026-02-28 14:13:12]	[done]
+	build successfully !
+
+[2026-02-28 14:14:32]	[done]
+	build successfully !
+
+[2026-02-28 15:04:34]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\stm32h7xx_it.c': source file has been changed.
+
+[2026-02-28 15:04:35]	[done]
+	build successfully !
+
+[2026-02-28 15:05:11]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': source file has been changed.
+
+[2026-02-28 15:05:11]	[done]
+	build successfully !
+
+[2026-02-28 15:05:40]	[done]
+	build successfully !
+
+[2026-02-28 16:10:01]	[info] incremental build: 3 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\main.c': source file has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_uart.cpp': source file has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\startup_stm32h723xx.s': source file has been changed.
+
+[2026-02-28 16:10:02]	[done]
+	build successfully !
+
+[2026-02-28 16:20:11]	[info] incremental build: 2 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_uart.cpp': source file has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': source file has been changed.
+
+[2026-02-28 16:20:12]	[done]
+	build successfully !
+
+[2026-02-28 16:22:21]	[info] incremental build: 2 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_uart.cpp': source file has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': source file has been changed.
+
+[2026-02-28 16:22:22]	[done]
+	build successfully !
+
+[2026-02-28 16:28:21]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': source file has been changed.
+
+[2026-02-28 16:28:22]	[done]
+	build successfully !
+
+[2026-02-28 16:31:01]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': source file has been changed.
+
+[2026-02-28 16:31:02]	[done]
+	build successfully !
+
+[2026-02-28 16:42:02]	[info] incremental build: 2 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': source file has been changed.
+
+[2026-02-28 16:42:03]	[done]
+	build successfully !
+
+[2026-02-28 16:56:13]	[info] incremental build: 2 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_booster.cpp': source file has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': source file has been changed.
+
+[2026-02-28 16:56:14]	[done]
+	build successfully !
+
+[2026-02-28 17:12:12]	[info] incremental build: 2 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': source file has been changed.
+
+[2026-02-28 17:12:13]	[done]
+	build successfully !
+
+[2026-02-28 19:34:59]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': source file has been changed.
+
+[2026-02-28 19:35:00]	[done]
+	build successfully !
+
+[2026-02-28 19:40:22]	[info] incremental build: 3 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\main.c': source file has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\usart.c': source file has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\startup_stm32h723xx.s': source file has been changed.
+
+[2026-02-28 19:40:23]	[done]
+	build successfully !
+

@@ -370,9 +370,14 @@ void SuperCAP_UART1_Callback(uint8_t *Buffer, uint16_t Length)
  */
 
 #ifdef GIMBAL
+uint32_t imu_cnt = 0;
+uint16_t L;
+float IMU_Dt;
 void IMUB_USART7_Callback(uint8_t *Buffer, uint16_t Length)
 {
+    L = Length;
     chariot.Gimbal.External_IMU.UART_BMI_Data_Process(Buffer);
+    IMU_Dt = DWT_GetDeltaT(&imu_cnt);
 }
 #endif
 
@@ -409,8 +414,6 @@ void MiniPC_UART_Callback(uint8_t *Buffer, uint16_t Length)
 extern Referee_Rx_A_t CAN3_Chassis_Rx_Data_A;
 float Sin_Single;
 uint32_t Single_Time;
-uint32_t imu_cnt = 0;
-float IMU_Dt;
 void Task100us_TIM4_Callback()
 {
     #ifdef CHASSIS
@@ -418,9 +421,7 @@ void Task100us_TIM4_Callback()
 
     #elif defined(GIMBAL)
         // 单给IMU消息开的定时器 ims
-        DWT_GetDeltaT(&imu_cnt);
-        chariot.Gimbal.Boardc_BMI.TIM_Calculate_PeriodElapsedCallback();
-        IMU_Dt = DWT_GetDeltaT(&imu_cnt);
+        chariot.Gimbal.Boardc_BMI.TIM_Calculate_PeriodElapsedCallback();     
 
         if(chariot.Referee.Get_Game_Stage() == Referee_Game_Status_Stage_BATTLE){                               //比赛开始状态
             chariot.DR16.Set_Left_Switch(DR16_Switch_Status_DOWN);                  //保险 强制上位机
@@ -447,6 +448,8 @@ void Task100us_TIM4_Callback()
             chariot.Gimbal.External_IMU.TIM_Calculate_PeriodElapsedCallback();
         }
 
+        chariot.Gimbal.Motor_Pitch.TIM_Process_PeriodElapsedCallback();                 //为了和普通发送分开，避免仲裁
+
         //生成正弦信号测试
         Single_Time ++;
         Sin_Single = 15.0f * sinf(2.0f * PI * 3.0f * Single_Time / 1000.0f);
@@ -463,6 +466,7 @@ void Task100us_TIM4_Callback()
 extern Referee_Rx_A_t CAN3_Chassis_Rx_Data_A;
 void Task1ms_TIM5_Callback()
 {
+    static uint8_t mod2 = 0;
     init_finished++;
     if(init_finished>2000)
     start_flag=1;
@@ -475,11 +479,15 @@ void Task1ms_TIM5_Callback()
     /****************************** 交互层回调函数 1ms *****************************************/
     if(start_flag==1)
     {
-        chariot.TIM_Calculate_PeriodElapsedCallback();
+        mod2 ++;
+        if(mod2 == 2){
+            chariot.TIM_Calculate_PeriodElapsedCallback();          //降低控制频率，1.外置imu回传频率有问题，2.达妙和大疆一起1khz看曲线只有500hz稳定
+            mod2 = 0;
+        }
         
     /****************************** 驱动层回调函数 1ms *****************************************/ 
         //统一打包发送
-        TIM_CAN_PeriodElapsedCallback();
+        TIM_CAN_PeriodElapsedCallback();                            //1khz发送，确保每一帧都被执行
         
         static int mod5 = 0,mod100 = 0,mod68 = 0;
         mod5++;

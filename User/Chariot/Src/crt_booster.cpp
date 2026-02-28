@@ -318,7 +318,7 @@ void Class_Booster::Output()
             }
             if (shoot_time < ShootTime)
             {
-                shoot_time++;
+                shoot_time++;                           //注意这里应该和运算频率有关
             }
 
             // Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega * 2.5f);//测试用 平常注释

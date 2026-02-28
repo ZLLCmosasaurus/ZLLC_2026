@@ -1,4 +1,4 @@
-arm-none-eabi-objcopy --update-section ER_IROM1="C:\Users\HLlll\AppData\Local\Temp\ZLLC_2026_7MSlnxrK.bin"  "c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\MDK-ARM\Sentry/ZLLC_2026.axf" "c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\MDK-ARM\Sentry/ZLLC_2026.elf"
+arm-none-eabi-objcopy --update-section ER_IROM1="C:\Users\HLlll\AppData\Local\Temp\ZLLC_2026_NGsdML2R.bin"  "c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\Sentry/ZLLC_2026.axf" "c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\Sentry/ZLLC_2026.elf"
 
-arm-none-eabi-objcopy: c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\MDK-ARM\Sentry/ZLLC_2026.elf: warning: allocated section `RW_IRAM2' not in segment
+arm-none-eabi-objcopy: c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\Sentry/ZLLC_2026.elf: warning: allocated section `RW_IRAM2' not in segment
 

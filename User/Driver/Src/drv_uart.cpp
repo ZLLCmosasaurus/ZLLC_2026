@@ -216,12 +216,11 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 }
 
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart){
-    //速率太快导致接收可能出现满中断
+    //意外错误处理
     if (huart->Instance == UART7)
     {
         huart->ErrorCode = 0;
         UART7_Manage_Object.Rx_Length = UART7_Manage_Object.Rx_Buffer_Length;
-        UART7_Manage_Object.Callback_Function(UART7_Manage_Object.Rx_Buffer, UART7_Manage_Object.Rx_Buffer_Length);
         HAL_UARTEx_ReceiveToIdle_DMA(huart, UART7_Manage_Object.Rx_Buffer, UART7_Manage_Object.Rx_Buffer_Length);
 		__HAL_DMA_DISABLE_IT(&hdma_uart7_rx, DMA_IT_HT);
     }
