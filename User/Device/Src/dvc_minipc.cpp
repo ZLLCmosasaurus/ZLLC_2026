@@ -55,9 +55,11 @@ void Class_MiniPC::Data_Process(Enum_MiniPC_Data_Source Data_Source)
     memcpy(&CAN3_Sentry_CMD_Data[4], &Data_NUC_To_MCU.Robot_Position_X, sizeof(uint16_t));
     memcpy(&CAN3_Sentry_CMD_Data[6], &Data_NUC_To_MCU.Robot_Position_Y, sizeof(uint16_t));
     //自瞄解算
-    Auto_aim(float(Data_NUC_To_MCU.Gimbal_Target_X / 100.f), float(Data_NUC_To_MCU.Gimbal_Target_Y / 100.f), float(Data_NUC_To_MCU.Gimbal_Target_Z / 100.f), &Rx_Angle_Yaw, &Rx_Angle_Pitch, &Distance);
+   
+    Rx_Angle_Yaw=Data_NUC_To_MCU.Target_Yaw_Angle / 100.f;
+    Rx_Angle_Pitch=Data_NUC_To_MCU.Target_Pitch_Angle / 100.f;
     Math_Constrain(&Rx_Angle_Pitch, -25.0f, 25.0f);
-
+    
     Rx_Chassis_Target_Omega               = Data_NUC_To_MCU.MiniPC_To_Chassis_Target_Omega / 100.0f;
     Rx_Chassis_Target_Velocity_X          = Data_NUC_To_MCU.MiniPC_To_Chassis_Target_Velocity_X / 100.0f;
     Rx_Chassis_Target_Velocity_Y          = Data_NUC_To_MCU.MiniPC_To_Chassis_Target_Velocity_Y / 100.0f;

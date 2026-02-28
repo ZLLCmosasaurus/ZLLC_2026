@@ -7,7 +7,7 @@
     "buildMode": "fast|multhread",
     "showRepathOnLog": true,
     "threadNum": 20,
-    "rootDir": "c:\\Users\\HLlll\\Desktop\\M67-Sentry\\MDK-ARM",
+    "rootDir": "c:\\Users\\HLlll\\Downloads\\HubLay-M67 - 副本\\HubLay-M67 - 副本\\HubLay-M67\\MDK-ARM",
     "dumpPath": "Sentry",
     "outDir": "Sentry",
     "ram": 327680,
@@ -180,20 +180,20 @@
             "rw-base": "",
             "xo-base": "",
             "link-scatter": [
-                "c:/Users/HLlll/Desktop/M67-Sentry/MDK-ARM/Sentry/ZLLC_2026.sct"
+                "\"c:/Users/HLlll/Downloads/HubLay-M67 - 副本/HubLay-M67 - 副本/HubLay-M67/MDK-ARM/Sentry/ZLLC_2026.sct\""
             ]
         }
     },
     "env": {
-        "workspaceFolder": "c:\\Users\\HLlll\\Desktop\\M67-Sentry\\MDK-ARM",
+        "workspaceFolder": "c:\\Users\\HLlll\\Downloads\\HubLay-M67 - 副本\\HubLay-M67 - 副本\\HubLay-M67\\MDK-ARM",
         "workspaceFolderBasename": "MDK-ARM",
-        "OutDir": "c:\\Users\\HLlll\\Desktop\\M67-Sentry\\MDK-ARM\\.\\Sentry",
+        "OutDir": "c:\\Users\\HLlll\\Downloads\\HubLay-M67 - 副本\\HubLay-M67 - 副本\\HubLay-M67\\MDK-ARM\\.\\Sentry",
         "OutDirRoot": ".",
         "OutDirBase": ".\\Sentry",
         "ProjectName": "ZLLC_2026",
         "ConfigName": "Sentry",
-        "ProjectRoot": "c:\\Users\\HLlll\\Desktop\\M67-Sentry\\MDK-ARM",
-        "ExecutableName": "c:\\Users\\HLlll\\Desktop\\M67-Sentry\\MDK-ARM\\.\\Sentry\\ZLLC_2026",
+        "ProjectRoot": "c:\\Users\\HLlll\\Downloads\\HubLay-M67 - 副本\\HubLay-M67 - 副本\\HubLay-M67\\MDK-ARM",
+        "ExecutableName": "c:\\Users\\HLlll\\Downloads\\HubLay-M67 - 副本\\HubLay-M67 - 副本\\HubLay-M67\\MDK-ARM\\.\\Sentry\\ZLLC_2026",
         "ChipPackDir": ".pack/Keil/STM32H7xx_DFP.4.0.0",
         "ChipName": "STM32H723VGTx",
         "SYS_Platform": "win32",
