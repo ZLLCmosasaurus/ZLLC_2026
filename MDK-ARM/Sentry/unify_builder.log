@@ -711,3 +711,104 @@ These source files will be recompiled
 [2026-02-28 19:40:23]	[done]
 	build successfully !
 
+[2026-02-28 20:59:09]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
+
+[2026-02-28 20:59:14]	[done]
+	build successfully !
+
+[2026-02-28 21:04:06]	[done]
+	build successfully !
+
+[2026-03-01 12:50:26]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_uart.cpp': source file has been changed.
+
+[2026-03-01 12:50:28]	[done]
+	build successfully !
+
+[2026-03-01 12:57:06]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
+
+[2026-03-01 12:57:06]	[done]
+	build successfully !
+
+[2026-03-01 13:04:17]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
+
+[2026-03-01 13:04:18]	[done]
+	build successfully !
+
+[2026-03-01 13:04:49]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
+
+[2026-03-01 13:04:50]	[done]
+	build successfully !
+
+[2026-03-01 13:07:20]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
+
+[2026-03-01 13:07:20]	[done]
+	build successfully !
+
+[2026-03-01 13:16:50]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
+
+[2026-03-01 13:16:51]	[done]
+	build successfully !
+
+[2026-03-01 13:45:49]	[info] incremental build: 3 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_uart.cpp': source file has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': source file has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': source file has been changed.
+
+[2026-03-01 13:45:51]	[done]
+	build successfully !
+
+[2026-03-01 16:40:21]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': source file has been changed.
+
+[2026-03-01 16:40:22]	[done]
+	build successfully !
+
+[2026-03-01 16:40:40]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': source file has been changed.
+
+[2026-03-01 16:40:41]	[done]
+	build successfully !
+
+[2026-03-01 16:41:48]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': source file has been changed.
+
+[2026-03-01 16:41:49]	[done]
+	build successfully !
+
+[2026-03-01 16:45:18]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': source file has been changed.
+
+[2026-03-01 16:45:19]	[done]
+	build successfully !
+
