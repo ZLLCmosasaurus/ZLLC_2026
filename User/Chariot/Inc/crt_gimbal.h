@@ -23,6 +23,8 @@
 
 /* Exported types ------------------------------------------------------------*/
 #define LOCK_PITCH 2.30f
+extern float YAW_Reference_Angle;
+extern float YAW_Chassis_Angle;
  
 /**
  * @brief 云台控制类型
@@ -213,9 +215,9 @@ protected:
     // pitch轴最小值
     float Min_Pitch_Angle = -10.0f;
     // pitch轴最大值
-    float Max_Pitch_Angle = 10.0f ; //多10°
+    float Max_Pitch_Angle = 25.0f ; //多10°
     // 大pitch轴最小值
-    float Min_Pitch_2_Angle = 0.49f;
+    float Min_Pitch_2_Angle = 0.588875473f;
     // 大pitch轴最大值
     float Max_Pitch_2_Angle = LOCK_PITCH; //均待定
     // 电磁铁固定角度

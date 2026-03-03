@@ -141,6 +141,7 @@ void Class_Steering_Wheel_Chassis::Speed_Resolution()
         case(Chassis_Control_Type_FLLOW):
         case(Chassis_Control_Type_SPIN_Positive):
         case(Chassis_Control_Type_SPIN_NePositive):
+        case(Chassis_Control_Type_Drive):
         {
             //轮组自锁，每个小轮坐标系都符合右手系
             static uint32_t Lock_Time = 0;
@@ -210,11 +211,11 @@ void Class_Steering_Wheel_Chassis::Speed_Resolution()
             float True_Vx[4], True_Vy[4], True_Target_Angle_Radian[4];
             
             //斜坡处理
-            True_Vx[0] = True_Vx[3] = Slope_Velocity_X.Get_Out() - sin(THETA) * Slope_Omega.Get_Out() *  R_DIST/ 2;
-            True_Vx[1] = True_Vx[2] = Slope_Velocity_X.Get_Out() + sin(THETA) * Slope_Omega.Get_Out() *  R_DIST/ 2;
+            True_Vx[0] = True_Vx[3] = Slope_Velocity_X.Get_Out() - sin((PI/2) - THETA) * Slope_Omega.Get_Out() *  R_DIST/ 2;
+            True_Vx[1] = True_Vx[2] = Slope_Velocity_X.Get_Out() + sin((PI/2) - THETA) * Slope_Omega.Get_Out() *  R_DIST/ 2;
 
-            True_Vy[0] = True_Vy[1] = Slope_Velocity_Y.Get_Out() - cos(THETA) * Slope_Omega.Get_Out() *  R_DIST/ 2;
-            True_Vy[2] = True_Vy[3] = Slope_Velocity_Y.Get_Out() + cos(THETA) * Slope_Omega.Get_Out() *  R_DIST/ 2;
+            True_Vy[0] = True_Vy[1] = Slope_Velocity_Y.Get_Out() - cos((PI/2) - THETA) * Slope_Omega.Get_Out() *  R_DIST/ 2;
+            True_Vy[2] = True_Vy[3] = Slope_Velocity_Y.Get_Out() + cos((PI/2) - THETA) * Slope_Omega.Get_Out() *  R_DIST/ 2;
 
             //舵轮转动角度的优化处理
             for(int i = 0;i<4;i++){
@@ -318,43 +319,10 @@ void Class_Steering_Wheel_Chassis::TIM_Calculate_PeriodElapsedCallback(Enum_Spri
     //     return;         //失能情况下不跑功率限制，防止出错
     // }
 
-    #ifdef POWER_LIMIT
+    //#ifdef POWER_LIMIT
 
-    //Supercap.Set_Now_Power(Referee->Get_Chassis_Power());
-    float Chassis_Limit_Power = 45.0f;                          //底盘需要限制的功率
-    float Referee_Limit_Power = 45.0f;                          //裁判系统反馈的功率上限
-    float Chassis_Energy_Buffer = Referee->Get_Chassis_Energy_Buffer();             //裁判系统回馈的剩余缓冲能量
 
-    if(Referee->Get_Referee_Status()==Referee_Status_DISABLE){
-        Chassis_Limit_Power = 80.0f;
-    }
-    else
-    {
-        if(Supercap.Get_Total_Energy() < 250){
-            Referee_Limit_Power = Low_Chassis_Energy_Callback();            //即将超20000J状态
-        }
-        else{
-            Referee_Limit_Power = Referee->Get_Chassis_Power_Max();
-        }
-
-        if(__Sprint_Status == Sprint_Status_DISABLE || Supercap.Get_Supercap_Status() == Disconnected){
-            Chassis_Buffer_Power = (Chassis_Energy_Buffer - Chassis_Energy_Buffer_Min) * Chassis_Energy_Buffer_Kp;
-            Math_Constrain(&Chassis_Buffer_Power,-60.0f,45.0f);
-            Chassis_Limit_Power = Chassis_Buffer_Power + Referee_Limit_Power;
-        }
-        else{       //这里可能加不同的决策
-            Chassis_Buffer_Power = (Chassis_Energy_Buffer - Chassis_Energy_Buffer_Min) * Chassis_Energy_Buffer_Kp;
-            Math_Constrain(&Chassis_Buffer_Power,-60.0f,45.0f);
-            Chassis_Limit_Power = Chassis_Buffer_Power + Referee_Limit_Power + Supercap.Get_Buffer_Power();
-        }
-    }
-    
-    Power_Limit.Set_Power_Limit(Chassis_Limit_Power);
-    Power_Limit.TIM_Adjust_PeriodElapsedCallback(Motor_Wheel);  //功率限制算法
-    Supercap.Set_Limit_Power(Referee->Get_Chassis_Power_Max() + Chassis_Buffer_Power + 5.0f);
-    Supercap.TIM_Supercap_PeriodElapsedCallback();          //向超电发送信息
-
-    #elif defined (POWER_LIMIT_JH)
+    #ifdef POWER_LIMIT_JH
     
     //计算限制功率
     if(Referee->Get_Referee_Status() == Referee_Status_ENABLE){
@@ -385,7 +353,7 @@ void Class_Steering_Wheel_Chassis::TIM_Calculate_PeriodElapsedCallback(Enum_Spri
     Power_Management.Actual_Power = Supercap.Get_Chassis_Power();//Referee->Get_Chassis_Power();
     Power_Management.Total_error = 0.0f;
 
-#ifdef AGV
+    #ifdef AGV
     for (int i = 0; i < 4; i++)         //数据传递处理
     {
         //都是计算转子的
@@ -410,27 +378,6 @@ void Class_Steering_Wheel_Chassis::TIM_Calculate_PeriodElapsedCallback(Enum_Spri
         Motor_Steer[i].Set_Out(Power_Management.Motor_Data[i + 4].output);//set_out已经有output输出
         //Motor_Steer[i].Output();
     }
-#else
-    for (int i = 0; i < 4; i++)         //数据传递处理
-    {
-        //都是计算转子的
-        Power_Management.Motor_Data[i].feedback_omega = Motor_Wheel[i].Get_Now_Omega_Radian() * RAD_TO_RPM * Motor_Wheel[i].Get_Gearbox_Rate();
-        Power_Management.Motor_Data[i].feedback_torque = Motor_Wheel[i].Get_Now_Torque() * M3508_CMD_CURRENT_TO_TORQUE;     //与减速比有关
-        Power_Management.Motor_Data[i].torque = Motor_Wheel[i].Get_Out() * M3508_CMD_CURRENT_TO_TORQUE;                     //与减速比有关
-        Power_Management.Motor_Data[i].pid_output = Motor_Wheel[i].Get_Out();
-
-        Power_Management.Motor_Data[i].Target_error = fabs(Motor_Wheel[i].Get_Target_Omega_Radian() - Motor_Wheel[i].Get_Now_Omega_Radian());
-        
-    }
-    Power_Management.Total_error = 0.0;
-    Power_Limit.Power_Task(Power_Management);
-
-    for (int i = 0; i < 4; i++)
-    {
-        Motor_Wheel[i].Set_Out(Power_Management.Motor_Data[i].output);
-        Motor_Wheel[i].Output();
-    }
-#endif
 
     if(Referee->Get_Referee_Status() == Referee_Status_ENABLE){
         Supercap.Set_Limit_Power(Referee->Get_Chassis_Power_Max() + Chassis_Buffer + 5.0f);
@@ -440,7 +387,9 @@ void Class_Steering_Wheel_Chassis::TIM_Calculate_PeriodElapsedCallback(Enum_Spri
     }
     //Supercap.TIM_Supercap_PeriodElapsedCallback();          //向超电发送信息
     #endif
-		
+    // #elif defined (POWER_LIMIT_GY)
+
+#endif	
 		
 }
 

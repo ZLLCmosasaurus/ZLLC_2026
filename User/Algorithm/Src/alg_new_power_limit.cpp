@@ -10,7 +10,6 @@
  */
 
 #include "alg_new_power_limit.h"
-//#include "alg_power_limit.h"
 #include "math.h"
 
 /* Private macros ------------------------------------------------------------*/
@@ -52,99 +51,12 @@ void Class_Power_Limit::Init(float __ErrorLow, float __ErrorUp)
 float Class_Power_Limit::Calculate_Theoretical_Power(float omega, float torque, uint8_t motor_index)
 {
 
-    float cmdPower = rpm2av(omega) * torque +
+    float cmdPower = rpm2av(omega) * torque * k4 +
                      fabs(rpm2av(omega)) * k1 +
                      torque * torque * k2 +
                      k3;
 
     return cmdPower;
-}
-
-/**
- * @brief 计算功率系数
- *
- * @param actual_power 实际功率
- * @param motor_data 电机数据数组
- */
-void Class_Power_Limit::Calculate_Power_Coefficient(float actual_power, const Struct_Power_Motor_Data *motor_data)
-{
-#ifdef AGV
-    // static Matrixf<2, 1> samples_mot, samples_dir;
-    // static Matrixf<2, 1> params_mot, params_dir;
-    // float effectivePower_mot = 0, effectivePower_dir = 0;
-
-    // samples_mot[0][0] = samples_mot[1][0] = 0;
-    // samples_dir[0][0] = samples_dir[1][0] = 0;
-
-    // if (actual_power > 5)
-    // {
-    //     // 分别处理动力电机(奇数索引)和转向电机(偶数索引)
-    //     for (int i = 0; i < 8; i++)
-    //     {
-    //         if (i % 2 == 0) // 转向电机
-    //         {
-    //             if (motor_data[i].feedback_torque * rpm2av(motor_data[i].feedback_omega) > 0)
-    //             {
-    //                 effectivePower_dir += motor_data[i].feedback_torque *
-    //                                       rpm2av(motor_data[i].feedback_omega);
-    //             }
-    //             samples_dir[0][0] += fabsf(rpm2av(motor_data[i].feedback_omega));
-    //             samples_dir[1][0] += motor_data[i].feedback_torque *
-    //                                  motor_data[i].feedback_torque;
-    //         }
-    //         else // 动力电机
-    //         {
-    //             if (motor_data[i].feedback_torque * rpm2av(motor_data[i].feedback_omega) > 0)
-    //             {
-    //                 effectivePower_mot += motor_data[i].feedback_torque *
-    //                                       rpm2av(motor_data[i].feedback_omega);
-    //             }
-    //             samples_mot[0][0] += fabsf(rpm2av(motor_data[i].feedback_omega));
-    //             samples_mot[1][0] += motor_data[i].feedback_torque *
-    //                                  motor_data[i].feedback_torque;
-    //         }
-    //     }
-
-    //     // 更新RLS参数
-    //     float power_ratio = 0.8f; // 动力电机功率占比
-    //     params_mot = rls_mot.update(samples_mot,
-    //                                 power_ratio * actual_power - effectivePower_mot - 4 * k3_mot);
-    //     params_dir = rls_dir.update(samples_dir,
-    //                                 (1 - power_ratio) * actual_power - effectivePower_dir - 4 * k3_dir);
-
-    //     // 更新系数
-    //     k1_mot = my_fmax(params_mot[0][0], 1e-5f);
-    //     k2_mot = my_fmax(params_mot[1][0], 1e-5f);
-    //     k1_dir = my_fmax(params_dir[0][0], 1e-5f);
-    //     k2_dir = my_fmax(params_dir[1][0], 1e-5f);
-    // }
-#else
-    static Matrixf<2, 1> samples;
-    static Matrixf<2, 1> params;
-    float effectivePower = 0;
-
-    samples[0][0] = samples[1][0] = 0;
-
-    if (actual_power > 5)
-    {
-        for (int i = 0; i < 4; i++)
-        {
-            // if (motor_data[i].feedback_torque * rpm2av(motor_data[i].feedback_omega) > 0)
-            // {
-                
-            // }
-            effectivePower += motor_data[i].feedback_torque *
-                                  rpm2av(motor_data[i].feedback_omega);
-            samples[0][0] += fabsf(rpm2av(motor_data[i].feedback_omega));
-            samples[1][0] += motor_data[i].feedback_torque *
-                             motor_data[i].feedback_torque;
-        }
-
-        params = rls.update(samples, actual_power - effectivePower - 4 * k3);
-        k1 = my_fmax(params[0][0], 1e-7f);
-        k2 = my_fmax(params[1][0], 1e-7f);
-    }
-#endif
 }
 
 /**
@@ -331,8 +243,7 @@ void Class_Power_Limit::Power_Task(Struct_Power_Management &power_management)
 
         // 限幅处理
         power_management.Motor_Data[i].output =
-            (power_management.Motor_Data[i].output > 16384) ? 16384 : (power_management.Motor_Data[i].output < -16384) ? -16384
-                                                                                                                       : power_management.Motor_Data[i].output;
+            (power_management.Motor_Data[i].output > 16384) ? 16384 : (power_management.Motor_Data[i].output < -16384) ? -16384 : power_management.Motor_Data[i].output;
     }
 
     power_management.Theoretical_Total_Power = theoretical_sum;

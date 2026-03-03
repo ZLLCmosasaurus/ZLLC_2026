@@ -139,6 +139,8 @@ extern uint8_t CAN3_MiniPC_Tx_Data_B[];   //下位机发送缓冲区
 extern uint8_t CAN3_MiniPC_Tx_Data_C[];   //下位机发送缓冲区
 extern uint8_t CAN3_MiniPC_Tx_Data_D[];   //下位机发送缓冲区
 
+extern uint8_t CAN1_MiniPc_Tx_Data[8];
+extern uint8_t CAN2_MiniPc_Tx_Data[8];
 /*********LK电机 控制缓冲区***********/
 extern uint8_t CAN1_0x141_Tx_Data[8];
 extern uint8_t CAN1_0x142_Tx_Data[8];

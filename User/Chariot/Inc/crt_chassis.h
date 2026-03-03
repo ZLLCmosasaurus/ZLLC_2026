@@ -79,6 +79,7 @@ enum Enum_Chassis_Control_Type :uint8_t
     Chassis_Control_Type_FLLOW,
     Chassis_Control_Type_SPIN_Positive,
     Chassis_Control_Type_SPIN_NePositive,  // 反小陀螺
+    Chassis_Control_Type_Drive  //底盘直驱
 };
 
 /**
@@ -114,7 +115,7 @@ public:
     //随动环
     //Class_PID Chassis_Follow_PID_Angle;
 
-    void Init(float __Velocity_X_Max = 4.0f, float __Velocity_Y_Max = 4.0f, float __Omega_Max = 4.0f, float __Steer_Power_Ratio = 0.5);
+    void Init(float __Velocity_X_Max = 12.0f, float __Velocity_Y_Max = 12.0f, float __Omega_Max = 4.0f, float __Steer_Power_Ratio = 0.5);
 
     inline Enum_Chassis_Control_Type Get_Chassis_Control_Type();
     inline float Get_Velocity_X_Max();
@@ -130,7 +131,6 @@ public:
     inline float Get_Target_Omega();
     inline float Get_Spin_Omega();
     inline float Get_Relative_Angle();
-    inline Enum_Supercap_Mode Get_Supercap_Mode();
 
     inline void Set_Chassis_Control_Type(Enum_Chassis_Control_Type __Chassis_Control_Type);
     inline void Set_Target_Velocity_X(float __Target_Velocity_X);
@@ -140,7 +140,6 @@ public:
     inline void Set_Now_Velocity_Y(float __Now_Velocity_Y);
     inline void Set_Now_Omega(float __Now_Omega);
     inline void Set_Relative_Angle(float __Relative_Angle);
-    inline void Set_Supercap_Mode(Enum_Supercap_Mode __Supercap_Mode);
 
     inline void Set_Velocity_Y_Max(float __Velocity_Y_Max);
     inline void Set_Velocity_X_Max(float __Velocity_X_Max);
@@ -155,7 +154,7 @@ protected:
     //速度Y限制
     float Velocity_Y_Max=4.0f;
     //角速度限制
-    float Omega_Max;
+    float Omega_Max = 0.7f;
     //舵向电机功率上限比率
     float Steer_Power_Ratio = 0.5f;
     //底盘小陀螺模式角速度
@@ -194,7 +193,6 @@ protected:
 
     //底盘控制方法
     Enum_Chassis_Control_Type Chassis_Control_Type = Chassis_Control_Type_DISABLE;
-    Enum_Supercap_Mode Supercap_Mode = Supercap_DISABLE;
     //目标速度X
     float Target_Velocity_X = 0.0f;
     //目标速度Y
@@ -347,10 +345,6 @@ float Class_Steering_Wheel_Chassis::Get_Relative_Angle()
 {
     return (Relative_Angle);
 }
-Enum_Supercap_Mode Class_Steering_Wheel_Chassis::Get_Supercap_Mode()
-{
-    return (Supercap_Mode);
-}
 /**
  * @brief 设定底盘控制方法
  *
@@ -444,10 +438,6 @@ void Class_Steering_Wheel_Chassis::Set_Velocity_X_Max(float __Velocity_X_Max)
 void Class_Steering_Wheel_Chassis::Set_Relative_Angle(float __Relative_Angle)
 {
     Relative_Angle = __Relative_Angle;
-}
-void Class_Steering_Wheel_Chassis::Set_Supercap_Mode(Enum_Supercap_Mode __Supercap_Mode)
-{
-    Supercap_Mode = __Supercap_Mode;
 }
 #endif
 

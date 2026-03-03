@@ -97,7 +97,8 @@ enum Enum_LK_Motor_Control_Method
 	LK_Motor_Control_Method_ANGLE,          //霍尔(磁编)角度环
     LK_Motor_Control_Method_OMEGA,          //霍尔(磁编)角速度环
     LK_Motor_Control_Method_TORQUE,         //霍尔(磁编)力矩环
-	LK_Motor_Control_Method_OpenLoop        //无传感器 直接开环，一般不会用到(仅MS电机有效)
+	LK_Motor_Control_Method_OpenLoop,       //无传感器 直接开环，一般不会用到(仅MS电机有效)
+    LK_Motor_Control_Method_ANGLE_LOCK      //云台折叠下yaw的锁定状态
 };
 
 /**

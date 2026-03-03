@@ -22,7 +22,9 @@
 /* Private function declarations ---------------------------------------------*/
 
 /* Function prototypes -------------------------------------------------------*/
-
+float YAW_Reference_Angle;
+float YAW_Chassis_Angle;
+float DebugMo = 135.0f;
 /**
  * @brief TIM定时器中断计算回调函数
  *
@@ -44,7 +46,8 @@ void Class_Gimbal_Pitch_Motor_DM4310::TIM_PID_PeriodElapsedCallback()
 							
                 //速度环
                 PID_Omega.Set_Target(Target_Omega);
-                PID_Omega.Set_Now(True_Gyro_Pitch * RAD_TO_DEG);
+                //PID_Omega.Set_Now(True_Gyro_Pitch * RAD_TO_DEG);//因为大Pitch不稳内环实际值先用电机自身
+                PID_Omega.Set_Now(Data.Now_Omega);
             }
             else
             {
@@ -59,10 +62,8 @@ void Class_Gimbal_Pitch_Motor_DM4310::TIM_PID_PeriodElapsedCallback()
             }
 
             PID_Omega.TIM_Adjust_PeriodElapsedCallback();
-
-            Target_Torque=PID_Omega.Get_Out();
-						
-            Set_Out(Target_Torque);//补偿重力
+            Target_Torque=PID_Omega.Get_Out();		
+            Set_Out(Target_Torque + abs(cosf(True_Rad_Pitch) * DebugMo));//补偿重力
 		}
         break;
         case(DM_Motor_Control_Method_MIT_OPENLOOP):
@@ -173,6 +174,21 @@ void Class_Gimbal_Yaw_Motor_LK7025::TIM_PID_PeriodElapsedCallback()
         Set_Out(Out);
     }
     break;
+    case (LK_Motor_Control_Method_ANGLE_LOCK):
+    {
+        PID_Angle.Set_Target(YAW_Reference_Angle + 30.8f);
+        PID_Angle.Set_Now(YAW_Chassis_Angle);
+        PID_Angle.TIM_Adjust_PeriodElapsedCallback();
+        Target_Omega_Angle = PID_Angle.Get_Out();
+        // 速度环
+        PID_Omega.Set_Target(Target_Omega_Angle);
+        PID_Omega.Set_Now(Data.Now_Omega_Radian);
+        PID_Omega.TIM_Adjust_PeriodElapsedCallback();
+
+        Out = PID_Omega.Get_Out();
+        Set_Out(Out);
+    }
+    break;
     default:
     {
         Set_Out(0.0f);
@@ -220,8 +236,8 @@ void Class_Gimbal::Init()
     Motor_Yaw.Init(&hfdcan2, LK_Motor_ID_0x141, 220.f, 0, 33.0f, LK_Motor_Control_Method_IMU_ANGLE, LK_Motor_Control_Torque);
     
     // pitch轴电机
-    Motor_Pitch.PID_Angle.Init(2.0f, 0.0f, 0.0f, 0.0f, 2000.0f, 4090.0f);
-    Motor_Pitch.PID_Omega.Init(5.0f, 0.0f, 0.0f, 0.0f, 2000.0f, 4090.0f);
+    Motor_Pitch.PID_Angle.Init(0.7f, 0.0f, 0.0f, 0.0f, 200.0f, 4090.0f);
+    Motor_Pitch.PID_Omega.Init(180.0f, 1.0f, 0.0f, 0.0f, 2000.0f, 4090.0f);
     Motor_Pitch.IMU = &DM_IMU;
     Motor_Pitch.Init(&hfdcan2, DM_Motor_ID_0xA1, DM_Motor_Control_Method_MIT_OPENLOOP);
 
@@ -272,20 +288,20 @@ void Class_Gimbal::Output()
             // 限制角度
             Math_Constrain(&Target_Pitch_Angle, Min_Pitch_Angle, Max_Pitch_Angle);
             Math_Constrain(&Target_Pitch_2_Angle, Min_Pitch_2_Angle, Max_Pitch_2_Angle);
-            Math_Constrain(&Target_Yaw_Angle, Min_Yaw_Angle, Max_Yaw_Angle);
+            //Math_Constrain(&Target_Yaw_Angle, Min_Yaw_Angle, Max_Yaw_Angle);
 
-            Motor_Pitch_2.Set_Target_Omega(0.5f);
+            Motor_Pitch_2.Set_Target_Omega(1.0f);
 
             // 设置目标角度
-            if(Motor_Pitch_2.Get_Now_Angle() > LOCK_PITCH - 0.3f)
-            {
-                Motor_Yaw.Set_Target_Angle(Target_Yaw_Angle);
-            }
-            else
-            {
-                Motor_Yaw.Disable();
-                Motor_Yaw.Set_Out(0.0f);
-            }
+            // if(Motor_Pitch_2.Get_Now_Angle() > LOCK_PITCH - 0.3f)
+            // {
+            //     Motor_Yaw.Set_Target_Angle(Target_Yaw_Angle);
+            // }
+            // else
+            // {
+            //     Motor_Yaw.Disable();
+            //     Motor_Yaw.Set_Out(0.0f);
+            // }
             // 限制角度范围 处理yaw轴180度问题
             while ((Target_Yaw_Angle - Motor_Yaw.Get_True_Angle_Yaw()) > Max_Yaw_Angle)
             {
@@ -295,6 +311,7 @@ void Class_Gimbal::Output()
             {
                 Target_Yaw_Angle += (2 * Max_Yaw_Angle);
             }
+            Motor_Yaw.Set_Target_Angle(Target_Yaw_Angle);
             Motor_Pitch.Set_Target_Angle(Target_Pitch_Angle);
             Motor_Pitch_2.Set_Target_Angle(Target_Pitch_2_Angle);
         }

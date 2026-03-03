@@ -146,6 +146,59 @@ class Class_FSM_Alive_Control_VT13 : public Class_FSM
 };
 
 /**
+ * @brief 云台控制模式有限状态机
+ * 通过检测PITCH电机角度实时切换控制模式
+ */
+class Gimbal_FSM : public Class_FSM
+{
+public:
+    // 云台控制模式定义
+    typedef enum {
+        GIMBAL_RELAX_MODE = 0,     // 松弛模式
+        GIMBAL_INIT_MODE,          // 初始化模式
+        GIMBAL_STABILIZE_MODE,     // 自稳模式
+        GIMBAL_FOLLOW_MODE,        // 跟随模式
+        GIMBAL_CALIBRATION_MODE,   // 校准模式
+        GIMBAL_SAFE_MODE           // 安全保护模式
+    } GimbalMode_t;
+    
+    // 电机角度状态定义
+    typedef struct {
+        float current_angle;       // 当前角度
+        float target_angle;        // 目标角度
+        float angle_threshold;      // 角度阈值
+        uint32_t stable_time;      // 稳定时间计数
+    } MotorAngleState_t;
+    
+    Gimbal_FSM();
+    
+    // 设置电机角度反馈
+    void SetPitchAngle(float angle);
+    
+    // 设置目标角度
+    void SetTargetAngle(float angle);
+    
+    // 获取当前控制模式
+    inline uint8_t GetCurrentMode();
+    
+    // 状态处理函数（在定时器回调中调用）
+    void TIM_Status_PeriodElapsedCallback();
+    
+    // 模式切换条件检查
+    bool CheckModeTransitionConditions();
+
+private:
+    MotorAngleState_t pitch_motor;     // PITCH电机状态
+    uint32_t mode_switch_debounce;     // 模式切换防抖计数
+    bool motor_connected;              // 电机连接状态
+    
+    // 私有方法
+    bool CheckAngleStable();
+    bool CheckAngleInRange(float min_angle, float max_angle);
+    void ExecuteModeSpecificActions();
+};
+
+/**
  * @brief 控制对象
  *
  */
@@ -270,14 +323,15 @@ protected:
     //绑定的CAN
     Struct_CAN_Manage_Object *CAN_Manage_Object = &CAN3_Manage_Object;
 
+    //底盘转换后的角度（数据来源yaw电机）
+    float Chassis_Angle;
+    //底盘标定参考正方向角度(数据来源yaw电机)
+    float Reference_Angle = -7.15783691f;
+	float Reference_Radian = Reference_Angle * PI / 180.f;
+
     #ifdef CHASSIS
-        //底盘标定参考正方向角度(数据来源yaw电机)
-        float Reference_Angle = -2.8729248f;
-		float Reference_Radian = Reference_Angle * PI / 180.f;
         //小陀螺云台坐标系稳定偏转角度 用于矫正
         float Offset_Angle = -0.0f;  //7.5°
-        //底盘转换后的角度（数据来源yaw电机）
-        float Chassis_Angle;
         //写变量
         uint32_t Gimbal_Alive_Flag = 0;
         uint32_t Pre_Gimbal_Alive_Flag = 0;
@@ -306,7 +360,7 @@ protected:
         //DR16云台yaw灵敏度系数(0.001PI表示yaw速度最大时为1rad/s)
         float DR16_Yaw_Angle_Resolution = 0.008f * PI * 57.29577951308232;
         //DR16云台pitch灵敏度系数(0.001PI表示pitch速度最大时为1rad/s)
-        float DR16_Pitch_Angle_Resolution = 0.003f * PI * 57.29577951308232;
+        float DR16_Pitch_Angle_Resolution = 0.01f * PI * 57.29577951308232;
 
         //DR16云台yaw灵敏度系数(0.001PI表示yaw速度最大时为1rad/s)
         float DR16_Yaw_Resolution = 0.003f * PI;

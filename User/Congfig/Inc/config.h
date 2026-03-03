@@ -25,7 +25,8 @@
 //#define BATTLE
 
 //功率控制相关
-//#define POWER_LIMIT_JH
+#define POWER_LIMIT_JH
+//#define POWER_LIMIT_GY
 #define POWER_CONTROL 0 //启用功率控制
 //#define BUFFER_LOOP
 

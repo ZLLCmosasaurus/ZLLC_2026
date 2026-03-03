@@ -149,13 +149,16 @@ void Chassis_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 #endif
 /* CAN3留给磁编*/ 
 #ifdef CHASSIS
+uint32_t last_cnt;
+float Dt;
 void Chassis_Device_CAN3_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
 	can[2]++;
     switch (CAN_RxMessage->Header.Identifier)
     {
-        case(0xD3):
+        case(0xD1):
         {
+//					  Dt = 1.0f/DWT_GetDeltaT(&last_cnt);
             chariot.Chassis.Motor_Steer[0].MA600_Data_Process(CAN_RxMessage);
         }
         break;
@@ -164,12 +167,12 @@ void Chassis_Device_CAN3_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
             chariot.Chassis.Motor_Steer[1].MA600_Data_Process(CAN_RxMessage);
         }
         break;
-        case(0xD4):
+        case(0xD3):
         {
             chariot.Chassis.Motor_Steer[2].MA600_Data_Process(CAN_RxMessage);
         }
         break;
-        case(0xD1):
+        case(0xD4):
         {
             chariot.Chassis.Motor_Steer[3].MA600_Data_Process(CAN_RxMessage);
         }   
@@ -194,12 +197,12 @@ void Gimbal_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 		break;
         case(0x201):
         {
-            chariot.Booster.Motor_Friction_Right.CAN_RxCpltCallback(CAN_RxMessage->Data);
+            chariot.Booster.Motor_Friction_Left.CAN_RxCpltCallback(CAN_RxMessage->Data);
         }
 		break;
 		case(0x202):
 		{
-			chariot.Booster.Motor_Friction_Left.CAN_RxCpltCallback(CAN_RxMessage->Data);
+			chariot.Booster.Motor_Friction_Right.CAN_RxCpltCallback(CAN_RxMessage->Data);
 		}
 		break;
         // case(0xA1):
@@ -207,6 +210,10 @@ void Gimbal_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 		//  	Dt = 1.0f/DWT_GetDeltaT(&last_cnt);
         //     chariot.Gimbal.Motor_Pitch.CAN_RxCpltCallback(CAN_RxMessage->Data);
 		// }
+        case (0xa1):
+        {
+            chariot.MiniPC.CAN_RxCpltCallback(CAN_RxMessage->Data);
+        }
         break;
         case(0xA2):
         {				
@@ -229,13 +236,8 @@ void Gimbal_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
     {
         case(0x141):
         {
-						Dt2 = 1.0f/DWT_GetDeltaT(&last_cnt2);
+						//Dt2 = 1.0f/DWT_GetDeltaT(&last_cnt2);
             chariot.Gimbal.Motor_Yaw.CAN_RxCpltCallback(CAN_RxMessage->Data);
-        }
-        break;
-        case(0x203):
-        {
-            chariot.Booster.Motor_Driver.CAN_RxCpltCallback(CAN_RxMessage->Data);
         }
         break;
         case(0x88)://与下板进行通讯
@@ -245,9 +247,17 @@ void Gimbal_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
         break;
         case(0xA1):
         {
-		    Dt = 1.0f/DWT_GetDeltaT(&last_cnt);
+						//Dt = 1.0f/DWT_GetDeltaT(&last_cnt);
             chariot.Gimbal.Motor_Pitch.CAN_RxCpltCallback(CAN_RxMessage->Data);
 		}
+        break;
+        case(0x204):
+        {
+            Dt = 1.0f/DWT_GetDeltaT(&last_cnt);
+                chariot.Booster.Motor_Driver.CAN_RxCpltCallback(CAN_RxMessage->Data);
+            
+        }
+        break;
 //      break;
     }
 		
@@ -375,7 +385,7 @@ void SuperCAP_UART1_Callback(uint8_t *Buffer, uint16_t Length)
 #ifdef GIMBAL
 void MiniPC_USB_Callback(uint8_t *Buffer, uint32_t Length)
 {
-    chariot.MiniPC.USB_RxCpltCallback(Buffer);
+    //chariot.MiniPC.USB_RxCpltCallback(Buffer);
 }
 #endif
 /**
@@ -388,7 +398,7 @@ void MiniPC_USB_Callback(uint8_t *Buffer, uint32_t Length)
 #ifdef GIMBAL
 void MiniPC_UART_Callback(uint8_t *Buffer, uint16_t Length)
 {
-    chariot.MiniPC.UART_RxCpltCallback(Buffer);
+    //chariot.MiniPC.UART_RxCpltCallback(Buffer);
 }
 #endif
 /**
@@ -411,14 +421,20 @@ void Task100us_TIM4_Callback()
 
     #elif defined(GIMBAL)
         // 单给IMU消息开的定时器 ims
-    //chariot.Gimbal.Boardc_BMI.TIM_Calculate_PeriodElapsedCallback();     
-		        static uint8_t mod2 = 0;
+    //chariot.Gimbal.Boardc_BMI.TIM_Calculate_PeriodElapsedCallback();    
+    static uint16_t mod5 = 0;
+    static uint8_t mod2 = 0;
+    if (mod5 % 50 == 1)
+    {
+        mod5 = 0;
         mod2++;
         if(mod2%2 == 0)
             chariot.Gimbal.DM_IMU.IMU_RequestData(&hfdcan3,0x01,2);
         else
             chariot.Gimbal.DM_IMU.IMU_RequestData(&hfdcan3,0x01,3);
-    
+            
+    }
+    mod5++;
     #endif
 }
 
@@ -444,10 +460,11 @@ void Task1ms_TIM5_Callback()
     {
     #ifdef GIMBAL
         chariot.FSM_Alive_Control.Reload_TIM_Status_PeriodElapsedCallback();
-        if(chariot.Gimbal.Motor_Yaw.Get_LK_Motor_Control_Method() == LK_Motor_Control_Method_OpenLoop)
-        {
-            chariot.Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
-        }
+//        if(chariot.Gimbal.Motor_Pitch_2.Get_Now_Angle() < LOCK_PITCH - 0.35f && chariot.DR16.Get_Right_Switch() != DR16_Switch_Status_DOWN)//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//        {
+//            chariot.Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_Drive);
+//            chariot.Chassis.Set_Target_Omega(0.0f);
+//        }
         //chariot.FSM_Alive_Control_VT13.Reload_TIM_Status_PeriodElapsedCallback();
         // if(gimbal_lock == 0)
         // {
@@ -534,7 +551,7 @@ extern "C" void Task_Init()
         UART_Init(&huart9, VT13_UART_Callback, 30);
         #endif
         //上位机USB
-        USB_Init(&MiniPC_USB_Manage_Object,MiniPC_USB_Callback);
+        //USB_Init(&MiniPC_USB_Manage_Object,MiniPC_USB_Callback);
         //上位机串口
         UART_Init(&huart8, MiniPC_UART_Callback, 56);
 

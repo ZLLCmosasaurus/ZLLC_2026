@@ -199,8 +199,8 @@ void Class_DM_Motor_J4310::Data_Process(uint8_t* Rx_Data)
     }
 
     //计算电机本身信息
-    Data.Now_Angle = (float)tmp_position / 65536.0f * PI + 1.57f;//uint_to_float(tmp_position,-1.0f, 1.0f, 16) * 180.0f;
-    Data.Now_Omega = Math_Int_To_Float(tmp_omega, 0, (1 << 12) - 1, -30.0f, 30.0f) *180.f /PI;
+    Data.Now_Angle = (float)tmp_position / 65536.0f * PI + 1.57f;//因为用了位置速度改的
+    Data.Now_Omega = Math_Int_To_Float(tmp_omega, 0, (1 << 12) - 1, -30.0f, 30.0f);
     Data.Now_Torque = Math_Int_To_Float(tmp_torque, 0, (1 << 12) - 1, -10.0, 10.0);
     Data.Now_MOS_Temperature = DM_Rx_Data[6];
     Data.Now_Rotor_Temperature = DM_Rx_Data[7];
