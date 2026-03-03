@@ -308,7 +308,9 @@ void Device_SPI2_Callback(uint8_t *Tx_Buffer, uint8_t *Rx_Buffer, uint16_t Lengt
 #ifdef GIMBAL
 void DR16_UART5_Callback(uint8_t *Buffer, uint16_t Length)
 {
-    chariot.DR16.DR16_UART_RxCpltCallback(Buffer);
+    if(Length == 18){               //长度小于18的应该是错误的数据
+        chariot.DR16.DR16_UART_RxCpltCallback(Buffer);
+    }
 }
 #endif
 /**

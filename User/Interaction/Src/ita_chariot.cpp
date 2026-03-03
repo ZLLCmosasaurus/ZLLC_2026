@@ -322,7 +322,9 @@ void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback(uint8_t *Rx_Data)
  */
 void Class_Chariot::MiniPC_Data_Updata()
 {
-    MiniPC.Set_Gimbal_Now_Yaw_Angle(Gimbal.External_IMU.Get_Angle_Yaw());
+    // MiniPC.Set_Gimbal_Now_Yaw_Angle(Gimbal.External_IMU.Get_Angle_Yaw());
+    //注意，因为上电时刻的小头imu不一定是与大yaw正对的，会影响到自瞄，这样执行角度的时候直接减去大Yaw的IMU就可以了
+    MiniPC.Set_Gimbal_Now_Yaw_Angle(Gimbal.Boardc_BMI.Get_Angle_Yaw() + Gimbal.Motor_Yaw.Get_Zero_Offset_Angle());
     MiniPC.Set_Gimbal_Now_Roll_Angle(Gimbal.External_IMU.Get_Angle_Roll());
     MiniPC.Set_Gimbal_Now_Pitch_Angle(Gimbal.External_IMU.Get_Angle_Pitch());
     MiniPC.Set_Gimbal_Now_Relative_Angle(Gimbal.Motor_Main_Yaw.Get_Now_Angle() - Reference_Angle * 57.3f);
@@ -1021,9 +1023,13 @@ void Class_FSM_Alive_Control::Reload_TIM_Status_PeriodElapsedCallback()
         //遥控器串口错误状态
         case (4):
         {
+            huart5.ErrorCode = 0;
+            UART5_Manage_Object.Rx_Length = 0;
+            memset(UART5_Manage_Object.Rx_Buffer, 0, UART_BUFFER_SIZE);
             HAL_UART_DMAStop(&huart5); // 停止以重启
             //HAL_Delay(10); // 等待错误结束
-            HAL_UARTEx_ReceiveToIdle_DMA(&huart5, UART5_Manage_Object.Rx_Buffer, UART5_Manage_Object.Rx_Buffer_Length);
+            HAL_UARTEx_ReceiveToIdle_DMA(&huart5, UART5_Manage_Object.Rx_Buffer, UART5_Manage_Object.Rx_Buffer_Length * 2);
+            __HAL_DMA_DISABLE_IT(&hdma_uart5_rx, DMA_IT_HT);
 
             //处理完直接跳转到 离线检测状态
             Status[Now_Status_Serial].Time = 0;

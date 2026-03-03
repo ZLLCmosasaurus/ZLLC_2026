@@ -61,7 +61,7 @@ void Class_Gimbal::Init()
     Motor_Main_Yaw.Init(&hfdcan2, LK_Motor_ID_0x141, LK_Motor_Control_Method_ANGLE, MAIN_YAW_ENCODER_OFFSET);
 
     // yaw轴电机
-    Motor_Yaw.PID_Angle.Init(0.78f, 0.0f, 0.001f, 0.0f, 25, 25);
+    Motor_Yaw.PID_Angle.Init(0.78f, 0.0f, 0.0025f, 0.0f, 25, 25);
     //Kp给大容易因为大小Yaw联动的噪声出问题，达不到理想的想要，用大Ki补偿误差，还有Ki对抖动不敏感（积分，相位延迟）强制补偿掉，也可以尝试LESO，但他可能对噪声敏感一些（重在抗扰动）
     //Ki太大对阶跃信号抖动滞后，不用了
     Motor_Yaw.PID_Omega.Init(3000.0f, 0.0f, 0.0f, 0.0f, Motor_Yaw.Get_Output_Max(), Motor_Yaw.Get_Output_Max());
@@ -72,11 +72,11 @@ void Class_Gimbal::Init()
     Motor_Yaw.Init(&hfdcan1, DJI_Motor_ID_0x205, DJI_Motor_Control_Method_ANGLE, YAW_ENCODER_OFFSET);
     
     // pitch轴电机
-    Motor_Pitch.PID_Angle.Init(0.5f, 0.0f, 0.0005f, 0.0f, 10.0f, 10.0f);
-    Motor_Pitch.PID_Omega.Init(500.0f, 0.0f, 0.0f, 0.0f, 2048.0f, 2048.0f);
+    Motor_Pitch.PID_Angle.Init(0.70f, 0.0f, 0.00f, 0.0f, 10.0f, 10.0f);
+    Motor_Pitch.PID_Omega.Init(120.0f, 0.0f, 0.0f, 0.0f, 2048.0f, 2048.0f);
     // Motor_Pitch.PID_Angle.Init(0.0f, 0.0f, 0.0f, 0.0f, 10.0f, 10.0f);
     // Motor_Pitch.PID_Omega.Init(0.0f, 0.0f, 0.0f, 0.0f, 2048.0f, 2048.0f);
-    Motor_Pitch.Init(&hfdcan1, DM_Motor_ID_0xA1, DM_Motor_Control_Method_MIT_TORQUE, 0, 20.94359f, 1.2f);
+    Motor_Pitch.Init(&hfdcan1, DM_Motor_ID_0xA1, DM_Motor_Control_Method_MIT_TORQUE, 0, 20.94359f, 3.0f);
     Motor_Pitch_LESO.Init(0.1, 80.0, 1.0, Observe_Motor_Omega, Motor_DM4310);
 
     External_IMU_Gyro_Yaw.Init(0.99,0.07);
@@ -340,8 +340,6 @@ void Class_Gimbal::TIM_Calculate_PeriodElapsedCallback()
     // else{
     //     Motor_Yaw.TIM_PID_PeriodElapsedCallback();
     // }
-    
-    
 
     //PID输出
     Motor_Yaw.TIM_PID_PeriodElapsedCallback();
@@ -349,7 +347,7 @@ void Class_Gimbal::TIM_Calculate_PeriodElapsedCallback()
     Motor_Main_Yaw.TIM_Process_PeriodElapsedCallback();
 
     if(Get_Gimbal_Control_Type() != Gimbal_Control_Type_DISABLE){
-        Pitch_Compensite_Output = 0.20f * cosf(Motor_Pitch.Get_Transform_Angle() / 57.3f);
+        Pitch_Compensite_Output = 0.5f * cosf(Motor_Pitch.Get_Transform_Angle() / 57.3f);
         Motor_Pitch.Compensite_Out(Pitch_Compensite_Output);
     }
     else{

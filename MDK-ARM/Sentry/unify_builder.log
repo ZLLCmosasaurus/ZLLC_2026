@@ -812,3 +812,84 @@ These source files will be recompiled
 [2026-03-01 16:45:19]	[done]
 	build successfully !
 
+[2026-03-01 17:40:29]	[done]
+	build successfully !
+
+[2026-03-01 17:48:51]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
+
+[2026-03-01 17:48:52]	[done]
+	build successfully !
+
+[2026-03-01 17:54:06]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_booster.cpp': source file has been changed.
+
+[2026-03-01 17:54:07]	[done]
+	build successfully !
+
+[2026-03-02 16:06:28]	[info] incremental build: 10 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_new_power_limit.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_power_limit.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_booster.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_GraphicsSendTask.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_djimotor.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_can.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
+
+[2026-03-02 16:06:29]	[done]
+	build successfully !
+
+[2026-03-02 16:30:51]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
+
+[2026-03-02 16:30:56]	[done]
+	build successfully !
+
+[2026-03-02 17:00:20]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
+
+[2026-03-02 17:00:21]	[done]
+	build successfully !
+
+[2026-03-02 17:41:28]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
+
+[2026-03-02 17:41:29]	[done]
+	build successfully !
+
+[2026-03-02 17:41:44]	[done]
+	build successfully !
+
+[2026-03-02 17:53:36]	[info] incremental build: 2 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': source file has been changed.
+
+[2026-03-02 17:53:37]	[done]
+	build successfully !
+
+[2026-03-02 20:50:58]	[info] incremental build: 2 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': source file has been changed.
+
+[2026-03-02 20:51:01]	[done]
+	build successfully !
+
