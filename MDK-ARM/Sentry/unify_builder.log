@@ -1,1315 +1,198 @@
-[2026-02-27 14:21:49]	[info] incremental build: 93 source files changed
+[2026-03-05 21:45:12]	[info] incremental build: 4 source files changed
 These source files will be recompiled
 ---
-'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\dma.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\fdcan.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\gpio.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\iwdg.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\main.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\spi.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\stm32h7xx_hal_msp.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\stm32h7xx_it.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\system_stm32h7xx.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\tim.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\usart.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_cortex.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_dma.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_dma_ex.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_exti.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_fdcan.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_flash.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_flash_ex.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_gpio.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_hsem.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_i2c.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_i2c_ex.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_iwdg.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_mdma.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_pcd.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_pcd_ex.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_pwr.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_pwr_ex.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_rcc.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_rcc_ex.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_spi.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_spi_ex.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_tim.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_tim_ex.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_uart.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_uart_ex.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_ll_usb.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Middlewares\ST\STM32_USB_Device_Library\Class\CDC\Src\usbd_cdc.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Middlewares\ST\STM32_USB_Device_Library\Core\Src\usbd_core.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Middlewares\ST\STM32_USB_Device_Library\Core\Src\usbd_ctlreq.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\Middlewares\ST\STM32_USB_Device_Library\Core\Src\usbd_ioreq.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\USB_DEVICE\App\usb_device.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\USB_DEVICE\App\usbd_cdc_if.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\USB_DEVICE\App\usbd_desc.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\USB_DEVICE\Target\usbd_conf.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\PID.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\QuaternionEKF.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\SignalGenerator.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_LESO.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_MahonyAHRS.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_SMC_Control.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_filter.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_fsm.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_new_power_limit.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_pid.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_power_limit.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_slope.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\kalman_filter.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\user_lib.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_booster.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Congfig\Src\config.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_GraphicsSendTask.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_TensionMeter.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_VT13.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_boardc_bmi088.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_buzzer.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_djimotor.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_dmmotor.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_dr16.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_dwt.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_external_imu.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_imu.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_lkmotor.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_minipc.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_referee.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_servo.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_supercap.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_adc.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_bsp-boarda.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_can.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_dwt.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_i2c.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_math.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_spi.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_tim.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_uart.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_usb.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\startup_stm32h723xx.s': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_can.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Chariot\Inc\crt_gimbal.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Chariot\Inc\crt_gimbal.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Chariot\Inc\crt_gimbal.h' has been changed.
 
-[2026-02-27 14:21:51]	compilation failed at : "c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp", exit code: 1
+[2026-03-05 21:45:13]	compilation failed at : "c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp", exit code: 1
 command: 
   "c:\Users\HLlll\AppData\Local\Keil_v5\ARM\ARMCLANG\bin\armclang.exe" --target=arm-arm-none-eabi -c -xc++ -std=c++11 -I. -I../Core/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I../USB_DEVICE/App -I../USB_DEVICE/Target -I../Middlewares/ST/STM32_USB_Device_Library/Core/Inc -I../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc -I../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I../User/Congfig/Inc -I../User/Task/Inc -I../User/Interaction/Inc -I../User/Chariot/Inc -I../User/Device/Inc -I../User/Driver/Inc -I../User/Algorithm/Inc -I../Drivers/CMSIS/Include -IRTE/_Sentry -I../DSP/Include -D"USE_HAL_DRIVER" -D"STM32H723xx" -D"__FPU_PRESENT=1" -D"__FPU_USED=1" -D"ARM_MATH_CM7" -mfloat-abi=hard -mfpu=fpv5-sp-d16 -mcpu=cortex-m7 -mlittle-endian -O0 -ffunction-sections -funsigned-char -fshort-enums -fshort-wchar -fno-rtti -w -g -o ./Sentry/.obj/__/User/Chariot/Src/crt_gimbal.o -MMD ./../User/Chariot/Src/crt_gimbal.cpp
-   at unify_builder.Program.compileByMulThread(Int32 thrNum, CmdInfo[] cmds_, List`1 errLogs)
    at unify_builder.Program.Main(String[] args_)
 ---
-In file included from ./../User/Chariot/Src/crt_booster.cpp:14:
-In file included from ../User/Chariot/Inc\crt_booster.h:25:
-../User/Device/Inc\dvc_minipc.h:356:17: error: class member cannot be redeclared
-  356 |     inline void Set_Gimbal_Now_Yaw_Angle(float __Gimbal_Now_Roll_Angle);
-      |                 ^
-../User/Device/Inc\dvc_minipc.h:355:17: note: previous declaration is here
-  355 |     inline void Set_Gimbal_Now_Yaw_Angle(float __Gimbal_Now_Yaw_Angle);
-      |                 ^
-../User/Device/Inc\dvc_minipc.h:638:20: error: redefinition of 'Set_Gimbal_Now_Roll_Angle'
-  638 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
-      |                    ^
-../User/Device/Inc\dvc_minipc.h:608:20: note: previous definition is here
-  608 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
-      |                    ^
-2 errors generated.
-In file included from ./../User/Device/Src/dvc_GraphicsSendTask.cpp:11:
-In file included from ../User/Device/Inc\dvc_GraphicsSendTask.h:15:
-In file included from ../User/Chariot/Inc\crt_chassis.h:29:
-../User/Device/Inc\dvc_minipc.h:356:17: error: class member cannot be redeclared
-  356 |     inline void Set_Gimbal_Now_Yaw_Angle(float __Gimbal_Now_Roll_Angle);
-      |                 ^
-../User/Device/Inc\dvc_minipc.h:355:17: note: previous declaration is here
-  355 |     inline void Set_Gimbal_Now_Yaw_Angle(float __Gimbal_Now_Yaw_Angle);
-      |                 ^
-../User/Device/Inc\dvc_minipc.h:638:20: error: redefinition of 'Set_Gimbal_Now_Roll_Angle'
-  638 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
-      |                    ^
-../User/Device/Inc\dvc_minipc.h:608:20: note: previous definition is here
-  608 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
-      |                    ^
-2 errors generated.
-In file included from ./../User/Chariot/Src/crt_chassis.cpp:20:
-In file included from ../User/Chariot/Inc\crt_chassis.h:29:
-../User/Device/Inc\dvc_minipc.h:356:17: error: class member cannot be redeclared
-  356 |     inline void Set_Gimbal_Now_Yaw_Angle(float __Gimbal_Now_Roll_Angle);
-      |                 ^
-../User/Device/Inc\dvc_minipc.h:355:17: note: previous declaration is here
-  355 |     inline void Set_Gimbal_Now_Yaw_Angle(float __Gimbal_Now_Yaw_Angle);
-      |                 ^
-../User/Device/Inc\dvc_minipc.h:638:20: error: redefinition of 'Set_Gimbal_Now_Roll_Angle'
-  638 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
-      |                    ^
-../User/Device/Inc\dvc_minipc.h:608:20: note: previous definition is here
-  608 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
-      |                    ^
-2 errors generated.
-In file included from ./../User/Chariot/Src/crt_gimbal.cpp:14:
-In file included from ../User/Chariot/Inc\crt_gimbal.h:18:
-../User/Device/Inc\dvc_minipc.h:356:17: error: class member cannot be redeclared
-  356 |     inline void Set_Gimbal_Now_Yaw_Angle(float __Gimbal_Now_Roll_Angle);
-      |                 ^
-../User/Device/Inc\dvc_minipc.h:355:17: note: previous declaration is here
-  355 |     inline void Set_Gimbal_Now_Yaw_Angle(float __Gimbal_Now_Yaw_Angle);
-      |                 ^
-../User/Device/Inc\dvc_minipc.h:638:20: error: redefinition of 'Set_Gimbal_Now_Roll_Angle'
-  638 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
-      |                    ^
-../User/Device/Inc\dvc_minipc.h:608:20: note: previous definition is here
-  608 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
-      |                    ^
-2 errors generated.
+./../User/Chariot/Src/crt_gimbal.cpp:106:21: error: no member named 'Set_DM_Motor_Control_Alg' in 'Class_DJI_Motor_GM6020'
+  106 |         Motor_Pitch.Set_DM_Motor_Control_Alg(DM_Motor_DISANLE);
+      |         ~~~~~~~~~~~ ^
+./../User/Chariot/Src/crt_gimbal.cpp:132:25: error: no member named 'Set_DM_Motor_Control_Alg' in 'Class_DJI_Motor_GM6020'
+  132 |             Motor_Pitch.Set_DM_Motor_Control_Alg(DM_PID_Angle);
+      |             ~~~~~~~~~~~ ^
+./../User/Chariot/Src/crt_gimbal.cpp:167:29: error: no member named 'Set_DM_Motor_Control_Alg' in 'Class_DJI_Motor_GM6020'
+  167 |                 Motor_Pitch.Set_DM_Motor_Control_Alg(DM_PID_Angle);
+      |                 ~~~~~~~~~~~ ^
+./../User/Chariot/Src/crt_gimbal.cpp:193:29: error: no member named 'Set_DM_Motor_Control_Alg' in 'Class_DJI_Motor_GM6020'
+  193 |                 Motor_Pitch.Set_DM_Motor_Control_Alg(DM_PID_Omega);
+      |                 ~~~~~~~~~~~ ^
+./../User/Chariot/Src/crt_gimbal.cpp:197:33: error: no member named 'Set_Target_Omega' in 'Class_DJI_Motor_GM6020'
+  197 |                     Motor_Pitch.Set_Target_Omega(CRUISE_PITCH_SPEED);
+      |                     ~~~~~~~~~~~ ^
+./../User/Chariot/Src/crt_gimbal.cpp:209:33: error: no member named 'Set_Target_Omega' in 'Class_DJI_Motor_GM6020'
+  209 |                     Motor_Pitch.Set_Target_Omega(CRUISE_PITCH_SPEED);
+      |                     ~~~~~~~~~~~ ^
+./../User/Chariot/Src/crt_gimbal.cpp:212:33: error: no member named 'Set_Target_Omega' in 'Class_DJI_Motor_GM6020'
+  212 |                     Motor_Pitch.Set_Target_Omega(-CRUISE_PITCH_SPEED);
+      |                     ~~~~~~~~~~~ ^
+./../User/Chariot/Src/crt_gimbal.cpp:223:29: error: no member named 'Set_DM_Motor_Control_Alg' in 'Class_DJI_Motor_GM6020'
+  223 |                 Motor_Pitch.Set_DM_Motor_Control_Alg(DM_PID_Angle);
+      |                 ~~~~~~~~~~~ ^
+./../User/Chariot/Src/crt_gimbal.cpp:286:25: error: no member named 'Set_DM_Motor_Control_Alg' in 'Class_DJI_Motor_GM6020'
+  286 |             Motor_Pitch.Set_DM_Motor_Control_Alg(DM_PID_Angle);
+      |             ~~~~~~~~~~~ ^
+./../User/Chariot/Src/crt_gimbal.cpp:334:49: error: no member named 'Get_Output_Torque' in 'Class_DJI_Motor_GM6020'
+  334 |     Motor_Pitch_LESO.Set_CMD_Torque(Motor_Pitch.Get_Output_Torque());               //上一时刻的输出力矩
+      |                                     ~~~~~~~~~~~ ^
+10 errors generated.
 
-[2026-02-27 14:22:09]	[info] incremental build: 23 source files changed
+[2026-03-05 21:47:48]	[info] incremental build: 4 source files changed
 These source files will be recompiled
 ---
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_booster.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp': object (.o) file not exist
 'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_GraphicsSendTask.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_imu.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_lkmotor.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_minipc.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_referee.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_servo.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_supercap.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_adc.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_bsp-boarda.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_can.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_dwt.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_i2c.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_math.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_spi.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_tim.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_uart.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_usb.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\startup_stm32h723xx.s': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_can.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Chariot\Inc\crt_gimbal.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Chariot\Inc\crt_gimbal.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Chariot\Inc\crt_gimbal.h' has been changed.
 
-[2026-02-27 14:22:09]	compilation failed at : "c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_minipc.cpp", exit code: 1
+[2026-03-05 21:47:48]	compilation failed at : "c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp", exit code: 1
 command: 
-  "c:\Users\HLlll\AppData\Local\Keil_v5\ARM\ARMCLANG\bin\armclang.exe" --target=arm-arm-none-eabi -c -xc++ -std=c++11 -I. -I../Core/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I../USB_DEVICE/App -I../USB_DEVICE/Target -I../Middlewares/ST/STM32_USB_Device_Library/Core/Inc -I../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc -I../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I../User/Congfig/Inc -I../User/Task/Inc -I../User/Interaction/Inc -I../User/Chariot/Inc -I../User/Device/Inc -I../User/Driver/Inc -I../User/Algorithm/Inc -I../Drivers/CMSIS/Include -IRTE/_Sentry -I../DSP/Include -D"USE_HAL_DRIVER" -D"STM32H723xx" -D"__FPU_PRESENT=1" -D"__FPU_USED=1" -D"ARM_MATH_CM7" -mfloat-abi=hard -mfpu=fpv5-sp-d16 -mcpu=cortex-m7 -mlittle-endian -O0 -ffunction-sections -funsigned-char -fshort-enums -fshort-wchar -fno-rtti -w -g -o ./Sentry/.obj/__/User/Device/Src/dvc_minipc.o -MMD ./../User/Device/Src/dvc_minipc.cpp
-   at unify_builder.Program.compileByMulThread(Int32 thrNum, CmdInfo[] cmds_, List`1 errLogs)
+  "c:\Users\HLlll\AppData\Local\Keil_v5\ARM\ARMCLANG\bin\armclang.exe" --target=arm-arm-none-eabi -c -xc++ -std=c++11 -I. -I../Core/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I../USB_DEVICE/App -I../USB_DEVICE/Target -I../Middlewares/ST/STM32_USB_Device_Library/Core/Inc -I../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc -I../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I../User/Congfig/Inc -I../User/Task/Inc -I../User/Interaction/Inc -I../User/Chariot/Inc -I../User/Device/Inc -I../User/Driver/Inc -I../User/Algorithm/Inc -I../Drivers/CMSIS/Include -IRTE/_Sentry -I../DSP/Include -D"USE_HAL_DRIVER" -D"STM32H723xx" -D"__FPU_PRESENT=1" -D"__FPU_USED=1" -D"ARM_MATH_CM7" -mfloat-abi=hard -mfpu=fpv5-sp-d16 -mcpu=cortex-m7 -mlittle-endian -O0 -ffunction-sections -funsigned-char -fshort-enums -fshort-wchar -fno-rtti -w -g -o ./Sentry/.obj/__/User/Chariot/Src/crt_gimbal.o -MMD ./../User/Chariot/Src/crt_gimbal.cpp
    at unify_builder.Program.Main(String[] args_)
 ---
-In file included from ./../User/Device/Src/dvc_GraphicsSendTask.cpp:11:
-In file included from ../User/Device/Inc\dvc_GraphicsSendTask.h:15:
-In file included from ../User/Chariot/Inc\crt_chassis.h:29:
-../User/Device/Inc\dvc_minipc.h:358:17: error: class member cannot be redeclared
-  358 |     inline void Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle);
-      |                 ^
-../User/Device/Inc\dvc_minipc.h:356:17: note: previous declaration is here
-  356 |     inline void Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle);
-      |                 ^
-../User/Device/Inc\dvc_minipc.h:638:20: error: redefinition of 'Set_Gimbal_Now_Roll_Angle'
-  638 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
-      |                    ^
-../User/Device/Inc\dvc_minipc.h:608:20: note: previous definition is here
-  608 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
-      |                    ^
-2 errors generated.
-In file included from ./../User/Chariot/Src/crt_booster.cpp:14:
-In file included from ../User/Chariot/Inc\crt_booster.h:25:
-../User/Device/Inc\dvc_minipc.h:358:17: error: class member cannot be redeclared
-  358 |     inline void Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle);
-      |                 ^
-../User/Device/Inc\dvc_minipc.h:356:17: note: previous declaration is here
-  356 |     inline void Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle);
-      |                 ^
-../User/Device/Inc\dvc_minipc.h:638:20: error: redefinition of 'Set_Gimbal_Now_Roll_Angle'
-  638 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
-      |                    ^
-../User/Device/Inc\dvc_minipc.h:608:20: note: previous definition is here
-  608 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
-      |                    ^
-2 errors generated.
-In file included from ./../User/Chariot/Src/crt_gimbal.cpp:14:
-In file included from ../User/Chariot/Inc\crt_gimbal.h:18:
-../User/Device/Inc\dvc_minipc.h:358:17: error: class member cannot be redeclared
-  358 |     inline void Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle);
-      |                 ^
-../User/Device/Inc\dvc_minipc.h:356:17: note: previous declaration is here
-  356 |     inline void Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle);
-      |                 ^
-../User/Device/Inc\dvc_minipc.h:638:20: error: redefinition of 'Set_Gimbal_Now_Roll_Angle'
-  638 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
-      |                    ^
-../User/Device/Inc\dvc_minipc.h:608:20: note: previous definition is here
-  608 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
-      |                    ^
-2 errors generated.
-In file included from ./../User/Chariot/Src/crt_chassis.cpp:20:
-In file included from ../User/Chariot/Inc\crt_chassis.h:29:
-../User/Device/Inc\dvc_minipc.h:358:17: error: class member cannot be redeclared
-  358 |     inline void Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle);
-      |                 ^
-../User/Device/Inc\dvc_minipc.h:356:17: note: previous declaration is here
-  356 |     inline void Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle);
-      |                 ^
-../User/Device/Inc\dvc_minipc.h:638:20: error: redefinition of 'Set_Gimbal_Now_Roll_Angle'
-  638 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
-      |                    ^
-../User/Device/Inc\dvc_minipc.h:608:20: note: previous definition is here
-  608 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
-      |                    ^
-2 errors generated.
-In file included from ./../User/Device/Src/dvc_minipc.cpp:14:
-../User/Device/Inc\dvc_minipc.h:358:17: error: class member cannot be redeclared
-  358 |     inline void Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle);
-      |                 ^
-../User/Device/Inc\dvc_minipc.h:356:17: note: previous declaration is here
-  356 |     inline void Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle);
-      |                 ^
-../User/Device/Inc\dvc_minipc.h:638:20: error: redefinition of 'Set_Gimbal_Now_Roll_Angle'
-  638 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
-      |                    ^
-../User/Device/Inc\dvc_minipc.h:608:20: note: previous definition is here
-  608 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
-      |                    ^
-2 errors generated.
+./../User/Chariot/Src/crt_gimbal.cpp:199:57: error: too few arguments to function call, single argument '__Target_Omega_Radian' was not specified
+  199 |                     Motor_Pitch.Set_Target_Omega_Radian()
+      |                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ ^
+../User/Device/Inc\dvc_djimotor.h:771:30: note: 'Set_Target_Omega_Radian' declared here
+  771 | void Class_DJI_Motor_GM6020::Set_Target_Omega_Radian(float __Target_Omega_Radian)
+      |                              ^                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+./../User/Chariot/Src/crt_gimbal.cpp:199:58: error: expected ';' after expression
+  199 |                     Motor_Pitch.Set_Target_Omega_Radian()
+      |                                                          ^
+      |                                                          ;
+./../User/Chariot/Src/crt_gimbal.cpp:339:49: error: no member named 'Get_Output_Torque' in 'Class_DJI_Motor_GM6020'
+  339 |     Motor_Pitch_LESO.Set_CMD_Torque(Motor_Pitch.Get_Output_Torque());               //上一时刻的输出力矩
+      |                                     ~~~~~~~~~~~ ^
+3 errors generated.
 
-[2026-02-27 14:22:24]	[info] incremental build: 18 source files changed
+[2026-03-05 21:47:58]	[info] incremental build: 4 source files changed
 These source files will be recompiled
 ---
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_booster.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp': object (.o) file not exist
 'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_GraphicsSendTask.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_minipc.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_adc.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_bsp-boarda.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_can.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_dwt.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_i2c.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_math.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_spi.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_tim.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_uart.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_usb.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\startup_stm32h723xx.s': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_can.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Chariot\Inc\crt_gimbal.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Chariot\Inc\crt_gimbal.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Chariot\Inc\crt_gimbal.h' has been changed.
 
-[2026-02-27 14:22:24]	compilation failed at : "c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_minipc.cpp", exit code: 1
+[2026-03-05 21:47:58]	compilation failed at : "c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp", exit code: 1
 command: 
-  "c:\Users\HLlll\AppData\Local\Keil_v5\ARM\ARMCLANG\bin\armclang.exe" --target=arm-arm-none-eabi -c -xc++ -std=c++11 -I. -I../Core/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I../USB_DEVICE/App -I../USB_DEVICE/Target -I../Middlewares/ST/STM32_USB_Device_Library/Core/Inc -I../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc -I../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I../User/Congfig/Inc -I../User/Task/Inc -I../User/Interaction/Inc -I../User/Chariot/Inc -I../User/Device/Inc -I../User/Driver/Inc -I../User/Algorithm/Inc -I../Drivers/CMSIS/Include -IRTE/_Sentry -I../DSP/Include -D"USE_HAL_DRIVER" -D"STM32H723xx" -D"__FPU_PRESENT=1" -D"__FPU_USED=1" -D"ARM_MATH_CM7" -mfloat-abi=hard -mfpu=fpv5-sp-d16 -mcpu=cortex-m7 -mlittle-endian -O0 -ffunction-sections -funsigned-char -fshort-enums -fshort-wchar -fno-rtti -w -g -o ./Sentry/.obj/__/User/Device/Src/dvc_minipc.o -MMD ./../User/Device/Src/dvc_minipc.cpp
-   at unify_builder.Program.compileByMulThread(Int32 thrNum, CmdInfo[] cmds_, List`1 errLogs)
+  "c:\Users\HLlll\AppData\Local\Keil_v5\ARM\ARMCLANG\bin\armclang.exe" --target=arm-arm-none-eabi -c -xc++ -std=c++11 -I. -I../Core/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I../USB_DEVICE/App -I../USB_DEVICE/Target -I../Middlewares/ST/STM32_USB_Device_Library/Core/Inc -I../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc -I../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I../User/Congfig/Inc -I../User/Task/Inc -I../User/Interaction/Inc -I../User/Chariot/Inc -I../User/Device/Inc -I../User/Driver/Inc -I../User/Algorithm/Inc -I../Drivers/CMSIS/Include -IRTE/_Sentry -I../DSP/Include -D"USE_HAL_DRIVER" -D"STM32H723xx" -D"__FPU_PRESENT=1" -D"__FPU_USED=1" -D"ARM_MATH_CM7" -mfloat-abi=hard -mfpu=fpv5-sp-d16 -mcpu=cortex-m7 -mlittle-endian -O0 -ffunction-sections -funsigned-char -fshort-enums -fshort-wchar -fno-rtti -w -g -o ./Sentry/.obj/__/User/Chariot/Src/crt_gimbal.o -MMD ./../User/Chariot/Src/crt_gimbal.cpp
    at unify_builder.Program.Main(String[] args_)
 ---
-In file included from ./../User/Chariot/Src/crt_booster.cpp:14:
-In file included from ../User/Chariot/Inc\crt_booster.h:25:
-../User/Device/Inc\dvc_minipc.h:637:20: error: redefinition of 'Set_Gimbal_Now_Roll_Angle'
-  637 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
-      |                    ^
-../User/Device/Inc\dvc_minipc.h:607:20: note: previous definition is here
-  607 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
-      |                    ^
-1 error generated.
-In file included from ./../User/Device/Src/dvc_GraphicsSendTask.cpp:11:
-In file included from ../User/Device/Inc\dvc_GraphicsSendTask.h:15:
-In file included from ../User/Chariot/Inc\crt_chassis.h:29:
-../User/Device/Inc\dvc_minipc.h:637:20: error: redefinition of 'Set_Gimbal_Now_Roll_Angle'
-  637 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
-      |                    ^
-../User/Device/Inc\dvc_minipc.h:607:20: note: previous definition is here
-  607 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
-      |                    ^
-1 error generated.
-In file included from ./../User/Chariot/Src/crt_gimbal.cpp:14:
-In file included from ../User/Chariot/Inc\crt_gimbal.h:18:
-../User/Device/Inc\dvc_minipc.h:637:20: error: redefinition of 'Set_Gimbal_Now_Roll_Angle'
-  637 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
-      |                    ^
-../User/Device/Inc\dvc_minipc.h:607:20: note: previous definition is here
-  607 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
-      |                    ^
-1 error generated.
-In file included from ./../User/Chariot/Src/crt_chassis.cpp:20:
-In file included from ../User/Chariot/Inc\crt_chassis.h:29:
-../User/Device/Inc\dvc_minipc.h:637:20: error: redefinition of 'Set_Gimbal_Now_Roll_Angle'
-  637 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
-      |                    ^
-../User/Device/Inc\dvc_minipc.h:607:20: note: previous definition is here
-  607 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
-      |                    ^
-1 error generated.
-In file included from ./../User/Device/Src/dvc_minipc.cpp:14:
-../User/Device/Inc\dvc_minipc.h:637:20: error: redefinition of 'Set_Gimbal_Now_Roll_Angle'
-  637 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
-      |                    ^
-../User/Device/Inc\dvc_minipc.h:607:20: note: previous definition is here
-  607 | void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
-      |                    ^
+./../User/Chariot/Src/crt_gimbal.cpp:338:49: error: no member named 'Get_Output_Torque' in 'Class_DJI_Motor_GM6020'
+  338 |     Motor_Pitch_LESO.Set_CMD_Torque(Motor_Pitch.Get_Output_Torque());               //上一时刻的输出力矩
+      |                                     ~~~~~~~~~~~ ^
 1 error generated.
 
-[2026-02-27 14:22:59]	[info] incremental build: 18 source files changed
+[2026-03-05 21:48:08]	[info] incremental build: 4 source files changed
 These source files will be recompiled
 ---
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_booster.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp': object (.o) file not exist
 'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_GraphicsSendTask.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_minipc.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_adc.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_bsp-boarda.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_can.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_dwt.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_i2c.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_math.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_spi.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_tim.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_uart.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_usb.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': object (.o) file not exist
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_can.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Chariot\Inc\crt_gimbal.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Chariot\Inc\crt_gimbal.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Chariot\Inc\crt_gimbal.h' has been changed.
+
+[2026-03-05 21:48:09]	compilation failed at : "c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp", exit code: 1
+command: 
+  "c:\Users\HLlll\AppData\Local\Keil_v5\ARM\ARMCLANG\bin\armclang.exe" --target=arm-arm-none-eabi -c -xc++ -std=c++11 -I. -I../Core/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I../USB_DEVICE/App -I../USB_DEVICE/Target -I../Middlewares/ST/STM32_USB_Device_Library/Core/Inc -I../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc -I../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I../User/Congfig/Inc -I../User/Task/Inc -I../User/Interaction/Inc -I../User/Chariot/Inc -I../User/Device/Inc -I../User/Driver/Inc -I../User/Algorithm/Inc -I../Drivers/CMSIS/Include -IRTE/_Sentry -I../DSP/Include -D"USE_HAL_DRIVER" -D"STM32H723xx" -D"__FPU_PRESENT=1" -D"__FPU_USED=1" -D"ARM_MATH_CM7" -mfloat-abi=hard -mfpu=fpv5-sp-d16 -mcpu=cortex-m7 -mlittle-endian -O0 -ffunction-sections -funsigned-char -fshort-enums -fshort-wchar -fno-rtti -w -g -o ./Sentry/.obj/__/User/Task/Src/tsk_config_and_callback.o -MMD ./../User/Task/Src/tsk_config_and_callback.cpp
+   at unify_builder.Program.Main(String[] args_)
+---
+./../User/Task/Src/tsk_config_and_callback.cpp:453:36: error: no member named 'TIM_Process_PeriodElapsedCallback' in 'Class_DJI_Motor_GM6020'
+  453 |         chariot.Gimbal.Motor_Pitch.TIM_Process_PeriodElapsedCallback();                 //为了和普通发送分开，避免仲裁
+      |         ~~~~~~~~~~~~~~~~~~~~~~~~~~ ^
+1 error generated.
+
+[2026-03-05 21:49:42]	[info] incremental build: 3 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_djimotor.cpp': source file has been changed.
 'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\startup_stm32h723xx.s': object (.o) file not exist
 
-[2026-02-27 14:23:01]	[done]
+[2026-03-05 21:49:43]	[done]
 	build successfully !
 
-[2026-02-27 14:23:18]	[done]
-	build successfully !
-
-[2026-02-28 11:01:43]	[info] incremental build: 93 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Core\Src\dma.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Core\Src\fdcan.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Core\Src\gpio.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Core\Src\iwdg.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Core\Src\main.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Core\Src\spi.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Core\Src\stm32h7xx_hal_msp.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Core\Src\stm32h7xx_it.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Core\Src\system_stm32h7xx.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Core\Src\tim.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Core\Src\usart.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_cortex.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_dma.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_dma_ex.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_exti.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_fdcan.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_flash.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_flash_ex.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_gpio.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_hsem.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_i2c.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_i2c_ex.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_iwdg.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_mdma.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_pcd.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_pcd_ex.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_pwr.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_pwr_ex.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_rcc.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_rcc_ex.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_spi.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_spi_ex.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_tim.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_tim_ex.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_uart.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_hal_uart_ex.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Drivers\STM32H7xx_HAL_Driver\Src\stm32h7xx_ll_usb.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Middlewares\ST\STM32_USB_Device_Library\Class\CDC\Src\usbd_cdc.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Middlewares\ST\STM32_USB_Device_Library\Core\Src\usbd_core.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Middlewares\ST\STM32_USB_Device_Library\Core\Src\usbd_ctlreq.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\Middlewares\ST\STM32_USB_Device_Library\Core\Src\usbd_ioreq.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\USB_DEVICE\App\usb_device.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\USB_DEVICE\App\usbd_cdc_if.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\USB_DEVICE\App\usbd_desc.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\USB_DEVICE\Target\usbd_conf.c': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Algorithm\Src\PID.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Algorithm\Src\QuaternionEKF.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Algorithm\Src\SignalGenerator.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Algorithm\Src\alg_LESO.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Algorithm\Src\alg_MahonyAHRS.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Algorithm\Src\alg_SMC_Control.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Algorithm\Src\alg_filter.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Algorithm\Src\alg_fsm.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Algorithm\Src\alg_new_power_limit.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Algorithm\Src\alg_pid.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Algorithm\Src\alg_power_limit.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Algorithm\Src\alg_slope.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Algorithm\Src\kalman_filter.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Algorithm\Src\user_lib.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Chariot\Src\crt_booster.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Chariot\Src\crt_chassis.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Chariot\Src\crt_gimbal.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Congfig\Src\config.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Device\Src\dvc_GraphicsSendTask.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Device\Src\dvc_TensionMeter.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Device\Src\dvc_VT13.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Device\Src\dvc_boardc_bmi088.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Device\Src\dvc_buzzer.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Device\Src\dvc_djimotor.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Device\Src\dvc_dmmotor.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Device\Src\dvc_dr16.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Device\Src\dvc_dwt.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Device\Src\dvc_external_imu.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Device\Src\dvc_imu.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Device\Src\dvc_lkmotor.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Device\Src\dvc_minipc.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Device\Src\dvc_referee.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Device\Src\dvc_servo.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Device\Src\dvc_supercap.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Driver\Src\drv_adc.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Driver\Src\drv_bsp-boarda.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Driver\Src\drv_can.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Driver\Src\drv_dwt.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Driver\Src\drv_i2c.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Driver\Src\drv_math.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Driver\Src\drv_spi.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Driver\Src\drv_tim.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Driver\Src\drv_uart.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Driver\Src\drv_usb.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Interaction\Src\ita_chariot.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\User\Task\Src\tsk_config_and_callback.cpp': object (.o) file not exist
-'c:\Users\HLlll\Downloads\HubLay-M67 - 副本\HubLay-M67 - 副本\HubLay-M67\MDK-ARM\startup_stm32h723xx.s': object (.o) file not exist
-
-[2026-02-28 11:01:46]	[done]
-	build successfully !
-
-[2026-02-28 11:27:29]	[info] incremental build: 8 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_booster.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_minipc.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_minipc.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_minipc.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_GraphicsSendTask.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_minipc.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_minipc.cpp': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_can.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_minipc.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_minipc.h' has been changed.
-
-[2026-02-28 11:27:31]	[done]
-	build successfully !
-
-[2026-02-28 11:27:57]	[info] incremental build: 1 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': source file has been changed.
-
-[2026-02-28 11:27:58]	[done]
-	build successfully !
-
-[2026-02-28 11:29:49]	[done]
-	build successfully !
-
-[2026-02-28 11:31:02]	[info] incremental build: 1 source files changed
+[2026-03-05 21:50:53]	[info] incremental build: 1 source files changed
 These source files will be recompiled
 ---
 'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': source file has been changed.
 
-[2026-02-28 11:31:02]	[done]
+[2026-03-05 21:50:54]	[done]
 	build successfully !
 
-[2026-02-28 11:32:20]	[info] incremental build: 1 source files changed
+[2026-03-05 21:56:27]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_djimotor.cpp': source file has been changed.
+
+[2026-03-05 21:56:28]	[done]
+	build successfully !
+
+[2026-03-05 21:59:29]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_djimotor.cpp': source file has been changed.
+
+[2026-03-05 21:59:30]	[done]
+	build successfully !
+
+[2026-03-05 22:01:40]	[info] incremental build: 2 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_djimotor.cpp': source file has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_can.cpp': source file has been changed.
+
+[2026-03-05 22:01:40]	[done]
+	build successfully !
+
+[2026-03-05 22:07:04]	[info] incremental build: 2 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_djimotor.cpp': source file has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_can.cpp': source file has been changed.
+
+[2026-03-05 22:07:05]	[done]
+	build successfully !
+
+[2026-03-05 22:22:24]	[info] incremental build: 2 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_can.cpp': source file has been changed.
+
+[2026-03-05 22:22:25]	[done]
+	build successfully !
+
+[2026-03-06 14:45:41]	[info] incremental build: 3 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_djimotor.cpp': source file has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_can.cpp': source file has been changed.
+
+[2026-03-06 14:45:43]	[done]
+	build successfully !
+
+[2026-03-06 14:51:27]	[info] incremental build: 1 source files changed
 These source files will be recompiled
 ---
 'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
 
-[2026-02-28 11:32:20]	[done]
+[2026-03-06 14:51:28]	[done]
 	build successfully !
 
-[2026-02-28 11:35:39]	[info] incremental build: 1 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': source file has been changed.
-
-[2026-02-28 11:35:40]	[done]
-	build successfully !
-
-[2026-02-28 11:38:55]	[done]
-	build successfully !
-
-[2026-02-28 11:45:36]	[info] incremental build: 1 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
-
-[2026-02-28 11:45:37]	[done]
-	build successfully !
-
-[2026-02-28 11:49:53]	[info] incremental build: 2 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': source file has been changed.
-
-[2026-02-28 11:49:54]	[done]
-	build successfully !
-
-[2026-02-28 14:11:09]	[info] incremental build: 2 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\stm32h7xx_it.c': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': source file has been changed.
-
-[2026-02-28 14:11:09]	compilation failed at : "c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\stm32h7xx_it.c", exit code: 1
-command: 
-  "c:\Users\HLlll\AppData\Local\Keil_v5\ARM\ARMCLANG\bin\armclang.exe" --target=arm-arm-none-eabi -c -xc -std=c99 -I. -I../Core/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I../USB_DEVICE/App -I../USB_DEVICE/Target -I../Middlewares/ST/STM32_USB_Device_Library/Core/Inc -I../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc -I../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I../User/Congfig/Inc -I../User/Task/Inc -I../User/Interaction/Inc -I../User/Chariot/Inc -I../User/Device/Inc -I../User/Driver/Inc -I../User/Algorithm/Inc -I../Drivers/CMSIS/Include -IRTE/_Sentry -I../DSP/Include -D"USE_HAL_DRIVER" -D"STM32H723xx" -D"__FPU_PRESENT=1" -D"__FPU_USED=1" -D"ARM_MATH_CM7" -mfloat-abi=hard -mfpu=fpv5-sp-d16 -mcpu=cortex-m7 -mlittle-endian -O0 -ffunction-sections -funsigned-char -fshort-enums -fshort-wchar -fno-rtti -w -g -o ./Sentry/.obj/__/Core/Src/stm32h7xx_it.o -MMD ./../Core/Src/stm32h7xx_it.c
-   at unify_builder.Program.Main(String[] args_)
----
-./../Core/Src/stm32h7xx_it.c:498:10: error: call to undeclared function 'DWT_GetDeltaT'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
-  498 | IMU_Dt = DWT_GetDeltaT(&imu_cnt);
-      |          ^
-1 error generated.
-
-[2026-02-28 14:11:27]	[info] incremental build: 2 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\stm32h7xx_it.c': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': source file has been changed.
-
-[2026-02-28 14:11:27]	link failed !, exit code: 1
-   at unify_builder.Program.Main(String[] args_)
----
-Error: L6218E: Undefined symbol DWT_GetDeltaT (referred from stm32h7xx_it.o).
-Not enough information to list image symbols.
-Finished: 1 information, 0 warning and 1 error messages.
-
-
-[2026-02-28 14:13:11]	[info] incremental build: 19 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\stm32h7xx_it.c': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\PID.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_SMC_Control.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_new_power_limit.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_power_limit.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_booster.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_GraphicsSendTask.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_boardc_bmi088.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_djimotor.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_dwt.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_external_imu.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_imu.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_minipc.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_can.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_uart.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_dwt.h' has been changed.
-
-[2026-02-28 14:13:12]	[done]
-	build successfully !
-
-[2026-02-28 14:14:32]	[done]
-	build successfully !
-
-[2026-02-28 15:04:34]	[info] incremental build: 1 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\stm32h7xx_it.c': source file has been changed.
-
-[2026-02-28 15:04:35]	[done]
-	build successfully !
-
-[2026-02-28 15:05:11]	[info] incremental build: 1 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': source file has been changed.
-
-[2026-02-28 15:05:11]	[done]
-	build successfully !
-
-[2026-02-28 15:05:40]	[done]
-	build successfully !
-
-[2026-02-28 16:10:01]	[info] incremental build: 3 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\main.c': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_uart.cpp': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\startup_stm32h723xx.s': source file has been changed.
-
-[2026-02-28 16:10:02]	[done]
-	build successfully !
-
-[2026-02-28 16:20:11]	[info] incremental build: 2 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_uart.cpp': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': source file has been changed.
-
-[2026-02-28 16:20:12]	[done]
-	build successfully !
-
-[2026-02-28 16:22:21]	[info] incremental build: 2 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_uart.cpp': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': source file has been changed.
-
-[2026-02-28 16:22:22]	[done]
-	build successfully !
-
-[2026-02-28 16:28:21]	[info] incremental build: 1 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': source file has been changed.
-
-[2026-02-28 16:28:22]	[done]
-	build successfully !
-
-[2026-02-28 16:31:01]	[info] incremental build: 1 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': source file has been changed.
-
-[2026-02-28 16:31:02]	[done]
-	build successfully !
-
-[2026-02-28 16:42:02]	[info] incremental build: 2 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': source file has been changed.
-
-[2026-02-28 16:42:03]	[done]
-	build successfully !
-
-[2026-02-28 16:56:13]	[info] incremental build: 2 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_booster.cpp': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': source file has been changed.
-
-[2026-02-28 16:56:14]	[done]
-	build successfully !
-
-[2026-02-28 17:12:12]	[info] incremental build: 2 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': source file has been changed.
-
-[2026-02-28 17:12:13]	[done]
-	build successfully !
-
-[2026-02-28 19:34:59]	[info] incremental build: 1 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': source file has been changed.
-
-[2026-02-28 19:35:00]	[done]
-	build successfully !
-
-[2026-02-28 19:40:22]	[info] incremental build: 3 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\main.c': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\Core\Src\usart.c': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\startup_stm32h723xx.s': source file has been changed.
-
-[2026-02-28 19:40:23]	[done]
-	build successfully !
-
-[2026-02-28 20:59:09]	[info] incremental build: 1 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
-
-[2026-02-28 20:59:14]	[done]
-	build successfully !
-
-[2026-02-28 21:04:06]	[done]
-	build successfully !
-
-[2026-03-01 12:50:26]	[info] incremental build: 1 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_uart.cpp': source file has been changed.
-
-[2026-03-01 12:50:28]	[done]
-	build successfully !
-
-[2026-03-01 12:57:06]	[info] incremental build: 1 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
-
-[2026-03-01 12:57:06]	[done]
-	build successfully !
-
-[2026-03-01 13:04:17]	[info] incremental build: 1 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
-
-[2026-03-01 13:04:18]	[done]
-	build successfully !
-
-[2026-03-01 13:04:49]	[info] incremental build: 1 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
-
-[2026-03-01 13:04:50]	[done]
-	build successfully !
-
-[2026-03-01 13:07:20]	[info] incremental build: 1 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
-
-[2026-03-01 13:07:20]	[done]
-	build successfully !
-
-[2026-03-01 13:16:50]	[info] incremental build: 1 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
-
-[2026-03-01 13:16:51]	[done]
-	build successfully !
-
-[2026-03-01 13:45:49]	[info] incremental build: 3 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_uart.cpp': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': source file has been changed.
-
-[2026-03-01 13:45:51]	[done]
-	build successfully !
-
-[2026-03-01 16:40:21]	[info] incremental build: 1 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': source file has been changed.
-
-[2026-03-01 16:40:22]	[done]
-	build successfully !
-
-[2026-03-01 16:40:40]	[info] incremental build: 1 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': source file has been changed.
-
-[2026-03-01 16:40:41]	[done]
-	build successfully !
-
-[2026-03-01 16:41:48]	[info] incremental build: 1 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': source file has been changed.
-
-[2026-03-01 16:41:49]	[done]
-	build successfully !
-
-[2026-03-01 16:45:18]	[info] incremental build: 1 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': source file has been changed.
-
-[2026-03-01 16:45:19]	[done]
-	build successfully !
-
-[2026-03-01 17:40:29]	[done]
-	build successfully !
-
-[2026-03-01 17:48:51]	[info] incremental build: 1 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
-
-[2026-03-01 17:48:52]	[done]
-	build successfully !
-
-[2026-03-01 17:54:06]	[info] incremental build: 1 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_booster.cpp': source file has been changed.
-
-[2026-03-01 17:54:07]	[done]
-	build successfully !
-
-[2026-03-02 16:06:28]	[info] incremental build: 10 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_new_power_limit.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_power_limit.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_booster.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_GraphicsSendTask.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_djimotor.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_can.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-
-[2026-03-02 16:06:29]	[done]
-	build successfully !
-
-[2026-03-02 16:30:51]	[info] incremental build: 1 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
-
-[2026-03-02 16:30:56]	[done]
-	build successfully !
-
-[2026-03-02 17:00:20]	[info] incremental build: 1 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
-
-[2026-03-02 17:00:21]	[done]
-	build successfully !
-
-[2026-03-02 17:41:28]	[info] incremental build: 1 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
-
-[2026-03-02 17:41:29]	[done]
-	build successfully !
-
-[2026-03-02 17:41:44]	[done]
-	build successfully !
-
-[2026-03-02 17:53:36]	[info] incremental build: 2 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': source file has been changed.
-
-[2026-03-02 17:53:37]	[done]
-	build successfully !
-
-[2026-03-02 20:50:58]	[info] incremental build: 2 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': source file has been changed.
-
-[2026-03-02 20:51:01]	[done]
-	build successfully !
-
-[2026-03-04 21:16:49]	[info] incremental build: 14 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_new_power_limit.cpp': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_power_limit.cpp': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_booster.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Congfig\Inc\config.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Congfig\Src\config.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Congfig\Inc\config.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_GraphicsSendTask.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Chariot\Inc\crt_chassis.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_djimotor.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_minipc.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_supercap.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_referee.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Congfig\Inc\config.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_supercap.cpp': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_can.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-
-[2026-03-04 21:16:50]	compilation failed at : "c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp", exit code: 1
-command: 
-  "c:\Users\HLlll\AppData\Local\Keil_v5\ARM\ARMCLANG\bin\armclang.exe" --target=arm-arm-none-eabi -c -xc++ -std=c++11 -I. -I../Core/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I../USB_DEVICE/App -I../USB_DEVICE/Target -I../Middlewares/ST/STM32_USB_Device_Library/Core/Inc -I../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc -I../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I../User/Congfig/Inc -I../User/Task/Inc -I../User/Interaction/Inc -I../User/Chariot/Inc -I../User/Device/Inc -I../User/Driver/Inc -I../User/Algorithm/Inc -I../Drivers/CMSIS/Include -IRTE/_Sentry -I../DSP/Include -D"USE_HAL_DRIVER" -D"STM32H723xx" -D"__FPU_PRESENT=1" -D"__FPU_USED=1" -D"ARM_MATH_CM7" -mfloat-abi=hard -mfpu=fpv5-sp-d16 -mcpu=cortex-m7 -mlittle-endian -O0 -ffunction-sections -funsigned-char -fshort-enums -fshort-wchar -fno-rtti -w -g -o ./Sentry/.obj/__/User/Chariot/Src/crt_chassis.o -MMD ./../User/Chariot/Src/crt_chassis.cpp
-   at unify_builder.Program.compileByMulThread(Int32 thrNum, CmdInfo[] cmds_, List`1 errLogs)
-   at unify_builder.Program.Main(String[] args_)
----
-./../User/Algorithm/Src/alg_new_power_limit.cpp:110:22: error: use of undeclared identifier 'rls_mot'
-  110 |         params_mot = rls_mot.update(samples_mot,
-      |                      ^
-./../User/Algorithm/Src/alg_new_power_limit.cpp:111:91: error: use of undeclared identifier 'k3_mot'
-  111 |                                     power_ratio * actual_power - effectivePower_mot - 4 * k3_mot);
-      |                                                                                           ^
-./../User/Algorithm/Src/alg_new_power_limit.cpp:112:22: error: use of undeclared identifier 'rls_dir'
-  112 |         params_dir = rls_dir.update(samples_dir,
-      |                      ^
-./../User/Algorithm/Src/alg_new_power_limit.cpp:113:97: error: use of undeclared identifier 'k3_dir'
-  113 |                                     (1 - power_ratio) * actual_power - effectivePower_dir - 4 * k3_dir);
-      |                                                                                                 ^
-./../User/Algorithm/Src/alg_new_power_limit.cpp:116:9: error: use of undeclared identifier 'k1_mot'
-  116 |         k1_mot = my_fmax(params_mot[0][0], 1e-5f);
-      |         ^
-./../User/Algorithm/Src/alg_new_power_limit.cpp:117:9: error: use of undeclared identifier 'k2_mot'
-  117 |         k2_mot = my_fmax(params_mot[1][0], 1e-5f);
-      |         ^
-./../User/Algorithm/Src/alg_new_power_limit.cpp:118:9: error: use of undeclared identifier 'k1_dir'
-  118 |         k1_dir = my_fmax(params_dir[0][0], 1e-5f);
-      |         ^
-./../User/Algorithm/Src/alg_new_power_limit.cpp:119:9: error: use of undeclared identifier 'k2_dir'
-  119 |         k2_dir = my_fmax(params_dir[1][0], 1e-5f);
-      |         ^
-8 errors generated.
-./../User/Chariot/Src/crt_chassis.cpp:406:51: error: no member named 'Get_Supercap_Buffer_Power' in 'Class_Supercap'
-  406 |             Power_Management.Max_Power = Supercap.Get_Supercap_Buffer_Power() + Power_Management.Buffer_Power + Referee->Get_Chassis_Power_Max();
-      |                                          ~~~~~~~~ ^
-./../User/Chariot/Src/crt_chassis.cpp:445:24: error: 'Output' is a protected member of 'Class_DJI_Motor_C620'
-  445 |         Motor_Wheel[i].Output();
-      |                        ^
-../User/Device/Inc\dvc_djimotor.h:479:10: note: declared protected here
-  479 |     void Output();
-      |          ^
-./../User/Chariot/Src/crt_chassis.cpp:448:24: error: 'Output' is a protected member of 'Class_DJI_Motor_C620'
-  448 |         Motor_Steer[i].Output();
-      |                        ^
-../User/Device/Inc\dvc_djimotor.h:479:10: note: declared protected here
-  479 |     void Output();
-      |          ^
-./../User/Chariot/Src/crt_chassis.cpp:386:6: error: unterminated conditional directive
-  386 |     #if POWER_CONTROL == 1
-      |      ^
-4 errors generated.
-
-[2026-03-04 21:17:40]	[info] incremental build: 10 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_new_power_limit.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_GraphicsSendTask.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Chariot\Inc\crt_chassis.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_djimotor.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_minipc.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_supercap.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_referee.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Congfig\Inc\config.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_supercap.cpp': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_can.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-
-[2026-03-04 21:17:40]	compilation failed at : "c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp", exit code: 1
-command: 
-  "c:\Users\HLlll\AppData\Local\Keil_v5\ARM\ARMCLANG\bin\armclang.exe" --target=arm-arm-none-eabi -c -xc++ -std=c++11 -I. -I../Core/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I../USB_DEVICE/App -I../USB_DEVICE/Target -I../Middlewares/ST/STM32_USB_Device_Library/Core/Inc -I../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc -I../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I../User/Congfig/Inc -I../User/Task/Inc -I../User/Interaction/Inc -I../User/Chariot/Inc -I../User/Device/Inc -I../User/Driver/Inc -I../User/Algorithm/Inc -I../Drivers/CMSIS/Include -IRTE/_Sentry -I../DSP/Include -D"USE_HAL_DRIVER" -D"STM32H723xx" -D"__FPU_PRESENT=1" -D"__FPU_USED=1" -D"ARM_MATH_CM7" -mfloat-abi=hard -mfpu=fpv5-sp-d16 -mcpu=cortex-m7 -mlittle-endian -O0 -ffunction-sections -funsigned-char -fshort-enums -fshort-wchar -fno-rtti -w -g -o ./Sentry/.obj/__/User/Chariot/Src/crt_chassis.o -MMD ./../User/Chariot/Src/crt_chassis.cpp
-   at unify_builder.Program.compileByMulThread(Int32 thrNum, CmdInfo[] cmds_, List`1 errLogs)
-   at unify_builder.Program.Main(String[] args_)
----
-./../User/Algorithm/Src/alg_new_power_limit.cpp:148:1: error: extraneous closing brace ('}')
-  148 | }
-      | ^
-1 error generated.
-./../User/Chariot/Src/crt_chassis.cpp:406:51: error: no member named 'Get_Supercap_Buffer_Power' in 'Class_Supercap'
-  406 |             Power_Management.Max_Power = Supercap.Get_Supercap_Buffer_Power() + Power_Management.Buffer_Power + Referee->Get_Chassis_Power_Max();
-      |                                          ~~~~~~~~ ^
-./../User/Chariot/Src/crt_chassis.cpp:445:24: error: 'Output' is a protected member of 'Class_DJI_Motor_C620'
-  445 |         Motor_Wheel[i].Output();
-      |                        ^
-../User/Device/Inc\dvc_djimotor.h:479:10: note: declared protected here
-  479 |     void Output();
-      |          ^
-./../User/Chariot/Src/crt_chassis.cpp:448:24: error: 'Output' is a protected member of 'Class_DJI_Motor_C620'
-  448 |         Motor_Steer[i].Output();
-      |                        ^
-../User/Device/Inc\dvc_djimotor.h:479:10: note: declared protected here
-  479 |     void Output();
-      |          ^
-./../User/Chariot/Src/crt_chassis.cpp:386:6: error: unterminated conditional directive
-  386 |     #if POWER_CONTROL == 1
-      |      ^
-4 errors generated.
-
-[2026-03-04 21:18:15]	[info] incremental build: 7 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_new_power_limit.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_referee.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Congfig\Inc\config.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_supercap.cpp': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_can.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-
-[2026-03-04 21:18:16]	compilation failed at : "c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp", exit code: 1
-command: 
-  "c:\Users\HLlll\AppData\Local\Keil_v5\ARM\ARMCLANG\bin\armclang.exe" --target=arm-arm-none-eabi -c -xc++ -std=c++11 -I. -I../Core/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I../USB_DEVICE/App -I../USB_DEVICE/Target -I../Middlewares/ST/STM32_USB_Device_Library/Core/Inc -I../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc -I../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I../User/Congfig/Inc -I../User/Task/Inc -I../User/Interaction/Inc -I../User/Chariot/Inc -I../User/Device/Inc -I../User/Driver/Inc -I../User/Algorithm/Inc -I../Drivers/CMSIS/Include -IRTE/_Sentry -I../DSP/Include -D"USE_HAL_DRIVER" -D"STM32H723xx" -D"__FPU_PRESENT=1" -D"__FPU_USED=1" -D"ARM_MATH_CM7" -mfloat-abi=hard -mfpu=fpv5-sp-d16 -mcpu=cortex-m7 -mlittle-endian -O0 -ffunction-sections -funsigned-char -fshort-enums -fshort-wchar -fno-rtti -w -g -o ./Sentry/.obj/__/User/Chariot/Src/crt_chassis.o -MMD ./../User/Chariot/Src/crt_chassis.cpp
-   at unify_builder.Program.Main(String[] args_)
----
-./../User/Chariot/Src/crt_chassis.cpp:406:51: error: no member named 'Get_Supercap_Buffer_Power' in 'Class_Supercap'
-  406 |             Power_Management.Max_Power = Supercap.Get_Supercap_Buffer_Power() + Power_Management.Buffer_Power + Referee->Get_Chassis_Power_Max();
-      |                                          ~~~~~~~~ ^
-./../User/Chariot/Src/crt_chassis.cpp:445:24: error: 'Output' is a protected member of 'Class_DJI_Motor_C620'
-  445 |         Motor_Wheel[i].Output();
-      |                        ^
-../User/Device/Inc\dvc_djimotor.h:479:10: note: declared protected here
-  479 |     void Output();
-      |          ^
-./../User/Chariot/Src/crt_chassis.cpp:448:24: error: 'Output' is a protected member of 'Class_DJI_Motor_C620'
-  448 |         Motor_Steer[i].Output();
-      |                        ^
-../User/Device/Inc\dvc_djimotor.h:479:10: note: declared protected here
-  479 |     void Output();
-      |          ^
-./../User/Chariot/Src/crt_chassis.cpp:386:6: error: unterminated conditional directive
-  386 |     #if POWER_CONTROL == 1
-      |      ^
-4 errors generated.
-
-[2026-03-04 21:18:28]	[info] incremental build: 6 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_referee.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Congfig\Inc\config.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_supercap.cpp': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_can.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-
-[2026-03-04 21:18:28]	compilation failed at : "c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp", exit code: 1
-command: 
-  "c:\Users\HLlll\AppData\Local\Keil_v5\ARM\ARMCLANG\bin\armclang.exe" --target=arm-arm-none-eabi -c -xc++ -std=c++11 -I. -I../Core/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I../USB_DEVICE/App -I../USB_DEVICE/Target -I../Middlewares/ST/STM32_USB_Device_Library/Core/Inc -I../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc -I../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I../User/Congfig/Inc -I../User/Task/Inc -I../User/Interaction/Inc -I../User/Chariot/Inc -I../User/Device/Inc -I../User/Driver/Inc -I../User/Algorithm/Inc -I../Drivers/CMSIS/Include -IRTE/_Sentry -I../DSP/Include -D"USE_HAL_DRIVER" -D"STM32H723xx" -D"__FPU_PRESENT=1" -D"__FPU_USED=1" -D"ARM_MATH_CM7" -mfloat-abi=hard -mfpu=fpv5-sp-d16 -mcpu=cortex-m7 -mlittle-endian -O0 -ffunction-sections -funsigned-char -fshort-enums -fshort-wchar -fno-rtti -w -g -o ./Sentry/.obj/__/User/Chariot/Src/crt_chassis.o -MMD ./../User/Chariot/Src/crt_chassis.cpp
-   at unify_builder.Program.Main(String[] args_)
----
-./../User/Chariot/Src/crt_chassis.cpp:445:24: error: 'Output' is a protected member of 'Class_DJI_Motor_C620'
-  445 |         Motor_Wheel[i].Output();
-      |                        ^
-../User/Device/Inc\dvc_djimotor.h:479:10: note: declared protected here
-  479 |     void Output();
-      |          ^
-./../User/Chariot/Src/crt_chassis.cpp:448:24: error: 'Output' is a protected member of 'Class_DJI_Motor_C620'
-  448 |         Motor_Steer[i].Output();
-      |                        ^
-../User/Device/Inc\dvc_djimotor.h:479:10: note: declared protected here
-  479 |     void Output();
-      |          ^
-./../User/Chariot/Src/crt_chassis.cpp:386:6: error: unterminated conditional directive
-  386 |     #if POWER_CONTROL == 1
-      |      ^
-3 errors generated.
-
-[2026-03-04 21:20:22]	[info] incremental build: 12 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_new_power_limit.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_power_limit.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_booster.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_GraphicsSendTask.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_djimotor.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_referee.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Congfig\Inc\config.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_supercap.cpp': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_can.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-
-[2026-03-04 21:20:23]	compilation failed at : "c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp", exit code: 1
-command: 
-  "c:\Users\HLlll\AppData\Local\Keil_v5\ARM\ARMCLANG\bin\armclang.exe" --target=arm-arm-none-eabi -c -xc++ -std=c++11 -I. -I../Core/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I../USB_DEVICE/App -I../USB_DEVICE/Target -I../Middlewares/ST/STM32_USB_Device_Library/Core/Inc -I../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc -I../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I../User/Congfig/Inc -I../User/Task/Inc -I../User/Interaction/Inc -I../User/Chariot/Inc -I../User/Device/Inc -I../User/Driver/Inc -I../User/Algorithm/Inc -I../Drivers/CMSIS/Include -IRTE/_Sentry -I../DSP/Include -D"USE_HAL_DRIVER" -D"STM32H723xx" -D"__FPU_PRESENT=1" -D"__FPU_USED=1" -D"ARM_MATH_CM7" -mfloat-abi=hard -mfpu=fpv5-sp-d16 -mcpu=cortex-m7 -mlittle-endian -O0 -ffunction-sections -funsigned-char -fshort-enums -fshort-wchar -fno-rtti -w -g -o ./Sentry/.obj/__/User/Chariot/Src/crt_chassis.o -MMD ./../User/Chariot/Src/crt_chassis.cpp
-   at unify_builder.Program.compileByMulThread(Int32 thrNum, CmdInfo[] cmds_, List`1 errLogs)
-   at unify_builder.Program.Main(String[] args_)
----
-./../User/Chariot/Src/crt_chassis.cpp:445:24: error: 'Output' is a protected member of 'Class_DJI_Motor_C620'
-  445 |         Motor_Wheel[i].Output();
-      |                        ^
-../User/Device/Inc\dvc_djimotor.h:485:10: note: declared protected here
-  485 |     void Output();
-      |          ^
-./../User/Chariot/Src/crt_chassis.cpp:448:24: error: 'Output' is a protected member of 'Class_DJI_Motor_C620'
-  448 |         Motor_Steer[i].Output();
-      |                        ^
-../User/Device/Inc\dvc_djimotor.h:485:10: note: declared protected here
-  485 |     void Output();
-      |          ^
-./../User/Chariot/Src/crt_chassis.cpp:386:6: error: unterminated conditional directive
-  386 |     #if POWER_CONTROL == 1
-      |      ^
-3 errors generated.
-
-[2026-03-04 21:21:14]	[info] incremental build: 12 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_new_power_limit.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_power_limit.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_booster.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_GraphicsSendTask.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_djimotor.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_referee.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Congfig\Inc\config.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_supercap.cpp': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_can.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-
-[2026-03-04 21:21:14]	compilation failed at : "c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp", exit code: 1
-command: 
-  "c:\Users\HLlll\AppData\Local\Keil_v5\ARM\ARMCLANG\bin\armclang.exe" --target=arm-arm-none-eabi -c -xc++ -std=c++11 -I. -I../Core/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I../USB_DEVICE/App -I../USB_DEVICE/Target -I../Middlewares/ST/STM32_USB_Device_Library/Core/Inc -I../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc -I../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I../User/Congfig/Inc -I../User/Task/Inc -I../User/Interaction/Inc -I../User/Chariot/Inc -I../User/Device/Inc -I../User/Driver/Inc -I../User/Algorithm/Inc -I../Drivers/CMSIS/Include -IRTE/_Sentry -I../DSP/Include -D"USE_HAL_DRIVER" -D"STM32H723xx" -D"__FPU_PRESENT=1" -D"__FPU_USED=1" -D"ARM_MATH_CM7" -mfloat-abi=hard -mfpu=fpv5-sp-d16 -mcpu=cortex-m7 -mlittle-endian -O0 -ffunction-sections -funsigned-char -fshort-enums -fshort-wchar -fno-rtti -w -g -o ./Sentry/.obj/__/User/Chariot/Src/crt_chassis.o -MMD ./../User/Chariot/Src/crt_chassis.cpp
-   at unify_builder.Program.compileByMulThread(Int32 thrNum, CmdInfo[] cmds_, List`1 errLogs)
-   at unify_builder.Program.Main(String[] args_)
----
-./../User/Chariot/Src/crt_chassis.cpp:445:24: error: 'Output' is a protected member of 'Class_DJI_Motor_C620'
-  445 |         Motor_Wheel[i].Output();
-      |                        ^
-../User/Device/Inc\dvc_djimotor.h:489:10: note: declared protected here
-  489 |     void Output();
-      |          ^
-./../User/Chariot/Src/crt_chassis.cpp:448:24: error: 'Output' is a protected member of 'Class_DJI_Motor_C620'
-  448 |         Motor_Steer[i].Output();
-      |                        ^
-../User/Device/Inc\dvc_djimotor.h:489:10: note: declared protected here
-  489 |     void Output();
-      |          ^
-./../User/Chariot/Src/crt_chassis.cpp:386:6: error: unterminated conditional directive
-  386 |     #if POWER_CONTROL == 1
-      |      ^
-3 errors generated.
-
-[2026-03-04 21:22:23]	[info] incremental build: 6 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_referee.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Congfig\Inc\config.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_supercap.cpp': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_can.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-
-[2026-03-04 21:22:23]	compilation failed at : "c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp", exit code: 1
-command: 
-  "c:\Users\HLlll\AppData\Local\Keil_v5\ARM\ARMCLANG\bin\armclang.exe" --target=arm-arm-none-eabi -c -xc++ -std=c++11 -I. -I../Core/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I../USB_DEVICE/App -I../USB_DEVICE/Target -I../Middlewares/ST/STM32_USB_Device_Library/Core/Inc -I../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc -I../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I../User/Congfig/Inc -I../User/Task/Inc -I../User/Interaction/Inc -I../User/Chariot/Inc -I../User/Device/Inc -I../User/Driver/Inc -I../User/Algorithm/Inc -I../Drivers/CMSIS/Include -IRTE/_Sentry -I../DSP/Include -D"USE_HAL_DRIVER" -D"STM32H723xx" -D"__FPU_PRESENT=1" -D"__FPU_USED=1" -D"ARM_MATH_CM7" -mfloat-abi=hard -mfpu=fpv5-sp-d16 -mcpu=cortex-m7 -mlittle-endian -O0 -ffunction-sections -funsigned-char -fshort-enums -fshort-wchar -fno-rtti -w -g -o ./Sentry/.obj/__/User/Chariot/Src/crt_chassis.o -MMD ./../User/Chariot/Src/crt_chassis.cpp
-   at unify_builder.Program.Main(String[] args_)
----
-./../User/Chariot/Src/crt_chassis.cpp:445:24: error: 'Output' is a protected member of 'Class_DJI_Motor_C620'
-  445 |         Motor_Wheel[i].Output();
-      |                        ^
-../User/Device/Inc\dvc_djimotor.h:489:10: note: declared protected here
-  489 |     void Output();
-      |          ^
-./../User/Chariot/Src/crt_chassis.cpp:448:24: error: 'Output' is a protected member of 'Class_DJI_Motor_C620'
-  448 |         Motor_Steer[i].Output();
-      |                        ^
-../User/Device/Inc\dvc_djimotor.h:489:10: note: declared protected here
-  489 |     void Output();
-      |          ^
-./../User/Chariot/Src/crt_chassis.cpp:386:6: error: unterminated conditional directive
-  386 |     #if POWER_CONTROL == 1
-      |      ^
-3 errors generated.
-
-[2026-03-04 21:24:03]	[info] incremental build: 12 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_new_power_limit.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_power_limit.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_booster.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_GraphicsSendTask.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_djimotor.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_referee.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Congfig\Inc\config.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_supercap.cpp': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_can.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-
-[2026-03-04 21:24:04]	compilation failed at : "c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp", exit code: 1
-command: 
-  "c:\Users\HLlll\AppData\Local\Keil_v5\ARM\ARMCLANG\bin\armclang.exe" --target=arm-arm-none-eabi -c -xc++ -std=c++11 -I. -I../Core/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc -I../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy -I../USB_DEVICE/App -I../USB_DEVICE/Target -I../Middlewares/ST/STM32_USB_Device_Library/Core/Inc -I../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc -I../Drivers/CMSIS/Device/ST/STM32H7xx/Include -I../User/Congfig/Inc -I../User/Task/Inc -I../User/Interaction/Inc -I../User/Chariot/Inc -I../User/Device/Inc -I../User/Driver/Inc -I../User/Algorithm/Inc -I../Drivers/CMSIS/Include -IRTE/_Sentry -I../DSP/Include -D"USE_HAL_DRIVER" -D"STM32H723xx" -D"__FPU_PRESENT=1" -D"__FPU_USED=1" -D"ARM_MATH_CM7" -mfloat-abi=hard -mfpu=fpv5-sp-d16 -mcpu=cortex-m7 -mlittle-endian -O0 -ffunction-sections -funsigned-char -fshort-enums -fshort-wchar -fno-rtti -w -g -o ./Sentry/.obj/__/User/Chariot/Src/crt_chassis.o -MMD ./../User/Chariot/Src/crt_chassis.cpp
-   at unify_builder.Program.compileByMulThread(Int32 thrNum, CmdInfo[] cmds_, List`1 errLogs)
-   at unify_builder.Program.Main(String[] args_)
----
-./../User/Chariot/Src/crt_chassis.cpp:386:6: error: unterminated conditional directive
-  386 |     #if POWER_CONTROL == 1
-      |      ^
-1 error generated.
-
-[2026-03-04 21:24:35]	[info] incremental build: 6 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp': object (.o) file not exist
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_referee.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Congfig\Inc\config.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_supercap.cpp': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_can.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': source file has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
-
-[2026-03-04 21:24:38]	[done]
-	build successfully !
-
-[2026-03-05 19:24:05]	[info] incremental build: 1 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp': source file has been changed.
-
-[2026-03-05 19:24:06]	[done]
-	build successfully !
-
-[2026-03-05 19:43:27]	[done]
-	build successfully !
-
-[2026-03-05 19:46:30]	[info] incremental build: 1 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp': source file has been changed.
-
-[2026-03-05 19:46:31]	[done]
-	build successfully !
-
-[2026-03-05 19:46:35]	[info] incremental build: 1 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp': source file has been changed.
-
-[2026-03-05 19:46:35]	[done]
-	build successfully !
-
-[2026-03-05 19:46:49]	[info] incremental build: 7 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_new_power_limit.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Algorithm\Inc\alg_new_power_limit.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_booster.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Algorithm\Inc\alg_new_power_limit.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Algorithm\Inc\alg_new_power_limit.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_GraphicsSendTask.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Algorithm\Inc\alg_new_power_limit.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_can.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Algorithm\Inc\alg_new_power_limit.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Algorithm\Inc\alg_new_power_limit.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Algorithm\Inc\alg_new_power_limit.h' has been changed.
-
-[2026-03-05 19:46:51]	[done]
-	build successfully !
-
-[2026-03-05 19:49:36]	[info] incremental build: 7 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_new_power_limit.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Algorithm\Inc\alg_new_power_limit.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_booster.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Algorithm\Inc\alg_new_power_limit.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Algorithm\Inc\alg_new_power_limit.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_GraphicsSendTask.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Algorithm\Inc\alg_new_power_limit.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_can.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Algorithm\Inc\alg_new_power_limit.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Algorithm\Inc\alg_new_power_limit.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Algorithm\Inc\alg_new_power_limit.h' has been changed.
-
-[2026-03-05 19:49:38]	[done]
-	build successfully !
-
-[2026-03-05 19:50:51]	[info] incremental build: 1 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp': source file has been changed.
-
-[2026-03-05 19:50:52]	[done]
-	build successfully !
-
-[2026-03-05 19:51:58]	[info] incremental build: 1 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp': source file has been changed.
-
-[2026-03-05 19:51:59]	[done]
-	build successfully !
-
-[2026-03-05 19:56:36]	[info] incremental build: 1 source files changed
-These source files will be recompiled
----
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp': source file has been changed.
-
-[2026-03-05 19:56:46]	[done]
-	build successfully !
-
-[2026-03-05 20:02:31]	[info] incremental build: 13 source files changed
+[2026-03-07 16:17:06]	[info] incremental build: 13 source files changed
 These source files will be recompiled
 ---
 'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_new_power_limit.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Congfig\Inc\config.h' has been changed.
 'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_power_limit.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Congfig\Inc\config.h' has been changed.
 'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_booster.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Congfig\Inc\config.h' has been changed.
-'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Congfig\Inc\config.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp': source file has been changed.
 'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Congfig\Inc\config.h' has been changed.
 'c:\Users\HLlll\Desktop\M67-Sentry\User\Congfig\Src\config.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Congfig\Inc\config.h' has been changed.
 'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_GraphicsSendTask.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Congfig\Inc\config.h' has been changed.
@@ -1320,6 +203,35 @@ These source files will be recompiled
 'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Congfig\Inc\config.h' has been changed.
 'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Congfig\Inc\config.h' has been changed.
 
-[2026-03-05 20:02:33]	[done]
+[2026-03-07 16:17:08]	[done]
+	build successfully !
+
+[2026-03-07 16:41:12]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_djimotor.cpp': source file has been changed.
+
+[2026-03-07 16:41:17]	[done]
+	build successfully !
+
+[2026-03-07 21:23:53]	[info] incremental build: 14 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_new_power_limit.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_power_limit.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_booster.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Congfig\Inc\config.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_chassis.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Congfig\Inc\config.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Congfig\Src\config.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Congfig\Inc\config.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_GraphicsSendTask.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Congfig\Inc\config.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_djimotor.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_minipc.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Congfig\Inc\config.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_referee.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Congfig\Inc\config.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Device\Src\dvc_supercap.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Congfig\Inc\config.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_can.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Interaction\Src\ita_chariot.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': dependence 'c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\..\User\Device\Inc\dvc_djimotor.h' has been changed.
+
+[2026-03-07 21:23:54]	[done]
 	build successfully !
 
