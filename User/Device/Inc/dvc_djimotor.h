@@ -16,11 +16,18 @@
 
 #include "alg_pid.h"
 #include "drv_can.h"
-#include "alg_power_limit.h"
 #include "dvc_dwt.h"
 #include "alg_filter.h"
+#include "config.h"
 
 #include "alg_SMC_Control.h"
+
+#ifdef POWER_LIMIT_1
+#include "alg_power_limit.h"
+#elif defined(POWER_LIMIT_2)
+#include "alg_new_power_limit.h"
+#endif
+
 /* Exported macros -----------------------------------------------------------*/
 
 /* Exported types ------------------------------------------------------------*/
@@ -377,7 +384,12 @@ public:
     Class_PID PID_Omega;
     
     //功率限制友元函数
+    #ifdef POWER_LIMIT_1
     friend class Class_Power_Limit;
+    #elif defined POWER_LIMIT_2
+    friend class Class_New_Power_Limit;
+    #endif
+    friend class Class_Tricycle_Chassis;
 
     void Init(FDCAN_HandleTypeDef *__hcan, Enum_DJI_Motor_ID __CAN_ID, Enum_DJI_Motor_Control_Method __Control_Method = DJI_Motor_Control_Method_OMEGA, float __Gearbox_Rate = 13.933f, float __Torque_Max = 16384.0f);
 
@@ -396,6 +408,7 @@ public:
     inline float Get_Target_Omega_Angle();
     inline float Get_Target_Torque();
     inline float Get_Out();
+    inline float Get_Gearbox_Rate();
 
     inline void Set_DJI_Motor_Control_Method(Enum_DJI_Motor_Control_Method __Control_Method);
     inline void Set_Target_Angle(float __Target_Angle);
@@ -1191,6 +1204,16 @@ float Class_DJI_Motor_C620::Get_Target_Torque()
 float Class_DJI_Motor_C620::Get_Out()
 {
     return (Out);
+}
+
+/**
+ * @brief 获取减速比
+ *
+ * @return float 减速比
+ */
+inline float Class_DJI_Motor_C620::Get_Gearbox_Rate()
+{
+  return Gearbox_Rate;
 }
 
 /**

@@ -207,6 +207,11 @@ void Gimbal_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
             chariot.Gimbal.Motor_Yaw.CAN_RxCpltCallback(CAN_RxMessage->Data);
             break;
         }
+        case(0x206):
+        {
+            chariot.Gimbal.Motor_Pitch.CAN_RxCpltCallback(CAN_RxMessage->Data);
+            break;
+        }
         case(0xA1):
         {
             Dt = DWT_GetDeltaT(&CNTTT);
@@ -450,7 +455,7 @@ void Task100us_TIM4_Callback()
             chariot.Gimbal.External_IMU.TIM_Calculate_PeriodElapsedCallback();
         }
 
-        chariot.Gimbal.Motor_Pitch.TIM_Process_PeriodElapsedCallback();                 //为了和普通发送分开，避免仲裁
+        // chariot.Gimbal.Motor_Pitch.TIM_Process_PeriodElapsedCallback();                 //为了和普通发送分开，避免仲裁
 
         //生成正弦信号测试
         Single_Time ++;

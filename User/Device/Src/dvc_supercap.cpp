@@ -105,7 +105,8 @@ void Class_Supercap::Data_Process()
     switch(CAN_Manage_Object->Rx_Buffer.Header.Identifier){
         case (0x67):{
             memcpy(&CAN_Supercap_Rx_Data_Normal, CAN_Manage_Object->Rx_Buffer.Data, sizeof(Supercap_Rx_Data_A));
-            Chassis_Power = CAN_Supercap_Rx_Data_Normal.Chassis_Power/10.f;
+            Chassis_Power = CAN_Supercap_Rx_Data_Normal.Chassis_Power / 10.f;
+            Buffer_Power = CAN_Supercap_Rx_Data_Normal.Buffer_Power / 100.0f;
             if(Referee->Get_Game_Stage() == Referee_Game_Status_Stage_BATTLE)
             {
                 Consuming_Power -= (float)(Get_Consuming_Power_Now() / 10000);

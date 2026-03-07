@@ -167,6 +167,8 @@ protected:
     //内部变量
     float Consuming_Power = 20000.f;
     float Chassis_Power;
+    float Buffer_Power;
+
     //当前时刻的超级电容接收flag
     uint32_t Flag = 0;
     //前一时刻的超级电容接收flag
@@ -266,26 +268,32 @@ float Class_Supercap::Get_Now_Voltage()
 {
     return (Supercap_Data.Supercap_Voltage);
 }
+
 float Class_Supercap::Get_Consuming_Power()
 {
     return (Consuming_Power);
 }
+
 Enum_Supercap_Mode Class_Supercap::Get_Supercap_Mode()
 {
     return(Supercap_Mode);
 }
+
 uint16_t Class_Supercap::Get_Buffer_Power()
 {
-    return(CAN_Supercap_Rx_Data_Normal.Buffer_Power);
+    return(Buffer_Power);
 }
+
 uint8_t Class_Supercap::Get_Supercap_Proportion()
 {
     return(CAN_Supercap_Rx_Data_Normal.Cap_Proportion);
 }
+
 uint16_t Class_Supercap::Get_Consuming_Power_Now()
 {
     return(CAN_Supercap_Rx_Data_Normal.Consuming_Power_Now);
 }
+
 /**
  * @brief 设定绝对最大限制功率
  *
@@ -295,10 +303,12 @@ void Class_Supercap::Set_Limit_Power(float __Limit_Power)
 {
     Supercap_Tx_Data.Limit_Power = __Limit_Power;
 }
+
 void Class_Supercap::Set_Working_Status(Enum_Working_Status __Working_Status)
 {
     Supercap_Tx_Data.Working_Status = __Working_Status;
 }
+
 void Class_Supercap::Set_Supercap_Mode(Enum_Supercap_Mode __Supercap_Mode)
 {
     Supercap_Mode = __Supercap_Mode;

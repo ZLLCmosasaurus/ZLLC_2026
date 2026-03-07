@@ -252,14 +252,14 @@ void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback(uint8_t *Rx_Data)
             // 底盘控制类型
             Enum_Chassis_Control_Type chassis_control_type = Chassis_Control_Type_DISABLE;
             // 超电控制类型
-            Enum_Supercap_Mode supercap_mode = Supercap_DISABLE;
+            Enum_Sprint_Status sprint_status = Sprint_Status_DISABLE;
             // float映射到int16之后的速度
             int16_t tmp_velocity_x = 0, tmp_velocity_y = 0, tmp_omega = 0;
 
             memcpy(&tmp_velocity_x,&CAN_Manage_Object->Rx_Buffer.Data[0],sizeof(int16_t));
             memcpy(&tmp_velocity_y,&CAN_Manage_Object->Rx_Buffer.Data[2],sizeof(int16_t)); 
             memcpy(&tmp_omega,&CAN_Manage_Object->Rx_Buffer.Data[4],sizeof(int16_t));
-            memcpy(&supercap_mode,&CAN_Manage_Object->Rx_Buffer.Data[6],sizeof(uint8_t));
+            memcpy(&sprint_status,&CAN_Manage_Object->Rx_Buffer.Data[6],sizeof(uint8_t));
             memcpy(&control_type,&CAN_Manage_Object->Rx_Buffer.Data[7],sizeof(uint8_t));
 
             gimbal_velocity_x = Math_Int_To_Float(tmp_velocity_x,-450,450,-4.0f,4.0f);
@@ -291,7 +291,7 @@ void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback(uint8_t *Rx_Data)
             Chassis.Set_Target_Velocity_X(chassis_velocity_x);
             Chassis.Set_Target_Velocity_Y(chassis_velocity_y);
             Chassis.Set_Target_Omega(chassis_omega);                    //线速度    会根据模式选择是否控制
-            Chassis.Set_Supercap_Mode(supercap_mode);
+            Chassis.Set_Sprint_Status(sprint_status);
             break;
         }
         case (0x95):
@@ -722,7 +722,7 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
             Chassis.Set_Target_Omega(-PID_Chassis_Fllow.Get_Out());
         }
 
-        Chassis.TIM_Calculate_PeriodElapsedCallback(Sprint_Status);
+        Chassis.TIM_Calculate_PeriodElapsedCallback();
 
         //DWT_SysTimeUpdate();
 				

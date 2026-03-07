@@ -235,3 +235,62 @@ These source files will be recompiled
 [2026-03-07 21:23:54]	[done]
 	build successfully !
 
+[2026-03-08 01:32:16]	[info] incremental build: 3 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_pid.cpp': source file has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Driver\Src\drv_can.cpp': source file has been changed.
+
+[2026-03-08 01:32:18]	[done]
+	build successfully !
+
+[2026-03-08 01:33:11]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Chariot\Src\crt_gimbal.cpp': source file has been changed.
+
+[2026-03-08 01:33:12]	[done]
+	build successfully !
+
+[2026-03-08 01:38:21]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_pid.cpp': source file has been changed.
+
+[2026-03-08 01:38:22]	[done]
+	build successfully !
+
+[2026-03-08 01:41:33]	[info] incremental build: 2 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_pid.cpp': source file has been changed.
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': source file has been changed.
+
+[2026-03-08 01:41:34]	[done]
+	build successfully !
+
+[2026-03-08 01:43:31]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_pid.cpp': source file has been changed.
+
+[2026-03-08 01:43:32]	[done]
+	build successfully !
+
+[2026-03-08 01:45:27]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Algorithm\Src\alg_pid.cpp': source file has been changed.
+
+[2026-03-08 01:45:28]	[done]
+	build successfully !
+
+[2026-03-08 01:46:27]	[info] incremental build: 1 source files changed
+These source files will be recompiled
+---
+'c:\Users\HLlll\Desktop\M67-Sentry\User\Task\Src\tsk_config_and_callback.cpp': source file has been changed.
+
+[2026-03-08 01:46:28]	[done]
+	build successfully !
+

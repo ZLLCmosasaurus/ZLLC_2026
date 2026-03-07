@@ -23,10 +23,16 @@
 #include "alg_slope.h"
 #include "dvc_referee.h"
 #include "dvc_djimotor.h"
-#include "alg_power_limit.h"
 #include "dvc_supercap.h"
 #include "config.h"
 #include "dvc_minipc.h"
+
+#ifdef POWER_LIMIT_1
+#include "alg_power_limit.h"
+#elif defined (POWER_LIMIT_2)
+#include "alg_new_power_limit.h"
+#endif
+
 /* Exported macros -----------------------------------------------------------*/
 #define wheel_diameter 12.000000f   // 
 #define half_width 10.0f           // 25.000000f		x方向为宽
@@ -97,8 +103,12 @@ public:
     Class_Supercap Supercap;
       
     //功率限制
+    #ifdef POWER_LIMIT_1
     Class_Power_Limit Power_Limit;
-    //Struct_Power_Management Power_Management;
+    #elif defined (POWER_LIMIT_2)
+    Class_New_Power_Limit Power_Limit;
+    Struct_Power_Management Power_Management;
+    #endif
     
     //裁判系统
     Class_Referee *Referee;
@@ -136,12 +146,12 @@ public:
     inline void Set_Now_Velocity_Y(float __Now_Velocity_Y);
     inline void Set_Now_Omega(float __Now_Omega);
     inline void Set_Relative_Angle(float __Relative_Angle);
-    inline void Set_Supercap_Mode(Enum_Supercap_Mode __Supercap_Mode);
+    inline void Set_Sprint_Status(Enum_Sprint_Status __Sprint_Status);
 
     inline void Set_Velocity_Y_Max(float __Velocity_Y_Max);
     inline void Set_Velocity_X_Max(float __Velocity_X_Max);
 
-    void TIM_Calculate_PeriodElapsedCallback(Enum_Sprint_Status __Sprint_Status);
+    void TIM_Calculate_PeriodElapsedCallback();
     void Power_Limit_Update();
 
 protected:
@@ -192,6 +202,8 @@ protected:
     //底盘控制方法
     Enum_Chassis_Control_Type Chassis_Control_Type = Chassis_Control_Type_DISABLE;
     Enum_Supercap_Mode Supercap_Mode = Supercap_DISABLE;
+    Enum_Sprint_Status Sprint_Status = Sprint_Status_DISABLE;
+
     //目标速度X
     float Target_Velocity_X = 0.0f;
     //目标速度Y
@@ -497,15 +509,14 @@ void Class_Tricycle_Chassis::Set_Relative_Angle(float __Relative_Angle)
     Relative_Angle = __Relative_Angle;
 }
 
-
 /**
- * @brief 设置超电控制状态
- * @param __Supercap_Mode 
+ * @brief 设置超电是否使用
  */
-void Class_Tricycle_Chassis::Set_Supercap_Mode(Enum_Supercap_Mode __Supercap_Mode)
+inline void Class_Tricycle_Chassis::Set_Sprint_Status(Enum_Sprint_Status __Sprint_Status)
 {
-    Supercap_Mode = __Supercap_Mode;
+    Sprint_Status = __Sprint_Status;
 }
+
 #endif
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

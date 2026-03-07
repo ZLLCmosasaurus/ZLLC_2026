@@ -110,10 +110,16 @@ void Class_PID::TIM_Adjust_PeriodElapsedCallback()
             speed_ratio = 0.0f;
         }
     }
-    //积分限幅
+    //积分限幅   这样写有利于积分饱和快速退出
     if (I_Out_Max != 0.0f)
     {
-        Math_Constrain(&Integral_Error, -I_Out_Max / K_I, I_Out_Max / K_I);
+        // Math_Constrain(&Integral_Error, -I_Out_Max / K_I, I_Out_Max / K_I);
+        if(K_I >= 0.0f){        //原本小于0的Ki会有问题
+            Math_Constrain(&Integral_Error, -I_Out_Max / K_I, I_Out_Max / K_I);
+        }
+        else{
+            Math_Constrain(&Integral_Error, I_Out_Max / K_I, -I_Out_Max / K_I);
+        }
     }
     if (I_Separate_Threshold == 0.0f)
     {
