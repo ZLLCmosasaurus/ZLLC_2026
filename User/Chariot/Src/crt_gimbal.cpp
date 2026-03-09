@@ -212,7 +212,7 @@ void Class_Gimbal::Output()
                     Motor_Pitch.Set_Target_Omega_Angle(CRUISE_PITCH_SPEED);
                 }
                 else if(Motor_Pitch.Get_Transform_Angle() > Max_Pitch_Angle){
-                    Motor_Pitch.Set_Target_Omega_Angle(CRUISE_PITCH_SPEED);
+                    Motor_Pitch.Set_Target_Omega_Angle(-CRUISE_PITCH_SPEED);
                 }
 
                 //更新历史值

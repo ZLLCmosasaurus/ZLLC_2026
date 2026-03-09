@@ -31,7 +31,7 @@
 #define YAW_ENCODER_OFFSET  3400
 #define MAIN_YAW_ENCODER_OFFSET 2048
 
-#define CRUISE_PITCH_SPEED 3.0f                 //rad
+#define CRUISE_PITCH_SPEED 0.05 * 57.3f          //angle
 #define CRUISE_YAW_SPEED   1.5f                 //rad
 #define LIMIT_YAW_ANGLE    80.0f
 

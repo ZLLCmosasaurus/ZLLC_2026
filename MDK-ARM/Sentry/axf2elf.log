@@ -1,4 +1,0 @@
-arm-none-eabi-objcopy --update-section ER_IROM1="C:\Users\HLlll\AppData\Local\Temp\ZLLC_2026_t9kGlLey.bin"  "c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\Sentry/ZLLC_2026.axf" "c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\Sentry/ZLLC_2026.elf"
-
-arm-none-eabi-objcopy: c:\Users\HLlll\Desktop\M67-Sentry\MDK-ARM\Sentry/ZLLC_2026.elf: warning: allocated section `RW_IRAM2' not in segment
-
