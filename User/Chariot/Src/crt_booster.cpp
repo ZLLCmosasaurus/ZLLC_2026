@@ -139,21 +139,52 @@ void Class_FSM_Antijamming::Reload_TIM_Status_PeriodElapsedCallback()
             //卡弹反应状态->准备卡弹处理
             Booster->Motor_Driver.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
             //Booster->Driver_Angle = Booster->Motor_Driver.Get_Now_Radian() + PI / 12.0f;//原版本
-            Booster->Driver_Angle = Booster->Motor_Driver.Get_Now_Radian() + (2 * PI / 8.0f);
+            Booster->Driver_Angle = Booster->Motor_Driver.Get_Now_Radian() - (2 * PI / 8.0f);
             Booster->Motor_Driver.Set_Target_Radian(Booster->Driver_Angle);
             Set_Status(3);
         }
         break;
         case (3):
         {
-            //卡弹处理状态
+            static uint16_t tim1_check_cnt = 0,tim2_check_cnt = 0;
+            //卡弹处理跳转正常状态
+                if (abs(Booster->Motor_Driver.Get_Now_Torque()) < Booster->Driver_Torque_Threshold)
+                {
+                    tim1_check_cnt++;
+                    tim2_check_cnt=0;
+                }
+                else
+                {
+                    //刷新时间重新计时
+                    tim1_check_cnt=0;
+                    //超阈值计时
+                    tim2_check_cnt++;
+                }
 
-            if (Status[Now_Status_Serial].Time >= 300)
-            {
-                //长时间回拨->正常状态
-                Set_Status(0);
-            }
+                if(tim1_check_cnt >= 200)
+                {
+                    //长时间回拨->正常状态
+                    tim1_check_cnt = 0;
+                    Set_Status(0);
+                }
+
+                //检测卡死状态跳转到失能摩擦轮状态
+                if(tim2_check_cnt >= 300)
+                {
+                    tim2_check_cnt=0;
+                    Set_Status(4);
+                }
         }
+        break;
+        case (4):
+        {
+            Booster->Output();
+            // 发射机构失能
+            Booster->Motor_Driver.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OPENLOOP);
+            Booster->Motor_Driver.PID_Angle.Set_Integral_Error(0.0f);
+            Booster->Motor_Driver.PID_Omega.Set_Integral_Error(0.0f);
+            Booster->Motor_Driver.Set_Out(0.0f);
+        }   
         break;
     }
 }
@@ -510,7 +541,7 @@ void Class_Booster::TIM_Calculate_PeriodElapsedCallback()
     //FSM_Heat_Detect.Reload_TIM_Status_PeriodElapsedCallback();
     //卡弹处理
     FSM_Antijamming.Reload_TIM_Status_PeriodElapsedCallback();
-    Output();
+    //Output();
     //PID输出
     Motor_Driver.TIM_PID_PeriodElapsedCallback();
     Motor_Friction_Left.TIM_PID_PeriodElapsedCallback();

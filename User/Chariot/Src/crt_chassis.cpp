@@ -85,7 +85,7 @@ void Class_Steering_Wheel_Chassis::Init(float __Velocity_X_Max, float __Velocity
     Motor_Steer[2].Init(&hfdcan1, DJI_Motor_ID_0x206);
     Motor_Steer[3].Init(&hfdcan1, DJI_Motor_ID_0x208);
     //舵向电机零点位置初始化
-    Motor_Steer[0].Set_Zero_Position(-3.07f);
+    Motor_Steer[0].Set_Zero_Position(-0.07f);
     Motor_Steer[1].Set_Zero_Position(0.88f);
     Motor_Steer[2].Set_Zero_Position(2.42f);
     Motor_Steer[3].Set_Zero_Position(-1.13f);
@@ -293,6 +293,7 @@ void Class_Steering_Wheel_Chassis::Speed_Resolution()
  * @brief TIM定时器中断计算回调函数
  *
  */
+float Max_Power_test = 80.0f;
 float Chassis_Buffer = 0.0;
 float a,b,c;
 void Class_Steering_Wheel_Chassis::TIM_Calculate_PeriodElapsedCallback(Enum_Sprint_Status __Sprint_Status)
@@ -346,7 +347,7 @@ void Class_Steering_Wheel_Chassis::TIM_Calculate_PeriodElapsedCallback(Enum_Spri
     }
     else{
         //裁判系统离线限制功率
-        Power_Management.Max_Power = 80.0f;
+        Power_Management.Max_Power = Max_Power_test;
         Chassis_Buffer = 0.0f;
     }
     

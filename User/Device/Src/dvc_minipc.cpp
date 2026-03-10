@@ -230,7 +230,7 @@ float Class_MiniPC::calc_pitch(float x, float y, float z)
     if (d < a_d)
     {
         // return 当前pitch，因为无解1
-		return IMU->Get_DMIMU_Pitch();
+		return IMU->Get_Angle_Pitch();
 		
     }
 

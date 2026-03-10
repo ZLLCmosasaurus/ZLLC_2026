@@ -420,8 +420,8 @@ void Task100us_TIM4_Callback()
     Referee_Sand_Cnt++;
 
     #elif defined(GIMBAL)
-        // 单给IMU消息开的定时器 ims
-    //chariot.Gimbal.Boardc_BMI.TIM_Calculate_PeriodElapsedCallback();    
+    // 单给IMU消息开的定时器 ims
+    chariot.Gimbal.Boardc_BMI.TIM_Calculate_PeriodElapsedCallback();    
     static uint16_t mod5 = 0;
     static uint8_t mod2 = 0;
     if (mod5 % 50 == 1)

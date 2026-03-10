@@ -24,7 +24,7 @@
 /* Function prototypes -------------------------------------------------------*/
 float YAW_Reference_Angle;
 float YAW_Chassis_Angle;
-float DebugMo = 135.0f;
+float DebugMo = 250.0f;
 /**
  * @brief TIM定时器中断计算回调函数
  *
@@ -36,7 +36,7 @@ void Class_Gimbal_Pitch_Motor_DM4310::TIM_PID_PeriodElapsedCallback()
 	    case(DM_Motor_Control_Method_MIT_IMU_Angle):
 		{
             PID_Angle.Set_Target(Target_Angle);
-            if(IMU->Get_DM_IMU_Status()!=DM_IMU_Status_DISABLE)
+            if(IMU->Get_IMU_Status() != IMU_Status_DISABLE)
             {
                 //角度环
                 PID_Angle.Set_Now(True_Angle_Pitch);
@@ -92,9 +92,9 @@ void Class_Gimbal_Pitch_Motor_DM4310::Disable()
  */
 void Class_Gimbal_Pitch_Motor_DM4310::Transform_Angle()
 {
-    True_Rad_Pitch = -1 * IMU->Get_DMIMU_Pitch() * DEG_TO_RAD;
-    True_Gyro_Pitch = -1 * IMU->Get_DMIMU_Gyro_Pitch();
-    True_Angle_Pitch = -1 * IMU->Get_DMIMU_Pitch();
+    True_Rad_Pitch = -1 * IMU->Get_Rad_Pitch();
+    True_Gyro_Pitch = -1 * IMU->Get_Gyro_Pitch();
+    True_Angle_Pitch = -1 * IMU->Get_Angle_Pitch();
 }
 
 /**
@@ -128,7 +128,7 @@ void Class_Gimbal_Yaw_Motor_LK7025::TIM_PID_PeriodElapsedCallback()
     {
         // 角速度环
         PID_Omega.Set_Target(Target_Omega_Angle);
-        if (IMU->Get_DM_IMU_Status() == DM_IMU_Status_DISABLE)
+        if (IMU->Get_IMU_Status() != IMU_Status_DISABLE)
         {
             PID_Omega.Set_Now(Data.Now_Omega_Angle);
         }
@@ -144,7 +144,7 @@ void Class_Gimbal_Yaw_Motor_LK7025::TIM_PID_PeriodElapsedCallback()
     case (LK_Motor_Control_Method_IMU_ANGLE):
     {
         PID_Angle.Set_Target(Target_Angle);
-        if (IMU->Get_DM_IMU_Status() != DM_IMU_Status_DISABLE)
+        if (IMU->Get_IMU_Status() != IMU_Status_DISABLE)
         {
             // 角度环
             PID_Angle.Set_Now(True_Angle_Yaw);
@@ -211,9 +211,9 @@ void Class_Gimbal_Yaw_Motor_LK7025::Disable()
  */
 void Class_Gimbal_Yaw_Motor_LK7025::Transform_Angle()
 {
-    True_Rad_Yaw = 1 * IMU->Get_DMIMU_Yaw() * DEG_TO_RAD;
-    True_Gyro_Yaw = 1 * IMU->Get_DMIMU_Gyro_Yaw();
-    True_Angle_Yaw = 1 * IMU->Get_DMIMU_Yaw();
+    True_Rad_Yaw = 1 * IMU->Get_Rad_Yaw();
+    True_Gyro_Yaw = 1 * IMU->Get_Gyro_Yaw();
+    True_Angle_Yaw = 1 * IMU->Get_Angle_Yaw();
 }
 /**
  * @brief 云台初始化
@@ -221,24 +221,26 @@ void Class_Gimbal_Yaw_Motor_LK7025::Transform_Angle()
  */
 void Class_Gimbal::Init()
 {
+    // imu初始化
+    Boardc_BMI.Init();
 
     // yaw轴电机
 //   Motor_Yaw.PID_Angle.Init(0.8f, 0.0f, 0.0f, 0.0f, 200.0f, 4000.0f,0.0f,0.0f,0.0f,0.001f,0.0f);
 //   Motor_Yaw.PID_Omega.Init(13.f, 0.f, 0.0f, 0.0f, 200.0f, 4000.0f,0.0f,0.0f,0.0f,0.001f,0.0f);
     Motor_Yaw.PID_Angle.Init(0.5f, 0.0f, 0.0f, 0.0f, 200.0f, 4000.0f,0.0f,0.0f,0.0f,0.001f,0.0f);
-    Motor_Yaw.PID_Omega.Init(90.f, 50.0f, 0.0f, 0.0f, 200.0f, 4000.0f,0.0f,0.0f,0.0f,0.001f,0.0f);
+    Motor_Yaw.PID_Omega.Init(190.f, 230.0f, 0.0f, 0.0f, 200.0f, 4000.0f,0.0f,0.0f,0.0f,0.001f,0.0f);
 //    Motor_Yaw.PID_Angle.Init(0.0f, 0.0f, 0.0f, 0.0f, 200.0f, 4000.0f,0.0f,0.0f,0.0f,0.001f,0.0f);
 //    Motor_Yaw.PID_Omega.Init(0.0f, 0.0f, 0.0f, 0.0f, 200.0f, 4000.0f,0.0f,0.0f,0.0f,0.001f,0.0f);
     //Motor_Yaw.PID_Angle.Init(30.f, 0.0f, 0.0f, 0.0f, 500, 500);
     //Motor_Yaw.PID_Omega.Init(60.0f, 15.0f, 0.0f, 0.0f, 6000, Motor_Yaw.Get_Output_Max(), 10.f, 50.f);
     //Motor_Yaw.PID_Torque.Init(0.f, 0.0f, 0.0f, 0.0f, Motor_Yaw.Get_Output_Max(), Motor_Yaw.Get_Output_Max());
-    Motor_Yaw.IMU = &DM_IMU;
+    Motor_Yaw.IMU = &Boardc_BMI;
     Motor_Yaw.Init(&hfdcan2, LK_Motor_ID_0x141, 220.f, 0, 33.0f, LK_Motor_Control_Method_IMU_ANGLE, LK_Motor_Control_Torque);
     
     // pitch轴电机
     Motor_Pitch.PID_Angle.Init(0.7f, 0.0f, 0.0f, 0.0f, 200.0f, 4090.0f);
     Motor_Pitch.PID_Omega.Init(180.0f, 1.0f, 0.0f, 0.0f, 2000.0f, 4090.0f);
-    Motor_Pitch.IMU = &DM_IMU;
+    Motor_Pitch.IMU = &Boardc_BMI;
     Motor_Pitch.Init(&hfdcan2, DM_Motor_ID_0xA1, DM_Motor_Control_Method_MIT_OPENLOOP);
 
     Motor_Pitch_2.Init(&hfdcan1, DM_Motor_ID_0xA2, DM_Motor_Control_Method_POSITION_OMEGA, PI);
@@ -343,6 +345,31 @@ void Class_Gimbal::Output()
             Motor_Yaw.Set_Target_Angle(Target_Yaw_Angle);
             Motor_Pitch.Set_Target_Angle(Target_Pitch_Angle);
 
+        }
+        else if (Get_Gimbal_Control_Type() == Gimbal_Control_type_FOLD)
+        {
+            //控制方式
+            Motor_Yaw.Set_LK_Motor_Control_Method(LK_Motor_Control_Method_ANGLE_LOCK);
+            Motor_Pitch.Set_DM_Motor_Control_Method(DM_Motor_Control_Method_MIT_IMU_Angle);
+
+            // 限制角度
+            Math_Constrain(&Target_Pitch_Angle, Min_Pitch_Angle, Max_Pitch_Angle);
+            Math_Constrain(&Target_Pitch_2_Angle, Min_Pitch_2_Angle, Max_Pitch_2_Angle);
+
+            // 限制角度范围 处理yaw轴180度问题
+            while ((Target_Yaw_Angle - Motor_Yaw.Get_True_Angle_Yaw()) > Max_Yaw_Angle)
+            {
+                Target_Yaw_Angle -= (2 * Max_Yaw_Angle);
+            }
+            while ((Target_Yaw_Angle - Motor_Yaw.Get_True_Angle_Yaw()) < -Max_Yaw_Angle)
+            {
+                Target_Yaw_Angle += (2 * Max_Yaw_Angle);
+            }
+
+            // 设置目标角度
+            Motor_Yaw.Set_Target_Angle(Target_Yaw_Angle);
+            Motor_Pitch.Set_Target_Angle(Target_Pitch_Angle);
+            Motor_Pitch_2.Set_Target_Angle(Target_Pitch_2_Angle);
         }
     }
 }

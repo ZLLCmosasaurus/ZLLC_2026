@@ -14,6 +14,8 @@
 
 /* Includes ------------------------------------------------------------------*/
 
+#include "dvc_boardc_bmi088.h"
+#include "dvc_imu.h"
 #include "dvc_dmmotor.h"
 #include "dvc_minipc.h"
 #include "dvc_dmimu.h"
@@ -35,6 +37,7 @@ enum Enum_Gimbal_Control_Type :uint8_t
     Gimbal_Control_Type_DISABLE = 0,
     Gimbal_Control_Type_NORMAL,
     Gimbal_Control_Type_MINIPC,
+    Gimbal_Control_type_FOLD,
 };
 
 struct IMU_Data
@@ -55,7 +58,7 @@ class Class_Gimbal_Pitch_Motor_DM4310 : public Class_DM_Motor_J4310
 {
 public:
     //陀螺仪获取云台角速度
-    Class_DM_IMU* IMU;
+    Class_IMU* IMU;
 
 
     inline float Get_True_Rad_Pitch();
@@ -112,7 +115,7 @@ class Class_Gimbal_Yaw_Motor_LK7025 : public Class_LK_Motor
 {
 public:
     //陀螺仪获取云台角速度
-    Class_DM_IMU* IMU;
+    Class_IMU* IMU;
     
     inline float Get_True_Rad_Yaw();
     inline float Get_True_Gyro_Yaw();
@@ -168,7 +171,7 @@ class Class_Gimbal
 public:
 
     //imu对象
-    //Class_IMU Boardc_BMI;
+    Class_IMU Boardc_BMI;
     //外置IMU
     Class_DM_IMU DM_IMU;
 
@@ -217,7 +220,7 @@ protected:
     // pitch轴最大值
     float Max_Pitch_Angle = 25.0f ; //多10°
     // 大pitch轴最小值
-    float Min_Pitch_2_Angle = 0.588875473f;
+    float Min_Pitch_2_Angle = 0.48875473f;
     // 大pitch轴最大值
     float Max_Pitch_2_Angle = LOCK_PITCH; //均待定
     // 电磁铁固定角度

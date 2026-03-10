@@ -104,8 +104,8 @@ protected:
     float ErrorUp;                //高于error，直接按error分配功率，防止功率乱吃，分配错误
 
     float k1 = 0.0100000001f;
-    float k2 = 510.00f;
-    float k3 = 11.00f / 8.00f;
+    float k2 = 535.00f;
+    float k3 = 6.50f / 8.00f;
     float k4 = 1.0f;
     RLS<2> rls{1e-5f, 0.9999f};
 
