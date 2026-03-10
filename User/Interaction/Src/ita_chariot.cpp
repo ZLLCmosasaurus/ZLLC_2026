@@ -422,7 +422,7 @@ float Offset_K = 0.175f;
 void Class_Chariot::Control_Chassis()
 {
     // 遥控器摇杆值
-    float dr16_l_x, dr16_l_y, dr16_r_x, dr16_yaw;
+    float dr16_l_x, dr16_l_y, dr16_r_x, dr16_r_y, dr16_yaw;
     // 底盘坐标系速度目标值 float
     float chassis_velocity_x = 0, chassis_velocity_y = 0;
     float chassis_delta_radian = 0;
@@ -431,6 +431,7 @@ void Class_Chariot::Control_Chassis()
     dr16_l_x = (Math_Abs(DR16.Get_Left_X()) > DR16_Dead_Zone) ? DR16.Get_Left_X() : 0;
     dr16_l_y = (Math_Abs(DR16.Get_Left_Y()) > DR16_Dead_Zone) ? DR16.Get_Left_Y() : 0;
     dr16_r_x = (Math_Abs(DR16.Get_Right_X()) > DR16_Dead_Zone) ? DR16.Get_Right_X() : 0;
+    dr16_r_y = (Math_Abs(DR16.Get_Right_Y()) > DR16_Dead_Zone) ? DR16.Get_Right_Y() : 0;
     dr16_yaw = (Math_Abs(DR16.Get_Yaw()) > 0.5f) ? DR16.Get_Yaw() : 0;
 
     // 遥控器操作逻辑
@@ -438,16 +439,30 @@ void Class_Chariot::Control_Chassis()
     volatile int DR16_Right_Switch_Status = DR16.Get_Right_Switch();
     switch (DR16_Left_Switch_Status)
     {
-    case (DR16_Switch_Status_UP):
+    case (DR16_Switch_Status_UP): // 左上
     {
-        Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
+        if (DR16_Right_Switch_Status == DR16_Switch_Status_MIDDLE && Gimbal.arm_init == true) // 左上 + 右中 启动底盘
+        {
+            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL);
+        }
+        else
+        {
+            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
+        }
         break;
     }
-    case (DR16_Switch_Status_MIDDLE): // 左中 正常模式控制底盘，只有当机械臂移动到初始位姿后才将底盘设置为正常模式
+    case (DR16_Switch_Status_MIDDLE): // 左中
     {
         if (Gimbal.arm_init == true)
         {
-            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL);
+            if (DR16_Right_Switch_Status == DR16_Switch_Status_DOWN) // 左中 + 右下 上台阶状态机(SLOPE)
+            {
+                Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SLOPE);
+            }
+            else
+            {
+                Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL);
+            }
         }
         else
         {
@@ -459,7 +474,7 @@ void Class_Chariot::Control_Chassis()
     {
         if (Gimbal.arm_init == true)
         {
-            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SLOPE);
+            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL);
         }
         else
         {
@@ -474,7 +489,6 @@ void Class_Chariot::Control_Chassis()
     }
     }
 
-    // 云台到底盘坐标系转换
     volatile int Chassis_control_type = Chassis.Get_Chassis_Control_Type();
     switch (Chassis_control_type)
     {
@@ -493,58 +507,87 @@ void Class_Chariot::Control_Chassis()
         chassis_delta_radian = -dr16_r_x * sqrt(1.0f - dr16_r_x * dr16_r_x / 2.0f) * 0.01f;
 
         // 传递拨杆状态
-        switch (DR16_Right_Switch_Status)
+        if (DR16_Left_Switch_Status == DR16_Switch_Status_DOWN)
         {
-        case (DR16_Switch_Status_MIDDLE):
-        {
-            Chassis.Set_DR16_Right_Uplift_Status(DR16_Right_Switch_MIDDLE);
-            break;
+            switch (DR16_Right_Switch_Status)
+            {
+
+            case (DR16_Switch_Status_UP):
+            {
+                Chassis.Set_DR16_Right_Uplift_Status(DR16_Right_Switch_UP);
+                break;
+            }
+
+            case (DR16_Switch_Status_DOWN):
+            {
+                Chassis.Set_DR16_Right_Uplift_Status(DR16_Right_Switch_DOWN);
+                break;
+            }
+
+            default:
+            {
+                Chassis.Set_DR16_Right_Uplift_Status(DR16_Right_Switch_MIDDLE);
+                break;
+            }
+            }
         }
 
-        case (DR16_Switch_Status_UP):
+        if(DR16_Left_Switch_Status == DR16_Switch_Status_DOWN)
+        // 左下自定义控制器模式时将底盘速度减半，便于微调
         {
-            Chassis.Set_DR16_Right_Uplift_Status(DR16_Right_Switch_UP);
-            break;
+            chassis_velocity_x *= 0.5f;
+            chassis_velocity_y *= 0.5f;
+            chassis_delta_radian *= 0.75f;
         }
 
-        case (DR16_Switch_Status_DOWN):
-        {
-            Chassis.Set_DR16_Right_Uplift_Status(DR16_Right_Switch_DOWN);
-            break;
-        }
-        }
+        // // 传递拨杆状态
+        // switch (DR16_Right_Switch_Status)
+        // {
+        // case (DR16_Switch_Status_MIDDLE):
+        // {
+        //     Chassis.Set_DR16_Right_Uplift_Status(DR16_Right_Switch_MIDDLE);
+        //     break;
+        // }
+
+        // case (DR16_Switch_Status_UP):
+        // {
+        //     if (dr16_yaw >= 0.9f)
+        //     {
+        //         Chassis.Set_DR16_Right_Uplift_Status(Chassis_Uplift_FLAG_ADD);
+        //     }
+        //     else
+        //     {
+        //         Chassis.Set_DR16_Right_Uplift_Status(DR16_Right_Switch_UP);
+        //     }
+        //     break;
+        // }
+
+        // case (DR16_Switch_Status_DOWN):
+        // {
+        //     Chassis.Set_DR16_Right_Uplift_Status(DR16_Right_Switch_DOWN);
+        //     break;
+        // }
+        // }
 
         break;
     }
-    case (Chassis_Control_Type_SLOPE):
+    case (Chassis_Control_Type_SLOPE): // 上台阶状态机，Yaw控制状态机状态，右摇杆y控制小轮子开关
     {
         chassis_velocity_y = -dr16_l_x * sqrt(1.0f - dr16_l_y * dr16_l_y / 2.0f) * 1.0f;
         chassis_velocity_x = dr16_l_y * sqrt(1.0f - dr16_l_x * dr16_l_x / 2.0f) * 1.0f;
         chassis_delta_radian += -dr16_r_x * sqrt(1.0f - dr16_r_x * dr16_r_x / 2.0f) * 0.005f;
 
-        // 传递拨杆状态，拨杆上+Yaw = 状态机前进，拨杆下+Yaw = 开启小轮子
-        switch (DR16_Right_Switch_Status)
+        // 传递状态机和小轮子状态，Yaw >= 0.8f 上台阶状态递加，右摇杆 >= 0.75f 打开小轮子
+        if (dr16_r_y >= 0.75f)
         {
-        case (DR16_Switch_Status_MIDDLE):
+            Chassis.Set_DR16_Right_Uplift_Status(Chassis_Uplift_WHEEL_ON);
+        }
+        else
         {
-            Chassis.Set_DR16_Right_Uplift_Status(DR16_Right_Switch_MIDDLE);
-            break;
+            Chassis.Set_DR16_Right_Uplift_Status(dr16_yaw >= 0.8f ? Chassis_Uplift_FLAG_ADD : DR16_Right_Switch_MIDDLE);
         }
 
-        case (DR16_Switch_Status_UP):
-        {
-            Chassis.Set_DR16_Right_Uplift_Status(
-                dr16_yaw >= 0.8f ? Chassis_Uplift_FLAG_ADD : DR16_Right_Switch_UP);
-            break;
-        }
-
-        case (DR16_Switch_Status_DOWN):
-        {
-            Chassis.Set_DR16_Right_Uplift_Status(
-                dr16_yaw >= 0.8f ? Chassis_Uplift_WHEEL_ON : DR16_Right_Switch_DOWN);
-            break;
-        }
-        }
+        break;
     }
     }
 
@@ -637,7 +680,7 @@ void Class_Chariot::Chassis_Test_Control()
             chassis_velocity_x = dr16_l_y * sqrt(1.0f - dr16_l_x * dr16_l_x / 2.0f) * Chassis.Get_Velocity_Y_Max();
             chassis_radian += -dr16_r_x * sqrt(1.0f - dr16_r_x * dr16_r_x / 2.0f) * 0.01f;
 
-            track_omega = dr16_r_y * sqrt(1.0f - dr16_r_y * dr16_r_y / 2.0f) * 25.0f;
+            track_omega = 0.0f;
         }
         else
         // 其他跳变状态
@@ -691,20 +734,23 @@ void Class_Chariot::Chassis_Test_Control()
         switch (DR16_Right_Switch_Status)
         {
         case (DR16_Switch_Status_UP):
-        {
-            for (int i = 0; i < 4; i++)
+            // 前左抬升高度控制
             {
-                target_uplift_rad[i] += PI * 0.03f;
+                target_uplift_rad[0] += PI * 0.003f * dr16_right_y;
+                break;
             }
-            break;
-        }
 
         case (DR16_Switch_Status_DOWN):
-        {
-            for (int i = 0; i < 4; i++)
+            // 后两个抬升高度控制
             {
-                target_uplift_rad[i] -= PI * 0.03f;
+                target_uplift_rad[2] += PI * 0.003f * dr16_right_y;
+                target_uplift_rad[3] += PI * 0.003f * dr16_right_y;
+                break;
             }
+
+        case (DR16_Switch_Status_MIDDLE):
+        {
+            target_uplift_rad[1] += PI * 0.003f * dr16_right_y;
             break;
         }
 
@@ -723,6 +769,8 @@ void Class_Chariot::Chassis_Test_Control()
 #endif
 
 #ifdef CHASSIS
+bool low_height_flag = false;
+static uint8_t flag_count = 0;
 void Class_Chariot::Control_Chassis()
 {
     // 底盘坐标系速度目标值 float
@@ -754,7 +802,7 @@ void Class_Chariot::Control_Chassis()
 
         if (DR16_Right_Uplift_Status == Chassis_Uplift_WHEEL_ON)
         {
-            track_omega = 25.0f;
+            track_omega = 20.0f * PI;
         }
         else
         {
@@ -829,34 +877,51 @@ void Class_Chariot::Control_Chassis()
     }
     case (Chassis_Control_Type_NORMAL):
     {
-        // 上台阶状态机状态清零
-        Chassis.Ledder_FSM.Set_Status(0);
+        // // 上台阶状态机状态清零
+        // Chassis.Ledder_FSM.Set_Status(0);
 
-        // 底盘在线状态下遥控器控制抬升机构
+        // // 底盘在线状态下遥控器控制抬升机构
 
-        // 抬升机构控制逻辑
+        // // 抬升机构控制逻辑
+        // switch (DR16_Right_Uplift_Status)
+        // {
+        // case (DR16_Right_Switch_UP):
+        // {
+        //     for (int i = 0; i < 4; i++)
+        //     {
+        //         target_uplift_rad[i] += PI * 0.03f;
+        //     }
+        //     break;
+        // }
+
+        // case (DR16_Right_Switch_DOWN):
+        // {
+        //     for (int i = 0; i < 4; i++)
+        //     {
+        //         target_uplift_rad[i] -= PI * 0.03f;
+        //     }
+        //     break;
+        // }
+
+        // default:
+        // {
+        // }
+        // }
+
         switch (DR16_Right_Uplift_Status)
         {
         case (DR16_Right_Switch_UP):
         {
-            for (int i = 0; i < 4; i++)
-            {
-                target_uplift_rad[i] += PI * 0.03f;
-            }
+            target_uplift_rad[0] += PI * 0.01f;
             break;
         }
 
         case (DR16_Right_Switch_DOWN):
         {
-            for (int i = 0; i < 4; i++)
-            {
-                target_uplift_rad[i] -= PI * 0.03f;
-            }
-            break;
-        }
+            target_uplift_rad[0] -= PI * 0.01f;
 
-        default:
-        {
+            Math_Constrain(target_uplift_rad + 0, Chassis.Uplift_Touch_Radian[0], 28.5f);
+            break;
         }
         }
 
@@ -919,69 +984,65 @@ void Class_Chariot::Control_Gimbal()
     tmp_j4_pitch_radian = Gimbal.Get_Target_J4_Pitch_Radian();
     tmp_j5_yaw_radian = Gimbal.Get_Target_J5_Yaw_Radian();
 
-    if (DR16.Get_Left_Switch() == DR16_Switch_Status_UP) // 左上 失能
+    if (DR16.Get_Left_Switch() == DR16_Switch_Status_UP) // 左上
     {
-        Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_DISABLE);
+        if (DR16.Get_Right_Switch() == DR16_Switch_Status_MIDDLE) // 左上+右中，机械臂初始姿态
+        {
+            Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
+        }
+        else // 左上 + 右其他状态，机械臂失能
+        {
+            Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_DISABLE);
+        }
     }
     // 其余位置都是遥控器控制
-    else if (DR16.Get_Left_Switch() == DR16_Switch_Status_MIDDLE) // 左中，摇杆控制机械臂
+    else if (DR16.Get_Left_Switch() == DR16_Switch_Status_MIDDLE) // 左中，机械臂伸收缩以及底盘上台阶状态机
     {
-        Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
-
-        switch (DR16.Get_Right_Switch())
+        if (DR16.Get_Right_Switch() == DR16_Switch_Status_UP) // 左中 + 右上，机械臂伸展/收缩
         {
-        case (DR16_Switch_Status_UP):
-            // 右上，左摇杆y轴控制pitch_1，x轴控制yaw_1，右摇杆y轴控制yaw_3，x轴控制yaw_2
+            if (dr16_right_y >= 0.8f)
+            // 右摇杆往上拨切换到蜷缩状态，这个状态两个大臂收起，防止冲下台阶时重心侧翻和撞地
             {
-                tmp_j0_pitch_radian += dr16_left_y * DR16_J0_Pitch_Resolution;
-                tmp_j1_yaw_radian += dr16_left_x * DR16_J1_Yaw_Resolution;
-                tmp_j2_yaw_radian += dr16_right_y * DR16_J2_Yaw_Resolution; // 由于装配上的设计，Pitch3角度减小是关节上抬，增大是关节下抬，这里让遥控器直观控制关节的运动
-                tmp_j3_yaw_radian += dr16_right_x * DR16_J3_Yaw_Resolution;
-                break;
+                // j1 - 0.637
+                // j2 - -2.094
+                // j3 - -1.0832
+                tmp_j0_pitch_radian = 0.0f;
+                tmp_j1_yaw_radian = 0.637f;
+                tmp_j2_yaw_radian = -2.094f;
+                tmp_j3_yaw_radian = -1.0832f;
+                tmp_j4_pitch_radian = 0.0f;
+                tmp_j5_yaw_radian = 0.0f;
             }
-        case (DR16_Switch_Status_MIDDLE):
-            // 右中，左摇杆y轴控制pitch_1，x轴控制yaw，右摇杆y轴控制pitch_2，x轴控制roll_1
+            else if (dr16_right_y <= -0.8f)
             {
-                tmp_j3_yaw_radian += dr16_left_x * DR16_J3_Yaw_Resolution;
-                tmp_j5_yaw_radian += dr16_right_x * DR16_J5_Yaw_Resolution;
-                tmp_j4_pitch_radian += dr16_right_y * DR16_J4_Pitch_Resolution;
-                break;
+                // 右摇杆往下拨切换到初始位姿，方便底盘通过台阶
+                tmp_j0_pitch_radian = 0.0f;
+                tmp_j1_yaw_radian = 0.0f;
+                tmp_j2_yaw_radian = 0.0f;
+                tmp_j3_yaw_radian = 0.0f;
+                tmp_j4_pitch_radian = 0.0f;
+                tmp_j5_yaw_radian = 0.0f;
             }
-        case (DR16_Switch_Status_DOWN):
-            // 右下，暂时定为控制末端机构的平动和垂直运动，解算出的目标角度必须使用Gimbal对象中的Set函数，保持模式切换下数据的同步
-            {
-
-                break;
-            }
-
-
         }
+        // 右拨杆其他状态，机械臂保持姿态不变
+
+        Gimbal.Set_Target_J0_Pitch_Radian(tmp_j0_pitch_radian);
+        Gimbal.Set_Target_J1_Yaw_Radian(tmp_j1_yaw_radian);
+        Gimbal.Set_Target_J2_Yaw_Radian(tmp_j2_yaw_radian);
+        Gimbal.Set_Target_J3_Yaw_Radian(tmp_j3_yaw_radian);
+        Gimbal.Set_Target_J4_Pitch_Radian(tmp_j4_pitch_radian);
+        Gimbal.Set_Target_J5_Yaw_Radian(tmp_j5_yaw_radian);
     }
-    else if (DR16.Get_Left_Switch() == DR16_Switch_Status_DOWN)
+    else if (DR16.Get_Left_Switch() == DR16_Switch_Status_DOWN) // 左下，自定义控制器控制机械臂
     {
-        if (dr16_right_y >= 0.8f)
-        // 右摇杆往上拨切换到蜷缩状态，这个状态两个大臂收起，防止冲下台阶时重心侧翻和撞地
-        {
-            // j1 - 0.637
-            // j2 - -2.094
-            // j3 - -1.0832
-            tmp_j0_pitch_radian = 0.0f;
-            tmp_j1_yaw_radian = 0.637f;
-            tmp_j2_yaw_radian = -2.094f;
-            tmp_j3_yaw_radian = -1.0832f;
-            tmp_j4_pitch_radian = 0.0f;
-            tmp_j5_yaw_radian = 0.0f;
-        }
-        else if (dr16_right_y <= -0.8f)
-        {
-            // 右摇杆往下拨切换到初始位姿，方便底盘通过台阶
-            tmp_j0_pitch_radian = 0.0f;
-            tmp_j1_yaw_radian = 0.0f;
-            tmp_j2_yaw_radian = 0.0f;
-            tmp_j3_yaw_radian = 0.0f;
-            tmp_j4_pitch_radian = 0.0f;
-            tmp_j5_yaw_radian = 0.0f;
-        }
+        tmp_j0_pitch_radian = Offline_Controller_Data.Angle[0];
+        tmp_j1_yaw_radian = Offline_Controller_Data.Angle[1];
+        tmp_j2_yaw_radian = Offline_Controller_Data.Angle[2];
+        tmp_j3_yaw_radian = Offline_Controller_Data.Angle[3];
+        tmp_j4_pitch_radian = Offline_Controller_Data.Angle[4];
+        tmp_j5_yaw_radian = Offline_Controller_Data.Angle[5];
+        // 夹爪控制
+        tmp_gripper_radian += dr16_right_y * DR16_Gripper_Resolution;
 
         Gimbal.Set_Target_J0_Pitch_Radian(tmp_j0_pitch_radian);
         Gimbal.Set_Target_J1_Yaw_Radian(tmp_j1_yaw_radian);
@@ -995,8 +1056,6 @@ void Class_Chariot::Control_Gimbal()
         Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
     }
 
-    // 夹爪控制函数，任何模式下都可以控制夹爪
-    tmp_gripper_radian += dr16_yaw * DR16_Gripper_Resolution;
     Math_Constrain(&tmp_gripper_radian, 0.0f, 0.90f);
     last_gripper_value = tmp_gripper_radian;
     // 云台对象中夹爪赋值
@@ -1290,6 +1349,7 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
         Gimbal.J3_Yaw_4340P.TIM_Alive_PeriodElapsedCallback();
         Gimbal.J4_Pitch_4340P.TIM_Alive_PeriodElapsedCallback();
         Gimbal.J5_Yaw_4340P.TIM_Alive_PeriodElapsedCallback();
+        Gimbal.Motor_C610_Gripper.TIM_Alive_PeriodElapsedCallback();
 
         is_arm_online = (Gimbal.J0_Pitch_4340.Get_DM_Motor_Status() == DJI_Motor_Status_ENABLE ||
                          Gimbal.J1_Yaw_8009P.Get_DM_Motor_Status() == DJI_Motor_Status_ENABLE ||

@@ -424,6 +424,7 @@ public:
     float debug_roll_target_omega = 1.5f;
     float debug_roll_target_radian = 0.0f; // roll目标位置，弧度制，用于在校准后角度的基础上进行增量，顺时针方向为正，电机校准的方向是逆时针，所以需要加角度
 #endif
+    float test_angle[6] = {0.0f, 0.5f, 1.68f, -1.0f, 0.0f, 0.0f};
 
 protected:
     // 电机CAN通信优先级变量
@@ -480,7 +481,7 @@ protected:
     // gripper校准角度，默认为0
     float gripper_cali_offset = 0.0f;
     float Min_gripper_Radian = gripper_cali_offset;
-    float Max_gripper_Radian = gripper_cali_offset + 0.95f; // 最大角度，完全闭合时为0.95f
+    float Max_gripper_Radian = gripper_cali_offset + 1.15f; // 最大角度，完全闭合时为1.15f
 
     /*SCARA臂*/
     float J0_Pitch_Min_Radian = -2.1185f;
@@ -545,13 +546,13 @@ protected:
 
     // Set函数中会自己乘减速比
     float Target_J0_Pitch_Radian = 0.0f;
-    float Target_J0_Pitch_Omega = 0.75f * PI * PITCH_RATIO;
+    float Target_J0_Pitch_Omega = 0.80f * PI * PITCH_RATIO;
 
     float Target_J1_Yaw_Radian = 0.0f;
     float Target_J1_Yaw_Omega = 0.65f * PI;
 
     float Target_J2_Yaw_Radian = 0.0f;
-    float Target_J2_Yaw_Omega = 0.75f * PI;
+    float Target_J2_Yaw_Omega = 1.0f * PI;
 
     float Target_J3_Yaw_Radian = 0.0f;
     float Target_J3_Yaw_Omega = 1.25f * PI;

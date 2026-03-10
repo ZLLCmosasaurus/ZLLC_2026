@@ -356,7 +356,6 @@ void Gimbal_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
     switch (CAN_RxMessage->Header.Identifier)
     {
-
     case (0xA4): // J3 - 4340P - Yaw
     {
         chariot.Gimbal.J3_Yaw_4340P.CAN_RxCpltCallback(CAN_RxMessage->Data);
@@ -378,7 +377,6 @@ void Gimbal_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
     case (0x206):
     {
         chariot.Gimbal.Motor_C610_Gripper.CAN_RxCpltCallback(CAN_RxMessage->Data);
-        break;
     }
     break;
     }
@@ -460,7 +458,6 @@ void DR16_UART5_Callback(uint8_t *Buffer, uint16_t Length)
 void VT13_UART_Callback(uint8_t *Buffer, uint16_t Length)
 {
     chariot.VT13.VT13_UART_RxCpltCallback(Buffer);
-
     // 底盘 云台 发射机构 的控制策略
     chariot.TIM_Control_Callback();
 }
@@ -501,8 +498,8 @@ void Offline_Controller_UART1_Callback(uint8_t *Buffer, uint16_t Length)
 {
     memcpy(chariot.UART1_Buffer, Buffer, 14);
 
-    uint8_t i;
-    for (i = 0; i++; i < 14)
+    int i;
+    for (i = 0; i < 14; i++)
     {
         if (chariot.UART1_Buffer[i] == 0xA5)
         {
@@ -510,12 +507,15 @@ void Offline_Controller_UART1_Callback(uint8_t *Buffer, uint16_t Length)
         }
     }
 
-    if (chariot.UART1_Buffer[i + 12 % 14] == 0x11)
+    bool flag = chariot.UART1_Buffer[(i+13) % 14] == 0x11;
+
+    if (flag)
     {
-        for (int i = 0; i < 6; i++)
+        for (int j = 0; j < 6; j++)
         {
-            int16_t temp = (Buffer[2 * i + 2] << 8) | Buffer[2 * i + 1];
-            chariot.Offline_Controller_Data.Angle[i] = temp / 100.f;
+            int index = 2 * j + i;
+            int16_t temp = (Buffer[index + 2] << 8) | Buffer[index + 1];
+            chariot.Offline_Controller_Data.Angle[j] = temp / 100.f;
         }
     }
 }
@@ -812,7 +812,7 @@ extern "C" void Task_Init()
     // 上位机串口
     UART_Init(&huart8, MiniPC_UART_Callback, 56);
     // 离线状态自定义控制器
-    UART_Init(&huart1, Offline_Controller_UART1_Callback, 14);
+    UART_Init(&huart10, Offline_Controller_UART1_Callback, 14);
 
 #endif
 
@@ -834,8 +834,8 @@ extern "C" void Task_Init()
 
     /********************************* 交互层初始化 *********************************/
 
-    // 遥控器死区给0.3f
-    chariot.Init(0.3f);
+    // 遥控器死区给0.15f
+    chariot.Init(0.15f);
 
     /********************************* 使能调度时钟 *********************************/
 

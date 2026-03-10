@@ -352,6 +352,8 @@ targets:
       libList: []
     excludeList:
       - ../DSP/libCMSISDSP.a
+      - <virtual_root>/Driver/agile_modbus_rtu.c
+      - <virtual_root>/Driver/agile_modbus.c
     toolchain: AC6
     toolchainConfigMap:
       AC6:

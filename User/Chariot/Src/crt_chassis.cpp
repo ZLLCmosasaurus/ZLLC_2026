@@ -874,12 +874,14 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
 
     case (1): // 抬升机构下降至触地位置
     {
+        static uint32_t ready_time = 0;
+
         Chassis->Set_Target_Uplift_Radian(0, ledder_1_touch[0]);
         Chassis->Set_Target_Uplift_Radian(1, ledder_1_touch[1]);
         Chassis->Set_Target_Uplift_Radian(2, ledder_1_touch[2]);
         Chassis->Set_Target_Uplift_Radian(3, ledder_1_touch[3]);
 
-        if(TRIGGER_CNT > 2) TRIGGER_CNT = 1;
+        //if(TRIGGER_CNT > 2) TRIGGER_CNT = 1;
 
         bool is_ready = true;
         for (int i = 0; i < 4; i++)
@@ -887,7 +889,9 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
             is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Omega_Radian()) <= 0.1f);
         }
 
-        if (is_ready && TRIGGER_CNT == 2)
+        is_ready ? ready_time = ready_time : ready_time = Status[Now_Status_Serial].Time;
+
+        if (is_ready)
         {
             Set_Status(2);
         }
@@ -897,11 +901,12 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
 
     case (2): // 此状态抬升机构将整车抬起
     {
-        if(TRIGGER_CNT > 3) TRIGGER_CNT = 2;
+        if(TRIGGER_CNT > 2) TRIGGER_CNT = 1;
 
         for (int i = 0; i < 4; i++)
         {
-            target_rad[i] -= PI * 0.01f;
+            target_rad[i] -= PI * 0.05f;
+            DWT_GetDeltaT(&Delta_s);
             Math_Constrain(target_rad + i, ledder_1_uplift[i], ledder_1_touch[i]);
             Chassis->Set_Target_Uplift_Radian(i, target_rad[i]);
         }
@@ -913,7 +918,7 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
         }
 
         // 将车身送上台阶后使用遥控器切换到下一个状态
-        if (is_ready && TRIGGER_CNT == 3)
+        if (is_ready && TRIGGER_CNT == 2)
         {
             Set_Status(3);
         }
@@ -923,7 +928,7 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
 
     case (3): // 此状态为登上第一个台阶后的抬升机构复位状态
     {
-        if(TRIGGER_CNT > 4) TRIGGER_CNT = 3;
+        if(TRIGGER_CNT > 3) TRIGGER_CNT = 2;
 
         Chassis->Set_Target_Uplift_Radian(0, ledder_1_over[0]);
         Chassis->Set_Target_Uplift_Radian(1, ledder_1_over[1]);
@@ -936,9 +941,10 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
             is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Omega_Radian()) <= 0.1f);
         }
 
-        if (is_ready && TRIGGER_CNT == 4)
+        if (is_ready && TRIGGER_CNT == 3)
         {
-            Set_Status(4);
+            //Set_Status(4);
+            Set_Status(0);  //完整形态暂时使用，复位
         }
 
         break;
@@ -946,7 +952,7 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
 
     case (4): // 次状态为抬升机构下降至第二个台阶触地位置
     {
-        if(TRIGGER_CNT > 5) TRIGGER_CNT = 4;
+        if(TRIGGER_CNT > 4) TRIGGER_CNT = 3;
 
         Chassis->Set_Target_Uplift_Radian(0, ledder_2_touch[0]);
         Chassis->Set_Target_Uplift_Radian(1, ledder_2_touch[1]);
@@ -959,7 +965,7 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
             is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Omega_Radian()) <= 0.1f);
         }
 
-        if (is_ready && TRIGGER_CNT == 5)
+        if (is_ready && TRIGGER_CNT == 4)
         {
             Set_Status(5);
         }
@@ -969,11 +975,11 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
 
     case (5): // 此状态车身整体被抬起
     {
-        if(TRIGGER_CNT > 6) TRIGGER_CNT = 5;
+        if(TRIGGER_CNT > 5) TRIGGER_CNT = 4;
 
         for (int i = 0; i < 4; i++)
         {
-            target_rad[i] -= PI * 0.01f;
+            target_rad[i] -= PI * 0.025f;
             Math_Constrain(target_rad + i, ledder_2_uplift[i], ledder_2_touch[i]);
             Chassis->Set_Target_Uplift_Radian(i, target_rad[i]);
         }
@@ -984,7 +990,7 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
             is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Omega_Radian()) <= 0.05f);
         }
 
-        if (is_ready && TRIGGER_CNT == 6)
+        if (is_ready && TRIGGER_CNT == 5)
         {
             Set_Status(6);
         }
