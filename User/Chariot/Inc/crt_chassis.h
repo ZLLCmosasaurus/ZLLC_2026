@@ -630,7 +630,7 @@ public:
     void TIM_Calculate_PeriodElapsedCallback(Enum_Sprint_Status __Sprint_Status);
 
     // 着地时的角度，相对于Min_Radian
-    float Uplift_Touch_Radian[4] = {18.5f, 18.5f, 17.0f, 17.0f};
+    float Uplift_Touch_Radian[4] = {9.0f, 9.0f, 19.5f, 19.5f};
 
 protected:
     // 初始化相关常量

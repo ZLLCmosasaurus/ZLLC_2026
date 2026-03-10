@@ -48,6 +48,7 @@ virtualFolder:
         - path: ../User/Device/Src/dvc_servo.cpp
         - path: ../User/Device/Src/dvc_buzzer.cpp
         - path: ../User/Device/Src/dvc_motor_dji.cpp
+        - path: ../User/Device/Src/dvc_jd_motor.cpp
       folders: []
     - name: Driver
       files:
@@ -61,6 +62,8 @@ virtualFolder:
         - path: ../User/Driver/Src/drv_tim.cpp
         - path: ../User/Driver/Src/drv_uart.cpp
         - path: ../User/Driver/Src/drv_usb.cpp
+        - path: ../User/Driver/Src/agile_modbus.c
+        - path: ../User/Driver/Src/agile_modbus_rtu.c
       folders: []
     - name: Algorithm
       files:

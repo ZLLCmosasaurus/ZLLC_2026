@@ -356,7 +356,6 @@ void Gimbal_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
     switch (CAN_RxMessage->Header.Identifier)
     {
-
     case (0xA4): // J3 - 4340P - Yaw
     {
         chariot.Gimbal.J3_Yaw_4340P.CAN_RxCpltCallback(CAN_RxMessage->Data);
@@ -378,7 +377,6 @@ void Gimbal_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
     case (0x206):
     {
         chariot.Gimbal.Motor_C610_Gripper.CAN_RxCpltCallback(CAN_RxMessage->Data);
-        break;
     }
     break;
     }

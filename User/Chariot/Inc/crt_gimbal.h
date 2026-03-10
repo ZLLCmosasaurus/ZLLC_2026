@@ -424,6 +424,7 @@ public:
     float debug_roll_target_omega = 1.5f;
     float debug_roll_target_radian = 0.0f; // roll目标位置，弧度制，用于在校准后角度的基础上进行增量，顺时针方向为正，电机校准的方向是逆时针，所以需要加角度
 #endif
+    float test_angle[6] = {0.0f, 0.5f, 1.68f, -1.0f, 0.0f, 0.0f};
 
 protected:
     // 电机CAN通信优先级变量
