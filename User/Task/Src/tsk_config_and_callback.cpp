@@ -647,7 +647,7 @@ void Task1ms_TIM5_Callback()
     /************ 判断设备在线状态判断 50ms (所有device:电机，遥控器，裁判系统等) ***************/
 
     chariot.TIM1msMod50_Alive_PeriodElapsedCallback();
-    HAL_IWDG_Refresh(&hiwdg1);
+    // HAL_IWDG_Refresh(&hiwdg1);
 
     /****************************** 交互层回调函数 1ms *****************************************/
     if (start_flag == 1)
