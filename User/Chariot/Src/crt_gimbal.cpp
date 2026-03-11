@@ -61,10 +61,10 @@ void Class_Gimbal::Init()
     Motor_Main_Yaw.Init(&hfdcan2, LK_Motor_ID_0x141, LK_Motor_Control_Method_ANGLE, MAIN_YAW_ENCODER_OFFSET);
 
     // yaw轴电机
-    Motor_Yaw.PID_Angle.Init(0.60f, 0.0f, 0.0f, 0.0f, 25, 25);
+    Motor_Yaw.PID_Angle.Init(0.60f, 0.0f, 0.001f, 0.0f, 25, 25);
     //Kp给大容易因为大小Yaw联动的噪声出问题，达不到理想的想要，用大Ki补偿误差，还有Ki对抖动不敏感（积分，相位延迟）强制补偿掉，也可以尝试LESO，但他可能对噪声敏感一些（重在抗扰动）
     //Ki太大对阶跃信号抖动滞后，不用了
-    Motor_Yaw.PID_Omega.Init(3000.0f, 0.0f, 0.0f, 0.0f, Motor_Yaw.Get_Output_Max(), Motor_Yaw.Get_Output_Max());
+    Motor_Yaw.PID_Omega.Init(3700.0f, 4.5f, 0.0015f, 0.0f, Motor_Yaw.Get_Output_Max(), Motor_Yaw.Get_Output_Max());
     Motor_Yaw.PID_Torque.Init(0.f, 0.0f, 0.0f, 0.0f, Motor_Yaw.Get_Output_Max(), Motor_Yaw.Get_Output_Max());
 
     Motor_Yaw.SMC_Control.Init(0.005, 60.0, 70.0, 2.0);
@@ -74,7 +74,7 @@ void Class_Gimbal::Init()
     // pitch轴电机
     // Motor_Pitch.PID_Angle.Init(0.70f, 0.0f, 0.00f, 0.0f, 10.0f, 10.0f);
     // Motor_Pitch.PID_Omega.Init(120.0f, 0.0f, 0.0f, 0.0f, 2048.0f, 2048.0f);
-    Motor_Pitch.PID_Angle.Init(0.72f, 0.0f, 0.0045f, 0.0f, 7.0f, 7.0f);
+    Motor_Pitch.PID_Angle.Init(0.72f, 0.05f, 0.0045f, 0.0f, 7.0f, 7.0f);
     Motor_Pitch.PID_Omega.Init(-2000.0f, 0.0f, 0.0f, 0.0f, 16384.0f, 16384.0f);
     // Motor_Pitch.PID_Angle.Init(0.0f, 0.0f, 0.0f, 0.0f, 10.0f, 10.0f);
     // Motor_Pitch.PID_Omega.Init(0.0f, 0.0f, 0.0f, 0.0f, 2048.0f, 2048.0f);
@@ -133,9 +133,8 @@ void Class_Gimbal::Output()
             Motor_Main_Yaw.Set_LK_Motor_Control_Method(LK_Motor_Control_Method_ANGLE);
             Motor_Pitch.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
 
-            Target_Yaw_Angle = tmp_Target_Angle;
-            Target_Pitch_Angle = tmp_Target_Pitch_Angle;
-
+            //Target_Yaw_Angle = Sin_Single;
+           // Target_Pitch_Angle = tmp_Target_Pitch_Angle;会和dr16的遥控器输入冲突
             //对于大Yaw控制的突变点与优劣弧处理       0--2*PI
             Angle_Continuity_Process(&Target_Main_Yaw_Angle, Boardc_BMI.Get_Angle_Yaw());
             Angle_Continuity_Process(&Target_Yaw_Angle, Motor_Yaw.Get_Zero_Offset_Angle());
@@ -194,7 +193,7 @@ void Class_Gimbal::Output()
             if(MiniPC->Get_Auto_aim_Status() == Auto_aim_Status_DISABLE){               //巡航模式
                 Motor_Yaw.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
                 Motor_Pitch.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
-
+                
                 if(!Curise_Flag){
                     Motor_Yaw.Set_Target_Omega_Angle(CRUISE_YAW_SPEED);
                     Motor_Pitch.Set_Target_Omega_Angle(CRUISE_PITCH_SPEED);

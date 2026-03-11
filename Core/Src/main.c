@@ -62,7 +62,9 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+void __aeabi_atexit(void) {
+    // 空实现
+}
 /* USER CODE END 0 */
 
 /**
@@ -73,7 +75,10 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+// 在系统初始化代码中添加
+extern void __aeabi_atexit(void);
+void __aeabi_atexit();
+  /* USER CODE END 1 */
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
