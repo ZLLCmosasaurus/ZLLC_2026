@@ -75,9 +75,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-// 在系统初始化代码中添加
-extern void __aeabi_atexit(void);
-void __aeabi_atexit();
+
   /* USER CODE END 1 */
   /* USER CODE END 1 */
 

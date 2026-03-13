@@ -278,13 +278,13 @@ void Class_Booster::Output()
             Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
 
             // 根据冷却计算拨弹盘默认速度, 此速度下与冷却均衡
-            Default_Driver_Omega = 80.f / 10.0f / 8.0f * 2.0f * PI;
+            Default_Driver_Omega = 30.f / 10.0f / 8.0f * 2.0f * PI;
             Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega);
 
             // 冷却时间获取
             if (Referee->Get_Referee_Status() == Referee_Status_DISABLE)
             {
-                Cooling_Value = 80;                                     //裁判系统没反馈用默认速度
+                Cooling_Value = 30;                                     //裁判系统没反馈用默认速度
             }
             else
             {

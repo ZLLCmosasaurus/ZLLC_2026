@@ -513,7 +513,7 @@ void Task1ms_TIM5_Callback()
         }	 
         if(mod100 == 100)
         {
-            #ifdef CHASSIS
+            #ifdef GIMBAL
             // 裁判系统发送
             chariot.Referee.TIM_UART_Tx_PeriodElapsedCallback();                //还没验证发送效果
             #endif
@@ -521,7 +521,7 @@ void Task1ms_TIM5_Callback()
         }
         if(mod68 == 68)
         {
-            #ifdef CHASSIS
+            #ifdef GIMBAL
             // 裁判系统发送
             chariot.Referee.Sentry_Auto_cmd_Transmit();
             #endif

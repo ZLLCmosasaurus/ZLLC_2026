@@ -50,10 +50,10 @@ void Class_MiniPC::Data_Process(Enum_MiniPC_Data_Source Data_Source)
   {
     if(!Verify_CRC16_Check_Sum(USB_Manage_Object->Rx_Buffer,USB_Manage_Object->Rx_Buffer_Length)) return;
     memcpy(&Data_NUC_To_MCU, USB_Manage_Object->Rx_Buffer, PACKET_LEN);
-    //转发下板发给裁判系统
-    memcpy(&CAN3_Sentry_CMD_Data, &Data_NUC_To_MCU.Sentry_cmd, sizeof(uint32_t));
-    memcpy(&CAN3_Sentry_CMD_Data[4], &Data_NUC_To_MCU.Robot_Position_X, sizeof(uint16_t));
-    memcpy(&CAN3_Sentry_CMD_Data[6], &Data_NUC_To_MCU.Robot_Position_Y, sizeof(uint16_t));
+    // //转发下板发给裁判系统
+    // memcpy(&CAN3_Sentry_CMD_Data, &Data_NUC_To_MCU.Sentry_cmd, sizeof(uint32_t));
+    // memcpy(&CAN3_Sentry_CMD_Data[4], &Data_NUC_To_MCU.Robot_Position_X, sizeof(uint16_t));
+    // memcpy(&CAN3_Sentry_CMD_Data[6], &Data_NUC_To_MCU.Robot_Position_Y, sizeof(uint16_t));
     //自瞄解算
    
     Rx_Angle_Yaw=Data_NUC_To_MCU.Target_Yaw_Angle / 100.f;
@@ -68,6 +68,11 @@ void Class_MiniPC::Data_Process(Enum_MiniPC_Data_Source Data_Source)
     Supercap_Mode                         = Enum_Supercap_Mode(Data_NUC_To_MCU.Device_Mode & 0x01);
     Outpost_Mode                          = Enum_Outpost_Mode(Data_NUC_To_MCU.Control_Type & 0x04);
     Auto_aim_Status                       = Enum_Auto_aim_Status(Data_NUC_To_MCU.Control_Type & 0x03);
+
+    //要发给裁判系统的数据
+    Referee->Set_Sentry_Cmd(Data_NUC_To_MCU.Sentry_cmd);
+    Referee->Set_Robot_Position(Data_NUC_To_MCU.Robot_Position_X, Data_NUC_To_MCU.Robot_Position_Y);
+
   }
 }
 

@@ -166,7 +166,7 @@ enum Enum_Auto_aim_Status : uint8_t
     Auto_aim_Status_ENABLE,
 };
 /**
- * @brief 前哨站模式
+ * @brief 击打前哨站模式
  *
  */
 enum Enum_Outpost_Mode : uint8_t
@@ -211,16 +211,16 @@ enum Enum_Booster_Type
 struct Struct_MiniPC_Rx_Data
 {
     uint8_t header;                                              // 帧头
-    int16_t MiniPC_To_Chassis_Target_Omega;                        // 底盘转动的角速度, rad/s
+    int16_t MiniPC_To_Chassis_Target_Omega;                      // 底盘转动的角速度, rad/s
     int16_t MiniPC_To_Chassis_Target_Velocity_X;                 // 目标线速度 x
     int16_t MiniPC_To_Chassis_Target_Velocity_Y;                 // 目标线速度 y
     int16_t Gimbal_Angular_Velocity_Yaw_Main;                    // 目标角速度 w
     int16_t Gimbal_Angular_Velocity_Yaw;
     int16_t Gimbal_Angular_Velocity_Pitch;                       // 目标角速度 p   
     uint8_t Camera_Id;                                           // 相机编号， 逆时针 海康为0
-    int16_t Target_Yaw_Angle;                                       // 小Yaw的目标角度yaw
-    int16_t Target_Pitch_Angle;                                     // 小Yaw的目标角度pitch
-    uint8_t Fire_Flag;                                                // 开火标志位
+    int16_t Target_Yaw_Angle;                                    // 小Yaw的目标角度yaw
+    int16_t Target_Pitch_Angle;                                  // 小Yaw的目标角度pitch
+    uint8_t Fire_Flag;                                           // 开火标志位
     Enum_MiniPC_Chassis_Control_Mode Chassis_Control_Mode;       // 底盘控制模式 随动/小陀螺
     uint8_t Control_Type;                                        // 云台控制模式     前三位自瞄，第四位是否击打前哨
     uint8_t Posture_Control_Mode;                                //姿态控制模式

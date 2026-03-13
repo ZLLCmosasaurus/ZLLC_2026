@@ -408,7 +408,7 @@ void Class_Tricycle_Chassis::TIM_Calculate_PeriodElapsedCallback()
         else
         {
             // Power_Management.Max_Power = Power_Management.Buffer_Power + Referee->Get_Chassis_Power_Max();
-            Power_Management.Max_Power = Referee->Get_Chassis_Power_Max();
+            Power_Management.Max_Power = Referee->Get_Chassis_Power_Max();              //不吃缓冲能量
         }
     }
     else
