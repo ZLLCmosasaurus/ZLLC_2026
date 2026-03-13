@@ -46,6 +46,8 @@ void Class_Chariot::Init(float __DR16_Dead_Zone)
         Chassis.Supercap.Referee = &Referee;
 
     #elif defined(GIMBAL)
+
+        Referee.Init(&huart10);
         
         Chassis.Set_Velocity_X_Max(4.0f);
         Chassis.Set_Velocity_Y_Max(4.0f);
@@ -818,11 +820,12 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
                 TIM1msMod50_Chassis_Communicate_Alive_PeriodElapsedCallback();    
                 DR16.TIM1msMod50_Alive_PeriodElapsedCallback();
                 Gimbal.External_IMU.TIM1msMod50_Alive_PeriodElapsedCallback();
-                MiniPC.TIM1msMod50_Alive_PeriodElapsedCallback();	   
+                MiniPC.TIM1msMod50_Alive_PeriodElapsedCallback();
+                
+                Referee.TIM1msMod50_Alive_PeriodElapsedCallback();
+                
                 mod50_mod3 = 0;         
             }
-            
-            Referee.TIM1msMod50_Alive_PeriodElapsedCallback();
 
             Gimbal.Motor_Pitch.TIM_Alive_PeriodElapsedCallback();
             Gimbal.Motor_Yaw.TIM_Alive_PeriodElapsedCallback();

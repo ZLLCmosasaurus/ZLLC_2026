@@ -1322,9 +1322,10 @@ public:
     inline void Set_Booster_17mm_1_Heat_Max(uint16_t __Booster_17mm_1_Heat_Max);
     inline void Set_Sentry_Revive_Status(Enum_Sentry_Revive_Status __Sentry_Revive_Status);
     inline void Set_Sentry_Revive_Buy_Status(Enum_Sentry_Revive_Status __Sentry_Revive_Buy_Status);
+    #endif
+
     inline void Set_Sentry_Cmd(uint32_t __Sentry_Cmd);
     inline void Set_Robot_Position(uint16_t __Robot_Position_X, uint16_t __Robot_Position_Y);
-    #endif
 
     // void Referee_UI_Draw_Line(uint8_t __Robot_ID, Enum_Referee_UI_Group_Index __Group_Index, uint8_t __Serial, uint8_t __Index, uint32_t __Color,uint32_t __Line_Width, uint32_t __Start_X, uint32_t __Start_Y,  uint32_t __End_X, uint32_t __End_Y,Enum_Referee_UI_Operate_Type __Operate_Type);
     // void Referee_UI_Draw_Rectangle(uint8_t __Robot_ID, Enum_Referee_UI_Group_Index __Group_Index, uint8_t __Serial, uint8_t __Index, uint32_t __Color,uint32_t __Line_Width, uint32_t __Start_X, uint32_t __Start_Y,  uint32_t __End_X, uint32_t __End_Y,Enum_Referee_UI_Operate_Type __Operate_Type);
@@ -2472,6 +2473,7 @@ void Class_Referee::Set_Sentry_Revive_Buy_Status(Enum_Sentry_Revive_Status __Sen
 {
     Sentry_cmd.sentry_cmd = (Sentry_cmd.sentry_cmd & ~ 0x2u) | ((static_cast<uint32_t>(__Sentry_Revive_Status ) & 0x2u) << 1);
 }
+#endif
 
 /**
  * @brief 设置哨兵自主决策命令数据包
@@ -2489,8 +2491,6 @@ inline void Class_Referee::Set_Robot_Position(uint16_t __Robot_Position_X, uint1
     Sentry_To_Radar.Robot_Position_X = __Robot_Position_X;
     Sentry_To_Radar.Robot_Position_Y = __Robot_Position_Y;
 }
-
-#endif
 
 #endif
 
