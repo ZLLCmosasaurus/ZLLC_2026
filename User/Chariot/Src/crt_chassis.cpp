@@ -88,8 +88,8 @@ void Class_Tricycle_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max
     //舵向电机零点位置初始化
     Motor_Steer[0].Set_Zero_Position(-0.5600000f);               //应该是轮子朝向的正方向，行进轮超前，并且顺时针转动为正方向的角度
     Motor_Steer[1].Set_Zero_Position(0.47999999f);
-    Motor_Steer[2].Set_Zero_Position(-1.5f);
-    Motor_Steer[3].Set_Zero_Position(-2.58999991f);
+    Motor_Steer[2].Set_Zero_Position(-1.46000004f);
+    Motor_Steer[3].Set_Zero_Position(-2.51999998f);
     #endif
 
     //底盘控制方式初始化
