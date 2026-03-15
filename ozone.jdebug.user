@@ -1,0 +1,30 @@
+
+GraphedExpression="Sin_Single", Color=#a00909
+GraphedExpression="((((chariot).Gimbal).Motor_Yaw).PID_Angle).Now", Color=#ff55ff
+GraphedExpression="((((chariot).Gimbal).Motor_Yaw).PID_Angle).Target", Color=#09a087
+GraphedExpression="(chariot.Gimbal.Motor_Yaw.PID_Angle).K_P", Color=#0984a0
+OpenDocument="stm32h7xx_hal_spi.c", FilePath="C:/Users/Lenovo/Desktop/M67_2026/Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi.c", Line=1581
+OpenDocument="tsk_config_and_callback.cpp", FilePath="C:/Users/Lenovo/Desktop/M67_2026/User/Task/Src/tsk_config_and_callback.cpp", Line=426
+OpenDocument="main.c", FilePath="C:/Users/Lenovo/Desktop/M67_2026/Core/Src/main.c", Line=61
+OpenToolbar="Debug", Floating=0, x=0, y=0
+OpenWindow="Source Files", DockArea=LEFT, x=0, y=0, w=732, h=475, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Disassembly", DockArea=RIGHT, x=0, y=1, w=722, h=406, TabPos=0, TopOfStack=1, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Break & Tracepoints", DockArea=LEFT, x=0, y=2, w=732, h=205, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, VectorCatchIndexMask=254
+OpenWindow="Memory 1", DockArea=BOTTOM, x=2, y=0, w=144, h=344, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, EditorAddress=0x0
+OpenWindow="Watched Data 1", DockArea=LEFT, x=0, y=1, w=732, h=369, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Terminal", DockArea=BOTTOM, x=1, y=0, w=108, h=344, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Data Sampling", DockArea=RIGHT, x=0, y=0, w=722, h=152, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, VisibleTab=0, UniformSampleSpacing=0
+OpenWindow="Timeline", DockArea=FLOATING, x=625, y=263, w=1883, h=1145, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=1, DataPaneShown=1, PowerPaneShown=0, CodePaneShown=0, PinCursor="Cursor Movable", TimePerDiv="1 s / Div", TimeStampFormat="Time", DataGraphDrawAsPoints=0, DataGraphLegendShown=1, DataGraphUniformSampleSpacing=0, DataGraphLegendPosition="83;44", PowerGraphDrawAsPoints=0, PowerGraphLegendShown=0, PowerGraphAvgFilterTime=Off, PowerGraphAvgFilterLen=Off, PowerGraphUniformSampleSpacing=0, PowerGraphLegendPosition="1664;446", CodeGraphLegendShown=0, CodeGraphLegendPosition="1672;0"
+OpenWindow="Console", DockArea=BOTTOM, x=0, y=0, w=1025, h=344, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+TableHeader="Vector Catches", SortCol="None", SortOrder="ASCENDING", VisibleCols=["";"Vector Catch";"Description"], ColWidths=[50;300;500]
+TableHeader="Break & Tracepoints", SortCol="None", SortOrder="ASCENDING", VisibleCols=["";"Type";"Location";"Extras"], ColWidths=[100;100;102;430]
+TableHeader="Data Sampling Table", SortCol="None", SortOrder="ASCENDING", VisibleCols=["Index";"Time";" Sin_Single";" ((((chariot).Gimbal).Motor_Yaw).PID_Angle).Now";" ((((chariot).Gimbal).Motor_Yaw).PID_Angle).Target";" (chariot.Gimbal.Motor_Yaw.PID_Angle).K_P"], ColWidths=[100;100;100;100;100;100]
+TableHeader="Data Sampling Setup", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Type";"Value";"Min";"Max";"Average";"# Changes";"Min. Change";"Max. Change"], ColWidths=[118;100;124;124;124;144;110;126;126]
+TableHeader="Power Sampling", SortCol="None", SortOrder="ASCENDING", VisibleCols=["Index";"Time";"Ch 0"], ColWidths=[100;100;100]
+TableHeader="Watched Data 1", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Value";"Location";"Refresh"], ColWidths=[274;100;100;258]
+TableHeader="RegisterSelectionDialog", SortCol="None", SortOrder="ASCENDING", VisibleCols=[], ColWidths=[]
+TableHeader="TargetExceptionDialog", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Address";"Description"], ColWidths=[26;26;26;26]
+TableHeader="Source Files", SortCol="File", SortOrder="ASCENDING", VisibleCols=["File";"Status";"Size";"#Insts";"Path"], ColWidths=[223;100;100;100;814]
+WatchedExpression="chariot.Gimbal.Target_Yaw_Angle", Window=Watched Data 1
+WatchedExpression="chariot.Gimbal.Motor_Yaw.PID_Omega", RefreshRate=2, Window=Watched Data 1
+WatchedExpression="chariot.Gimbal.Motor_Yaw.PID_Angle", RefreshRate=2, Window=Watched Data 1
