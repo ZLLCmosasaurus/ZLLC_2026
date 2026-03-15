@@ -75,7 +75,7 @@ void Class_Gimbal::Init()
     // Motor_Pitch.PID_Angle.Init(0.70f, 0.0f, 0.00f, 0.0f, 10.0f, 10.0f);
     // Motor_Pitch.PID_Omega.Init(120.0f, 0.0f, 0.0f, 0.0f, 2048.0f, 2048.0f);
     Motor_Pitch.PID_Angle.Init(0.72f, 0.05f, 0.0045f, 0.0f, 7.0f, 7.0f);
-    Motor_Pitch.PID_Omega.Init(-2000.0f, 0.0f, 0.0f, 0.0f, 16384.0f, 16384.0f);
+    Motor_Pitch.PID_Omega.Init(3000.0f, 0.0f, 0.0f, 0.0f, 16384.0f, 16384.0f);
     // Motor_Pitch.PID_Angle.Init(0.0f, 0.0f, 0.0f, 0.0f, 10.0f, 10.0f);
     // Motor_Pitch.PID_Omega.Init(0.0f, 0.0f, 0.0f, 0.0f, 2048.0f, 2048.0f);
     // Motor_Pitch.Init(&hfdcan1, DM_Motor_ID_0xA1, DM_Motor_Control_Method_MIT_TORQUE, 0, 20.94359f, 3.0f);

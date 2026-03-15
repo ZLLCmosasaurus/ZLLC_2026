@@ -572,7 +572,7 @@ void Class_Chariot::Control_Gimbal()
 
     // 遥控器操作逻辑
     tmp_gimbal_yaw -= dr16_y * DR16_Yaw_Angle_Resolution;
-    tmp_gimbal_pitch += dr16_r_y * DR16_Pitch_Angle_Resolution;
+    tmp_gimbal_pitch -= dr16_r_y * DR16_Pitch_Angle_Resolution;
 
     if(tmp_gimbal_pitch > 25.0f)tmp_gimbal_pitch = 25.0f;
     if(tmp_gimbal_pitch < -25.0f)tmp_gimbal_pitch = -25.0f;
@@ -626,7 +626,7 @@ void Class_Chariot::Control_Booster()
                 //MiniPC.Get_Rx_Yaw_Angle_A() == 0.f && MiniPC.Get_Rx_Pitch_Angle_A() == 0.f（相当于给了0.5s的误差）
                 if((MiniPC.Get_Auto_aim_Status() == Auto_aim_Status_ENABLE) && MiniPC.Get_Fire_Flag()==1 &&
                   (MiniPC.Get_Rx_Yaw_Angle() != 0.f || MiniPC.Get_Rx_Pitch_Angle() != 0.f))                 //后边两个判断似乎不需要
-                    Booster.Set_Booster_Control_Type(Booster_Control_Type_REPEATED);
+                    Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
                     
                 else if (MiniPC.Get_Auto_aim_Status() == Auto_aim_Status_DISABLE)
                     Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
