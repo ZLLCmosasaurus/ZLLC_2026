@@ -122,7 +122,7 @@ public:
     void TIM_2ms_Resolution_PeriodElapsedCallback();
     void TIM_2ms_Control_PeriodElapsedCallback();
 protected:
-    const float Wheel_Radius = 0.12f/2.0f; // 轮子半径
+    const float Wheel_Radius = 0.14f/2.0f; // 轮子半径
     const float Wheel_To_Core_Distance = 0.18466f; // 轮投影点距离中心距离
     // 内部变量
     //观测车体的速度

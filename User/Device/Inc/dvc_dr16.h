@@ -247,6 +247,8 @@ protected:
     uint16_t Unline_Cnt = 0;
     //遥控器50ms串口错误次数
     uint16_t Error_Cnt = 0;
+
+    uint16_t Check_Flag =0;
     //读变量
 
     //遥控器状态

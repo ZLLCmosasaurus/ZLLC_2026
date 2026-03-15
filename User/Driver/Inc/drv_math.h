@@ -29,7 +29,7 @@ extern "C" {
 #include "float.h"
 
 /* Exported macros -----------------------------------------------------------*/
-
+#define PI 3.14159265358979323846f
 //RPM换算到rad/s
 #define RPM_TO_RADPS (2.0f * PI / 60.0f)
 
@@ -38,6 +38,8 @@ extern "C" {
 
 //deg换算到rad
 #define DEG_TO_RAD (PI / 180.0f)
+//rad换算到deg
+#define RAD_TO_DEG (180.0 / PI)
 //摄氏度换算到开氏度
 #define CELSIUS_TO_KELVIN (273.15f)
 //重力加速度

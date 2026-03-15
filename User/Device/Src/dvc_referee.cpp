@@ -66,7 +66,240 @@ void Class_Referee::Init(UART_HandleTypeDef *huart, uint8_t __Frame_Header)
 
     Frame_Header = __Frame_Header;
 }
+/**
+ * @brief 裁判系统8bit循环冗余检验
+ *
+ * @param Message 消息
+ * @param Length 字节数
+ * @return uint8_t 校验码
+ */
+uint8_t Verify_CRC_8(uint8_t *Message, uint32_t Length)
+{
+    uint8_t index;
+    uint8_t check = 0xff;
 
+    if (Message == nullptr)
+    {
+        return (check);
+    }
+
+    while (Length--)
+    {
+        index = *Message;
+        Message++;
+        check = CRC8_TAB[check ^ index];
+    }
+    return (check);
+}
+/**
+ * @brief 裁判系统16bit循环冗余检验
+ *
+ * @param Message 消息
+ * @param Length 字节数
+ * @return uint8_t 校验码
+ */
+uint16_t Verify_CRC_16(uint8_t *Message, uint32_t Length)
+{
+    uint8_t index;
+    uint16_t check = 0xffff;
+
+    if (Message == nullptr)
+    {
+        return (check);
+    }
+
+    while (Length--)
+    {
+        index = *Message;
+        Message++;
+        check = ((uint16_t) (check) >> 8) ^ CRC16_Table[((uint16_t) (check) ^ (uint16_t) (index)) & 0xff];
+    }
+    return (check);
+}
+
+/**
+ * @brief UART通信发送UI函数
+ *
+ * @param Graphic_1 图形地址
+ */
+void Class_Referee::UART_Send_Interaction_UI_Graphic_1(Struct_Referee_Data_Interaction_Graphic_Config *Graphic_1)
+{
+    Struct_Referee_UART_Data *tmp_buffer = (Struct_Referee_UART_Data *) UART_Manage_Object->Tx_Buffer;
+
+    // 裁判系统帧头
+    tmp_buffer->Frame_Header = 0xa5;
+    tmp_buffer->Data_Length = sizeof(Struct_Referee_Tx_Data_Interaction_Graphic_1) - 2;
+    tmp_buffer->Sequence = Sequence;
+    tmp_buffer->CRC_8 = Verify_CRC_8((uint8_t *) tmp_buffer, 4);
+    tmp_buffer->Referee_Command_ID = Referee_Command_ID_INTERACTION;
+
+    // 交互帧头
+    Struct_Referee_Tx_Data_Interaction_Graphic_1 *tmp_data = (Struct_Referee_Tx_Data_Interaction_Graphic_1 *) tmp_buffer->Data;
+    tmp_data->Header = Referee_Interaction_Command_ID_UI_GRAPHIC_1;
+    tmp_data->Sender = Robot_Status.Robot_ID;
+    tmp_data->Receiver = static_cast<Enum_Referee_Data_Robots_Client_ID>((int) (Robot_Status.Robot_ID) + 0x100);
+
+    // UI发一个图形帧内容
+    tmp_data->Graphic[0] = *Graphic_1;
+
+    tmp_data->CRC_16 = Verify_CRC_16((uint8_t *) tmp_buffer, 7 + tmp_buffer->Data_Length);
+
+    HAL_UART_Transmit(UART_Manage_Object->UART_Handler, (uint8_t *) tmp_buffer, 7 + sizeof(Struct_Referee_Tx_Data_Interaction_Graphic_1), 100);
+
+    Sequence++;
+}
+/**
+ * @brief UART通信发送UI函数
+ *
+ * @param Graphic_1 图形地址
+ * @param Graphic_2 图形地址
+ */
+void Class_Referee::UART_Send_Interaction_UI_Graphic_2(Struct_Referee_Data_Interaction_Graphic_Config *Graphic_1, Struct_Referee_Data_Interaction_Graphic_Config *Graphic_2)
+{
+    Struct_Referee_UART_Data *tmp_buffer = (Struct_Referee_UART_Data *) UART_Manage_Object->Tx_Buffer;
+
+    // 裁判系统帧头
+    tmp_buffer->Frame_Header = 0xa5;
+    tmp_buffer->Data_Length = sizeof(Struct_Referee_Tx_Data_Interaction_Graphic_2) - 2;
+    tmp_buffer->Sequence = Sequence;
+    tmp_buffer->CRC_8 = Verify_CRC_8((uint8_t *) tmp_buffer, 4);
+    tmp_buffer->Referee_Command_ID = Referee_Command_ID_INTERACTION;
+
+    // 交互帧头
+    Struct_Referee_Tx_Data_Interaction_Graphic_2 *tmp_data = (Struct_Referee_Tx_Data_Interaction_Graphic_2 *) tmp_buffer->Data;
+    tmp_data->Header = Referee_Interaction_Command_ID_UI_GRAPHIC_2;
+    tmp_data->Sender = Robot_Status.Robot_ID;
+    tmp_data->Receiver = static_cast<Enum_Referee_Data_Robots_Client_ID>((int) (Robot_Status.Robot_ID) + 0x100);
+
+    // UI发两个图形帧内容
+    tmp_data->Graphic[0] = *Graphic_1;
+    tmp_data->Graphic[1] = *Graphic_2;
+
+    tmp_data->CRC_16 = Verify_CRC_16((uint8_t *) tmp_buffer, 7 + tmp_buffer->Data_Length);
+
+    HAL_UART_Transmit(UART_Manage_Object->UART_Handler, (uint8_t *) tmp_buffer, 7 + sizeof(Struct_Referee_Tx_Data_Interaction_Graphic_2), 100);
+
+    Sequence++;
+}
+
+/**
+ * @brief UART通信发送UI函数
+ *
+ * @param Graphic_1 图形地址
+ * @param Graphic_2 图形地址
+ * @param Graphic_3 图形地址
+ * @param Graphic_4 图形地址
+ * @param Graphic_5 图形地址
+ */
+void Class_Referee::UART_Send_Interaction_UI_Graphic_5(Struct_Referee_Data_Interaction_Graphic_Config *Graphic_1, Struct_Referee_Data_Interaction_Graphic_Config *Graphic_2, Struct_Referee_Data_Interaction_Graphic_Config *Graphic_3, Struct_Referee_Data_Interaction_Graphic_Config *Graphic_4, Struct_Referee_Data_Interaction_Graphic_Config *Graphic_5)
+{
+    Struct_Referee_UART_Data *tmp_buffer = (Struct_Referee_UART_Data *) UART_Manage_Object->Tx_Buffer;
+
+    // 裁判系统帧头
+    tmp_buffer->Frame_Header = 0xa5;
+    tmp_buffer->Data_Length = sizeof(Struct_Referee_Tx_Data_Interaction_Graphic_5) - 2;
+    tmp_buffer->Sequence = Sequence;
+    tmp_buffer->CRC_8 = Verify_CRC_8((uint8_t *) tmp_buffer, 4);
+    tmp_buffer->Referee_Command_ID = Referee_Command_ID_INTERACTION;
+
+    // 交互帧头
+    Struct_Referee_Tx_Data_Interaction_Graphic_5 *tmp_data = (Struct_Referee_Tx_Data_Interaction_Graphic_5 *) tmp_buffer->Data;
+    tmp_data->Header = Referee_Interaction_Command_ID_UI_GRAPHIC_5;
+    tmp_data->Sender = Robot_Status.Robot_ID;
+    tmp_data->Receiver = static_cast<Enum_Referee_Data_Robots_Client_ID>((int) (Robot_Status.Robot_ID) + 0x100);
+
+    // UI发五个图形帧内容
+    tmp_data->Graphic[0] = *Graphic_1;
+    tmp_data->Graphic[1] = *Graphic_2;
+    tmp_data->Graphic[2] = *Graphic_3;
+    tmp_data->Graphic[3] = *Graphic_4;
+    tmp_data->Graphic[4] = *Graphic_5;
+
+    tmp_data->CRC_16 = Verify_CRC_16((uint8_t *) tmp_buffer, 7 + tmp_buffer->Data_Length);
+
+    HAL_UART_Transmit(UART_Manage_Object->UART_Handler, (uint8_t *) tmp_buffer, 7 + sizeof(Struct_Referee_Tx_Data_Interaction_Graphic_5), 100);
+
+    Sequence++;
+}
+
+/**
+ * @brief UART通信发送UI函数
+ *
+ * @param Graphic_1 图形地址
+ * @param Graphic_2 图形地址
+ * @param Graphic_3 图形地址
+ * @param Graphic_4 图形地址
+ * @param Graphic_5 图形地址
+ * @param Graphic_6 图形地址
+ * @param Graphic_7 图形地址
+ */
+void Class_Referee::UART_Send_Interaction_UI_Graphic_7(Struct_Referee_Data_Interaction_Graphic_Config *Graphic_1, Struct_Referee_Data_Interaction_Graphic_Config *Graphic_2, Struct_Referee_Data_Interaction_Graphic_Config *Graphic_3, Struct_Referee_Data_Interaction_Graphic_Config *Graphic_4, Struct_Referee_Data_Interaction_Graphic_Config *Graphic_5, Struct_Referee_Data_Interaction_Graphic_Config *Graphic_6, Struct_Referee_Data_Interaction_Graphic_Config *Graphic_7)
+{
+    Struct_Referee_UART_Data *tmp_buffer = (Struct_Referee_UART_Data *) UART_Manage_Object->Tx_Buffer;
+
+    // 裁判系统帧头
+    tmp_buffer->Frame_Header = 0xa5;
+    tmp_buffer->Data_Length = sizeof(Struct_Referee_Tx_Data_Interaction_Graphic_7) - 2;
+    tmp_buffer->Sequence = Sequence;
+    tmp_buffer->CRC_8 = Verify_CRC_8((uint8_t *) tmp_buffer, 4);
+    tmp_buffer->Referee_Command_ID = Referee_Command_ID_INTERACTION;
+
+    // 交互帧头
+    Struct_Referee_Tx_Data_Interaction_Graphic_7 *tmp_data = (Struct_Referee_Tx_Data_Interaction_Graphic_7 *) tmp_buffer->Data;
+    tmp_data->Header = Referee_Interaction_Command_ID_UI_GRAPHIC_7;
+    tmp_data->Sender = Robot_Status.Robot_ID;
+    tmp_data->Receiver = static_cast<Enum_Referee_Data_Robots_Client_ID>((int) (Robot_Status.Robot_ID) + 0x100);
+
+    // UI发七个图形帧内容
+    tmp_data->Graphic[0] = *Graphic_1;
+    tmp_data->Graphic[1] = *Graphic_2;
+    tmp_data->Graphic[2] = *Graphic_3;
+    tmp_data->Graphic[3] = *Graphic_4;
+    tmp_data->Graphic[4] = *Graphic_5;
+    tmp_data->Graphic[5] = *Graphic_6;
+    tmp_data->Graphic[6] = *Graphic_7;
+
+    tmp_data->CRC_16 = Verify_CRC_16((uint8_t *) tmp_buffer, 7 + tmp_buffer->Data_Length);
+
+    HAL_UART_Transmit(UART_Manage_Object->UART_Handler, (uint8_t *) tmp_buffer, 7 + sizeof(Struct_Referee_Tx_Data_Interaction_Graphic_7), 100);
+
+    Sequence++;
+}
+
+/**
+ * @brief UART通信发送UI函数
+ *
+ * @param Graphic_String 图形地址
+ * @param String_Content 字符串地址
+ */
+void Class_Referee::UART_Send_Interaction_UI_Graphic_String(Struct_Referee_Data_Interaction_Graphic_Config *Graphic_String, const char *String_Content)
+{
+    Struct_Referee_UART_Data *tmp_buffer = (Struct_Referee_UART_Data *) UART_Manage_Object->Tx_Buffer;
+
+    // 裁判系统帧头
+    tmp_buffer->Frame_Header = 0xa5;
+    tmp_buffer->Data_Length = sizeof(Struct_Referee_Tx_Data_Interaction_Graphic_String) - 2;
+    tmp_buffer->Sequence = Sequence;
+    tmp_buffer->CRC_8 = Verify_CRC_8((uint8_t *) tmp_buffer, 4);
+    tmp_buffer->Referee_Command_ID = Referee_Command_ID_INTERACTION;
+
+    // 交互帧头
+    Struct_Referee_Tx_Data_Interaction_Graphic_String *tmp_data = (Struct_Referee_Tx_Data_Interaction_Graphic_String *) tmp_buffer->Data;
+    tmp_data->Header = Referee_Interaction_Command_ID_UI_GRAPHIC_STRING;
+    tmp_data->Sender = Robot_Status.Robot_ID;
+    tmp_data->Receiver = static_cast<Enum_Referee_Data_Robots_Client_ID>((int) (Robot_Status.Robot_ID) + 0x100);
+
+    // UI发字符串帧内容
+    tmp_data->Graphic_String = *Graphic_String;
+   // bzero(tmp_data->String, 30);
+    strcpy((char *) tmp_data->String, String_Content);
+
+    tmp_data->CRC_16 = Verify_CRC_16((uint8_t *) tmp_buffer, 7 + tmp_buffer->Data_Length);
+
+    HAL_UART_Transmit(UART_Manage_Object->UART_Handler, (uint8_t *) tmp_buffer, 7 + sizeof(Struct_Referee_Tx_Data_Interaction_Graphic_String), 80);
+
+    Sequence++;
+}
 
 /**
  * @brief 数据处理过程, 为节约性能不作校验但提供了接口
@@ -145,7 +378,7 @@ void Class_Referee::Data_Process()
                         buffer_index += sizeof(Struct_Referee_Rx_Data_Game_Robot_HP) + 7;
                     }
                     break;
-                    // 不确定为什么解包这里会导致其他数据错乱
+                    // //不确定为什么解包这里会导致其他数据错乱
                     // case (Referee_Command_ID_EVENT_DATA):
                     // {
                     //     for (int i = 0; i < data_length + 2; i++)
@@ -218,14 +451,14 @@ void Class_Referee::Data_Process()
                         buffer_index += sizeof(Struct_Referee_Rx_Data_Robot_Buff) + 7;
                     }
                     break;
-                    case (Referee_Command_ID_ROBOT_AERIAL_ENERGY):
-                    {
-                        for (int i = 0; i < data_length + 2; i++)
-                        {
-                            reinterpret_cast<uint8_t *>(&Robot_Aerial_Energy)[i] = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 7 + i)];
-                        }
-                        buffer_index += sizeof(Struct_Referee_Rx_Data_Robot_Aerial_Energy) + 7;
-                    }
+                    // case (Referee_Command_ID_ROBOT_AERIAL_ENERGY):
+                    // {
+                    //     for (int i = 0; i < data_length + 2; i++)
+                    //     {
+                    //         reinterpret_cast<uint8_t *>(&Robot_Aerial_Energy)[i] = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 7 + i)];
+                    //     }
+                    //     buffer_index += sizeof(Struct_Referee_Rx_Data_Robot_Aerial_Energy) + 7;
+                    // }
                     break;
                     case (Referee_Command_ID_ROBOT_DAMAGE):
                     {
@@ -272,6 +505,15 @@ void Class_Referee::Data_Process()
                         buffer_index += sizeof(Struct_Referee_Rx_Data_Robot_Dart_Command) + 7;
                     }
                     break;
+                    case (Referee_Command_ID_ROBOT_Robot_Position):
+                    {
+                        for (int i = 0; i < data_length + 2; i++)
+                        {
+                            reinterpret_cast<uint8_t *>(&Robot_Ally_Position)[i] = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 7 + i)];
+                        }
+                        buffer_index += sizeof(Struct_Referee_Rx_Data_Robot_Ally_Position) + 7;
+                    }
+                    break;
                     case (Referee_Command_ID_ROBOT_Sentry_Info):
                     {
                         for (int i = 0; i < data_length + 2; i++)
@@ -290,24 +532,24 @@ void Class_Referee::Data_Process()
                         buffer_index += sizeof(Struct_Referee_Rx_Data_Robot_Radar_Info) + 7;
                     }
                     break;
-                    case (Referee_Command_ID_INTERACTION):
-                    {
-                        for (int i = 0; i < data_length + 2; i++)
-                        {
-                            reinterpret_cast<uint8_t *>(&Interaction_Robot_Receive)[i] = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 7 + i)];
-                        }
-                        buffer_index += sizeof(Struct_Referee_Tx_Data_Interaction_Robot_Receive) + 7;
-                    }
-                    break;
-                    case (Referee_Command_ID_INTERACTION_RADAR_SEND):
-                    {
-                        for (int i = 0; i < data_length + 2; i++)
-                        {
-                            reinterpret_cast<uint8_t *>(&Interaction_Radar_Send)[i] = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 7 + i)];
-                        }
-                        buffer_index += sizeof(Struct_Referee_Tx_Data_Interaction_Radar_Send) + 7;
-                    }
-                    break;
+                    // case (Referee_Command_ID_INTERACTION):
+                    // {
+                    //     for (int i = 0; i < data_length + 2; i++)
+                    //     {
+                    //         reinterpret_cast<uint8_t *>(&Interaction_Robot_Receive)[i] = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 7 + i)];
+                    //     }
+                    //     buffer_index += sizeof(Struct_Referee_Tx_Data_Interaction_Robot_Receive) + 7;
+                    // }
+                    // break;
+                    // case (Referee_Command_ID_INTERACTION_RADAR_SEND):
+                    // {
+                    //     for (int i = 0; i < data_length + 2; i++)
+                    //     {
+                    //         reinterpret_cast<uint8_t *>(&Interaction_Radar_Send)[i] = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 7 + i)];
+                    //     }
+                    //     buffer_index += sizeof(Struct_Referee_Tx_Data_Interaction_Radar_Send) + 7;
+                    // }
+                    // break;
                     }
                 }
             }
@@ -349,37 +591,12 @@ void Class_Referee::TIM1msMod50_Alive_PeriodElapsedCallback()
     }
     Pre_Flag = Flag;
 }
+
 /**
  * @brief UART定时发送函数
  *
  * @param 
  */
-extern Struct_CAN_Referee_Rx_Data_t CAN_Referee_Rx_Data;
-void Class_Referee::TIM_UART_Tx_PeriodElapsedCallback()
-{
-    //雷达发送
-    Sentry_To_Radar.Sender = Get_ID();
-    if(Get_ID() == Referee_Data_Robots_ID_RED_SENTRY_7)
-    {
-        Sentry_To_Radar.Receiver = Referee_Data_Robots_ID_RED_RADAR_9;
-    }
-    else if (Get_ID() == Referee_Data_Robots_ID_BLUE_SENTRY_7)
-    {
-        Sentry_To_Radar.Receiver = Referee_Data_Robots_ID_BLUE_RADAR_9;
-    }
-    Sentry_To_Radar.Robot_Position_X = CAN_Referee_Rx_Data.Robot_Position_X;
-    Sentry_To_Radar.Robot_Position_Y = CAN_Referee_Rx_Data.Robot_Position_Y;
-    Referee_UI_Packed_Data(&Sentry_To_Radar);
-    HAL_UART_Transmit(UART_Manage_Object->UART_Handler, UART_Manage_Object->Tx_Buffer, UART_Manage_Object->Tx_Length,10);
-}
-void Class_Referee::Sentry_Auto_cmd_Transmit()
-{
-    //哨兵自主决策
-    Sentry_cmd.Sender = Get_ID();
-    Sentry_cmd.sentry_cmd = CAN_Referee_Rx_Data.Sentry_cmd;
-    Referee_UI_Packed_Data(&Sentry_cmd);
-    HAL_UART_Transmit(UART_Manage_Object->UART_Handler, UART_Manage_Object->Tx_Buffer, UART_Manage_Object->Tx_Length,10);
-}
 
 unsigned char Get_CRC8_Check_Sum(unsigned  char  *pchMessage,unsigned  int dwLength,unsigned char ucCRC8)
 {

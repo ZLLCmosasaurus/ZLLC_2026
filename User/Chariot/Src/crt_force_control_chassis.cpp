@@ -48,7 +48,7 @@ void xvEstimateKF_Update(KalmanFilter_t *EstimateKF ,float acc,float vel)
     EstimateKF->MeasuredVector[1] = acc;//测量加速度
     		
     //卡尔曼滤波器更新函数
-    Kalman_Filter_Update(EstimateKF);
+    // Kalman_Filter_Update(EstimateKF);
 
     // 提取估计值
     for (uint8_t i = 0; i < 2; i++)
@@ -377,7 +377,7 @@ void Class_Chassis::Output_To_Motor()
     }
 
     //进行功率限制
-    Power_Management.Max_Power = 100.0f;
+    Power_Management.Max_Power = 150.0f;
     //Power_Management.Total_error = 0.0;
     Power_Limit.Power_Task(Power_Management);
 

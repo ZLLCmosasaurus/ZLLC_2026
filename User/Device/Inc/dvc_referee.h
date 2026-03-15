@@ -209,8 +209,6 @@ enum Enum_Referee_Command_ID : uint16_t
     Referee_Command_ID_GAME_STATUS = 0x0001,
     Referee_Command_ID_GAME_RESULT,
     Referee_Command_ID_GAME_ROBOT_HP,
-    Referee_Command_ID_GAME_DART_STATUS_DISABLED,
-    Referee_Command_ID_GAME_AI_DISABLED,
     Referee_Command_ID_EVENT_DATA = 0x0101,
     Referee_Command_ID_EVENT_SUPPLY,
     Referee_Command_ID_EVENT_SUPPLY_REQUEST_DISABLED,
@@ -226,7 +224,9 @@ enum Enum_Referee_Command_ID : uint16_t
     Referee_Command_ID_ROBOT_REMAINING_AMMO,
     Referee_Command_ID_ROBOT_RFID,
     Referee_Command_ID_ROBOT_DART_COMMAND,
-    Referee_Command_ID_ROBOT_Sentry_Info = 0x020D,
+    Referee_Command_ID_ROBOT_Robot_Position,
+    Referee_Command_ID_ROBOT_Radar_Mark_Data,
+    Referee_Command_ID_ROBOT_Sentry_Info,
     Referee_Command_ID_ROBOT_Radar_Info = 0x020E,
     Referee_Command_ID_INTERACTION = 0x0301,
     Referee_Command_ID_INTERACTION_CUSTOM_CONTROLLER,
@@ -234,6 +234,23 @@ enum Enum_Referee_Command_ID : uint16_t
     Referee_Command_ID_INTERACTION_REMOTE_CONTROL,
     Referee_Command_ID_INTERACTION_Client_RECEIVE,
 };
+
+/**
+ * @brief 裁判系统 interaction 0x0301子命令码类型
+ *
+ */
+enum Enum_Referee_Interaction_Command_ID : uint16_t
+{
+    Referee_Interaction_Command_ID_UI_LAYER_DELETE = 0x0100,
+    Referee_Interaction_Command_ID_UI_GRAPHIC_1,
+    Referee_Interaction_Command_ID_UI_GRAPHIC_2,
+    Referee_Interaction_Command_ID_UI_GRAPHIC_5,
+    Referee_Interaction_Command_ID_UI_GRAPHIC_7,
+    Referee_Interaction_Command_ID_UI_GRAPHIC_STRING = 0x0110,
+    Referee_Interaction_Command_ID_SENTRY = 0x0120,
+    Referee_Interaction_Command_ID_RADAR = 0x0121,
+};
+
 
 /**
  * @brief 通用单方机器人ID
@@ -304,6 +321,7 @@ enum Enum_Referee_Data_Robots_Client_ID : uint16_t
     Referee_Data_Robots_Client_ID_BLUE_INFANTRY_4,
     Referee_Data_Robots_Client_ID_BLUE_INFANTRY_5,
     Referee_Data_Robots_Client_ID_BLUE_AERIAL_6,
+    Referee_Data_Robots_Server = 0x8080,
 };
 
 /**
@@ -445,244 +463,107 @@ enum Enum_Referee_Data_Interaction_Layer_Delete_Operation : uint8_t
 {
     Referee_Data_Interaction_Layer_Delete_Operation_NULL = 0,
     Referee_Data_Interaction_Layer_Delete_Operation_CLEAR_ONE,
-    Referee_Data_Interaction_Layer_Delete_Operation_CLEAR,
+    Referee_Data_Interaction_Layer_Delete_Operation_CLEAR_ALL,
 };
 
 /**
  * @brief 图形操作
  *
  */
-enum Enum_Graphic_Operation
+enum Enum_Referee_Data_Interaction_Graphic_Operation
 {
-    Graphic_Operation_NULL = 0,
-    Graphic_Operation_ADD,
-    Graphic_Operation_CHANGE,
-    Graphic_Operation_DELETE,
+    Referee_Data_Interaction_Graphic_Operation_NULL = 0,
+    Referee_Data_Interaction_Graphic_Operation_ADD,
+    Referee_Data_Interaction_Graphic_Operation_CHANGE,
+    Referee_Data_Interaction_Graphic_Operation_DELETE,
 };
 
 /**
  * @brief 图形类型
  *
  */
-enum Enum_Graphic_Type
+enum Enum_Referee_Data_Interaction_Graphic_Type
 {
-    Graphic_Type_LINE = 0,
-    Graphic_Type_RECTANGLE,
-    Graphic_Type_CIRCLE,
-    Graphic_Type_OVAL,
-    Graphic_Type_ARC,
-    Graphic_Type_FLOAT,
-    Graphic_Type_INTEGER,
-    Graphic_Type_STRING,
+    Referee_Data_Interaction_Graphic_Type_LINE = 0,
+    Referee_Data_Interaction_Graphic_Type_RECTANGLE,
+    Referee_Data_Interaction_Graphic_Type_CIRCLE,
+    Referee_Data_Interaction_Graphic_Type_OVAL,
+    Referee_Data_Interaction_Graphic_Type_ARC,
+    Referee_Data_Interaction_Graphic_Type_FLOAT,
+    Referee_Data_Interaction_Graphic_Type_INTEGER,
+    Referee_Data_Interaction_Graphic_Type_STRING,
 };
 
 /**
  * @brief 图形颜色
  *
  */
-enum Enum_Graphic_Color
+enum Enum_Referee_Data_Interaction_Graphic_Color
 {
-    Graphic_Color_MAIN = 0,
-    Graphic_Color_YELLOW,
-    Graphic_Color_GREEN,
-    Graphic_Color_ORANGE,
-    Graphic_Color_PURPLE,
-    Graphic_Color_PINK,
-    Graphic_Color_CYAN,
-    Graphic_Color_BLACK,
-    Graphic_Color_WHITE,
+    Referee_Data_Interaction_Graphic_Color_MAIN = 0,
+    Referee_Data_Interaction_Graphic_Color_YELLOW,
+    Referee_Data_Interaction_Graphic_Color_GREEN,
+    Referee_Data_Interaction_Graphic_Color_ORANGE,
+    Referee_Data_Interaction_Graphic_Color_PURPLE,
+    Referee_Data_Interaction_Graphic_Color_PINK,
+    Referee_Data_Interaction_Graphic_Color_CYAN,
+    Referee_Data_Interaction_Graphic_Color_BLACK,
+    Referee_Data_Interaction_Graphic_Color_WHITE,
 };
 
 /**
- * @brief 哨兵复活状态
+ * @brief 图形操作交互信息
  *
  */
-enum Enum_Sentry_Revive_Status : uint8_t
+enum Enum_Referee_Data_Interaction_Semiautomatic_Command : uint8_t
 {
-    Revive_OFF = 0,
-    Revive_ON,
+    Referee_Data_Interaction_Semiautomatic_Command_ATTACK = 1,
+    Referee_Data_Interaction_Semiautomatic_Command_DEFENCE,
+    Referee_Data_Interaction_Semiautomatic_Command_MOVE,
 };
 
 /**
- * @brief 直线图形结构体
+ * @brief 图形配置结构体
  *
  */
-struct Struct_Graphic_Line
+struct Struct_Referee_Data_Interaction_Graphic_Config
 {
     uint8_t Index[3];
     uint32_t Operation_Enum : 3;
     uint32_t Type_Enum : 3;
-    uint32_t Serial : 4;
+    uint32_t Layer_Num : 4;
     uint32_t Color_Enum : 4;
-    uint32_t Reserved_1 : 9;
-    uint32_t Reserved_2 : 9;
+    uint32_t Details_A : 9;
+    uint32_t Details_B : 9;
     uint32_t Line_Width : 10;
     uint32_t Start_X : 11;
     uint32_t Start_Y : 11;
-    uint32_t Reserved_3 : 10;
-    uint32_t End_X : 11;
-    uint32_t End_Y : 11;
+    uint32_t Details_C : 10;
+    uint32_t Details_D : 11;
+    uint32_t Details_E : 11;
 } __attribute__((packed));
 
-/**
- * @brief 矩形图形结构体
- *
- */
-struct Struct_Graphic_Rectangle
-{
-    uint8_t Index[3];
-    uint32_t Operation_Enum : 3;
-    uint32_t Type_Enum : 3;
-    uint32_t Serial : 4;
-    uint32_t Color_Enum : 4;
-    uint32_t Reserved_1 : 9;
-    uint32_t Reserved_2 : 9;
-    uint32_t Line_Width : 10;
-    uint32_t Start_X : 11;
-    uint32_t Start_Y : 11;
-    uint32_t Reserved_3 : 10;
-    uint32_t End_X : 11;
-    uint32_t End_Y : 11;
-} __attribute__((packed));
-
-/**
- * @brief 圆形图形结构体
- *
- */
-struct Struct_Graphic_Circle
-{
-    uint8_t Index[3];
-    uint32_t Operation_Enum : 3;
-    uint32_t Type_Enum : 3;
-    uint32_t Serial : 4;
-    uint32_t Color_Enum : 4;
-    uint32_t Reserved_1 : 9;
-    uint32_t Reserved_2 : 9;
-    uint32_t Line_Width : 10;
-    uint32_t Center_X : 11;
-    uint32_t Center_Y : 11;
-    uint32_t Radius : 10;
-    uint32_t Reserved_3 : 11;
-    uint32_t Reserved_4 : 11;
-} __attribute__((packed));
-
-/**
- * @brief 椭圆图形结构体
- *
- */
-struct Struct_Graphic_Oval
-{
-    uint8_t Index[3];
-    uint32_t Operation_Enum : 3;
-    uint32_t Type_Enum : 3;
-    uint32_t Serial : 4;
-    uint32_t Color_Enum : 4;
-    uint32_t Reserved_1 : 9;
-    uint32_t Reserved_2 : 9;
-    uint32_t Line_Width : 10;
-    uint32_t Center_X : 11;
-    uint32_t Center_Y : 11;
-    uint32_t Reserved_3 : 10;
-    uint32_t Half_Length_X : 11;
-    uint32_t Half_Length_Y : 11;
-} __attribute__((packed));
-
-/**
- * @brief 圆弧图形结构体
- * Angle单位是角度制而非弧度制
- *
- */
-struct Struct_Graphic_Arc
-{
-    uint8_t Index[3];
-    uint32_t Operation_Enum : 3;
-    uint32_t Type_Enum : 3;
-    uint32_t Serial : 4;
-    uint32_t Color_Enum : 4;
-    uint32_t Start_Angle : 9;
-    uint32_t End_Angle : 9;
-    uint32_t Line_Width : 10;
-    uint32_t Center_X : 11;
-    uint32_t Center_Y : 11;
-    uint32_t Reserved : 10;
-    uint32_t Half_Length_X : 11;
-    uint32_t Half_Length_Y : 11;
-} __attribute__((packed));
-
-/**
- * @brief 浮点数图形结构体
- * Decimal_Number 小数点后位数, 最多3位
- * Float *1000后的32位有符号整数
- *
- */
-struct Struct_Graphic_Float
-{
-    uint8_t Index[3];
-    uint32_t Operation_Enum : 3;
-    uint32_t Type_Enum : 3;
-    uint32_t Serial : 4;
-    uint32_t Color_Enum : 4;
-    uint32_t Font_Size : 9;
-    uint32_t Reserved : 9;
-    uint32_t Line_Width : 10;
-    uint32_t Start_X : 11;
-    uint32_t Start_Y : 11;
-    int32_t Float;
-} __attribute__((packed));
-
-/**
- * @brief 整型数图形结构体
- *
- */
-struct Struct_Graphic_Integer
-{
-    uint8_t Index[3];
-    uint32_t Operation_Enum : 3;
-    uint32_t Type_Enum : 3;
-    uint32_t Serial : 4;
-    uint32_t Color_Enum : 4;
-    uint32_t Font_Size : 9;
-    uint32_t Reserved : 9;
-    uint32_t Line_Width : 10;
-    uint32_t Start_X : 11;
-    uint32_t Start_Y : 11;
-    int32_t Integer;
-} __attribute__((packed));
-
-/**
- * @brief 字符串图形结构体
- *
- */
-struct Struct_Graphic_String
-{
-    uint8_t Index[3];
-    uint32_t Operation_Enum : 3;
-    uint32_t Type_Enum : 3;
-    uint32_t Serial : 4;
-    uint32_t Color_Enum : 4;
-    uint32_t Font_Size : 9;
-    uint32_t Length : 9;
-    uint32_t Line_Width : 10;
-    uint32_t Start_X : 11;
-    uint32_t Start_Y : 11;
-    uint32_t Reserved;
-} __attribute__((packed));
-
-/**
- * @brief 各种图形的联合体
- *
- */
-union Union_Graphic
-{
-    Struct_Graphic_Line Line;
-    Struct_Graphic_Rectangle Rectangle;
-    Struct_Graphic_Circle Circle;
-    Struct_Graphic_Oval Oval;
-    Struct_Graphic_Arc Arc;
-    Struct_Graphic_Float Float;
-    Struct_Graphic_Integer Integer;
-    Struct_Graphic_String String;
-} __attribute__((packed));
+// TODO
+// /**
+//  * @brief 图形配置结构体
+//  *
+//  */
+// struct Struct_Referee_Data_Interaction_Graphic_Config_test
+// {
+//     uint8_t Index[3];
+//     Enum_Referee_Data_Interaction_Graphic_Operation Operation : 3;
+//     Enum_Referee_Data_Interaction_Graphic_Type Type : 3;
+//     uint8_t Layer_Num : 4;
+//     Enum_Referee_Data_Interaction_Graphic_Color Color : 4;
+//     uint32_t Details_A : 9;
+//     uint32_t Details_B : 9;
+//     uint32_t Line_Width : 10;
+//     uint32_t Start_X : 11;
+//     uint32_t Start_Y : 11;
+//     uint32_t Details_C : 10;
+//     uint32_t Details_D : 11;
+//     uint32_t Details_E : 11;
+// } __attribute__((packed));
 
 /**
  * @brief 裁判系统源数据
@@ -690,13 +571,15 @@ union Union_Graphic
  */
 struct Struct_Referee_UART_Data
 {
-    uint8_t Frame_Header;
+    uint8_t Frame_Header = 0xa5;
     uint16_t Data_Length;
     uint8_t Sequence;
     uint8_t CRC_8;
     Enum_Referee_Command_ID Referee_Command_ID;
     uint8_t Data[121];
 } __attribute__((packed));
+
+
 
 /**
  * @brief 裁判系统经过处理的数据, 0x0001比赛状态, 3Hz发送
@@ -727,22 +610,15 @@ struct Struct_Referee_Rx_Data_Game_Result
  */
 struct Struct_Referee_Rx_Data_Game_Robot_HP
 {
-    uint16_t Red_Hero_1;
-    uint16_t Red_Engineer_2;
-    uint16_t Red_Infantry_3;
-    uint16_t Red_Infantry_4;
+    uint16_t ally_1_robot_HP;//己方1号英雄机器人血量，若该机器人未上场或者被罚下，则血量为0，下文同理 
+    uint16_t ally_2_robot_HP;//己方2号工程机器人血量
+    uint16_t ally_3_robot_HP;//己方3号步兵机器人血量
+    uint16_t ally_4_robot_HP;
     uint16_t Red_Infantry_5;
-    uint16_t Red_Sentry_7;
-    uint16_t Red_Outpost_11;
-    uint16_t Red_Base_10;
-    uint16_t Blue_Hero_1;
-    uint16_t Blue_Engineer_2;
-    uint16_t Blue_Infantry_3;
-    uint16_t Blue_Infantry_4;
-    uint16_t Blue_Infantry_5;
-    uint16_t Blue_Sentry_7;
-    uint16_t Blue_Outpost_11;
-    uint16_t Blue_Base_10;
+    uint16_t reserved;//保留位
+    uint16_t ally_7_robot_HP;
+    uint16_t ally_outpost_HP;//己方前哨站血量
+    uint16_t ally_base_HP;//己方基地血量
     uint16_t CRC_16;
 } __attribute__((packed));
 
@@ -863,7 +739,7 @@ struct Struct_Referee_Rx_Data_Robot_Position
 struct Struct_Referee_Rx_Data_Robot_Buff
 {
     uint8_t HP_Recovery_Buff_Rate ;
-    uint8_t Booster_Cooling_Buff_Rate ; 
+    uint16_t Booster_Cooling_Buff_Rate ; 
     uint8_t Defend_Buff_Rate ; //机器人防御增益（百分比，值为 50 表示 50%防御增益）
     uint8_t Vulnerability_Buff_Rate; //机器人负防御增益（百分比，值为 30 表示-30%防御增益）
     uint16_t Damage_Buff_Rate ; //机器人攻击增益（百分比，值为 50 表示 50%攻击增益）
@@ -915,6 +791,7 @@ struct Struct_Referee_Rx_Data_Robot_Remaining_Ammo
     uint16_t Booster_Allowance_17mm;
     uint16_t Booster_Allowance_42mm;
     uint16_t Money;
+    uint16_t projectile_allowance_fortress;
     uint16_t CRC_16;
 } __attribute__((packed));
 
@@ -945,6 +822,7 @@ struct Struct_Referee_Rx_Data_Robot_RFID
     uint32_t Self_Exchange_Area_Status_Enum : 1;
     uint32_t Centre_Status_Enum : 1;
     uint32_t Reserved : 12;
+    uint8_t rfid_status_2;//bit 0：对方地形跨越增益点（隧道）（靠近对方梯形高地较低处） bit 1：对方地形跨越增益点（隧道）（靠近对方梯形高地较高处）
     uint16_t CRC_16;
 } __attribute__((packed));
 
@@ -977,15 +855,39 @@ struct Struct_Referee_Rx_Data_Robot_Ally_Position
     float standard_4_y;  
     float reserved_a;  
     float reserved_b;
+    uint16_t CRC_16;
 } __attribute__((packed));
+
+/**
+ * @brief 裁判系统经过处理的数据, 0x020C机器人易伤情况, 10Hz发送
+ *
+ */
+struct Struct_Referee_Rx_Data_Radar_Mark_Data
+{
+    uint16_t mark_progress; 
+    uint16_t CRC_16;
+
+}__attribute__((packed));
 /**
  * @brief 裁判系统经过处理的数据, 0x020D哨兵信息, 10Hz发送
- *
  */
 struct Struct_Referee_Rx_Data_Robot_Sentry_Info
 {
-    uint32_t sentry_info;
-    uint16_t sentry_info_2;
+    // 第一个32位数据
+    uint32_t bullet_allowance : 11;                      // bit 0-10：除远程兑换外，哨兵机器人成功兑换的允许发弹量
+    uint32_t remote_bullet_exchange_count : 4;          // bit 11-14：哨兵机器人成功远程兑换允许发弹量的次数
+    uint32_t remote_health_exchange_count : 4;          // bit 15-18：哨兵机器人成功远程兑换血量的次数
+    uint32_t free_revive_available : 1;                 // bit 19：哨兵机器人当前是否可以确认免费复活
+    uint32_t instant_revive_available : 1;              // bit 20：哨兵机器人当前是否可以兑换立即复活
+    uint32_t instant_revive_cost : 10;                  // bit 21-30：哨兵机器人当前若兑换立即复活需要花费的金币数
+    uint32_t reserved_31 : 1;                           // bit 31：保留
+    
+    // 第二个16位数据
+    uint16_t reserved_0_11 : 12;                        // bit 0-11：保留位
+    uint16_t sentry_posture : 2;                        // bit 12-13：哨兵当前姿态
+    uint16_t energy_activable : 1;                      // bit 14：已方能量机关是否能够进入正在激活状态
+    uint16_t reserved_15 : 1;                           // bit 15：保留位
+    
     uint16_t CRC_16;
 } __attribute__((packed));
 
@@ -999,222 +901,230 @@ struct Struct_Referee_Rx_Data_Robot_Radar_Info
     uint16_t CRC_16;
 } __attribute__((packed));
 /**
- * @brief 裁判系统发送或接收的数据, 0x0301机器人间交互信息, 用户自主发送
- * TODO 视情况启用
- * Header 0x0200~0x02ff
- * Data 最大112
- *
- */
-struct Struct_Referee_Data_Interaction_Students
-{
-    uint16_t Header;
-    Enum_Referee_Data_Robots_ID Sender;
-    uint8_t Reserved_1;
-    Enum_Referee_Data_Robots_ID Receiver;
-    uint8_t Reserved_2;
-    uint8_t Data[112];
-    uint16_t CRC_16;
-}__attribute__((packed));
-
-/**
- * @brief 裁判系统发送的数据, 0x0301图形删除交互信息, 用户自主发送
+ * @brief 裁判系统接收的数据, 0x0301图形删除交互信息, 用户自主发送
  * Header 0x0100
  *
  */
 struct Struct_Referee_Tx_Data_Interaction_Layer_Delete
 {
-    uint16_t Header = 0x0100;
+    uint16_t Header = Referee_Interaction_Command_ID_UI_LAYER_DELETE;
     Enum_Referee_Data_Robots_ID Sender;
-    uint8_t Reserved;   
+    uint8_t Reserved;
     Enum_Referee_Data_Robots_Client_ID Receiver;
     Enum_Referee_Data_Interaction_Layer_Delete_Operation Operation;
     uint8_t Delete_Serial;
-} __attribute__((packed));
-
-/**
- * @brief 裁判系统发送的数据, 0x0301画一个图形交互信息, 用户自主发送
- *
- */
-struct Struct_Referee_Tx_Data_Interaction_Graphic_1
-{
-    uint16_t Header = 0x0101;
-    Enum_Referee_Data_Robots_ID Sender;
-    uint8_t Reserved;
-    Enum_Referee_Data_Robots_Client_ID Receiver;
-    Union_Graphic Graphic_1;
-} __attribute__((packed));
-
-/**
- * @brief 裁判系统发送的数据, 0x0301画两个图形交互信息, 用户自主发送
- *
- */
-struct Struct_Referee_Tx_Data_Interaction_Graphic_2
-{
-    uint16_t Header = 0x0102;
-    Enum_Referee_Data_Robots_ID Sender;
-    uint8_t Reserved;
-    Enum_Referee_Data_Robots_Client_ID Receiver;
-    Union_Graphic Graphic_1;
-    Union_Graphic Graphic_2;
-} __attribute__((packed));
-
-/**
- * @brief 裁判系统发送的数据, 0x0301画五个图形交互信息, 用户自主发送
- *
- */
-struct Struct_Referee_Tx_Data_Interaction_Graphic_5
-{
-    uint16_t Header = 0x0103;
-    Enum_Referee_Data_Robots_ID Sender;
-    uint8_t Reserved;
-    Enum_Referee_Data_Robots_Client_ID Receiver;
-    Union_Graphic Graphic_1;
-    Union_Graphic Graphic_2;
-    Union_Graphic Graphic_3;
-    Union_Graphic Graphic_4;
-    Union_Graphic Graphic_5;
-} __attribute__((packed));
-
-/**
- * @brief 裁判系统发送的数据, 0x0301画七个图形交互信息, 用户自主发送
- *
- */
-struct Struct_Referee_Tx_Data_Interaction_Graphic_7
-{
-    uint16_t Header = 0x0104;
-    Enum_Referee_Data_Robots_ID Sender;
-    uint8_t Reserved;
-    Enum_Referee_Data_Robots_Client_ID Receiver;
-    Union_Graphic Graphic[6];
-} __attribute__((packed));
-
-/**
- * @brief 裁判系统发送的数据, 0x0301画字符图形交互信息, 用户自主发送
- *
- */
-struct Struct_Referee_Tx_Data_Interaction_Graphic_String
-{
-    uint16_t Header = 0x0110;
-    Enum_Referee_Data_Robots_ID Sender;
-    uint8_t Reserved;
-    Enum_Referee_Data_Robots_Client_ID Receiver;
-    Union_Graphic Graphic_String;
-    uint8_t String[30];
-} __attribute__((packed));
-
-/**
- * @brief 裁判系统发送的数据, 0x0302自定义控制器交互信息, 用户自主发送
- * TODO 视情况赋予Data含义
- *
- */
-struct Struct_Referee_Tx_Data_Interaction_Custom_Controller
-{
-    uint8_t Data[30];
-} __attribute__((packed));
-
-/**
- * @brief 裁判系统接收的数据, 0x0303雷达发送小地图交互信息, 用户自主最高30Hz发送
- *
- */
-struct Struct_Referee_Tx_Data_Interaction_Radar_Send
-{
-    float Coordinate_X;
-    float Coordinate_Y;
-    uint8_t Keyboard;
-    Enum_Referee_Data_Robots_ID Robot_ID;
-    uint16_t cmd_source;
     uint16_t CRC_16;
 } __attribute__((packed));
 
 /**
- * @brief 裁判系统发送的数据, 0x0304图传遥控交互信息, 30Hz发送
+ * @brief 裁判系统接收的数据, 0x0301画一个图形交互信息, 用户自主发送
+ *
+ */
+struct Struct_Referee_Tx_Data_Interaction_Graphic_1
+{
+    uint16_t Header = Referee_Interaction_Command_ID_UI_GRAPHIC_1;
+    Enum_Referee_Data_Robots_ID Sender;
+    uint8_t Reserved;
+    Enum_Referee_Data_Robots_Client_ID Receiver;
+    Struct_Referee_Data_Interaction_Graphic_Config Graphic[1];
+    uint16_t CRC_16;
+} __attribute__((packed));
+
+/**
+ * @brief 裁判系统接收的数据, 0x0301画两个图形交互信息, 用户自主发送
+ *
+ */
+struct Struct_Referee_Tx_Data_Interaction_Graphic_2
+{
+    uint16_t Header = Referee_Interaction_Command_ID_UI_GRAPHIC_2;
+    Enum_Referee_Data_Robots_ID Sender;
+    uint8_t Reserved;
+    Enum_Referee_Data_Robots_Client_ID Receiver;
+    Struct_Referee_Data_Interaction_Graphic_Config Graphic[2];
+    uint16_t CRC_16;
+} __attribute__((packed));
+
+/**
+ * @brief 裁判系统接收的数据, 0x0301画五个图形交互信息, 用户自主发送
+ *
+ */
+struct Struct_Referee_Tx_Data_Interaction_Graphic_5
+{
+    uint16_t Header = Referee_Interaction_Command_ID_UI_GRAPHIC_5;
+    Enum_Referee_Data_Robots_ID Sender;
+    uint8_t Reserved;
+    Enum_Referee_Data_Robots_Client_ID Receiver;
+    Struct_Referee_Data_Interaction_Graphic_Config Graphic[5];
+    uint16_t CRC_16;
+} __attribute__((packed));
+
+/**
+ * @brief 裁判系统接收的数据, 0x0301画七个图形交互信息, 用户自主发送
+ *
+ */
+struct Struct_Referee_Tx_Data_Interaction_Graphic_7
+{
+    uint16_t Header = Referee_Interaction_Command_ID_UI_GRAPHIC_7;
+    Enum_Referee_Data_Robots_ID Sender;
+    uint8_t Reserved;
+    Enum_Referee_Data_Robots_Client_ID Receiver;
+    Struct_Referee_Data_Interaction_Graphic_Config Graphic[7];
+    uint16_t CRC_16;
+} __attribute__((packed));
+
+/**
+ * @brief 裁判系统接收的数据, 0x0301画字符图形交互信息, 用户自主发送
+ *
+ */
+struct Struct_Referee_Tx_Data_Interaction_Graphic_String
+{
+    uint16_t Header = Referee_Interaction_Command_ID_UI_GRAPHIC_STRING;
+    Enum_Referee_Data_Robots_ID Sender;
+    uint8_t Reserved;
+    Enum_Referee_Data_Robots_Client_ID Receiver;
+    Struct_Referee_Data_Interaction_Graphic_Config Graphic_String;
+    uint8_t String[30];
+    uint16_t CRC_16;
+} __attribute__((packed));
+
+/**
+ * @brief 裁判系统经过处理的数据, 0x020e雷达决策信息, 1Hz发送
+ *
+ */
+struct Struct_Referee_Rx_Data_Robot_Radar_Decision
+{
+    uint8_t Double_Damage_Chance : 2;
+    uint8_t Double_Damage_Enemy_Status_Enum : 1;
+    uint8_t Reserved : 5;
+    uint16_t CRC_16;
+} __attribute__((packed));
+
+
+/**
+ * @brief 裁判系统接收的数据, 0x0301哨兵自主决策交互信息, 哨兵自主发送
+ *
+ */
+struct Struct_Referee_Tx_Data_Interaction_Sentry
+{
+    uint16_t Header = Referee_Interaction_Command_ID_SENTRY;
+    uint32_t Confirm_Respawn_Status_Enum : 1;
+    uint32_t Confirm_Exchange_Respawn_Status_Enum : 1;
+    uint32_t Request_Exchange_Ammo_Number : 11;
+    uint32_t Request_Exchange_Ammo_Time : 4;
+    uint32_t Request_Exchange_HP_Time : 4;
+    uint32_t Reserved : 11;
+    uint16_t CRC_16;
+} __attribute__((packed));
+
+/**
+ * @brief 裁判系统接收的数据, 0x0301雷达自主决策交互信息, 雷达自主发送
+ *
+ */
+struct Struct_Referee_Tx_Data_Interaction_Radar
+{
+    uint16_t Header = Referee_Interaction_Command_ID_RADAR;
+    Enum_Referee_Data_Status Request_Double_Damage;
+    uint16_t CRC_16;
+} __attribute__((packed));
+
+/**
+ * @brief 裁判系统接收的数据, 0x0302自定义控制器交互信息, 用户自主发送
+ * TODO 视情况赋予Data含义
+ *
+ */
+struct Struct_Referee_Rx_Data_Interaction_Custom_Controller
+{
+    uint8_t Data[30];
+    uint16_t CRC_16;
+} __attribute__((packed));
+
+/**
+ * @brief 裁判系统接收的数据, 0x0303客户端发送小地图交互信息, 用户自主最高2Hz发送
+ *
+ */
+struct Struct_Referee_Rx_Data_Interaction_Robot_Receive_Client_Minimap
+{
+    float Coordinate_X;
+    float Coordinate_Y;
+    Enum_Referee_Data_Status Keyboard;
+    Enum_Referee_Data_Robots_ID Enemy_ID;
+    Enum_Referee_Data_Robots_ID Source_ID;
+    uint8_t Reserved;
+    uint16_t CRC_16;
+} __attribute__((packed));
+
+/**
+ * @brief 裁判系统发送的数据, 0x0304图传键鼠遥控交互信息, 30Hz发送
  * TODO 等待扩展
  *
  */
-struct Struct_Referee_Tx_Data_Interaction_Remote_Control
+struct Struct_Referee_Rx_Data_Interaction_Robot_Receive_Client_Remote_Control
 {
     uint16_t Mouse_X;
     uint16_t Mouse_Y;
     uint16_t Mouse_Z;
     Enum_Referee_Data_Status Mouse_Left_Key_Status;
     Enum_Referee_Data_Status Mouse_Right_Key_Status;
-    uint16_t Keyboard_Key_W : 1;
-    uint16_t Keyboard_Key_S : 1;
-    uint16_t Keyboard_Key_A : 1;
-    uint16_t Keyboard_Key_D : 1;
-    uint16_t Keyboard_Key_Shift : 1;
-    uint16_t Keyboard_Key_Ctrl : 1;
-    uint16_t Keyboard_Key_Q : 1;
-    uint16_t Keyboard_Key_E : 1;
-    uint16_t Keyboard_Key_R : 1;
-    uint16_t Keyboard_Key_F : 1;
-    uint16_t Keyboard_Key_G : 1;
-    uint16_t Keyboard_Key_Z : 1;
-    uint16_t Keyboard_Key_X : 1;    
-    uint16_t Keyboard_Key_C : 1;
-    uint16_t Keyboard_Key_V : 1;
-    uint16_t Keyboard_Key_B : 1;
+    uint16_t Keyboard_Key;
     uint16_t Reserved;
-} __attribute__((packed));
-
-/**
- * @brief 裁判系统发送的数据, 0x210雷达接收小地图交互信息, 用户自主最高30Hz发送
- *
- */
-struct Struct_Referee_Tx_Data_Interaction_Robot_Receive
-{
-    uint16_t Header;
-    uint16_t Sender;
-    uint16_t Receiver;
-    uint16_t hero_position_x; 
-    uint16_t hero_position_y; 
-    uint16_t engineer_position_x; 
-    uint16_t engineer_position_y; 
-    uint16_t infantry_3_position_x; 
-    uint16_t infantry_3_position_y; 
-    uint16_t infantry_4_position_x; 
-    uint16_t infantry_4_position_y; 
-    uint16_t infantry_5_position_x; 
-    uint16_t infantry_5_position_y; 
-    uint16_t sentry_position_x; 
-    uint16_t sentry_position_y; 
     uint16_t CRC_16;
 } __attribute__((packed));
 
 /**
- * @brief 裁判系统接收的数据, 0x120哨兵自主决策, 用户自主最高30Hz发送
+ * @brief 裁判系统接收的数据, 0x0305客户端接收小地图交互信息, 用户自主最高10Hz发送
  *
  */
-struct Struct_Sentry_cmd_t
+struct Struct_Referee_Rx_Data_Interaction_Client_Receive_Radar
 {
-    uint16_t Header = 0x120;
-    Enum_Referee_Data_Robots_ID Sender;
-    uint8_t Reserved;
-    uint16_t Receiver = 0x8080;
-    uint32_t sentry_cmd;
+    Enum_Referee_Data_Robots_ID Robot_ID;
+    float Coordinate_X;
+    float Coordinate_Y;
+    uint16_t CRC_16;
 } __attribute__((packed));
 
 /**
- * @brief 裁判系统发送的数据, 0x200雷达接收小地图交互信息, 用户自主最高30Hz发送
+ * @brief 裁判系统接收的数据, 0x0306客户端接收模拟键鼠遥控交互信息, 用户自主最高30Hz发送
+ * TODO 等待扩展
  *
  */
-struct Struct_Sentry_To_Radar_t
+struct Struct_Referee_Tx_Data_Interaction_Client_Receive_Custom_Controller
 {
-    uint16_t Header = 0x200;
-    Enum_Referee_Data_Robots_ID Sender;
-    uint8_t Reserved;
-    Enum_Referee_Data_Robots_ID Receiver;
-    uint8_t Reserved_2;
-    uint16_t Robot_Position_X;
-    uint16_t Robot_Position_Y;
+    uint16_t Keyboard_Key;
+    uint16_t Mouse_X : 12;
+    Enum_Referee_Data_Status Mouse_Left_Key_Status : 4;
+    uint16_t Mouse_Y : 12;
+    Enum_Referee_Data_Status Mouse_Right_Key_Status : 4;
+    uint16_t Reserved;
+    uint16_t CRC_16;
 } __attribute__((packed));
 
-struct Struct_CAN_Referee_Rx_Data_t //0x195
+/**
+ * @brief 裁判系统接收的数据, 0x0307客户端接收模拟键鼠遥控交互信息, 用户自主最高30Hz发送
+ *
+ */
+struct Struct_Referee_Tx_Data_Interaction_Client_Receive_Sentry_Semiautomatic_Minimap
 {
-    uint32_t Sentry_cmd;
-    uint16_t Robot_Position_X;
-    uint16_t Robot_Position_Y;
+    Enum_Referee_Data_Interaction_Semiautomatic_Command Command;
+    uint16_t Start_X;
+    uint16_t Start_Y;
+    int8_t Delta_X_List[49];
+    int8_t Delta_Y_List[49];
+    Enum_Referee_Data_Robots_Client_ID Sender_ID;
+    uint16_t CRC_16;
 } __attribute__((packed));
+
+/**
+ * @brief 裁判系统接收的数据, 0x0308客户端接收模拟键鼠遥控交互信息, 用户自主最高30Hz发送
+ *
+ */
+struct Struct_Referee_Tx_Data_Interaction_Client_Receive_Robot_Minimap
+{
+    Enum_Referee_Data_Robots_Client_ID Sender_ID;
+    Enum_Referee_Data_Robots_Client_ID Receiver_ID;
+    uint8_t Data[30];
+    uint16_t CRC_16;
+} __attribute__((packed));
+
 /**
  * @brief Specialized, 裁判系统
  *
@@ -1312,40 +1222,56 @@ public:
     inline uint16_t Get_Sentry_Position_Y();
     inline uint8_t Get_Energy_Left_Rate();
     inline uint8_t Get_Radar_Info();
-    inline uint32_t Get_Sentry_Info_1();
-    inline uint16_t Get_Sentry_Info_2();
-
-    template <typename T>
-    void Referee_UI_Packed_Data(T* __data);
-
+    inline uint16_t Get_Sentry_Bullet_Allowance();
+    inline uint8_t Get_Sentry_Remote_Bullet_Exchange_Count();
+    inline uint8_t Get_Sentry_Remote_Health_Exchange_Count();
+    inline bool Get_Sentry_Free_Revive_Available();
+    inline bool Get_Sentry_Instant_Revive_Available();
+    inline uint16_t Get_Sentry_Instant_Revive_Cost();
+    inline uint8_t Get_Sentry_Posture();
+    inline bool Get_Energy_Activable();
+    
     #ifdef GIMBAL
     inline void Set_Robot_ID(Enum_Referee_Data_Robots_ID __Robot_ID);
     inline void Set_Game_Stage(Enum_Referee_Game_Status_Stage __Game_Stage);  
-    inline void Set_Shoot_Speed(float __Shoot_Speed);
     inline void Set_Booster_17mm_1_Heat_CD(uint16_t __Booster_17mm_1_Heat_CD);
     inline void Set_Booster_17mm_1_Heat_Max(uint16_t __Booster_17mm_1_Heat_Max);
-    inline void Set_Sentry_Revive_Status(Enum_Sentry_Revive_Status __Sentry_Revive_Status);
-    inline void Set_Sentry_Revive_Buy_Status(Enum_Sentry_Revive_Status __Sentry_Revive_Buy_Status);
+    inline void Set_Booster_42mm_Heat(uint16_t __Booster_42mm_Heat);
+    inline void Set_Booster_42mm_Heat_Max(uint16_t __Booster_42mm_Heat_Max);
     #endif
 
-    // void Referee_UI_Draw_Line(uint8_t __Robot_ID, Enum_Referee_UI_Group_Index __Group_Index, uint8_t __Serial, uint8_t __Index, uint32_t __Color,uint32_t __Line_Width, uint32_t __Start_X, uint32_t __Start_Y,  uint32_t __End_X, uint32_t __End_Y,Enum_Referee_UI_Operate_Type __Operate_Type);
-    // void Referee_UI_Draw_Rectangle(uint8_t __Robot_ID, Enum_Referee_UI_Group_Index __Group_Index, uint8_t __Serial, uint8_t __Index, uint32_t __Color,uint32_t __Line_Width, uint32_t __Start_X, uint32_t __Start_Y,  uint32_t __End_X, uint32_t __End_Y,Enum_Referee_UI_Operate_Type __Operate_Type);
-    // void Referee_UI_Draw_Oval(uint8_t __Robot_ID, Enum_Referee_UI_Group_Index __Group_Index, uint8_t __Serial, uint8_t __Index, uint32_t __Color, uint32_t __Line_Width, uint32_t __Center_X, uint32_t __Center_Y, uint32_t __X_Length, uint32_t __Y_Length, Enum_Referee_UI_Operate_Type __Operate_Type);
-    // void Referee_UI_Draw_Circle(uint8_t __Robot_ID, Enum_Referee_UI_Group_Index __Group_Index, uint8_t __Serial, uint8_t __Index, uint32_t __Color, uint32_t __Line_Width, uint32_t __Center_X, uint32_t __Center_Y, uint32_t __Radius, Enum_Referee_UI_Operate_Type __Operate_Type);
-    // void Referee_UI_Draw_Float(uint8_t __Robot_ID, Enum_Referee_UI_Group_Index __Group_Index, uint8_t __Serial, uint8_t __Index, uint32_t __Color, uint32_t __Font_Size,uint32_t __Line_Width, uint32_t __Start_X, uint32_t __Start_Y, float __Number, Enum_Referee_UI_Operate_Type __Operate_Type);
-    // void Referee_UI_Draw_Integer(uint8_t __Robot_ID, Enum_Referee_UI_Group_Index __Group_Index, uint8_t __Serial, uint8_t __Index, uint32_t __Color, uint32_t __Font_Size,uint32_t __Line_Width, uint32_t __Start_X, uint32_t __Start_Y, int32_t __Number, Enum_Referee_UI_Operate_Type __Operate_Type);
-    // void Referee_UI_Draw_String(uint8_t __Robot_ID, Enum_Referee_UI_Group_Index __Group_Index, uint32_t __Serial, uint8_t __Index, uint32_t __Color, uint32_t __Font_Size,uint32_t __Line_Width, uint32_t __Start_X, uint32_t __Start_Y, char *__String ,uint32_t __String_Length, Enum_Referee_UI_Operate_Type __Operate_Type);
+    inline Struct_Referee_Data_Interaction_Graphic_Config *Set_Referee_UI_Clear(uint8_t Layer_Num, uint8_t Graphic_Num);
 
-    // void Referee_UI_Packed_String();
+    inline Struct_Referee_Data_Interaction_Graphic_Config *Set_Referee_UI_Line(uint8_t Layer_Num, uint8_t Graphic_Num, Enum_Referee_Data_Interaction_Graphic_Color Color, uint32_t Line_Width, uint32_t Start_X, uint32_t Start_Y, uint32_t End_X, uint32_t End_Y);
 
-    //template <typename T>
-    // void Referee_UI_Packed_Data(T* __data);
+    inline Struct_Referee_Data_Interaction_Graphic_Config *Set_Referee_UI_Rectangle(uint8_t Layer_Num, uint8_t Graphic_Num, Enum_Referee_Data_Interaction_Graphic_Color Color, uint32_t Line_Width, uint32_t Start_X, uint32_t Start_Y, uint32_t End_X, uint32_t End_Y);
 
-    // void UART_Tx_Referee_UI();
+    inline Struct_Referee_Data_Interaction_Graphic_Config *Set_Referee_UI_Circle(uint8_t Layer_Num, uint8_t Graphic_Num, Enum_Referee_Data_Interaction_Graphic_Color Color, uint32_t Line_Width, uint32_t Center_X, uint32_t Center_Y, uint32_t Radius);
 
-    void UART_RxCpltCallback(uint8_t *Rx_Data, uint16_t Size);
-    void TIM_UART_Tx_PeriodElapsedCallback();
-    void Sentry_Auto_cmd_Transmit();
+    inline Struct_Referee_Data_Interaction_Graphic_Config *Set_Referee_UI_Oval(uint8_t Layer_Num, uint8_t Graphic_Num, Enum_Referee_Data_Interaction_Graphic_Color Color, uint32_t Line_Width, uint32_t Center_X, uint32_t Center_Y, uint32_t Length_X, uint32_t Length_Y);
+
+    inline Struct_Referee_Data_Interaction_Graphic_Config *Set_Referee_UI_Arc(uint8_t Layer_Num, uint8_t Graphic_Num, Enum_Referee_Data_Interaction_Graphic_Color Color, uint32_t Line_Width, uint32_t Center_X, uint32_t Center_Y, uint32_t Angle_Start, uint32_t Angle_End, uint32_t Length_X, uint32_t Length_Y);
+
+    inline Struct_Referee_Data_Interaction_Graphic_Config *Set_Referee_UI_Float(Enum_Referee_Data_Interaction_Graphic_Operation __Graphic_Operation,uint8_t Layer_Num, uint8_t Graphic_Num, Enum_Referee_Data_Interaction_Graphic_Color Color, uint32_t Line_Width, uint32_t Start_X, uint32_t Start_Y, uint32_t Font_Width, float Float);
+
+    inline Struct_Referee_Data_Interaction_Graphic_Config *Set_Referee_UI_Integer(uint8_t Layer_Num, uint8_t Graphic_Num, Enum_Referee_Data_Interaction_Graphic_Color Color, uint32_t Line_Width, uint32_t Start_X, uint32_t Start_Y, uint32_t Font_Width, int32_t Integer);
+
+    inline Struct_Referee_Data_Interaction_Graphic_Config *Set_Referee_UI_String(uint8_t Layer_Num, uint8_t Graphic_Num, Enum_Referee_Data_Interaction_Graphic_Color Color, uint32_t Line_Width, uint32_t Start_X, uint32_t Start_Y, uint32_t Font_Width, uint32_t String_Length);
+
+    void UART_Send_Interaction_UI_Layer_Delete(Enum_Referee_Data_Interaction_Layer_Delete_Operation Layer_Delete_Operation, uint8_t Layer);
+
+    void UART_Send_Interaction_UI_Graphic_1(Struct_Referee_Data_Interaction_Graphic_Config *Graphic_1);
+
+    void UART_Send_Interaction_UI_Graphic_2(Struct_Referee_Data_Interaction_Graphic_Config *Graphic_1, Struct_Referee_Data_Interaction_Graphic_Config *Graphic_2);
+
+    void UART_Send_Interaction_UI_Graphic_5(Struct_Referee_Data_Interaction_Graphic_Config *Graphic_1, Struct_Referee_Data_Interaction_Graphic_Config *Graphic_2, Struct_Referee_Data_Interaction_Graphic_Config *Graphic_3, Struct_Referee_Data_Interaction_Graphic_Config *Graphic_4, Struct_Referee_Data_Interaction_Graphic_Config *Graphic_5);
+
+    void UART_Send_Interaction_UI_Graphic_7(Struct_Referee_Data_Interaction_Graphic_Config *Graphic_1, Struct_Referee_Data_Interaction_Graphic_Config *Graphic_2, Struct_Referee_Data_Interaction_Graphic_Config *Graphic_3, Struct_Referee_Data_Interaction_Graphic_Config *Graphic_4, Struct_Referee_Data_Interaction_Graphic_Config *Graphic_5, Struct_Referee_Data_Interaction_Graphic_Config *Graphic_6, Struct_Referee_Data_Interaction_Graphic_Config *Graphic_7);
+
+    void UART_Send_Interaction_UI_Graphic_String(Struct_Referee_Data_Interaction_Graphic_Config *Graphic_String, const char *String_Content);
+
+    void UART_RxCpltCallback(uint8_t *Rx_Data,uint16_t Length);
+   
     void TIM1msMod50_Alive_PeriodElapsedCallback();
 
 protected:
@@ -1357,11 +1283,14 @@ protected:
     uint8_t Frame_Header;
 
     //常量
-    uint8_t seq = 0;  //包序号
-    const uint8_t frameheader_len = 5; // 帧头长度
-    const uint8_t cmd_len = 2;         // 命令码长度
-    const uint8_t crc_len = 2;         // CRC16校验
+
     // 内部变量
+
+    // 发送序列号
+    uint8_t Sequence = 0;
+
+    // UI是否是初次绘制, 没绘制过是0
+    uint8_t UI_Change_Flag[10][10] = {0};
 
     //当前时刻的裁判系统接收flag
     uint32_t Flag = 0;
@@ -1410,11 +1339,12 @@ protected:
     Struct_Referee_Rx_Data_Robot_Radar_Info Radar_Info;
     //飞镖状态
     Struct_Referee_Rx_Data_Robot_Dart_Command Robot_Dart_Command;
-    //敌军位置
+    //我军位置
+    Struct_Referee_Rx_Data_Robot_Ally_Position Robot_Ally_Position;
+    //雷达易伤情况
+    Struct_Referee_Rx_Data_Radar_Mark_Data Radar_Mark_Data;
     //客户端接收小地图交互信息
-    Struct_Referee_Tx_Data_Interaction_Robot_Receive Interaction_Robot_Receive;
-
-
+    // Struct_Referee_Tx_Data_Interaction_Robot_Receive Interaction_Robot_Receive;
     //写变量
 
     //图形删除交互信息
@@ -1429,12 +1359,12 @@ protected:
     Struct_Referee_Tx_Data_Interaction_Graphic_7 Interaction_Graphic_7;
     //画字符图形交互信息
     Struct_Referee_Tx_Data_Interaction_Graphic_String Interaction_Graphic_String;
-    //雷达发送小地图交互信息
-    Struct_Referee_Tx_Data_Interaction_Radar_Send Interaction_Radar_Send;
-    //哨兵自主决策
-    Struct_Sentry_cmd_t Sentry_cmd;
-    //哨兵发送雷达位置
-    Struct_Sentry_To_Radar_t Sentry_To_Radar;
+     // 雷达决策信息
+    Struct_Referee_Rx_Data_Robot_Radar_Decision Robot_Radar_Decision;
+
+
+    //写变量
+    Struct_Referee_Data_Interaction_Graphic_Config Graphic_Config[10][10];
 
     //读写变量
 
@@ -1457,38 +1387,7 @@ uint32_t Verify_CRC16_Check_Sum(uint8_t *pchMessage, uint32_t dwLength);
 void Append_CRC16_Check_Sum(uint8_t * pchMessage,uint32_t dwLength);
 
 
-/**
- * @brief 裁判系统数据打包
- *
- */
-template <typename T>
-void Class_Referee::Referee_UI_Packed_Data(T* __data)
-{
-    uint16_t frame_length,data_len,cmd_id;
-    
-    cmd_id = 0x0301;    //子内容ID
-    data_len = sizeof(T);      //字符操作数据长度
-	frame_length = frameheader_len + cmd_len + data_len + crc_len;   //数据帧长度	
 
-	memset(UART_Manage_Object->Tx_Buffer,0,frame_length);  //存储数据的数组清零
-	
-	/*****帧头打包*****/
-	UART_Manage_Object->Tx_Buffer[0] = Frame_Header;//数据帧起始字节
-	memcpy(&UART_Manage_Object->Tx_Buffer[1],(uint8_t*)&data_len, 2);//数据帧中data的长度
-	UART_Manage_Object->Tx_Buffer[3] = seq;//包序号
-	Append_CRC8_Check_Sum(UART_Manage_Object->Tx_Buffer,frameheader_len);  //帧头校验CRC8
-
-	/*****命令码打包*****/
-	memcpy(&UART_Manage_Object->Tx_Buffer[frameheader_len],(uint8_t*)&cmd_id, cmd_len);
-	
-	/*****数据打包*****/
-	memcpy(&UART_Manage_Object->Tx_Buffer[frameheader_len+cmd_len], __data, sizeof(T));
-	Append_CRC16_Check_Sum(UART_Manage_Object->Tx_Buffer,frame_length);  //一帧数据校验CRC16
-
-    UART_Manage_Object->Tx_Length = frame_length;
-
-    seq++;
-}
 
 /**
  * @brief 获取裁判系统状态
@@ -1561,39 +1460,22 @@ uint16_t Class_Referee::Get_HP(Enum_Referee_Data_Robots_ID Robots_ID)
     switch (Robots_ID)
     {
     case (Referee_Data_Robots_ID_RED_HERO_1):
-        return (Game_Robot_HP.Red_Hero_1);
+        return (Game_Robot_HP.ally_1_robot_HP);
     case (Referee_Data_Robots_ID_RED_ENGINEER_2):
-        return (Game_Robot_HP.Red_Engineer_2);
+        return (Game_Robot_HP.ally_2_robot_HP);
     case (Referee_Data_Robots_ID_RED_INFANTRY_3):
-        return (Game_Robot_HP.Red_Infantry_3);
+        return (Game_Robot_HP.ally_3_robot_HP);
     case (Referee_Data_Robots_ID_RED_INFANTRY_4):
-        return (Game_Robot_HP.Red_Infantry_4);
+        return (Game_Robot_HP.ally_4_robot_HP);
     case (Referee_Data_Robots_ID_RED_INFANTRY_5):
         return (Game_Robot_HP.Red_Infantry_5);
     case (Referee_Data_Robots_ID_RED_SENTRY_7):
-        return (Game_Robot_HP.Red_Sentry_7);
+        return (Game_Robot_HP.ally_7_robot_HP);
     case (Referee_Data_Robots_ID_RED_OUTPOST_11):
-        return (Game_Robot_HP.Red_Outpost_11);
+        return (Game_Robot_HP.ally_outpost_HP);
     case (Referee_Data_Robots_ID_RED_BASE_10):
-        return (Game_Robot_HP.Red_Base_10);
-    case (Referee_Data_Robots_ID_BLUE_HERO_1):
-        return (Game_Robot_HP.Blue_Hero_1);
-    case (Referee_Data_Robots_ID_BLUE_ENGINEER_2):
-        return (Game_Robot_HP.Blue_Engineer_2);
-    case (Referee_Data_Robots_ID_BLUE_INFANTRY_3):
-        return (Game_Robot_HP.Blue_Infantry_3);
-    case (Referee_Data_Robots_ID_BLUE_INFANTRY_4):
-        return (Game_Robot_HP.Blue_Infantry_4);
-    case (Referee_Data_Robots_ID_BLUE_INFANTRY_5):
-        return (Game_Robot_HP.Blue_Infantry_5);
-    case (Referee_Data_Robots_ID_BLUE_SENTRY_7):
-        return (Game_Robot_HP.Blue_Sentry_7);
-    case (Referee_Data_Robots_ID_BLUE_OUTPOST_11):
-        return (Game_Robot_HP.Blue_Outpost_11);
-    case (Referee_Data_Robots_ID_BLUE_BASE_10):
-        return (Game_Robot_HP.Blue_Base_10);
-    default:
-        return (Game_Robot_HP.Blue_Base_10); // 或者返回一个其他合适的默认值
+        return (Game_Robot_HP.ally_base_HP);
+    
     }
 }
 
@@ -2324,67 +2206,7 @@ uint16_t Class_Referee::Get_Dart_Last_Confirm_Timestamp()
  *
  * @return float 雷达发送目标机器人位置x
  */
-float Class_Referee::Get_Radar_Send_Coordinate_X()
-{
-    return (Interaction_Radar_Send.Coordinate_X);
-}
 
-/**
- * @brief 获取雷达发送目标机器人位置y
- *
- * @return float 雷达发送目标机器人位置y
- */
-float Class_Referee::Get_Radar_Send_Coordinate_Y()
-{
-    return (Interaction_Radar_Send.Coordinate_Y);
-}
-uint16_t Class_Referee::Get_Hero_Position_X()
-{
-    return (Interaction_Robot_Receive.hero_position_x);
-}
-
-uint16_t Class_Referee::Get_Hero_Position_Y()
-{
-    return (Interaction_Robot_Receive.hero_position_y);
-}
-
-uint16_t Class_Referee::Get_Engineer_Position_X()
-{
-    return (Interaction_Robot_Receive.engineer_position_x);
-}
-
-uint16_t Class_Referee::Get_Engineer_Position_Y()
-{
-    return (Interaction_Robot_Receive.engineer_position_y);
-}
-uint16_t Class_Referee::Get_Infantry_3_Position_X()
-{
-    return (Interaction_Robot_Receive.infantry_3_position_x);
-}
-
-uint16_t Class_Referee::Get_Infantry_3_Position_Y()
-{
-    return (Interaction_Robot_Receive.infantry_3_position_y);
-}
-
-uint16_t Class_Referee::Get_Infantry_4_Position_X()
-{
-    return (Interaction_Robot_Receive.infantry_4_position_x);
-}
-
-uint16_t Class_Referee::Get_Infantry_4_Position_Y()
-{
-    return (Interaction_Robot_Receive.infantry_4_position_y);
-}
-uint16_t Class_Referee::Get_Sentry_Position_X()
-{
-    return (Interaction_Robot_Receive.sentry_position_x);
-}
-
-uint16_t Class_Referee::Get_Sentry_Position_Y()
-{
-    return (Interaction_Robot_Receive.sentry_position_y);
-}
 uint8_t Class_Referee::Get_Energy_Left_Rate()
 {
     return (Robot_Buff.Energy_Left_Rate);
@@ -2393,13 +2215,52 @@ uint8_t Class_Referee::Get_Radar_Info()
 {
     return (Radar_Info.radar_info);
 }
-uint32_t Class_Referee::Get_Sentry_Info_1()
+// 获取除远程兑换外，哨兵机器人成功兑换的允许发弹量
+inline uint16_t Class_Referee::Get_Sentry_Bullet_Allowance()
 {
-    return (Sentry_Info.sentry_info);
+    return (Sentry_Info.bullet_allowance);
 }
-uint16_t Class_Referee::Get_Sentry_Info_2()
+
+// 获取哨兵机器人成功远程兑换允许发弹量的次数
+inline uint8_t Class_Referee::Get_Sentry_Remote_Bullet_Exchange_Count()
 {
-    return (Sentry_Info.sentry_info_2);
+    return (Sentry_Info.remote_bullet_exchange_count);
+}
+
+// 获取哨兵机器人成功远程兑换血量的次数
+inline uint8_t Class_Referee::Get_Sentry_Remote_Health_Exchange_Count()
+{
+    return (Sentry_Info.remote_health_exchange_count);
+}
+
+// 获取哨兵机器人当前是否可以确认免费复活
+inline bool Class_Referee::Get_Sentry_Free_Revive_Available()
+{
+    return (Sentry_Info.free_revive_available != 0);
+}
+
+// 获取哨兵机器人当前是否可以兑换立即复活
+inline bool Class_Referee::Get_Sentry_Instant_Revive_Available()
+{
+    return (Sentry_Info.instant_revive_available != 0);
+}
+
+// 获取哨兵机器人当前若兑换立即复活需要花费的金币数
+inline uint16_t Class_Referee::Get_Sentry_Instant_Revive_Cost()
+{
+    return (Sentry_Info.instant_revive_cost);
+}
+
+// 获取哨兵当前姿态
+inline uint8_t Class_Referee::Get_Sentry_Posture()
+{
+    return (Sentry_Info.sentry_posture);
+}
+
+// 获取已方能量机关是否能够进入正在激活状态
+inline bool Class_Referee::Get_Energy_Activable()
+{
+    return (Sentry_Info.energy_activable != 0);
 }
 /**
  * @brief 设置机器人ID
@@ -2426,17 +2287,7 @@ void Class_Referee::Set_Game_Stage(Enum_Referee_Game_Status_Stage __Game_Stage)
 }
 #endif
 
-/**
- * @brief 设置机器人弹速
- * 
- * @param __Shoot_Speed 机器人弹速
- */
-#ifdef GIMBAL
-void Class_Referee::Set_Shoot_Speed(float __Shoot_Speed)
-{
-    this->Robot_Booster.Speed = __Shoot_Speed;
-}
-#endif
+
 /**
  * @brief 设置17mm枪管冷却cd
  *
@@ -2462,29 +2313,374 @@ void Class_Referee::Set_Booster_17mm_1_Heat_Max(uint16_t __Booster_17mm_1_Heat_M
 }
 #endif
 
-/**
- * @brief 设置哨兵复活状态
- *
- * @param __Sentry_Revive_Status 复活模式
- */
 #ifdef GIMBAL
-void Class_Referee::Set_Sentry_Revive_Status(Enum_Sentry_Revive_Status __Sentry_Revive_Status)
+void Class_Referee::Set_Booster_42mm_Heat_Max(uint16_t __Booster_42mm_Heat_Max)
 {
-    Sentry_cmd.sentry_cmd = (Sentry_cmd.sentry_cmd & ~ 0x1u) | (static_cast<uint32_t>(__Sentry_Revive_Status) & 0x1u);
+    this->Robot_Status.Shooter_Barrel_Heat_Limit = __Booster_42mm_Heat_Max;
+}
+#endif
+
+#ifdef GIMBAL
+void Class_Referee::Set_Booster_42mm_Heat(uint16_t __Booster_42mm_Heat)
+{
+    this->Robot_Power_Heat.Booster_42mm_Heat = __Booster_42mm_Heat;
 }
 #endif
 
 /**
- * @brief 设置哨兵买活状态
+ * @brief 设定裁判系统UI清除
  *
- * @param __Sentry_Revive_Status 买活模式
+ * @param Layer_Num 图层编号, 0~9
+ * @param Graphic_Num 图形编号, 0~9
  */
-#ifdef GIMBAL
-void Class_Referee::Set_Sentry_Revive_Buy_Status(Enum_Sentry_Revive_Status __Sentry_Revive_Status)
+inline Struct_Referee_Data_Interaction_Graphic_Config *Class_Referee::Set_Referee_UI_Clear(uint8_t Layer_Num, uint8_t Graphic_Num)
 {
-    Sentry_cmd.sentry_cmd = (Sentry_cmd.sentry_cmd & ~ 0x2u) | ((static_cast<uint32_t>(__Sentry_Revive_Status ) & 0x2u) << 1);
+    Graphic_Config[Layer_Num][Graphic_Num].Index[0] = '0';
+    Graphic_Config[Layer_Num][Graphic_Num].Index[1] = '0' + Layer_Num;
+
+    Graphic_Config[Layer_Num][Graphic_Num].Index[2] = '0' + Graphic_Num;
+
+    Graphic_Config[Layer_Num][Graphic_Num].Operation_Enum = Referee_Data_Interaction_Graphic_Operation_DELETE;
+
+    UI_Change_Flag[Layer_Num][Graphic_Num] = 0;
+
+    return (&Graphic_Config[Layer_Num][Graphic_Num]);
 }
-#endif
+
+/**
+ * @brief 设定裁判系统UI直线
+ *
+ * @param Layer_Num 图层编号, 0~9
+ * @param Graphic_Num 图形编号, 0~9
+ * @param Color 图形颜色
+ * @param Line_Width 线宽
+ * @param Start_X 起点x
+ * @param Start_Y 起点y
+ * @param End_X 终点x
+ * @param End_Y 终点y
+ * @return 对应图层指针
+ */
+inline Struct_Referee_Data_Interaction_Graphic_Config *Class_Referee::Set_Referee_UI_Line(uint8_t Layer_Num, uint8_t Graphic_Num, Enum_Referee_Data_Interaction_Graphic_Color Color, uint32_t Line_Width, uint32_t Start_X, uint32_t Start_Y, uint32_t End_X, uint32_t End_Y)
+{
+    Graphic_Config[Layer_Num][Graphic_Num].Index[0] = '0';
+    Graphic_Config[Layer_Num][Graphic_Num].Index[1] = '0' + Layer_Num;
+    Graphic_Config[Layer_Num][Graphic_Num].Index[2] = '0' + Graphic_Num;
+
+    if (UI_Change_Flag[Layer_Num][Graphic_Num] == 0)
+    {
+        Graphic_Config[Layer_Num][Graphic_Num].Operation_Enum = Referee_Data_Interaction_Graphic_Operation_ADD;
+        UI_Change_Flag[Layer_Num][Graphic_Num] = 1;
+    }
+    else
+    {
+        Graphic_Config[Layer_Num][Graphic_Num].Operation_Enum = Referee_Data_Interaction_Graphic_Operation_CHANGE;
+    }
+
+    Graphic_Config[Layer_Num][Graphic_Num].Type_Enum = Referee_Data_Interaction_Graphic_Type_LINE;
+    Graphic_Config[Layer_Num][Graphic_Num].Layer_Num = Layer_Num;
+    Graphic_Config[Layer_Num][Graphic_Num].Color_Enum = Color;
+    Graphic_Config[Layer_Num][Graphic_Num].Line_Width = Line_Width;
+    Graphic_Config[Layer_Num][Graphic_Num].Start_X = Start_X;
+    Graphic_Config[Layer_Num][Graphic_Num].Start_Y = Start_Y;
+    Graphic_Config[Layer_Num][Graphic_Num].Details_D = End_X;
+    Graphic_Config[Layer_Num][Graphic_Num].Details_E = End_Y;
+
+    return (&Graphic_Config[Layer_Num][Graphic_Num]);
+}
+
+/**
+ * @brief 设定裁判系统UI矩形
+ *
+ * @param Layer_Num 图层编号, 0~9
+ * @param Graphic_Num 图形编号, 0~9
+ * @param Color 图形颜色
+ * @param Line_Width 线宽
+ * @param Start_X 起点x
+ * @param Start_Y 起点y
+ * @param End_X 终点x
+ * @param End_Y 终点y
+ * @return 对应图层指针
+ */
+inline Struct_Referee_Data_Interaction_Graphic_Config *Class_Referee::Set_Referee_UI_Rectangle(uint8_t Layer_Num, uint8_t Graphic_Num, Enum_Referee_Data_Interaction_Graphic_Color Color, uint32_t Line_Width, uint32_t Start_X, uint32_t Start_Y, uint32_t End_X, uint32_t End_Y)
+{
+    Graphic_Config[Layer_Num][Graphic_Num].Index[0] = '0';
+    Graphic_Config[Layer_Num][Graphic_Num].Index[1] = '0' + Layer_Num;
+    Graphic_Config[Layer_Num][Graphic_Num].Index[2] = '0' + Graphic_Num;
+
+    if (UI_Change_Flag[Layer_Num][Graphic_Num] == 0)
+    {
+        Graphic_Config[Layer_Num][Graphic_Num].Operation_Enum = Referee_Data_Interaction_Graphic_Operation_ADD;
+        UI_Change_Flag[Layer_Num][Graphic_Num] = 1;
+    }
+    else
+    {
+        Graphic_Config[Layer_Num][Graphic_Num].Operation_Enum = Referee_Data_Interaction_Graphic_Operation_ADD;
+    }
+    
+    //
+    Graphic_Config[Layer_Num][Graphic_Num].Type_Enum = Referee_Data_Interaction_Graphic_Type_RECTANGLE;
+    Graphic_Config[Layer_Num][Graphic_Num].Layer_Num = Layer_Num;
+    Graphic_Config[Layer_Num][Graphic_Num].Color_Enum = Color;
+    Graphic_Config[Layer_Num][Graphic_Num].Line_Width = Line_Width;
+    Graphic_Config[Layer_Num][Graphic_Num].Start_X = Start_X;
+    Graphic_Config[Layer_Num][Graphic_Num].Start_Y = Start_Y;
+    Graphic_Config[Layer_Num][Graphic_Num].Details_D = End_X;
+    Graphic_Config[Layer_Num][Graphic_Num].Details_E = End_Y;
+
+    return (&Graphic_Config[Layer_Num][Graphic_Num]);
+}
+
+/**
+ * @brief 设定裁判系统UI圆形
+ *
+ * @param Layer_Num 图层编号, 0~9
+ * @param Graphic_Num 图形编号, 0~9
+ * @param Color 图形颜色
+ * @param Line_Width 线宽
+ * @param Center_X 圆心x
+ * @param Center_Y 圆心y
+ * @param Radius 半径
+ * @return 对应图层指针
+ */
+inline Struct_Referee_Data_Interaction_Graphic_Config *Class_Referee::Set_Referee_UI_Circle(uint8_t Layer_Num, uint8_t Graphic_Num, Enum_Referee_Data_Interaction_Graphic_Color Color, uint32_t Line_Width, uint32_t Center_X, uint32_t Center_Y, uint32_t Radius)
+{
+    Graphic_Config[Layer_Num][Graphic_Num].Index[0] = '0';
+    Graphic_Config[Layer_Num][Graphic_Num].Index[1] = '0' + Layer_Num;
+    Graphic_Config[Layer_Num][Graphic_Num].Index[2] = '0' + Graphic_Num;
+
+    if (UI_Change_Flag[Layer_Num][Graphic_Num] == 0)
+    {
+        Graphic_Config[Layer_Num][Graphic_Num].Operation_Enum = Referee_Data_Interaction_Graphic_Operation_ADD;
+        UI_Change_Flag[Layer_Num][Graphic_Num] = 1;
+    }
+    else
+    {
+        Graphic_Config[Layer_Num][Graphic_Num].Operation_Enum = Referee_Data_Interaction_Graphic_Operation_CHANGE;
+    }
+
+    Graphic_Config[Layer_Num][Graphic_Num].Type_Enum = Referee_Data_Interaction_Graphic_Type_CIRCLE;
+    Graphic_Config[Layer_Num][Graphic_Num].Layer_Num = Layer_Num;
+    Graphic_Config[Layer_Num][Graphic_Num].Color_Enum = Color;
+    Graphic_Config[Layer_Num][Graphic_Num].Line_Width = Line_Width;
+    Graphic_Config[Layer_Num][Graphic_Num].Start_X = Center_X;
+    Graphic_Config[Layer_Num][Graphic_Num].Start_Y = Center_Y;
+    Graphic_Config[Layer_Num][Graphic_Num].Details_C = Radius;
+
+    return (&Graphic_Config[Layer_Num][Graphic_Num]);
+}
+
+/**
+ * @brief 设定裁判系统UI椭圆形
+ *
+ * @param Layer_Num 图层编号, 0~9
+ * @param Graphic_Num 图形编号, 0~9
+ * @param Color 图形颜色
+ * @param Line_Width 线宽
+ * @param Center_X 圆心x
+ * @param Center_Y 圆心y
+ * @param Length_X x半轴长度
+ * @param Length_Y y半轴长度
+ * @return 对应图层指针
+ */
+inline Struct_Referee_Data_Interaction_Graphic_Config *Class_Referee::Set_Referee_UI_Oval(uint8_t Layer_Num, uint8_t Graphic_Num, Enum_Referee_Data_Interaction_Graphic_Color Color, uint32_t Line_Width, uint32_t Center_X, uint32_t Center_Y, uint32_t Length_X, uint32_t Length_Y)
+{
+    Graphic_Config[Layer_Num][Graphic_Num].Index[0] = '0';
+    Graphic_Config[Layer_Num][Graphic_Num].Index[1] = '0' + Layer_Num;
+    Graphic_Config[Layer_Num][Graphic_Num].Index[2] = '0' + Graphic_Num;
+
+    if (UI_Change_Flag[Layer_Num][Graphic_Num] == 0)
+    {
+        Graphic_Config[Layer_Num][Graphic_Num].Operation_Enum = Referee_Data_Interaction_Graphic_Operation_ADD;
+        UI_Change_Flag[Layer_Num][Graphic_Num] = 1;
+    }
+    else
+    {
+        Graphic_Config[Layer_Num][Graphic_Num].Operation_Enum = Referee_Data_Interaction_Graphic_Operation_CHANGE;
+    }
+
+    Graphic_Config[Layer_Num][Graphic_Num].Type_Enum = Referee_Data_Interaction_Graphic_Type_OVAL;
+    Graphic_Config[Layer_Num][Graphic_Num].Layer_Num = Layer_Num;
+    Graphic_Config[Layer_Num][Graphic_Num].Color_Enum = Color;
+    Graphic_Config[Layer_Num][Graphic_Num].Line_Width = Line_Width;
+    Graphic_Config[Layer_Num][Graphic_Num].Start_X = Center_X;
+    Graphic_Config[Layer_Num][Graphic_Num].Start_Y = Center_Y;
+    Graphic_Config[Layer_Num][Graphic_Num].Details_D = Length_X;
+    Graphic_Config[Layer_Num][Graphic_Num].Details_E = Length_Y;
+
+    return (&Graphic_Config[Layer_Num][Graphic_Num]);
+}
+
+/**
+ * @brief 设定裁判系统UI圆弧形
+ *
+ * @param Layer_Num 图层编号, 0~9
+ * @param Graphic_Num 图形编号, 0~9
+ * @param Color 图形颜色
+ * @param Line_Width 线宽
+ * @param Center_X 圆心x
+ * @param Center_Y 圆心y
+ * @param Angle_Start 起始角度
+ * @param Angle_End 终止角度
+ * @param Length_X x半轴长度
+ * @param Length_Y y半轴长度
+ * @return 对应图层指针
+ */
+inline Struct_Referee_Data_Interaction_Graphic_Config *Class_Referee::Set_Referee_UI_Arc(uint8_t Layer_Num, uint8_t Graphic_Num, Enum_Referee_Data_Interaction_Graphic_Color Color, uint32_t Line_Width, uint32_t Center_X, uint32_t Center_Y, uint32_t Angle_Start, uint32_t Angle_End, uint32_t Length_X, uint32_t Length_Y)
+{
+    Graphic_Config[Layer_Num][Graphic_Num].Index[0] = '0';
+    Graphic_Config[Layer_Num][Graphic_Num].Index[1] = '0' + Layer_Num;
+    Graphic_Config[Layer_Num][Graphic_Num].Index[2] = '0' + Graphic_Num;
+
+    if (UI_Change_Flag[Layer_Num][Graphic_Num] == 0)
+    {
+        Graphic_Config[Layer_Num][Graphic_Num].Operation_Enum = Referee_Data_Interaction_Graphic_Operation_ADD;
+        UI_Change_Flag[Layer_Num][Graphic_Num] = 1;
+    }
+    else
+    {
+        Graphic_Config[Layer_Num][Graphic_Num].Operation_Enum = Referee_Data_Interaction_Graphic_Operation_CHANGE;
+    }
+
+    Graphic_Config[Layer_Num][Graphic_Num].Type_Enum = Referee_Data_Interaction_Graphic_Type_ARC;
+    Graphic_Config[Layer_Num][Graphic_Num].Layer_Num = Layer_Num;
+    Graphic_Config[Layer_Num][Graphic_Num].Color_Enum = Color;
+    Graphic_Config[Layer_Num][Graphic_Num].Line_Width = Line_Width;
+    Graphic_Config[Layer_Num][Graphic_Num].Start_X = Center_X;
+    Graphic_Config[Layer_Num][Graphic_Num].Start_Y = Center_Y;
+    Graphic_Config[Layer_Num][Graphic_Num].Details_A = Angle_Start;
+    Graphic_Config[Layer_Num][Graphic_Num].Details_B = Angle_End;
+    Graphic_Config[Layer_Num][Graphic_Num].Details_D = Length_X;
+    Graphic_Config[Layer_Num][Graphic_Num].Details_E = Length_Y;
+
+    return (&Graphic_Config[Layer_Num][Graphic_Num]);
+}
+
+/**
+ * @brief 设定裁判系统UI浮点数
+ *
+ * @param Layer_Num 图层编号, 0~9
+ * @param Graphic_Num 图形编号, 0~9
+ * @param Color 图形颜色
+ * @param Line_Width 线宽
+ * @param Start_X 起点x
+ * @param Start_Y 起点y
+ * @param Font_Width 字体大小
+ * @param Float 数值
+ * @return 对应图层指针
+ */
+inline Struct_Referee_Data_Interaction_Graphic_Config *Class_Referee::Set_Referee_UI_Float(Enum_Referee_Data_Interaction_Graphic_Operation __Graphic_Operation,uint8_t Layer_Num, uint8_t Graphic_Num, Enum_Referee_Data_Interaction_Graphic_Color Color, uint32_t Line_Width, uint32_t Start_X, uint32_t Start_Y, uint32_t Font_Width, float Float)
+{
+    Graphic_Config[Layer_Num][Graphic_Num].Index[0] = '0';
+    Graphic_Config[Layer_Num][Graphic_Num].Index[1] = '0' + Layer_Num;
+    Graphic_Config[Layer_Num][Graphic_Num].Index[2] = '0' + Graphic_Num;
+
+    if (UI_Change_Flag[Layer_Num][Graphic_Num] == 0)
+    {
+        Graphic_Config[Layer_Num][Graphic_Num].Operation_Enum = Referee_Data_Interaction_Graphic_Operation_ADD;
+        UI_Change_Flag[Layer_Num][Graphic_Num] = 1;
+    }
+    else
+    {
+        Graphic_Config[Layer_Num][Graphic_Num].Operation_Enum = Referee_Data_Interaction_Graphic_Operation_CHANGE;
+    }
+    //测试用,通过变量控制操作，当绘制前，需要先add 在UI界面看到初始化的图形后，才可change，后续可以加一键式刷新add的封装解决此问题
+    Graphic_Config[Layer_Num][Graphic_Num].Operation_Enum = __Graphic_Operation;
+
+    Graphic_Config[Layer_Num][Graphic_Num].Type_Enum = Referee_Data_Interaction_Graphic_Type_FLOAT;
+    Graphic_Config[Layer_Num][Graphic_Num].Layer_Num = Layer_Num;
+    Graphic_Config[Layer_Num][Graphic_Num].Color_Enum = Color;
+    Graphic_Config[Layer_Num][Graphic_Num].Line_Width = Line_Width;
+    Graphic_Config[Layer_Num][Graphic_Num].Start_X = Start_X;
+    Graphic_Config[Layer_Num][Graphic_Num].Start_Y = Start_Y;
+    Graphic_Config[Layer_Num][Graphic_Num].Details_A = Font_Width;
+    int32_t *tmp_pointer = (int32_t *) ((uint32_t) &Graphic_Config[Layer_Num][Graphic_Num] + 11);
+    *tmp_pointer = (int32_t) (Float * 1000.0f);
+
+    return (&Graphic_Config[Layer_Num][Graphic_Num]);
+}
+
+/**
+ * @brief 设定裁判系统UI整型数
+ *
+ * @param Layer_Num 图层编号, 0~9
+ * @param Graphic_Num 图形编号, 0~9
+ * @param Color 图形颜色
+ * @param Line_Width 线宽
+ * @param Start_X 起点x
+ * @param Start_Y 起点y
+ * @param Font_Width 字体大小
+ * @param Integer 数值
+ * @return 对应图层指针
+ */
+inline Struct_Referee_Data_Interaction_Graphic_Config *Class_Referee::Set_Referee_UI_Integer(uint8_t Layer_Num, uint8_t Graphic_Num, Enum_Referee_Data_Interaction_Graphic_Color Color, uint32_t Line_Width, uint32_t Start_X, uint32_t Start_Y, uint32_t Font_Width, int32_t Integer)
+{
+    Graphic_Config[Layer_Num][Graphic_Num].Index[0] = '0';
+    Graphic_Config[Layer_Num][Graphic_Num].Index[1] = '0' + Layer_Num;
+    Graphic_Config[Layer_Num][Graphic_Num].Index[2] = '0' + Graphic_Num;
+
+    if (UI_Change_Flag[Layer_Num][Graphic_Num] == 0)
+    {
+        Graphic_Config[Layer_Num][Graphic_Num].Operation_Enum = Referee_Data_Interaction_Graphic_Operation_ADD;
+        UI_Change_Flag[Layer_Num][Graphic_Num] = 1;
+    }
+    else
+    {
+        Graphic_Config[Layer_Num][Graphic_Num].Operation_Enum = Referee_Data_Interaction_Graphic_Operation_CHANGE;
+    }
+
+    Graphic_Config[Layer_Num][Graphic_Num].Type_Enum = Referee_Data_Interaction_Graphic_Type_INTEGER;
+    Graphic_Config[Layer_Num][Graphic_Num].Layer_Num = Layer_Num;
+    Graphic_Config[Layer_Num][Graphic_Num].Color_Enum = Color;
+    Graphic_Config[Layer_Num][Graphic_Num].Line_Width = Line_Width;
+    Graphic_Config[Layer_Num][Graphic_Num].Start_X = Start_X;
+    Graphic_Config[Layer_Num][Graphic_Num].Start_Y = Start_Y;
+    Graphic_Config[Layer_Num][Graphic_Num].Details_A = Font_Width;
+    int32_t *tmp_pointer = (int32_t *) ((uint32_t) &Graphic_Config[Layer_Num][Graphic_Num] + 11);
+    *tmp_pointer = (int32_t) (Integer);
+
+    return (&Graphic_Config[Layer_Num][Graphic_Num]);
+}
+
+/**
+ * @brief 设定裁判系统UI字符串
+ *
+ * @param Layer_Num 图层编号, 0~9
+ * @param Graphic_Num 图形编号, 0~9
+ * @param Color 图形颜色
+ * @param Line_Width 线宽
+ * @param Start_X 起点x
+ * @param Start_Y 起点y
+ * @param Font_Width 字体大小
+ * @param String_Length 字符串长度
+ * @return
+ */
+inline Struct_Referee_Data_Interaction_Graphic_Config *Class_Referee::Set_Referee_UI_String(uint8_t Layer_Num, uint8_t Graphic_Num, Enum_Referee_Data_Interaction_Graphic_Color Color, uint32_t Line_Width, uint32_t Start_X, uint32_t Start_Y, uint32_t Font_Width, uint32_t String_Length)
+{
+    Graphic_Config[Layer_Num][Graphic_Num].Index[0] = '0';
+    Graphic_Config[Layer_Num][Graphic_Num].Index[1] = '0' + Layer_Num;
+    Graphic_Config[Layer_Num][Graphic_Num].Index[2] = '0' + Graphic_Num;
+
+    if (UI_Change_Flag[Layer_Num][Graphic_Num] == 0)
+    {
+        Graphic_Config[Layer_Num][Graphic_Num].Operation_Enum = Referee_Data_Interaction_Graphic_Operation_ADD;
+        UI_Change_Flag[Layer_Num][Graphic_Num] = 1;
+    }
+    else
+    {
+        Graphic_Config[Layer_Num][Graphic_Num].Operation_Enum = Referee_Data_Interaction_Graphic_Operation_CHANGE;
+    }
+
+    Graphic_Config[Layer_Num][Graphic_Num].Type_Enum = Referee_Data_Interaction_Graphic_Type_STRING;
+    Graphic_Config[Layer_Num][Graphic_Num].Layer_Num = Layer_Num;
+    Graphic_Config[Layer_Num][Graphic_Num].Color_Enum = Color;
+    Graphic_Config[Layer_Num][Graphic_Num].Line_Width = Line_Width;
+    Graphic_Config[Layer_Num][Graphic_Num].Start_X = Start_X;
+    Graphic_Config[Layer_Num][Graphic_Num].Start_Y = Start_Y;
+    Graphic_Config[Layer_Num][Graphic_Num].Details_A = Font_Width;
+    Graphic_Config[Layer_Num][Graphic_Num].Details_B = String_Length;
+
+    return (&Graphic_Config[Layer_Num][Graphic_Num]);
+}
 
 #endif
 

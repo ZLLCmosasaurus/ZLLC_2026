@@ -133,8 +133,10 @@ extern uint8_t CAN3_0xxf7_Tx_Data[];
 extern uint8_t CAN3_0xxf8_Tx_Data[];
 
 extern uint8_t CAN_Supercap_Tx_Data[];
-extern uint8_t CAN3_Chassis_Tx_Gimbal_Data[8];   //底盘给云台发送缓冲区
+extern uint8_t CAN3_Chassis_Tx_Gimbal_Data[];   //底盘给云台发送缓冲区
 extern uint8_t CAN3_Gimbal_Tx_Chassis_Data[];  //云台给底盘发送缓冲区
+extern uint8_t CAN3_Chassis_Tx_Gimbal_Data_1[];   //底盘给云台发送缓冲区
+extern uint8_t CAN3_Gimbal_Tx_Chassis_Data_1[];  //云台给底盘发送缓冲区
 extern uint8_t CAN3_Sentry_CMD_Data[];     //哨兵自主决策缓冲区
 extern uint8_t CAN3_Chassis_Tx_Data_A[];   //底盘给云台发送缓冲区
 extern uint8_t CAN3_Chassis_Tx_Data_B[];   //底盘给云台发送缓冲区
@@ -181,6 +183,8 @@ extern uint8_t CAN3_0x145_Tx_Data[8];
 extern uint8_t CAN3_0x146_Tx_Data[8];
 extern uint8_t CAN3_0x147_Tx_Data[8];
 extern uint8_t CAN3_0x148_Tx_Data[8];
+extern uint8_t CAN1_MiniPc_Tx_Data[8];
+extern uint8_t CAN2_MiniPc_Tx_Data[8];
 /* Exported function declarations ---------------------------------------------*/
 
 void CAN_Init(FDCAN_HandleTypeDef *hcan, CAN_Call_Back Callback_Function);

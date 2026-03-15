@@ -79,6 +79,8 @@ uint8_t CAN3_MiniPC_Tx_Data_C[8];   //下位机发送缓冲区
 uint8_t CAN3_MiniPC_Tx_Data_D[8];   //下位机发送缓冲区
 uint8_t CAN3_Chassis_Tx_Gimbal_Data[8];   //底盘给云台发送缓冲区
 uint8_t CAN3_Gimbal_Tx_Chassis_Data[8];  //云台给底盘发送缓冲区
+uint8_t CAN3_Chassis_Tx_Gimbal_Data_1[8];   //底盘给云台发送缓冲区
+uint8_t CAN3_Gimbal_Tx_Chassis_Data_1[8];  //云台给底盘发送缓冲区
 uint8_t CAN3_Sentry_CMD_Data[8];   //云台给底盘发送缓冲区
 
 //底盘分别给四个舵轮发送角度与速度数据
@@ -100,6 +102,8 @@ uint8_t CAN1_0x01E_Tx_Data[8];
 uint8_t CAN1_0x02E_TX_Data[8];
 uint8_t CAN2_Gimbal_Tx_Chassis_Data[8];  //云台给底盘发送缓冲区
 uint8_t CAN2_Chassis_Tx_Gimbal_Data[8];   //底盘给云台发送缓冲区
+uint8_t CAN1_MiniPc_Tx_Data[8];
+uint8_t CAN2_MiniPc_Tx_Data[8];
 /*********LK电机 控制缓冲区***********/
 uint8_t CAN1_0x141_Tx_Data[8];
 uint8_t CAN1_0x142_Tx_Data[8];
@@ -353,22 +357,19 @@ void TIM_CAN_PeriodElapsedCallback()
         mod5 = 0;
         
         #ifdef TRACK_LEG
-        CAN_Send_Data(&hfdcan2, 0x200, CAN2_0x200_Tx_Data, 8);//履带3508电机
-        CAN_Send_Data(&hfdcan1, 0x200, CAN1_0x200_Tx_Data, 8);//行进3508电机
+        //CAN_Send_Data(&hfdcan2, 0x200, CAN2_0x200_Tx_Data, 8); // 履带3508电机
+        CAN_Send_Data(&hfdcan1, 0x200, CAN1_0x200_Tx_Data, 8); // 行进3508电机
+        // CAN_Send_Data(&hfdcan2, 0x1ff, CAN2_0x1ff_Tx_Data, 8); // 导轮电机
         #endif
-        #ifdef AGV
-        //6020
-        //CAN_Send_Data(&hfdcan2, 0x01e, CAN1_0x01E_Tx_Data, 8);
-        #endif
+
+ 
     }
     
-    if (mod100 == 10) //10Hz
+    if (mod100 == 100) //10Hz
     {
 
-        #ifdef AGV
-        CAN_Send_Data(&hfdcan1, 0x51, CAN2_Chassis_Tx_Gimbal_Data, 8);
-        #endif
         CAN_Send_Data(&hfdcan3, 0x51, CAN3_Chassis_Tx_Gimbal_Data, 8);
+        CAN_Send_Data(&hfdcan3, 0x52, CAN3_Gimbal_Tx_Chassis_Data_1, 8);
         mod100 = 0;
     }
     #ifdef TRACK_LEG
@@ -377,67 +378,31 @@ void TIM_CAN_PeriodElapsedCallback()
         mod20 == 0;
     }
     #endif
-    #ifdef AGV
-    if (mod20 % 20 == 0) //50Hz
-    {
-        //上板
-        CAN_Send_Data(&hfdcan3, 0x188, CAN3_Chassis_Tx_Data_A, 8);
-        CAN_Send_Data(&hfdcan3, 0x199, CAN3_Chassis_Tx_Data_B, 8);
-        CAN_Send_Data(&hfdcan3, 0x178, CAN3_Chassis_Tx_Data_C, 8);      
-        CAN_Send_Data(&hfdcan3, 0x197, CAN3_Chassis_Tx_Data_E, 8);
-        CAN_Send_Data(&hfdcan3, 0x198, CAN3_Chassis_Tx_Data_D, 8);
-        CAN_Send_Data(&hfdcan3, 0x196, CAN3_Chassis_Tx_Data_F, 8);
-        //超电
-        CAN_Send_Data(&hfdcan1, 0x66, CAN_Supercap_Tx_Data, 8);
 
-        CAN_Send_Data(&hfdcan2, 0x01e, CAN1_0x01E_Tx_Data, 8);
-        //mod20 = 0;
-    }
-     if (mod20 % 2 == 0)
-    {
-        // while (HAL_FDCAN_GetTxFifoFreeLevel(&hfdcan2)) // 160hz
-        // {
-        //     CAN1_Tx_Index = (CAN1_Tx_Index + 1) % 2;
-        //     CAN_Send_Data(Massage_queue[CAN1_Tx_Index].hcan, Massage_queue[CAN1_Tx_Index].ID, Massage_queue[CAN1_Tx_Index].Data, Massage_queue[CAN1_Tx_Index].Length);
-        // }
-            //   CAN1_Tx_Index = (CAN1_Tx_Index + 1) % 2;
-            // CAN_Send_Data(Massage_queue[CAN1_Tx_Index].hcan, Massage_queue[CAN1_Tx_Index].ID, Massage_queue[CAN1_Tx_Index].Data, Massage_queue[CAN1_Tx_Index].Length);
-        CAN1_Tx_Index = 0;
-            CAN_Send_Data(Massage_queue[CAN1_Tx_Index].hcan, Massage_queue[CAN1_Tx_Index].ID, Massage_queue[CAN1_Tx_Index].Data, Massage_queue[CAN1_Tx_Index].Length);
-
-    }
-     if(mod20 % 2 == 1)
-    {
-        CAN1_Tx_Index = 1;
-        CAN_Send_Data(Massage_queue[CAN1_Tx_Index].hcan, Massage_queue[CAN1_Tx_Index].ID, Massage_queue[CAN1_Tx_Index].Data, Massage_queue[CAN1_Tx_Index].Length);
-    }
-
-    if(mod20 > 100)
-    {
-        mod20 = 0;
-    }
-    #endif
     #elif defined (GIMBAL)
 
     static uint8_t mod5 = 0,mod4 = 0,mod3 = 0,mod20 = 0;
     mod5++;
     mod4++;
-		mod3++;
+	mod3++;
     mod20++;
     
     if(mod5 == 5)
     {
         mod5 = 0;
-        CAN_Send_Data(&hfdcan2, 0x1fe, CAN2_0x1fe_Tx_Data, 8); //GM6020  按照0x1fe ID 发送 可控制多个电机
-        CAN_Send_Data(&hfdcan2, 0x1ff, CAN2_0x1ff_Tx_Data, 8); //摩擦轮 按照0x1ff ID 发送 可控制多个电机
 
+        //YAW PITCH轴4310
+         CAN_Send_Data(&hfdcan3,0x03,CAN3_0xxf3_Tx_Data,8);// YAW
+         CAN_Send_Data(&hfdcan2,0x04,CAN2_0xxf4_Tx_Data,8);//PITCH
         //  CAN3  下板       
         CAN_Send_Data(&hfdcan3, 0x200, CAN3_0x200_Tx_Data, 8); //拨弹盘  按照0x200 ID 发送 可控制多个电机
         CAN_Send_Data(&hfdcan3, 0x77, CAN3_Gimbal_Tx_Chassis_Data, 8); //给底盘发送控制命令 按照0x77 ID 发送
+        CAN_Send_Data(&hfdcan3, 0x78, CAN3_Gimbal_Tx_Chassis_Data_1, 8);
         
     }
     if(mod4 == 4)
     {
+        CAN_Send_Data(&hfdcan1, 0xa0, CAN1_MiniPc_Tx_Data, 8); // 上位机
         mod4 = 0;
     }
     if(mod3 == 3)
