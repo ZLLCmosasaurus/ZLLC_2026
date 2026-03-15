@@ -64,7 +64,7 @@ void Class_Gimbal::Init()
     Motor_Yaw.PID_Angle.Init(0.60f, 0.0f, 0.001f, 0.0f, 25, 25);
     //Kp给大容易因为大小Yaw联动的噪声出问题，达不到理想的想要，用大Ki补偿误差，还有Ki对抖动不敏感（积分，相位延迟）强制补偿掉，也可以尝试LESO，但他可能对噪声敏感一些（重在抗扰动）
     //Ki太大对阶跃信号抖动滞后，不用了
-    Motor_Yaw.PID_Omega.Init(3700.0f, 4.5f, 0.0015f, 0.0f, Motor_Yaw.Get_Output_Max(), Motor_Yaw.Get_Output_Max());
+    Motor_Yaw.PID_Omega.Init(5500.0f, 4.5f, 0.0015f, 0.0f, Motor_Yaw.Get_Output_Max(), Motor_Yaw.Get_Output_Max());
     Motor_Yaw.PID_Torque.Init(0.f, 0.0f, 0.0f, 0.0f, Motor_Yaw.Get_Output_Max(), Motor_Yaw.Get_Output_Max());
 
     Motor_Yaw.SMC_Control.Init(0.005, 60.0, 70.0, 2.0);
@@ -80,7 +80,7 @@ void Class_Gimbal::Init()
     // Motor_Pitch.PID_Omega.Init(0.0f, 0.0f, 0.0f, 0.0f, 2048.0f, 2048.0f);
     // Motor_Pitch.Init(&hfdcan1, DM_Motor_ID_0xA1, DM_Motor_Control_Method_MIT_TORQUE, 0, 20.94359f, 3.0f);
     Motor_Pitch.Init(&hfdcan1, DJI_Motor_ID_0x206, DJI_Motor_Control_Method_ANGLE);
-    Motor_Pitch_LESO.Init(0.1, 80.0, 1.0, Observe_Motor_Omega, Motor_DM4310);
+    Motor_Pitch_LESO.Init(0.05, 60.0, 1.0, Observe_Motor_Omega, Motor_GM6020);
 
     External_IMU_Gyro_Yaw.Init(0.99,0.07);
     External_IMU_Gyro_Pitch.Init(0.99,0.07);
@@ -91,7 +91,7 @@ void Class_Gimbal::Init()
  * @brief 输出到电机
  *
  */
-float tmp_Target_Angle = 0.0f, tmp_Target_Pitch_Angle = 0.0f;
+float tmp_Target_Angle = 0.0f, tmp_Target_Pitch_Angle = 0.0f, test_c;
 extern float Sin_Single;
 void Class_Gimbal::Output()
 {
@@ -133,7 +133,7 @@ void Class_Gimbal::Output()
             Motor_Main_Yaw.Set_LK_Motor_Control_Method(LK_Motor_Control_Method_ANGLE);
             Motor_Pitch.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
 
-            //Target_Yaw_Angle = Sin_Single;
+            Target_Yaw_Angle = 0.0f;
            // Target_Pitch_Angle = tmp_Target_Pitch_Angle;会和dr16的遥控器输入冲突
             //对于大Yaw控制的突变点与优劣弧处理       0--2*PI
             Angle_Continuity_Process(&Target_Main_Yaw_Angle, Boardc_BMI.Get_Angle_Yaw());
@@ -333,7 +333,7 @@ void Class_Gimbal::TIM_Calculate_PeriodElapsedCallback()
 
     //可能得写死区严重时的强制保护
 
-    // Motor_Pitch_LESO.Set_CMD_Torque(Motor_Pitch.Get_Output_Torque());               //上一时刻的输出力矩
+    // Motor_Pitch_LESO.Set_CMD_Torque(Motor_Pitch.Get_Out());               //上一时刻的输出力矩
     // Motor_Pitch_LESO.Set_Now_Omega(Motor_Pitch.Get_Transform_Omega());
     // Motor_Pitch_LESO.TIM_Adjust_PeriodElapsedCallback();
 
@@ -350,12 +350,12 @@ void Class_Gimbal::TIM_Calculate_PeriodElapsedCallback()
     Motor_Main_Yaw.TIM_Process_PeriodElapsedCallback();
 
     // if(Get_Gimbal_Control_Type() != Gimbal_Control_Type_DISABLE){
-    //     Pitch_Compensite_Output = 0.5f * cosf(Motor_Pitch.Get_Transform_Angle() / 57.3f);
-    //     Motor_Pitch.Compensite_Out(Pitch_Compensite_Output);
+    //     Pitch_Compensite_Output = test_c * cosf(Motor_Pitch.Get_Transform_Angle() / 57.3f);
+    //     Motor_Pitch.Compensite_Output(Pitch_Compensite_Output);
     // }
     // else{
     //     Pitch_Compensite_Output = 0;
-    //     Motor_Pitch.Compensite_Out(Pitch_Compensite_Output);
+    //     Motor_Pitch.Compensite_Output(Pitch_Compensite_Output);
     // }
 
 }

@@ -32,8 +32,8 @@
 #define MAIN_YAW_ENCODER_OFFSET 2048
 
 #define CRUISE_PITCH_SPEED 0.05 * 57.3f          //angle
-#define CRUISE_YAW_SPEED   1.5f                 //rad
-#define LIMIT_YAW_ANGLE    80.0f
+#define CRUISE_YAW_SPEED   1.8f                 //rad
+#define LIMIT_YAW_ANGLE    75.0f
 
 /**
  * @brief 云台控制类型
@@ -287,7 +287,7 @@ protected:
     // pitch轴最小值
     float Min_Pitch_Angle = -25.0f;
     // pitch轴最大值
-    float Max_Pitch_Angle = 25.0f ; //多10°
+    float Max_Pitch_Angle = 23.0f ; //多10°
 
     float Yaw_Compensite_KF = 150.0f;
     float Yaw_Compensite_Output = 0.0f;
