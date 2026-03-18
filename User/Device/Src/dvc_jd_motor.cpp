@@ -14,16 +14,22 @@
 #define MAX_OMEGA 17.4527f
 #define MAX_TORQUE 1.5f
 
-int rACT_Register = 0x03E8; // 电机使能寄存器地址
+#define Gripper_rACT_Setter_Register 0x03E8 // 夹持端使能寄存器地址
+#define Roll_rACT_Setter_Register 0x03E9 // 旋转轴使能寄存器地址
+#define Gripper_Setter_Register_A 0x03EA // 夹爪轴功能设置寄存器，高字节为夹持速度，低字节为夹持位置
+#define Gripper_Setter_Register_B 0x03EB // 夹爪轴功能设置寄存器，高字节为夹持力矩，低字节为夹持触发标志
+#define Roll_Setter_Register_C 0x03EC // 旋转轴功能设置寄存器，旋转绝对位置，2 字节有符号数，范围 -32768~32767，360 对应 360°
+#define Roll_Setter_Register_D 0x03ED // 旋转轴功能设置寄存器，高字节为旋转扭矩，低字节为旋转速度
+#define Roll_Setter_Register_E 0x03EE // 旋转轴功能设置寄存器，高字节为旋转圈数，低字节为运动触发（0x01 为绝对位置运动，0x02 为相对位置运动）
 
-int Gripper_Register_A = 0x03EA; // 夹爪轴，高字节为夹持速度，低字节为夹持位置
-int Gripper_Register_B = 0x03EB; // 夹爪轴，高字节为夹持力矩，低字节为夹持触发标志
+#define Gripper_rACT_Getter_Register 0x07D0 // 夹爪轴使能状态查询寄存器地址
+#define Roll_rACT_Getter_Register 0x07D1 // 旋转轴使能状态查询寄存器
+#define Gripper_Getter_Register_1 0x07D2 // 夹爪轴状态查询寄存器，高字节为速度，低字节为位置
+#define Gripper_Getter_Register_2 0x07D3 // 夹爪轴状态查询寄存器，高字节为电流值
+#define Roll_Getter_Register_1 0x07D4 // 旋转轴状态查询寄存器，绝对位置
+#define Roll_Getter_Register_2 0x07D5 // 旋转轴状态查询寄存器，高字节扭矩，低字节速度
 
-int Roll_Register_C = 0x03EC; // 旋转绝对位置，2 字节有符号数，范围 -32768~32767，360 对应 360°
-int Roll_Register_D = 0x03ED; // 高字节为旋转扭矩，低字节为旋转速度
-int Roll_Register_E = 0x03EE; // 高字节为旋转圈数，低字节为运动触发（0x01 为绝对位置运动，0x02 为相对位置运动）
-
-void Class_Jodell_Motor::Init(UART_HandleTypeDef *UART, int __Slave_Address)
+void Class_Jodell_Motor::Init(UART_HandleTypeDef *huart, int __Slave_Address)
 {
     if (huart->Instance == USART1)
     {
@@ -61,14 +67,31 @@ void Class_Jodell_Motor::Init(UART_HandleTypeDef *UART, int __Slave_Address)
     Slave_Address = __Slave_Address;
 
     agile_modbus_rtu_init(&ctx_rtu, Modbus_Tx_Buffer, sizeof(Modbus_Tx_Buffer), Modbus_Rx_Buffer, sizeof(Modbus_Rx_Buffer));
-    agile_modbus_set_slave(this->Slave_Address);
+    agile_modbus_set_slave(ctx, this->Slave_Address);
 }
 
-void Class_Jodell_Motor::Jodell_Motor_UART_RxCplt_Callback(uint8_t *Rx_Data, uint16_t Max_Length)
+void Class_Jodell_Motor::Jodell_Motor_UART_RxCplt_Callback(uint8_t *Rx_Data, uint16_t Length)
 {
-    Flag += 1;
+    // Modbus解析返回数据
+    int rc = agile_modbus_receive_judge(ctx, Length, AGILE_MODBUS_MSG_CONFIRMATION);
+    if (rc > 0)
+    {
+        // 通信正常，更新通信Flag
+        Flag += 1;
 
-    Data_Process();
+        // 获取功能码
+        uint8_t function = ctx->read_buf[ctx->backend->header_length];
+        if(function == AGILE_MODBUS_FC_WRITE_AND_READ_REGISTERS)
+        {
+            // 返回的数据
+            uint16_t read_data[6];
+            // 读取的寄存器个数
+            int regs_read = agile_modbus_deserialize_write_and_read_registers(ctx, Length, read_data);
+
+            if(regs_read >= 6)
+                Data_Process(read_data, regs_read);
+        }
+    }
 }
 
 void Class_Jodell_Motor::TIM1msMod50_Alive_PeriodElapsedCallback()
@@ -85,72 +108,107 @@ void Class_Jodell_Motor::TIM1msMod50_Alive_PeriodElapsedCallback()
     Pre_Flag = Flag;
 }
 
-void Class_Jodell_Motor::Modbus_Send_Request()
-{
-    HAL_UART_Transmit(UART_Manage_Object->UART_Handler, UART_Manage_Object->Tx_Buffer, UART_Manage_Object->Tx_Length, 10);
-}
-
 void Class_Jodell_Motor::TIM_UART_Tx_PeriodElapsedCallback()
 {
-    switch (Jodell_Control_Type)
+    // 清空缓存区
+    Modbus_Clear_Receive_Buffer();
+
+    // 记录数据包长度
+    int Data_Length = 0;
+
+    // 数据包相关变量
+    uint16_t write_data[4] = {0};
+    uint16_t write_addr = 0;
+    int write_nb = 0;
+
+    switch (Control_Type)
     {
-        case (Jodell_Control_Type_rACT)
-        // 电机使能帧
-        {
-            Modbus_Clear_Receive_Buffer();
-            if(Motor_Control_Status == Jodell_Motor_Control_ENABLE)
-            {
-                agile_modbus_serialize_write_registers(ctx, rACT_Register, 1, 0x0001);
-            }
-            else if(Motor_Control_Status == Jodell_Motor_Control_DISABLE)
-            {
-                agile_modbus_serialize_write_registers(ctx, rACT_Register, 1, 0x0000);
-            }
+    case Jodell_Control_Type_ENABLE:
+    {
+        write_addr = Gripper_rACT_Setter_Register;
+        write_nb = 2;
+        write_data[0] = 0x0001;
+        write_data[1] = 0x0001;
 
-            break;
-        }
-        case (Jodell_Control_Type_GRIPPER)
-        {
-            // 夹爪张合控制帧
-            uint16_t reg_data[2];
-
-            Modbus_Clear_Receive_Buffer();
-            if(Gripper_Status == Gripper_Clamp)
-            // 夹爪闭合
-            {
-                reg_data[0] = (0x80) << 8 | Clamp_Position; // 半速加持到指定位置
-                reg_data[1] = (0x80) << 8 | 0x01; // 半力触发
-            }
-            else if(Gripper_Clamp == Gripper_Release)
-            // 夹爪张开
-            {
-                reg_data[0] = (0x80) << 8 | 0x00; // 移动到0位置即张开
-                reg_data[1] = (0x80) << 8 | 0x01;
-            }
-            
-            agile_modbus_serialize_write_registers(ctx, Gripper_Register_A, 2, reg_data);
-
-            break;
-        }
-        case (Jodell_Control_Type_ROLL_ANGLE)
-        {
-            // Roll轴角度控制帧
-            uint16_t reg_data[4];
-
-            Modbus_Clear_Receive_Buffer();
-
-            uint8_t target_omega_byte = (uint8_t)((Target_Omega / MAX_OMEGA) * 255.0f);
-            uint8_t target_torque_byte = (uint8_t)((Target_Torque / MAX_TORQUE) * 255.0f);
-            reg_data[0] = (int16_t)(Target_Roll * 180.0f / PI);
-            reg_data[1] = (target_torque_byte << 8) | target_omega_byte;
-            reg_data[2] = 0x0000; // 旋转相对位置置0
-            reg_data[3] = (0x01 << 8) | 0x01; // 绝对位置模式，默认1圈
-
-            agile_modbus_serialize_write_registers(ctx, Roll_Register_C, 4, reg_data);
-
-            break;
-        }
-
+        break;
     }
 
+    case Jodell_Control_Type_GRIPPER:
+    {
+        write_addr = Gripper_Setter_Register_A;
+        write_nb = 2;
+        if (Gripper_Status == Gripper_Clamp)
+        {
+            write_data[0] = (0x80 << 8) | Target_Clamp_Position;
+            write_data[1] = (0x80 << 8) | 0x01;
+        }
+        else
+        {
+            write_data[0] = (0x80 << 8) | 0x00;
+            write_data[1] = (0x80 << 8) | 0x01;
+        }
+
+        break;
+    }
+
+    case Jodell_Control_Type_ROLL_ANGLE:
+    {
+        write_addr = Roll_Setter_Register_C;
+        write_nb = 4;
+        write_data[0] = (int16_t)(Target_Roll * 180.0f / PI);
+        write_data[1] = ((uint8_t)((Target_Torque / MAX_TORQUE) * 255.0f) << 8) |
+                        (uint8_t)((Target_Omega / MAX_OMEGA) * 255.0f);
+        write_data[2] = 0x0000;
+        write_data[3] = (0x01 << 8) | 0x01;
+
+        break;
+    }
+
+    default:
+        return;
+    }
+
+    // 数据帧打包，读写寄存器指令，读取0x07D0~0x07D5的数据
+    Data_Length = agile_modbus_serialize_write_and_read_registers(ctx,
+                                                                  write_addr, write_nb, write_data,
+                                                                  Gripper_rACT_Getter_Register, 6);
+
+    // 串口发送
+    if (Data_Length > 0)
+    {
+        HAL_UART_Transmit(UART_Manage_Object->UART_Handler, ctx->send_buf, Data_Length, 10);
+    }
+}
+
+void Class_Jodell_Motor::Modbus_Clear_Receive_Buffer()
+// 清空接收缓存区
+{
+    memset(Modbus_Rx_Buffer, 0, sizeof(Modbus_Rx_Buffer));
+}
+
+void Class_Jodell_Motor::Data_Process(uint16_t *data, int regs)
+{
+    //电机使能状态数据
+    uint8_t gripper_enable_status = ((data[0] & 0xFF) >> 3) & 0x03;
+    Gripper_Data.Enable_Status = (gripper_enable_status == 0x03 ? true : false);
+    uint8_t roll_enable_status = ((data[1] & 0xFF) >> 3) & 0x03;
+    Roll_Data.Enable_Status = (roll_enable_status == 0x03? true : false);
+
+    // 夹爪数据
+    uint8_t gripper_omega_raw = data[2] >> 8;
+    uint8_t gripper_pos_raw   = data[2] & 0xFF;
+    uint8_t gripper_torque_raw = data[3] >> 8;
+
+    Gripper_Data.Now_Omega    = ((float)gripper_omega_raw / 255.0f) * MAX_OMEGA;
+    Gripper_Data.Now_Position = ((float)gripper_pos_raw / 255.0f);
+    Gripper_Data.Now_Torque   = ((float)gripper_torque_raw / 255.0f) * MAX_TORQUE;
+
+    // 旋转轴数据
+    int16_t roll_pos_raw     = (int16_t)data[4];
+    uint8_t roll_torque_raw  = data[5] >> 8;
+    uint8_t roll_omega_raw   = data[5] & 0xFF;
+
+    Roll_Data.Now_Angle  = (float)roll_pos_raw; 
+    Roll_Data.Now_Torque = ((float)roll_torque_raw / 255.0f) * MAX_TORQUE;
+    Roll_Data.Now_Omega  = ((float)roll_omega_raw / 255.0f) * MAX_OMEGA;
 }

@@ -522,6 +522,21 @@
               <FileType>8</FileType>
               <FilePath>..\User\Device\Src\dvc_motor_dji.cpp</FilePath>
             </File>
+            <File>
+              <FileName>dvc_jd_motor.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User\Device\Src\dvc_jd_motor.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>agile_modbus_rtu.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Driver\Src\agile_modbus_rtu.c</FilePath>
+            </File>
+            <File>
+              <FileName>agile_modbus.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Driver\Src\agile_modbus.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

@@ -1,11 +1,13 @@
 #include <string.h>
 #include "drv_uart.h"
-#include "agile_modbus_rtu.c"
+#include "drv_math.h"
+#include "agile_modbus.h"
+#include "agile_modbus_rtu.h"
 
 enum Enum_Gripper_Status
 {
-    Gripper_Clamp = 0,  // 夹紧
-    Gripper_Release     // 松开
+    Gripper_Clamp = 0, // 夹紧
+    Gripper_Release    // 松开
 };
 
 enum Jodell_Motor_Status
@@ -22,26 +24,36 @@ enum Jodell_Motor_Control_Status
 
 enum Jodell_Control_Type
 {
-    Jodell_Control_Type_rACT = 0,
+    Jodell_Control_Type_ENABLE = 0,
+    Jodell_Control_Type_DISABLE,
     Jodell_Control_Type_GRIPPER,
     Jodell_Control_Type_ROLL_ANGLE
 };
 
-struct Jodell_Motor_Rx_Data
+struct Jodell_Roll_Rx_Data
+// 查询帧返回的电机旋转轴数据
 {
-    float Now_Roll_Angle;
+    bool Enable_Status;
+    float Now_Angle;
     float Now_Omega;
     float Now_Torque;
-    float Now_Gripper_Status;
-}
+};
+
+struct Jodell_Gripper_Rx_Data
+// 查询帧返回的夹爪轴数据
+{
+    bool Enable_Status;
+    float Now_Position;
+    float Now_Omega;
+    float Now_Torque;
+};
 
 class Class_Jodell_Motor
 {
-    public:
+public:
+    void Init(UART_HandleTypeDef *huart, int __Slave_Address);
 
-    void Init(UART_HandleTypeDef* UART, int __Slave_Address);
-
-    void Jodell_Motor_UART_RxCplt_Callback(uint8_t* Rx_Data, uint16_t Max_Length);
+    void Jodell_Motor_UART_RxCplt_Callback(uint8_t *Rx_Data, uint16_t Length);
 
     void TIM1msMod50_Alive_PeriodElapsedCallback();
 
@@ -59,11 +71,14 @@ class Class_Jodell_Motor
     inline void Set_Gripper_Clamp(uint8_t __Clamp_Position);
     inline Enum_Gripper_Status Get_Gripper_Status();
 
-    private:
+private:
+
+    //绑定的UART
+    Struct_UART_Manage_Object *UART_Manage_Object;
 
     // Modbus结构体
     agile_modbus_rtu_t ctx_rtu;
-    agile_modbus_t *ctx;
+    agile_modbus_t *ctx = &ctx_rtu._ctx;
     // Modbus发送缓冲区
     uint8_t Modbus_Tx_Buffer[256];
     // Modbus接收缓冲区
@@ -71,9 +86,9 @@ class Class_Jodell_Motor
     // 电机的从机地址
     int Slave_Address;
 
-    //当前时刻的电机通信flag
+    // 当前时刻的电机通信flag
     uint32_t Flag = 0;
-    //前一时刻的电机通信flag
+    // 前一时刻的电机通信flag
     uint32_t Pre_Flag = 0;
 
     Jodell_Motor_Status Motor_Status = Jodell_Motor_Status_OFFLINE;
@@ -84,13 +99,13 @@ class Class_Jodell_Motor
     float Target_Omega;
     float Target_Torque;
     Enum_Gripper_Status Gripper_Status;
-    uint8_t Clamp_Position;
+    uint8_t Target_Clamp_Position;
 
-    void Data_Process();
+    // 查询帧电机返回的数据
+    Jodell_Gripper_Rx_Data Gripper_Data;
+    Jodell_Roll_Rx_Data Roll_Data;
 
-    void Modbus_Send_Request();
-    void Modbus_Wait_For_Reseponse(uint8_t* Rx_Buffer, uint16_t Rx_Length);
+    void Data_Process(uint16_t *data, int regs);
+
     void Modbus_Clear_Receive_Buffer();
 };
-
-
