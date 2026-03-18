@@ -290,7 +290,7 @@ void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback(uint8_t *Rx_Data)
 #ifdef OMNI_WHEEL
         Chassis.Set_Target_Velocity_X(-chassis_velocity_x);
 #endif
-        Chassis.Set_Delta_Radian(chassis_delta_radian); // 目标角度增量
+        Chassis.Set_Delta_Radian(chassis_delta_radian); // 目标角度增量或目标角速度
         Chassis.Set_DR16_Right_Uplift_Status(dr16_uplift_status);
 
         Control_Chassis();
@@ -821,25 +821,46 @@ void Class_Chariot::Control_Chassis()
     { // 失能
         chassis_velocity_x = 0;
         chassis_velocity_y = 0;
+        #ifdef RADIAN_CONTROL
         chassis_radian = chassis_radian;
+        #elifdef OMEGA_CONTROL
+        chassis_radian = 0;
+        #endif
+
         break;
     }
     case (Chassis_Control_Type_NORMAL__):
     {
         chassis_velocity_x = Chassis.Get_Target_Velocity_X();
         chassis_velocity_y = Chassis.Get_Target_Velocity_Y();
+        #ifdef RADIAN_CONTROL
         chassis_radian += Chassis.Get_Delta_Radian();
+        #elifdef OMEGA_CONTROL
+        chassis_radian = Chassis.Get_Delta_Radian() * 300.0f;
+        #endif
+
         break;
     }
     }
+    #ifdef RADIAN_CONTROL
     if (chassis_radian > PI)
         chassis_radian -= 2 * PI;
     if (chassis_radian < -PI)
         chassis_radian += 2 * PI;
+    #elifdef OMEGA_CONTROL
+    if (chassis_radian > 4.0f)
+        chassis_radian = 4.0f;
+    if (chassis_radian < -4.0f)
+        chassis_radian = -4.0f;
+    #endif
 
     Force_Chassis.Set_Target_Velocity_X(chassis_velocity_x);
     Force_Chassis.Set_Target_Velocity_Y(chassis_velocity_y); // 前x左y正
+    #ifdef RADIAN_CONTROL
     Force_Chassis.Set_Target_Radian(chassis_radian);
+    #elifdef OMEGA_CONTROL
+    Force_Chassis.Set_Target_Omega(chassis_radian);
+    #endif
 
     Chassis.Set_Target_Track_Omega(track_omega);
 
@@ -1050,13 +1071,23 @@ void Class_Chariot::Control_Gimbal()
         Gimbal.Set_Target_J3_Yaw_Radian(tmp_j3_yaw_radian);
         Gimbal.Set_Target_J4_Pitch_Radian(tmp_j4_pitch_radian);
         Gimbal.Set_Target_J5_Yaw_Radian(tmp_j5_yaw_radian);
+
+        // 轨迹录制开关
+        if(dr16_yaw >= 0.8f)
+        {
+            Gimbal.is_recording = true;
+        }
+        else
+        {
+            Gimbal.is_recording = false;
+        }
     }
     else // 左下，摇杆控制底盘，机械臂保持原来的姿态
     {
         Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
     }
 
-    Math_Constrain(&tmp_gripper_radian, 0.0f, 0.90f);
+    Math_Constrain(&tmp_gripper_radian, 0.0f, Gimbal.gripper_stroke);
     last_gripper_value = tmp_gripper_radian;
     // 云台对象中夹爪赋值
     Gimbal.Set_Target_Gripper_Radian(tmp_gripper_radian);

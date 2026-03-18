@@ -370,5 +370,7 @@ void Class_Chassis::PID_Radian_Output()
     
     PID_Radian.TIM_Adjust_PeriodElapsedCallback();
 
+    #ifdef RADIAN_CONTROL
     Set_Target_Omega(PID_Radian.Get_Out());
+    #endif
 }

@@ -426,6 +426,12 @@ public:
 #endif
     float test_angle[6] = {0.0f, 0.5f, 1.68f, -1.0f, 0.0f, 0.0f};
 
+    float gripper_stroke = 1.0f * PI;
+
+    // 轨迹录制相关变量
+    bool is_recording = false; // 轨迹录制标志位
+    float Recorded_Trajectory[2000][6]; // 兑换三级矿时记录的关节角度，记录时间为10秒
+
 protected:
     // 电机CAN通信优先级变量
     static inline uint32_t can_priority_cnt = 0; // 电机CAN通信优先级计数器，前面写inline是为了能保持变量是类内部静态变量的同时可以自动初始化
@@ -481,11 +487,11 @@ protected:
     // gripper校准角度，默认为0
     float gripper_cali_offset = 0.0f;
     float Min_gripper_Radian = gripper_cali_offset;
-    float Max_gripper_Radian = gripper_cali_offset + 1.15f; // 最大角度，完全闭合时为1.15f
+    float Max_gripper_Radian = gripper_cali_offset + gripper_stroke; // 最大角度，完全闭合时为1.15f
 
     /*SCARA臂*/
     float J0_Pitch_Min_Radian = -2.1185f;
-    float J0_Pitch_Max_Radian = 1.1838f;
+    float J0_Pitch_Max_Radian = 0.5f * PI;
 
     float J1_Yaw_Min_Radian = -0.882f;
     float J1_Yaw_Max_Radian = 0.852f;

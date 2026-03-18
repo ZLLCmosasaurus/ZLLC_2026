@@ -155,6 +155,30 @@ void Class_Gimbal::Output()
                     Motor_C610_Gripper.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE); // 用Motor_Test调试时删这一行，因为上面Motor_Test的代码块里写了标志位用于使能和失能
                     Motor_C610_Gripper.Set_Target_Radian(Target_Gripper_Radian);
                 }
+
+                // 轨迹录制记录函数
+                if (is_recording)
+                {
+                    J0_Pitch_4340.Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
+                    J1_Yaw_8009P.Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
+                    J2_Yaw_4340P.Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
+                    J3_Yaw_4340P.Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
+                    J4_Pitch_4340P.Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
+                    J5_Yaw_4340P.Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
+
+                    static uint32_t record_cnt = 0;
+                    if (record_cnt % 5 == 0 & record_cnt / 5 < 2000)
+                    {
+                        Recorded_Trajectory[record_cnt / 5][0] = J0_Pitch_4340.Get_Now_Angle();
+                        Recorded_Trajectory[record_cnt / 5][1] = J1_Yaw_8009P.Get_Now_Angle();
+                        Recorded_Trajectory[record_cnt / 5][2] = J2_Yaw_4340P.Get_Now_Angle();
+                        Recorded_Trajectory[record_cnt / 5][3] = J3_Yaw_4340P.Get_Now_Angle();
+                        Recorded_Trajectory[record_cnt / 5][4] = J4_Pitch_4340P.Get_Now_Angle();
+                        Recorded_Trajectory[record_cnt / 5][5] = J5_Yaw_4340P.Get_Now_Angle();
+
+                        record_cnt++;
+                    }
+                }
             }
             else if ((Get_Gimbal_Control_Type() == Gimbal_Control_Type_MINIPC) && (MiniPC->Get_MiniPC_Status() != MiniPC_Status_DISABLE))
             {
@@ -198,7 +222,7 @@ void Class_Gimbal::Output()
             J5_Yaw_4340P.Set_Target_Omega(0.5f);
             J5_Yaw_4340P.Set_Target_Angle(0.0f); // Radian 0
 
-            bool init_flag = 
+            bool init_flag =
                 (fabs(J0_Pitch_4340.Get_Target_Angle() + PI - J0_Pitch_4340.Get_Now_Angle()) < 0.05f) &&
                 (fabs(J1_Yaw_8009P.Get_Target_Angle() + PI - J1_Yaw_8009P.Get_Now_Angle()) < 0.05f) &&
                 (fabs(J2_Yaw_4340P.Get_Target_Angle() + PI - J2_Yaw_4340P.Get_Now_Angle()) < 0.05f) &&
@@ -287,7 +311,7 @@ void Class_FSM_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
             {
                 Gimbal->gripper_cali_offset = gripper_offset;
                 Gimbal->Min_gripper_Radian = Gimbal->gripper_cali_offset;
-                Gimbal->Max_gripper_Radian = Gimbal->gripper_cali_offset + 0.95f; // 夹爪张开最大时为0.95f
+                Gimbal->Max_gripper_Radian = Gimbal->gripper_cali_offset + Gimbal->gripper_stroke; // 夹爪张开最大时为0.95f
             }
 
             if (gripper_cali_status)
@@ -369,7 +393,7 @@ bool Class_FSM_Calibration::Motor_Calibration(Class_DJI_Motor_C610 *Motor, float
 {
     Motor->Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
     Motor->Set_Target_Omega_Radian(Cali_Omega);
-    Motor->Set_Target_Radian(-3.14f);
+    Motor->Set_Target_Radian(-3.0f * PI);
 
     if ((fabs(Motor->Get_Now_Torque()) >= locked_torque) && (Motor->Get_Now_Omega_Radian() <= 0.01f))
     {
