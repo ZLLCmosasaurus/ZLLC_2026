@@ -158,7 +158,7 @@ protected:
     //舵向电机功率上限比率
     float Steer_Power_Ratio = 0.5f;
     //底盘小陀螺模式角速度
-    float Spin_Omega = 10.0f;
+    float Spin_Omega = 10.0f/2.0f;
     //常量
 
 

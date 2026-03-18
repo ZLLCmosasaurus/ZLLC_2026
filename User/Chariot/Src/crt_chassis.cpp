@@ -103,10 +103,7 @@ void Class_Steering_Wheel_Chassis::Init(float __Velocity_X_Max, float __Velocity
 float car_V,car_yaw;//车体总体朝向与速度
 void Class_Steering_Wheel_Chassis::Speed_Resolution()
 {
-	if(Motor_Steer[0].Get_MA600_Status()==MA600_Status_DISABLE || Motor_Steer[1].Get_MA600_Status()==MA600_Status_DISABLE ||
-       Motor_Steer[2].Get_MA600_Status()==MA600_Status_DISABLE || Motor_Steer[3].Get_MA600_Status()==MA600_Status_DISABLE)
-	{
-		for(uint8_t i=0;i<4;i++)
+			if(Motor_Steer[1].Get_MA600_Status()==MA600_Status_DISABLE || Motor_Steer[2].Get_MA600_Status()==MA600_Status_DISABLE)
 		{
 			Motor_Wheel[i].Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OPENLOOP);
 			Motor_Wheel[i].PID_Omega.Set_Integral_Error(0.0f);
@@ -347,7 +344,7 @@ void Class_Steering_Wheel_Chassis::TIM_Calculate_PeriodElapsedCallback(Enum_Spri
     }
     else{
         //裁判系统离线限制功率
-        Power_Management.Max_Power = Max_Power_test;
+        Power_Management.Max_Power = 100.0f;
         Chassis_Buffer = 0.0f;
     }
     
@@ -374,10 +371,10 @@ void Class_Steering_Wheel_Chassis::TIM_Calculate_PeriodElapsedCallback(Enum_Spri
     for (int i = 0; i < 4; i++)
     {
         Motor_Wheel[i].Set_Out(Power_Management.Motor_Data[i].output);
-        //Motor_Wheel[i].Output();
+       // Motor_Wheel[i].Output();
 
         Motor_Steer[i].Set_Out(Power_Management.Motor_Data[i + 4].output);//set_out已经有output输出
-        //Motor_Steer[i].Output();
+      //  Motor_Steer[i].Output();
     }
 
     if(Referee->Get_Referee_Status() == Referee_Status_ENABLE){
@@ -385,6 +382,7 @@ void Class_Steering_Wheel_Chassis::TIM_Calculate_PeriodElapsedCallback(Enum_Spri
     }
     else{
         Supercap.Set_Limit_Power(70.0f);
+        Supercap.Set_Working_Status(Working_Status_OFF);
     }
     //Supercap.TIM_Supercap_PeriodElapsedCallback();          //向超电发送信息
     #endif

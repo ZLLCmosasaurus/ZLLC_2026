@@ -123,6 +123,8 @@ void Chassis_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
  * @param CAN_RxMessage CAN2收到的消息
  */
 #ifdef CHASSIS
+float Dt = 0;
+uint32_t last_cnt = 0;
 void Chassis_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
 	can[1]++;
@@ -135,15 +137,25 @@ void Chassis_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
         break;						
         case (0x67)://超电接收
         {
+            Dt = 1.0f/DWT_GetDeltaT(&last_cnt);
             chariot.Chassis.Supercap.CAN_RxCpltCallback(CAN_RxMessage->Data);
+            
         }
-        break;
-        case(0x141)://给yaw进行通信
+         break;
+//        case (0x55):
+//        {
+//            chariot.Chassis.Supercap.CAN_RxCpltCallback(CAN_RxMessage->Data);
+//            break;
+//        }
+
+        case(0x02)://给yaw进行通信
         {
             if(CAN_RxMessage->Data[1] != 0)
             chariot.Motor_Yaw.CAN_RxCpltCallback(CAN_RxMessage->Data);
         }
-        break;	
+        break;
+
+			
     }
 }
 #endif

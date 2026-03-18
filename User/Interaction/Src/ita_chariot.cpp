@@ -356,6 +356,120 @@ void Class_Chariot::Control_Chassis()
 #endif
 
 /**
+* @brief 底盘直接接收DR16测试
+*
+*/
+#ifdef TEST
+float target[2];
+void Class_Chariot::Control_Chassis_Test()
+{
+    //遥控器摇杆值
+    float dr16_l_x = 0, dr16_l_y = 0,dr16_r_x = 0;
+
+    //底盘坐标系速度目标值 float
+    float chassis_velocity_x = 0, chassis_velocity_y = 0;
+    float gimbal_velocity_x=0,gimbal_velocity_y=0;
+    float chassis_omega = 0; 
+
+    //底盘控制类型
+    Enum_Chassis_Control_Type chassis_control_type;
+
+    //排除遥控器死区
+    dr16_l_x = (Math_Abs(DR16.Get_Left_X()) > DR16_Dead_Zone) ? DR16.Get_Left_X() : 0;
+    dr16_l_y = (Math_Abs(DR16.Get_Left_Y()) > DR16_Dead_Zone) ? DR16.Get_Left_Y() : 0;    
+    dr16_r_x = (Math_Abs(DR16.Get_Right_X()) > DR16_Dead_Zone) ? DR16.Get_Right_X() : 0;
+	// 设定矩形到圆形映射进行控制，因为遥控器理想是圆，但实际数据是正方形，如果45°移动，将会是1.414倍，所以要映射
+	gimbal_velocity_x = dr16_l_x * sqrt(1.0f - dr16_l_y * dr16_l_y / 2.0f) * Chassis.Get_Velocity_X_Max();
+    gimbal_velocity_y = dr16_l_y * sqrt(1.0f - dr16_l_x * dr16_l_x / 2.0f) * Chassis.Get_Velocity_Y_Max();	
+	//    //统一一下，进行限幅，但我感觉不太需要		因为初始化变量里面有一个值进行限制
+//        if(chassis_velocity_x>4.0f)
+//        {
+//            chassis_velocity_x=4.0f;
+//        }
+//        else if(chassis_velocity_x<-4.0f)
+//        {
+//            chassis_velocity_x=-4.0f;
+//        } 
+//        if(chassis_velocity_y>4.0f)
+//        {
+//            chassis_velocity_y=4.0f;
+//        }
+//        else if(chassis_velocity_y<-4.0f)
+//        {
+//            chassis_velocity_y=-4.0f;
+//        }
+//        
+        // 键盘遥控器操作逻辑
+        if (DR16.Get_Left_Switch() == DR16_Switch_Status_MIDDLE) // 左中 随动模式
+        {
+            // 底盘随动
+            chassis_control_type=Chassis_Control_Type_FLLOW;
+            chassis_omega = -dr16_r_x * Chassis.Get_Omega_Max();	
+        }
+        if (DR16.Get_Left_Switch() == DR16_Switch_Status_UP) // 左上 小陀螺模式
+        {
+            chassis_control_type=Chassis_Control_Type_SPIN_Positive;
+            chassis_omega = -Chassis.Get_Spin_Omega();
+					
+                if (DR16.Get_Right_Switch() == DR16_Switch_Status_DOWN) // 右下 小陀螺反向
+            {
+                chassis_control_type=Chassis_Control_Type_SPIN_NePositive;
+                chassis_omega = Chassis.Get_Spin_Omega();
+            }        				
+        }
+
+
+//        if(chassis_omega>4.0f)
+//        {
+//            chassis_omega=4.0f;
+//        }
+//        else if(chassis_omega<4.0f)
+//        {
+//            chassis_omega=-4.0f;
+//        }
+        #ifdef OLD
+
+        //获取云台坐标系和底盘坐标系的夹角（弧度制）
+        //角速度前馈，保证小陀螺时走直线
+        float Feedback_Angle =  0.0f;
+        if(Chassis.Get_Chassis_Control_Type() == Chassis_Control_Type_SPIN_Positive)
+        {
+            Feedback_Angle = -0.025f * Math_Int_To_Float(chassis_omega,0,0xFF,-1 * 20.0f,20.0f);
+        }
+        else if(Chassis.Get_Chassis_Control_Type() == Chassis_Control_Type_SPIN_NePositive)
+        {
+            Feedback_Angle = 0.025f * Math_Int_To_Float(chassis_omega,0,0xFF,-1 * 20.0f,20.0f);
+        }
+        else
+        {
+            Feedback_Angle = 0.0f;
+        }
+
+    float derta_angle;
+    Chassis_Angle = Motor_Yaw.Get_Now_Radian();
+    derta_angle = Reference_Angle - Chassis_Angle + Offset_Angle + Feedback_Angle;
+    derta_angle = derta_angle < 0 ? (derta_angle + 2 * PI) : derta_angle;
+
+    // 云台坐标系的目标速度转为底盘坐标系的目标速度 正常情况下不会更正，只有有偏移未矫正或者小陀螺或反小陀螺会更正
+    //无论云台如何动，dt7传的数据可以直接对应底盘车体运动行进，而不是完全以头为正方向
+    gimbal_velocity_x = 1.0f * ((float)(gimbal_velocity_x * cos(derta_angle) - gimbal_velocity_x * sin(derta_angle)));
+    gimbal_velocity_y = 1.0f * ((float)(gimbal_velocity_y * sin(derta_angle) + gimbal_velocity_y * cos(derta_angle)));
+    if(chassis_omega < 0.5f && chassis_omega > -0.5f)chassis_omega = 0;//限幅
+    //小陀螺行进，我感觉一般不会进入这个判断
+    #endif
+    chassis_velocity_x=gimbal_velocity_y;
+    chassis_velocity_y=-gimbal_velocity_x;
+
+    Chassis.Set_Target_Velocity_X(chassis_velocity_x);
+    Chassis.Set_Target_Velocity_Y(chassis_velocity_y);//前x正，左y正
+    Chassis.Set_Target_Omega(chassis_omega); 
+    
+    Chassis.Set_Chassis_Control_Type(chassis_control_type);    
+}
+
+#endif
+
+/**
  * @brief 鼠标数据转换
  *
  */
@@ -796,31 +910,42 @@ void Class_Chariot::Control_Booster()
         if (Active_Controller == Controller_DR16)
         {
 
-            if (DR16.Get_Keyboard_Key_B() == DR16_Key_Status_TRIG_FREE_PRESSED)
-            {
-                if (Booster.Booster_User_Control_Type == Booster_User_Control_Type_SINGLE)
-                {
-                    Booster.Booster_User_Control_Type = Booster_User_Control_Type_MULTI;
-                }
-                else
-                {
-                    Booster.Booster_User_Control_Type = Booster_User_Control_Type_SINGLE;
-                }
-            }
-            // 按下ctrl键 开启摩擦轮
-            if (DR16.Get_Keyboard_Key_Ctrl() == DR16_Key_Status_TRIG_FREE_PRESSED)
-            {
-                if (Fric_Status == Fric_Status_CLOSE)
-                {
-                    Booster.Set_Friction_Control_Type(Friction_Control_Type_ENABLE);
-                    Fric_Status = Fric_Status_OPEN;
-                }
-                else
-                {
-                    Booster.Set_Friction_Control_Type(Friction_Control_Type_DISABLE);
-                    Fric_Status = Fric_Status_CLOSE;
-                }
-            }
+#endif
+}
+#endif
+
+/**
+ * @brief 计算回调函数
+ *
+ */
+
+void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
+{
+#ifdef CHASSIS
+#ifdef OLD
+        // 底盘给云台发消息
+        CAN_Chassis_Tx_Gimbal_Callback();
+
+		if (Chassis.Get_Chassis_Control_Type() == Chassis_Control_Type_FLLOW)
+		{
+				// 随动环
+				Chassis_Angle = Motor_Yaw.Get_Now_Angle();
+
+				PID_Chassis_Follow.Set_Target(Reference_Angle);
+				PID_Chassis_Follow.Set_Now(Chassis_Angle);
+				if(Reference_Angle - Chassis_Angle>180.0f)
+				{
+					PID_Chassis_Follow.Set_Target(Reference_Angle-360.0f);
+				}
+				else if(Reference_Angle - Chassis_Angle <-180.0f)
+				{
+					PID_Chassis_Follow.Set_Target(Reference_Angle +180.0f);
+				}
+				else
+				{
+					
+				}
+				PID_Chassis_Follow.TIM_Adjust_PeriodElapsedCallback();
 
             // 按下鼠标左键 单发
             if (Booster.Get_Friction_Control_Type() == Friction_Control_Type_ENABLE)
@@ -922,44 +1047,34 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
 		Chassis.Set_Target_Omega(Chassis.Get_Spin_Omega());
 	}
 
-    else if(Chassis.Get_Chassis_Control_Type() == Chassis_Control_Type_Drive)
-    {
-        //在遥控器控制策略中实现
-        if(change_time < 100)
+		// if(Get_Gimbal_Status() == DR16_Status_ENABLE)
+        if(Get_Gimbal_Status()==Gimbal_Status_ENABLE)
+        //if(DR16.Get_DR16_Status()==DR16_Status_ENABLE)
+        // if(Get_Chassis_Status() == Chassis_Status_ENABLE)
+        {
+            Chassis.TIM_Calculate_PeriodElapsedCallback(Sprint_Status);//还有飞坡前馈没写
+        }
+        else
         {
             Chassis.Set_Target_Omega(0.0f);
             change_time++;
         }
-    }
-	else
-	{
-		Chassis.Set_Target_Omega(0.0f);
-	}
+        //DWT_SysTimeUpdate();
+        #endif
+        Chassis.TIM_Calculate_PeriodElapsedCallback(Sprint_Status);//还有飞坡前馈没写
+        Chassis.Supercap.Set_Working_Status(Working_Status_OFF);
+    #elif defined(GIMBAL)
 
-	// Chassis.Set_Sprint_Status(Sprint_Status);		
-    Chassis.TIM_Calculate_PeriodElapsedCallback(Sprint_Status);//还有飞坡前馈没写
-				
-#elif defined(GIMBAL)
-    Chassis_Angle = Gimbal.Motor_Yaw.Get_Now_Angle();
-    float diff = Reference_Angle - Chassis_Angle;
-    if(diff > 360.0f)
-    {
-        Reference_Angle -= 360.0f;
-    }
-    else if(diff < -360.0f)
-    {
-        Reference_Angle += 360.0f;
-    }
-    YAW_Reference_Angle = Reference_Angle;
-    YAW_Chassis_Angle = Chassis_Angle;
-    //各个模块的分别解算
-    Gimbal.TIM_Calculate_PeriodElapsedCallback();
-    Booster.TIM_Calculate_PeriodElapsedCallback();
-    //传输数据给上位机
-    MiniPC.TIM_Write_PeriodElapsedCallback();
-    //给下板发送数据
-    CAN_Gimbal_Tx_Chassis_Callback();
-#endif				
+        //各个模块的分别解算
+        Gimbal.TIM_Calculate_PeriodElapsedCallback();
+        Booster.TIM_Calculate_PeriodElapsedCallback();
+        //传输数据给上位机
+        MiniPC.TIM_Write_PeriodElapsedCallback();
+        //给下板发送数据
+        CAN_Gimbal_Tx_Chassis_Callback();
+    #endif
+
+			
 }
 
 
