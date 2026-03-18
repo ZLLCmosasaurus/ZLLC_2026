@@ -56,6 +56,8 @@ public:
     //超电
     Class_Supercap Supercap;
 
+    Class_Referee *Referee;
+
     //低通滤波器
     Class_Filter_Fourier Acceleration_X_Filter;
     Class_Filter_Fourier Acceleration_Y_Filter;

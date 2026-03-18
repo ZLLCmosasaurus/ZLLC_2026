@@ -16,7 +16,7 @@ void Class_IMU::Init()
 {
     // 初始化BMI088传感器，计算零漂 并检查初始化是否成功
     IMU_BMI088.init(&hspi2,&BMI088_Raw_Data);
-    HAL_Delay(100);
+    //HAL_Delay(100);
 
     // 初始化IST8310传感器
     //  IMU_IST8310.init(&hi2c3);
@@ -26,9 +26,9 @@ void Class_IMU::Init()
     IMU_MahonyAHRS.init(INS_Quat);
  
     //EKF初始化
-    IMU_QuaternionEKF_Init(10, 0.001, 1000000, 0.9996, 0.1, 0.0f, &QEKF_INS);
+    IMU_QuaternionEKF_Init(10, 0.001, 10000000, 1, 0 , 0.0f, &QEKF_INS);
 
-    INS.AccelLPF = 0.3;
+    INS.AccelLPF = 0.0085;
 
     //初始化温控pid参数 积分和输出限幅是一周期满占空比的计数240M/24/10000=1000
     PID_IMU_Tempture.Init(200, 500, 0, 0.0, 800, 1000);

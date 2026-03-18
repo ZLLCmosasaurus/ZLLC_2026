@@ -377,7 +377,20 @@ void Class_Chassis::Output_To_Motor()
     }
 
     //进行功率限制
-    Power_Management.Max_Power = 150.0f;
+    if(Referee->Get_Referee_Status() == Referee_Status_ENABLE)
+    {
+        float energyBuffer = Referee->Get_Chassis_Energy_Buffer();
+        // 归一化到[-1, 1]范围，中心点在30J
+        float normalized = (energyBuffer - 30.0f) / 30.0f;
+        // 使用tanh实现平滑过渡，范围[-30, 30]
+        float bufferPower = 30.0f * tanhf(normalized);
+        
+        Power_Management.Max_Power = Referee->Get_Chassis_Power_Max() + bufferPower;
+    }
+    else
+    {
+        Power_Management.Max_Power = 100.0f;
+    }
     //Power_Management.Total_error = 0.0;
     Power_Limit.Power_Task(Power_Management);
 

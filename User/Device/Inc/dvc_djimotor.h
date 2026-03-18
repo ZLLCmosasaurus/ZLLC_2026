@@ -378,6 +378,7 @@ public:
     // PID角速度环控制
     Class_PID PID_Omega;
     
+    
     //功率限制友元函数
     friend class Class_Power_Limit;
 
@@ -447,6 +448,7 @@ protected:
     uint32_t Flag = 0;
     //前一时刻的电机接收flag
     uint32_t Pre_Flag = 0;
+    float dt_pid;
 
     //读变量
 

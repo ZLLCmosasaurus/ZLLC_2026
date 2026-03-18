@@ -23,7 +23,7 @@
 #include "dvc_referee.h"
 #include "dvc_djimotor.h"
 #include "dvc_minipc.h"
-
+#include "dvc_dwt.h"
 /* Exported macros -----------------------------------------------------------*/
 
 /* Exported types ------------------------------------------------------------*/
@@ -98,6 +98,7 @@ public:
 class Class_Booster
 {
 public:
+    uint8_t Cmd_if_Fire = 0;
     uint8_t Shoot_Flag = 0; //0关闭 1开启 测试发射机构
     float Speed;
     //热量检测有限自动机
@@ -116,6 +117,7 @@ public:
 
     //拨弹盘电机
     Class_DJI_Motor_C620 Motor_Driver;
+    KalmanFilter Kf_Omega;
 
     //摩擦轮电机左
     Class_DJI_Motor_C620 Motor_Friction_Left;
@@ -156,7 +158,7 @@ protected:
     //拨弹盘堵转扭矩阈值, 超出被认为卡弹
     uint16_t Driver_Torque_Threshold = 13000;
     //摩擦轮单次判定发弹阈值, 超出被认为发射子弹
-    uint16_t Friction_Torque_Threshold = 2000;
+    uint16_t Friction_Torque_Threshold = 3000;
     //摩擦轮速度判定发弹阈值, 超出则说明已经开机
     float Friction_Omega_Threshold = 200;
 

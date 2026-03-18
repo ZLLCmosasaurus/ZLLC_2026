@@ -109,7 +109,7 @@ void Send_toReferee(uint16_t cmd_id, uint16_t data_len)
 	{
 		send_cnt--;
 		// 将超时时间从5ms增加到50ms，提高通信稳定性
-		HAL_UART_Transmit(&huart9, (uint8_t *)Transmit_Pack, Frame_Length, 50);
+		HAL_UART_Transmit(&huart10, (uint8_t *)Transmit_Pack, Frame_Length, 50);
 		DMAsendflag = 1;
 
 		// 添加短暂延时，避免连续发送导致丢包

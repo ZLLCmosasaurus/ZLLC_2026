@@ -49,7 +49,7 @@
 #define Double_Friction
 
 //遥控器选择
-//#define USE_VT13
+// #define USE_VT13
 #define USE_DR16
 
 /* 兵种/底盘类型选择*/

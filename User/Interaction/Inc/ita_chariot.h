@@ -109,6 +109,18 @@ enum Enum_VT13_Control_Type
     VT13_Control_Type_KEYBOARD,
     VT13_Control_Type_NONE,
 };
+
+/**
+ * @brief 活动控制器类型
+ *
+ */
+enum Enum_Active_Controller
+{
+    Controller_NONE = 0,
+    Controller_DR16,
+    Controller_VT13
+};
+
 /**
  * @brief 机器人是否离线 控制模式有限自动机
  *
@@ -278,6 +290,7 @@ public:
     uint32_t Flag_Message = 0;
 
     void Judge_DR16_Control_Type();
+    void Judge_VT13_Control_Type();
 
     void Control_Chassis();
 
@@ -327,6 +340,7 @@ protected:
         //常量
         //键鼠模式按住shift 最大速度缩放系数
         float DR16_Mouse_Chassis_Shift = 2.0f;
+        float VT13_Mouse_Chassis_Shift = 2.0f;
         //舵机占空比 默认关闭弹舱
         uint16_t Compare = 400;
         //DR16底盘加速灵敏度系数(0.001表示底盘加速度最大为1m/s2)
@@ -385,9 +399,15 @@ protected:
         //DR16控制数据来源
         Enum_DR16_Control_Type DR16_Control_Type = DR16_Control_Type_REMOTE;
         Enum_VT13_Control_Type VT13_Control_Type = VT13_Control_Type_NONE;
+        // 当前活动的控制器
+        Enum_Active_Controller Active_Controller = Controller_NONE;
         //内部函数
 
-        // void Judge_DR16_Control_Type();
+        // 判断当前活动的控制器
+        void Judge_Active_Controller();
+        // 获取当前活动的控制器类型
+        // Enum_Active_Controller Get_Active_Controller();
+
 
         // void Control_Chassis();
         void Control_Gimbal();
@@ -414,6 +434,16 @@ protected:
     }
 
     /**
+     * @brief 获取当前活动的控制器类型
+     *
+     * @return Enum_Active_Controller 当前活动的控制器类型
+    */
+    // Enum_Active_Controller Class_Chariot::Get_Active_Controller()
+    // {
+    //     return Active_Controller;
+    // }
+
+    /**
      * @brief 获取DR16控制数据来源
      * 
      * @return Enum_DR16_Control_Type DR16控制数据来源
@@ -421,7 +451,14 @@ protected:
 
     Enum_DR16_Control_Type Class_Chariot::Get_DR16_Control_Type()
     {
-        return (DR16_Control_Type);
+        if (Active_Controller == Controller_DR16)
+        {
+            return DR16_Control_Type;
+        }
+        else
+        {
+            return DR16_Control_Type_NONE;
+        }
     }
       /**
      * @brief 获取VT13控制数据来源
@@ -430,7 +467,14 @@ protected:
      */
     inline Enum_VT13_Control_Type Class_Chariot::Get_VT13_Control_Type()
     {
-      return (VT13_Control_Type);
+      if (Active_Controller == Controller_VT13)
+        {
+            return VT13_Control_Type;
+        }
+        else
+        {
+            return VT13_Control_Type_NONE;
+        }
     }
 
     /**

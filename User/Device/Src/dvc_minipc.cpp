@@ -14,7 +14,7 @@
 #include "dvc_minipc.h"
 
 /* private macros ------------------------------------------------------------*/
-
+#include "dvc_dwt.h"
 /* private types -------------------------------------------------------------*/
 
 /* private variables ---------------------------------------------------------*/
@@ -941,6 +941,8 @@ float Class_MiniPC::meanFilter(float input)
  *
  * @param rx_data 接收的数据
  */
+float Dt3;
+uint32_t last_cnt3 = 0;
 void Class_MiniPC::CAN_RxCpltCallback(uint8_t *rx_data)
 {
 #ifdef MINIPC_COMM_CAN
@@ -950,6 +952,7 @@ void Class_MiniPC::CAN_RxCpltCallback(uint8_t *rx_data)
     // 直接将接收到的数据复制到结构体
     memcpy(&Pack_Rx, rx_data, sizeof(Pack_Rx));
     
+    Dt3 = DWT_GetDeltaT(&last_cnt3);
     // 处理数据
     Data_Process();
 #endif

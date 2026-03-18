@@ -189,12 +189,16 @@ void Chassis_Device_CAN3_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage){
  * @param CAN_RxMessage CAN1收到的消息
  */
 #ifdef GIMBAL
+uint32_t cnt_last = 0;
+float dt;
+uint32_t fire_flag,booster_flag;
 void Gimbal_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
     switch (CAN_RxMessage->Header.Identifier)
     {
     case (0xA1):
     {
+        
         chariot.MiniPC.CAN_RxCpltCallback(CAN_RxMessage->Data);
     }
     break;
@@ -248,7 +252,7 @@ void Gimbal_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
     {
     case (0x11):
     {
-        chariot.Gimbal.dmIMU.IMU_UpdateData(CAN_RxMessage->Data);
+        // chariot.Gimbal.dmIMU.IMU_UpdateData(CAN_RxMessage->Data);
     }
     break;
     case (0x14):
@@ -283,7 +287,7 @@ void Gimbal_Device_CAN3_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage){
         // chariot.Gimbal.Motor_Yaw.CAN_RxCpltCallback(CAN_RxMessage->Data);
     }
     break;
-    case (0x201):
+    case (0x204):
     {
         chariot.Booster.Motor_Driver.CAN_RxCpltCallback(CAN_RxMessage->Data);
     }
@@ -345,9 +349,9 @@ void DR16_UART5_Callback(uint8_t *Buffer, uint16_t Length)
 #endif
 #endif
 /**
- * @brief UART9遥控器回调函数
+ * @brief UART1遥控器回调函数--图传
  *
- * @param Buffer UART9收到的消息
+ * @param Buffer UART1收到的消息
  * @param Length 长度
  */
 #ifdef GIMBAL
@@ -356,7 +360,10 @@ void VT13_UART_Callback(uint8_t *Buffer, uint16_t Length)
     chariot.VT13.VT13_UART_RxCpltCallback(Buffer);
 
     //底盘 云台 发射机构 的控制策略
-    chariot.TIM_Control_Callback();
+    if (*(Buffer + 0) == 0xA9 && *(Buffer + 1) == 0x53)
+    {
+        chariot.TIM_Control_Callback();
+    }
 }
 #endif
 
@@ -434,7 +441,8 @@ void MiniPC_UART_Callback(uint8_t *Buffer, uint16_t Length)
  * @brief TIM4任务回调函数
  *
  */
-
+uint32_t a =0;
+uint32_t b =0;
 void Task100us_TIM4_Callback()
 {
     #ifdef CHASSIS
@@ -450,8 +458,31 @@ void Task100us_TIM4_Callback()
     //chariot.Force_Control_Chassis.Boardc_BMI.TIM_Calculate_PeriodElapsedCallback();
     // chariot.Chassis.BoardDM_BMI.TIM_Calculate_PeriodElapsedCallback();
     #elif defined(GIMBAL)
+    dt = DWT_GetDeltaT(&cnt_last);
         // 单给IMU消息开的定时器 ims
         chariot.Gimbal.Boardc_BMI.TIM_Calculate_PeriodElapsedCallback();
+
+        // uint8_t Cmd_if_Fire1 = 0;
+        // static uint16_t shoot_cnt = 0;
+        // shoot_cnt++;
+        // if (shoot_cnt > 1000)
+        // {
+        //     Cmd_if_Fire1 = 1; //= Get_Shoot_Cmd(FSM_Heat_Detect.Heat,200);
+        //     shoot_cnt = 0;
+        // }
+        // else
+        // {
+        //     Cmd_if_Fire1 = 0;
+        // }
+
+        // if(chariot.DR16.Get_Left_Switch() == DR16_Switch_Status_DOWN && chariot.DR16.Get_Right_Switch()==DR16_Switch_Status_UP)
+        // {
+        //    if(chariot.MiniPC.Get_MiniPC_Status() == MiniPC_Status_ENABLE && Cmd_if_Fire1 == 1)
+        //    {
+        //         //chariot.Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+        //    }
+						
+        // }
         static uint8_t mod2 = 0;  
         mod2++;
         if(mod2%2 == 0)
@@ -562,7 +593,12 @@ void Task1ms_TIM5_Callback()
     if(start_flag==1)
     {
         #ifdef GIMBAL
+        #ifdef USE_DR16
         chariot.FSM_Alive_Control.Reload_TIM_Status_PeriodElapsedCallback();
+        #endif
+        #ifdef USE_VT13
+        chariot.FSM_Alive_Control_VT13.Reload_TIM_Status_PeriodElapsedCallback();
+        #endif
         #endif
         #ifdef CHASSIS
         #ifdef Only_Chassis
@@ -648,7 +684,7 @@ extern "C" void Task_Init()
         UART_Init(&huart5, DR16_UART5_Callback, 18);
         #endif
         //功率计
-        UART_Init(&huart1, Power_Cale_UART_Callback, 8+1);
+        // UART_Init(&huart1, Power_Cale_UART_Callback, 8+1);
         #ifdef POWER_LIMIT
 
 
@@ -672,7 +708,8 @@ extern "C" void Task_Init()
         UART_Init(&huart5, DR16_UART5_Callback, 18);
 		    //UART_Init(&huart6, Image_UART6_Callback, 40);
         #elif defined(USE_VT13)
-        UART_Init(&huart9, VT13_UART_Callback, 30);
+        //图传
+        UART_Init(&huart1, VT13_UART_Callback, 60);
         #endif
         //上位机USB
         USB_Init(&MiniPC_USB_Manage_Object,MiniPC_USB_Callback);
@@ -680,7 +717,7 @@ extern "C" void Task_Init()
         UART_Init(&huart8, MiniPC_UART_Callback, 56);
 
         //裁判系统
-        UART_Init(&huart10, Referee_UART10_Callback, 128);
+        // UART_Init(&huart10, Referee_UART10_Callback, 128);
 
     #endif
 
