@@ -12,6 +12,7 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "alg_filter.h"
+#include <stdlib.h>
 
 /* Private macros ------------------------------------------------------------*/
 
@@ -147,7 +148,7 @@ void Class_Filter_Kalman::Recv_Adjust_PeriodElapsedCallback()
 void init_filter(SpikeFilter* filter, int window_size) {
     filter->window_size = window_size;
     filter->current_index = 0;
-    //filter->buffer = (float*)malloc(window_size * sizeof(float));
+    filter->buffer = (float*)malloc(window_size * sizeof(float));
     memset(filter->buffer, 0, window_size * sizeof(float));
 }
 
@@ -168,14 +169,14 @@ float process_sample(SpikeFilter* filter, float input) {
     memcpy(sort_array, filter->buffer, filter->window_size * sizeof(float));
     
     // 快速排序取中值
-    //qsort(sort_array, filter->window_size, sizeof(float), compare);
+    qsort(sort_array, filter->window_size, sizeof(float), compare);
     
     return sort_array[filter->window_size / 2];
 }
 
 // 资源释放
 void free_filter(SpikeFilter* filter) {
-    //free(filter->buffer);
+    free(filter->buffer);
 }
 
 float addSampleAndFilter(float input, int windowSize) {

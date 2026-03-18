@@ -151,10 +151,10 @@ graphic_data_struct_t *CharGraphic_Draw(uint8_t layer, int Op_Type, uint16_t sta
 }
 
 /**********************************************************************************************************
- *�� �� ��: Char_Draw
- *����˵��: �����ַ�
- *��    ��: ��
- *�� �� ֵ: ��
+ * 函数名: Char_Draw
+ * 功能说明: 绘制字符
+ * 参    数: 无
+ * 返 回 值: 无
  **********************************************************************************************************/
 void Char_Draw(uint8_t layer, int Op_Type, uint16_t startx, uint16_t starty, uint8_t size, uint8_t len, uint16_t line_width, int color, uint8_t name[], uint8_t *str_data)
 {

@@ -13,6 +13,10 @@
 #ifndef _QUAT_EKF_H
 #define _QUAT_EKF_H
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 #include "kalman_filter.h"
 #include "arm_math.h"
 
@@ -51,6 +55,7 @@ typedef struct
     float Pitch;
     float Yaw;
 
+    float yaw_offset;
     float YawTotalAngle;
 
     float Q1; // 四元数更新过程噪声
@@ -68,12 +73,13 @@ typedef struct
     float YawAngleLast;
 } QEKF_INS_t;
 
-extern QEKF_INS_t QEKF_INS;
 extern float chiSquare;
 extern float ChiSquareTestThreshold;
-void IMU_QuaternionEKF_Init(float process_noise1, float process_noise2, float measure_noise, float lambda, float lpf, QEKF_INS_t *QEKF_INS);
+void IMU_QuaternionEKF_Init(float process_noise1, float process_noise2, float measure_noise, float lambda, float lpf, float yaw_offset, QEKF_INS_t *QEKF_INS);
 void IMU_QuaternionEKF_Update(float gx, float gy, float gz, float ax, float ay, float az, float dt, QEKF_INS_t *QEKF_INS);
 
-
+#ifdef __cplusplus
+}
+#endif
 
 #endif

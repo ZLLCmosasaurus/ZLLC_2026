@@ -1,8 +1,8 @@
 version: "4.1"
 name: ZLLC_2026
 type: ARM
-deviceName: STM32H723VGTx
-packDir: .pack/Keil/STM32H7xx_DFP.4.0.0
+deviceName: null
+packDir: null
 srcDirs: []
 virtualFolder:
   name: <virtual_root>
@@ -44,6 +44,7 @@ virtualFolder:
         - path: ../User/Device/Src/dvc_TensionMeter.cpp
         - path: ../User/Device/Src/dvc_servo.cpp
         - path: ../User/Device/Src/dvc_buzzer.cpp
+        - path: ../User/Device/Src/dvc_dmimu.cpp
       folders: []
     - name: Driver
       files:
@@ -319,7 +320,6 @@ targets:
         - ARM_MATH_CM7
         - USE_PWR_LDO_SUPPLY
       incList:
-        - .
         - ../Core/Inc
         - ../Drivers/STM32H7xx_HAL_Driver/Inc
         - ../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy

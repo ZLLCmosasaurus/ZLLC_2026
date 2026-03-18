@@ -2,10 +2,10 @@
  * @file dvc_LKmotor.h
  * @author lez
  * @brief lk电机配置与操作
- * @version 0.1
- * @date 2024-07-1 0.1 24赛季定稿
+ * @version 0.11
+ * @date 2025-12-5 0.1 26赛季定稿
  *
- * @copyright ZLLC 2024
+ * @copyright ZLLC 2026
  *
  */
 
@@ -23,7 +23,7 @@
 /* Exported types ------------------------------------------------------------*/
 
 /**
-	* 	@brief 瓴控电机状态
+ * 	@brief 瓴控电机状态
  *
  */
 enum Enum_LK_Motor_Status
@@ -60,26 +60,30 @@ enum Enum_LK_Motor_Control_Status
 };
 
 /**
-		命令报文标识符：0x140 + ID(1~32) 
-		回复报文标识符：0x180 + ID(1~32) 
- * @brief     can发送的数据帧控制ID，每一个数据帧的第一个字节，进行命令控制
- * @brief    电机在收到命令后回复主机。电机回复数据和当前发送数据一样，数据帧第一个字节和控制命令一样，其余参考数据手册。瓴控电机是一发一收模式
+ * @brief	命令报文标识符：0x140 + ID(1~32) 
+ * @brief	回复报文标识符：0x180 + ID(1~32) (实测也是 0x140 + ID(1~32))
+ * @brief   can发送的数据帧控制ID，每一个数据帧的第一个字节，进行命令控制
+ * @brief   电机在收到命令后回复主机(瓴控电机是一发一收模式)
+ * @brief   Data_Process函数只针对[读取电机状态 2]解包，其余恢复报文请直接查看接收缓存数组
  */
 enum Enum_LK_Motor_Control_ID : uint8_t
 {
-		LK_Motor_Control_Read_Status=0x9A,   //该命令读取当前电机的温度、电压和错误状态标志 
-		LK_Motor_Control_Shut_Down = 0x80,   //将电机从开启状态（上电后默认状态）切换到关闭状态
-        LK_Motor_Control_Stop = 0x81, //停止电机，但不清除电机运行状态
-        LK_Motor_Control_Run = 0x88,//将电机从关闭状态切换到开启状态
-		LK_Motor_Control_Torque = 0xA1,//转矩闭环控制，主机发送该命令以控制电机的转矩电流输出，控制值iqControl为int16_t类型，数值范围-2048~ 2048(仅在MF、MH、MG上可用)
-		LK_Motor_Control_Open_Loop=0xA0,//仅对MS电机生效，此模式输出开环电压，主机发送该命令以控制输出到电机的开环电压，控制值powerControl为int16_t类型，数值范围-850~850
-		LK_Motor_Control_Omega=0xA2,//速度环主机发送该命令以控制电机的速度， 同时带有力矩限制。控制值speedControl为int32_t类型，对应实际转速为0.01dps/LSB；控制值iqControl为int16_t类型，数值范围-2048~ 2048
-		LK_Motor_Control_Multi_Location=0xA3,//多圈位置闭环控制。主机发送该命令以控制电机的位置（多圈角度）。控制值angleControl为int32_t类型，对应实际位置为0.01degree/LSB，即36000代表360°，电机转动方向由目标位置和当前位置的差值决定。
-		LK_Motor_Control_Multi_Location_And_Speed_Limit=0xA4,  //跟0xA3一样，只不过增加了到达目标角度的速度限制
-		LK_Motor_Control_Single_Location=0xA5,//单圈位置闭环控制控制值  控制值angleControl 为uint32_t 类型，对应实际位置为0.01degree/LSB，即36000代表360°。
-		LK_Motor_Control_Single_Location_And_Speed_Limit=0xA6,//单圈位置闭环，并进行速度限制（由上位机软件进行限制）
-        Lk_Motor_Control_Delta_Location=0xA7,//增量位置闭环控制   int32_t 类型，对应实际位置为0.01degree/LSB，即36000 代表360°
-        LK_Motor_Control_Delta_Location_And_Speed_Limit=0xA8//增量位置闭环控制，并增加了速度限制（上位机调参软件限制）
+		LK_Motor_Control_Read_Status = 0x9A,                            //该命令读取当前电机的温度、电压和错误状态标志 
+        LK_Motor_Control_Clean_Status = 0x9B,                           //该命令清除当前电机的错误状态
+        LK_Motor_Control_Read_Motor_Data = 0x9C,                        //该命令读取当前电机的温度、电机转矩电流（MF、MG）/电机输出功率（MS）、转速、编码器位置
+        LK_Motor_Control_Read_Motor_Iq = 0x9D,                          //该命令读取当前电机的温度和三相电流数据
+		LK_Motor_Control_Shut_Down = 0x80,                              //将电机从开启状态（上电后默认状态）切换到关闭状态
+        LK_Motor_Control_Stop = 0x81,                                   //停止电机，但不清除电机运行状态
+        LK_Motor_Control_Run = 0x88,                                    //将电机从关闭状态切换到开启状态
+		LK_Motor_Control_Open_Loop=0xA0,                                //仅对MS电机生效，主机发送该命令以控制输出到电机的开环电压
+        LK_Motor_Control_Torque = 0xA1,                                 //转矩闭环控制，主机发送该命令以控制电机的转矩电流输出(仅在MF、MH、MG上可用)
+		LK_Motor_Control_Omega=0xA2,                                    //速度环主机发送该命令以控制电机的速度， 同时带有力矩限制
+		LK_Motor_Control_Multi_Location=0xA3,                           //多圈位置闭环控制。主机发送该命令以控制电机的位置（多圈角度）
+		LK_Motor_Control_Multi_Location_And_Speed_Limit=0xA4,           //跟0xA3一样，只不过增加了到达目标角度的速度限制
+		LK_Motor_Control_Single_Location=0xA5,                          //单圈位置闭环控制控制值
+		LK_Motor_Control_Single_Location_And_Speed_Limit=0xA6,          //单圈位置闭环，并进行速度限制（由上位机软件进行限制）
+        Lk_Motor_Control_Delta_Location=0xA7,                           //增量位置闭环控制
+        LK_Motor_Control_Delta_Location_And_Speed_Limit=0xA8            //增量位置闭环控制，并增加了速度限制（上位机调参软件限制）
 };
 
 /**
@@ -89,11 +93,12 @@ enum Enum_LK_Motor_Control_ID : uint8_t
 enum Enum_LK_Motor_Control_Method
 {
     LK_Motor_Control_Method_IMU_ANGLE = 0,  //惯性传感器的角度环
-    LK_Motor_Control_Method_IMU_OMEGA,     //惯性传感器的角速度环
-	LK_Motor_Control_Method_ANGLE,         //霍尔(磁编)角度环
-    LK_Motor_Control_Method_OMEGA,         //霍尔(磁编)角速度环
-    LK_Motor_Control_Method_TORQUE,        //霍尔(磁编)力矩环
-	LK_Motor_Control_Method_OpenLoop        //无传感器 直接开环，一般不会用到
+    LK_Motor_Control_Method_IMU_OMEGA,      //惯性传感器的角速度环
+	LK_Motor_Control_Method_ANGLE,          //霍尔(磁编)角度环
+    LK_Motor_Control_Method_OMEGA,          //霍尔(磁编)角速度环
+    LK_Motor_Control_Method_TORQUE,         //霍尔(磁编)力矩环
+	LK_Motor_Control_Method_OpenLoop,       //无传感器 直接开环，一般不会用到(仅MS电机有效)
+    LK_Motor_Control_Method_ANGLE_LOCK      //云台折叠下yaw的锁定状态
 };
 
 /**
@@ -102,10 +107,10 @@ enum Enum_LK_Motor_Control_Method
  */
 struct Struct_LK_Motor_CAN_Rx_Data
 {
-    Enum_LK_Motor_Control_ID CMD_ID;   //控制命令，数据帧第一个字节
-	uint8_t Temperature_Centigrade;     // 回传电机温度
-    uint16_t Current_Reverse;			//转矩电流  ，对MS系列是：输出功率
-	uint16_t Omega_Reverse;				//电机速度
+    Enum_LK_Motor_Control_ID CMD_ID;     //控制命令，数据帧第一个字节
+	uint8_t Temperature_Centigrade;      // 回传电机温度
+    uint16_t Current_Reverse;			 //转矩电流，对MS系列是：输出功率
+	uint16_t Omega_Reverse;				 //电机速度
     uint16_t Encoder_Reverse;            //编码器位置
 } __attribute__((packed));
 
@@ -118,8 +123,8 @@ struct Struct_LK_Motor_Rx_Data
     Enum_LK_Motor_Control_ID CMD_ID; //控制命令
 	float Now_Angle;  				//当前角度，以°为单位
     float Now_Radian;  				//当前角度，以rad为单位		
-	float Now_Omega_Angle;  		//当前角速度，从rpm转为°/s
-	float Now_Omega_Radian;  	    //当前角速度，从rpm转为rad/s	
+	float Now_Omega_Angle;  		//当前角速度，以dps为单位
+	float Now_Omega_Radian;  	    //当前角速度，从dps转为rad/s	
     float Now_Current;  			//当前电流， 对MS系列是输出功率·
     float Now_Temperature; 			//当前温度
     uint16_t Pre_Encoder; 
@@ -144,9 +149,8 @@ public:
     // 力矩环
     Class_PID PID_Torque;
 
-    void Init(FDCAN_HandleTypeDef *hcan, Enum_LK_Motor_ID __CAN_ID, float __Omega_Max=200, int32_t __Position_Offset = 0, float __Current_Max = 33.0f ,Enum_LK_Motor_Control_Method __Control_Method = LK_Motor_Control_Method_ANGLE,Enum_LK_Motor_Control_ID __Control_ID=LK_Motor_Control_Omega);
+    void Init(FDCAN_HandleTypeDef *hcan, Enum_LK_Motor_ID __CAN_ID, float __Omega_Max=200, int32_t __Position_Offset = 0, float __Current_Max = 33.0f ,Enum_LK_Motor_Control_Method __Control_Method = LK_Motor_Control_Method_ANGLE ,Enum_LK_Motor_Control_ID __Control_ID = LK_Motor_Control_Read_Motor_Data);
 
-		//Omega_Max是由调参助手决定的,这里只是定义但并没有使用
     inline Enum_LK_Motor_Control_Status Get_LK_Motor_Control_Status();
     inline Enum_LK_Motor_Status Get_LK_Motor_Status();
     inline float Get_Output_Max();
@@ -203,15 +207,14 @@ protected:
     float Current_Max;
     
     const int16_t Current_Max_Cmd = 50000;//外环速度环262144限幅
+
+    int16_t Out_Max = 2048;  //out输出限幅，(MS型号需改成850)
     
-    float Out = 0.0f;
-    
-    
+    int16_t Out = 0;
+       
     const float Torque_Current = 0.3;  
-
     
-    uint32_t Position_Max = 16383;
-
+    uint32_t Position_Max = 65536;
 
     //开始标志位
     uint8_t Start_Flag = 0;
@@ -222,14 +225,14 @@ protected:
 
     uint16_t Speed_Limit=65535;//角度或者位置环的速度限制，对应实际转速1dps/LSB，即360代表360dps。 
 
-    int16_t Iq_Control=2048;//扭矩限制
+    int16_t Iq_Control=2048;//扭矩限制，对应 MF 电机实际转矩电流范围-16.5A~16.5A，对应 MG 电机实际转矩电流范围-33A~33A
 
     Enum_LK_Motor_Status LK_Motor_Status = LK_Motor_Status_DISABLE;
     
     Struct_LK_Motor_Rx_Data Data;
 
 //瓴控电机控制ID
-    Enum_LK_Motor_Control_ID LK_Motor_Control_ID = LK_Motor_Control_Omega;
+    Enum_LK_Motor_Control_ID LK_Motor_Control_ID = LK_Motor_Control_Read_Motor_Data;
     
     Enum_LK_Motor_Control_Status LK_Motor_Control_Status = LK_Motor_Control_Status_DISABLE;
     //瓴控电机控制模式（跑pid模式）
@@ -580,18 +583,33 @@ void Class_LK_Motor::Set_Speed_Limit(uint16_t __Speed_Limit)
  */
 void Class_LK_Motor::Set_Iq_Control(int16_t __Iq_Control)
 {
-    Iq_Control=__Iq_Control;
+    if(__Iq_Control > Out_Max)
+    {
+        Iq_Control = Out_Max;
+    }
+    else if(__Iq_Control < -Out_Max)
+    {
+        Iq_Control = -Out_Max;
+    }
+    else
+    {
+        Iq_Control = __Iq_Control;
+    }
 }
 
 void Class_LK_Motor::Set_Out(float __Out)
 {
-    if(__Out > Current_Max_Cmd)
+    if(__Out > (float)Out_Max)
     {
-        __Out = Current_Max_Cmd;
+        Out = Out_Max;
     }
-    else if(__Out < -Current_Max_Cmd)
+    else if(__Out < (float)-Out_Max)
     {
-        __Out = -Current_Max_Cmd;
+        Out = -Out_Max;
+    }
+    else
+    {
+        Out = (int16_t)__Out;
     }
 }
 /**
@@ -601,10 +619,11 @@ void Class_LK_Motor::Set_Out(float __Out)
  */
 float Class_LK_Motor::Get_Output_Max()
 {
-    return (Current_Max_Cmd);
+    return (Out_Max);
 }
 
 
 #endif
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/
+

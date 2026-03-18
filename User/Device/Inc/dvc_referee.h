@@ -1215,6 +1215,7 @@ struct Struct_CAN_Referee_Rx_Data_t //0x195
     uint16_t Robot_Position_X;
     uint16_t Robot_Position_Y;
 } __attribute__((packed));
+
 /**
  * @brief Specialized, 裁判系统
  *
@@ -1321,6 +1322,7 @@ public:
     #ifdef GIMBAL
     inline void Set_Robot_ID(Enum_Referee_Data_Robots_ID __Robot_ID);
     inline void Set_Game_Stage(Enum_Referee_Game_Status_Stage __Game_Stage);  
+    inline void Set_Booster_17mm_1_Heat(uint16_t __Booster_17mm_1_Heat);
     inline void Set_Booster_17mm_1_Heat_CD(uint16_t __Booster_17mm_1_Heat_CD);
     inline void Set_Booster_17mm_1_Heat_Max(uint16_t __Booster_17mm_1_Heat_Max);
     inline void Set_Sentry_Revive_Status(Enum_Sentry_Revive_Status __Sentry_Revive_Status);
@@ -2422,6 +2424,19 @@ void Class_Referee::Set_Robot_ID(Enum_Referee_Data_Robots_ID __Robot_ID)
 void Class_Referee::Set_Game_Stage(Enum_Referee_Game_Status_Stage __Game_Stage)
 {
     this->Game_Status.Stage_Enum = __Game_Stage;
+}
+#endif
+
+
+/**
+ * @brief 设置17mm枪管热量
+ *
+ * @param __Booster_17mm_1_Heat 枪管热量
+ */
+#ifdef GIMBAL
+void Class_Referee::Set_Booster_17mm_1_Heat(uint16_t __Booster_17mm_1_Heat)
+{
+    this->Robot_Power_Heat.Booster_17mm_1_Heat = __Booster_17mm_1_Heat;
 }
 #endif
 

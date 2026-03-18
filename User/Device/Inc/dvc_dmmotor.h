@@ -16,6 +16,7 @@
 
 #include "drv_math.h"
 #include "drv_can.h"
+#include "alg_pid.h"
 
 /* Exported macros -----------------------------------------------------------*/
 
@@ -78,12 +79,12 @@ enum Enum_DM_Motor_Control_Method
 {
     DM_Motor_Control_Method_MIT_POSITION = 0,
     DM_Motor_Control_Method_MIT_OMEGA,
-    DM_Motor_Control_Method_MIT_TORQUE,
+    DM_Motor_Control_Method_MIT_ANGLE,
     DM_Motor_Control_Method_POSITION_OMEGA,
     DM_Motor_Control_Method_OMEGA,
-		DM_Motor_Control_Method_MIT_IMU_Angle,
+    DM_Motor_Control_Method_MIT_IMU_Angle,
+    DM_Motor_Control_Method_MIT_OPENLOOP
 };
-
 /**
  * @brief 达妙电机源数据
  *
@@ -108,18 +109,13 @@ struct Struct_DM_Motor_Rx_Data
     Enum_DM_Motor_ID CAN_ID;
     Enum_DM_Motor_ErrorCode ErrorCode;
     float Now_Angle;
-    float Now_Radian;
-    float Now_Omega_Angle;
-    float Now_Omega_Radian;
+    float Now_Omega;
     float Now_Torque;
-    float Now_MOS_Temperature; //驱动MOS的平均温度
-    float Now_Rotor_Temperature; // 电机内部线圈的平均温度
+    float Now_MOS_Temperature;
+    float Now_Rotor_Temperature;
     uint16_t Pre_Position;
     int32_t Total_Position;
-    int32_t Pre_Total_Position;
     int32_t Total_Round;
-    uint8_t Now_Motor_Coil_Temperature; //电机线圈温度
-    uint8_t Now_PCB_Temperature; //达妙板子上的PCB板温度
 };
 
 /**
@@ -132,6 +128,11 @@ struct Struct_DM_Motor_Rx_Data
 class Class_DM_Motor_J4310
 {
 public:
+
+    // PID角度环控制
+    Class_PID PID_Angle;
+    // PID角速度环控制
+    Class_PID PID_Omega;
 
     void Init(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CAN_ID, Enum_DM_Motor_Control_Method __Control_Method = DM_Motor_Control_Method_MIT_POSITION, int32_t __Position_Offset = 0, float __Omega_Max = 20.94359f, float __Torque_Max = 10.0f);
 
@@ -149,6 +150,7 @@ public:
     inline float Get_Target_Angle();
     inline float Get_Target_Omega();
     inline float Get_Target_Torque();
+    inline float Get_Out();
     
     inline void Set_DM_Control_Status(Enum_DM_Motor_Control_Status __DM_Motor_Control_Status);
     inline void Set_DM_Motor_Control_Method(Enum_DM_Motor_Control_Method __DM_Motor_Control_Method);
@@ -157,10 +159,13 @@ public:
     inline void Set_Target_Angle(float __Target_Angle);
     inline void Set_Target_Omega(float __Target_Omega);
     inline void Set_Target_Torque(float __Target_Torque);
+    inline void Set_Out(float __Out);
+	inline void Limit_Out();
 
     void CAN_RxCpltCallback(uint8_t *Rx_Data);
     void TIM_Alive_PeriodElapsedCallback();
     void TIM_Process_PeriodElapsedCallback();
+    void TIM_PID_PeriodElapsedCallback();
 
 protected:
     //初始化相关变量
@@ -177,7 +182,8 @@ protected:
     float Omega_Max;
     //最大扭矩, 调参助手设置, 推荐7, 也就是最大输出7NM
     float Torque_Max;
-
+    //输出量
+    float Out=0.0f;
     //常量
     
     //一圈位置刻度
@@ -219,6 +225,7 @@ protected:
     //内部函数
 
     void Data_Process(uint8_t* Rx_Data);
+    void Output();
 };
 
 /* Exported variables --------------------------------------------------------*/
@@ -245,18 +252,6 @@ float Class_DM_Motor_J4310::Get_Now_Angle()
     return (Data.Now_Angle);
 }
 
-
-/**
- * @brief 获取当前的角度, rad
- *
- * @return float 当前的角度, rad
- */
-float Class_DM_Motor_J4310::Get_Now_Radian()
-{
-    return (Data.Now_Radian);
-}
-
-
 /**
  * @brief 获取当前的速度, rad/s
  *
@@ -264,7 +259,7 @@ float Class_DM_Motor_J4310::Get_Now_Radian()
  */
 float Class_DM_Motor_J4310::Get_Now_Omega()
 {
-    return (Data.Now_Omega_Radian);
+    return (Data.Now_Omega);
 }
 
 /**
@@ -358,6 +353,16 @@ float Class_DM_Motor_J4310::Get_Target_Torque()
 }
 
 /**
+ * @brief 获取目标的输出
+ *
+ * @return float 目标的输出   
+ */
+float Class_DM_Motor_J4310::Get_Out()
+{
+    return (Out);
+}
+
+/**
  * @brief 设定电机控制状态
  *
  * @param __DM_Motor_Control_Status 电机控制状态
@@ -425,6 +430,35 @@ void Class_DM_Motor_J4310::Set_Target_Omega(float __Target_Omega)
 void Class_DM_Motor_J4310::Set_Target_Torque(float __Target_Torque)
 {
     Target_Torque = __Target_Torque;
+}
+
+/**
+ * @brief 设定目标的输出
+ *
+ * @param __Out 目标的输出
+ */
+
+void Class_DM_Motor_J4310::Set_Out(float __Out)
+{
+    Out=__Out;
+}
+
+/**
+ * @brief 限制目标的输出
+ *
+ * @param __Out 目标的输出
+ */
+void Class_DM_Motor_J4310::Limit_Out()
+{
+	if(Out>4095)
+		Out=4095;
+	else if(Out<-4095)
+		Out=-4095;
+	
+	else
+	{
+        		
+	}
 }
 
 #endif

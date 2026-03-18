@@ -11,7 +11,6 @@
 
 #include "dvc_imu.h"
 
-
 void Class_IMU::Init()
 {
     // 初始化BMI088传感器，计算零漂 并检查初始化是否成功
@@ -26,12 +25,12 @@ void Class_IMU::Init()
     IMU_MahonyAHRS.init(INS_Quat);
  
     //EKF初始化
-    IMU_QuaternionEKF_Init(10, 0.001, 10000000, 1, 0 ,&QEKF_INS);
+    IMU_QuaternionEKF_Init(10, 0.001, 1000000, 0.9996, 0.1, 0.0006, &QEKF_INS);
 
-    INS.AccelLPF = 0.0085;
+    INS.AccelLPF = 0.3;
 
     //初始化温控pid参数 积分和输出限幅是一周期满占空比的计数240M/24/10000=1000
-    PID_IMU_Tempture.Init(200, 300, 0, 0.0, 250, 500);
+    PID_IMU_Tempture.Init(200, 500, 0, 0.0, 800, 1000);
     HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
 
 }
@@ -80,7 +79,7 @@ void Class_IMU::TIM_Calculate_PeriodElapsedCallback(void)
     if(Tempture_Cnt_mod50 % 50 == 0)
     {
         PID_IMU_Tempture.Set_Now(BMI088_Raw_Data.Temperature);
-        PID_IMU_Tempture.Set_Target(40.);
+        PID_IMU_Tempture.Set_Target(40.f);//由于拉满pwm后升温依旧较慢，干脆设低一点
         PID_IMU_Tempture.TIM_Adjust_PeriodElapsedCallback();
         if(PID_IMU_Tempture.Get_Out() <= 0)TIM_Set_PWM(&htim3, TIM_CHANNEL_4, 0);
         else

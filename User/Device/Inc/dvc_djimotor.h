@@ -508,12 +508,12 @@ class Class_DJI_Motor_C620_Steer : public Class_DJI_Motor_C620{
 public:
     inline float Get_Now_Zero_Offset_Radian();
     inline float Get_Zero_Position();
-		inline Enum_MA600_Status Get_MA600_Status();
+	inline Enum_MA600_Status Get_MA600_Status();
 
+    inline void Set_Now_Zero_Offset_Radian(float __Zero_Offset_Radian);
     inline void Set_Zero_Position(float __Zero_Position);
 
     void CAN_MA_RxCpltCallback(uint8_t *Rx_Data);
-    // void MA600_Data_Process(Struct_CAN_Rx_Buffer *CAN_RxMessage);
     void MA600_Data_Process(Struct_CAN_Rx_Buffer *CAN_RxMessage);
 
     void TIM_Alive_PeriodElapsedCallback_MA600();
@@ -1289,11 +1289,15 @@ void Class_DJI_Motor_C620::Set_Out(float __Out)
 }
 
 
-float Class_DJI_Motor_C620_Steer::Get_Now_Zero_Offset_Radian(){
+inline float Class_DJI_Motor_C620_Steer::Get_Now_Zero_Offset_Radian(){
     return Zero_Offset_Radian;
 }
 
-float Class_DJI_Motor_C620_Steer::Get_Zero_Position(){
+inline void Class_DJI_Motor_C620_Steer::Set_Now_Zero_Offset_Radian(float __Zero_Offset_Radian){
+    Zero_Offset_Radian = __Zero_Offset_Radian;
+}
+
+inline float Class_DJI_Motor_C620_Steer::Get_Zero_Position(){
     return Zero_Position;
 }
 
@@ -1302,7 +1306,7 @@ void Class_DJI_Motor_C620_Steer::Set_Zero_Position(float __Zero_Position){
 }
 
 
-Enum_MA600_Status Class_DJI_Motor_C620_Steer::Get_MA600_Status()
+inline Enum_MA600_Status Class_DJI_Motor_C620_Steer::Get_MA600_Status()
 {
 	return MA600_Status;
 }

@@ -131,14 +131,14 @@ void Class_Supercap::Data_Process()
  */
 void Class_Supercap::Output()
 {
-    if(Get_Supercap_Mode() == Supercap_ENABLE)
-    {
-        Set_Working_Status(Working_Status_ON);
-    }
-    else
-    {
-        Set_Working_Status(Working_Status_OFF);
-    }
+    // if(Get_Supercap_Mode() == Supercap_ENABLE)
+    // {
+    //     Set_Working_Status(Working_Status_ON);
+    // }
+    // else
+    // {
+    //     Set_Working_Status(Working_Status_OFF);
+    // }
     // Set_Working_Status(Working_Status_ON);
     // Set_Working_Status(Working_Status_OFF);
     memcpy(CAN_Tx_Data, &Supercap_Tx_Data, sizeof(Struct_Supercap_Tx_Data));

@@ -35,9 +35,6 @@ extern "C" {
 
 #include "arm_math.h"
 
-#ifdef __cplusplus
-}
-#endif
 //#include "dsp/matrix_functions.h"
 #include "math.h"
 #include "stdint.h"
@@ -99,13 +96,13 @@ typedef struct kf_t
     int8_t MatStatus;
 
     // 用户定义函数,可以替换或扩展基准KF的功能
-    void (*User_Func0_f)(struct kf_t *kf);
-    void (*User_Func1_f)(struct kf_t *kf);
-    void (*User_Func2_f)(struct kf_t *kf);
-    void (*User_Func3_f)(struct kf_t *kf);
-    void (*User_Func4_f)(struct kf_t *kf);
-    void (*User_Func5_f)(struct kf_t *kf);
-    void (*User_Func6_f)(struct kf_t *kf);
+    void (*User_Func0_f)(struct kf_t *kf, void* Para1);
+    void (*User_Func1_f)(struct kf_t *kf, void* Para1);
+    void (*User_Func2_f)(struct kf_t *kf, void* Para1);
+    void (*User_Func3_f)(struct kf_t *kf, void* Para1);
+    void (*User_Func4_f)(struct kf_t *kf, void* Para1);
+    void (*User_Func5_f)(struct kf_t *kf, void* Para1);
+    void (*User_Func6_f)(struct kf_t *kf, void* Para1);
     
     // 矩阵存储空间指针
     float *xhat_data, *xhatminus_data;
@@ -130,6 +127,26 @@ void Kalman_Filter_PminusUpdate(KalmanFilter_t *kf);
 void Kalman_Filter_SetK(KalmanFilter_t *kf);
 void Kalman_Filter_xhatUpdate(KalmanFilter_t *kf);
 void Kalman_Filter_P_Update(KalmanFilter_t *kf);
-float *Kalman_Filter_Update(KalmanFilter_t *kf);
+float *Kalman_Filter_Update(KalmanFilter_t *kf, void* Para1);
+
+// 卡尔曼滤波器结构体
+typedef struct {
+    float x;  // 当前估计值
+    float P;  // 误差协方差
+    float K;  // 卡尔曼增益
+
+    //卡尔曼滤波器参数
+    float Q;  // 过程噪声协方差
+    float R;  // 观测噪声协方差
+    float A;  // 状态转移矩阵
+    float H;  // 观测矩阵
+} KalmanFilter;
+void kalman_init(KalmanFilter *kf, float initial_value);
+void kalman_update(KalmanFilter *kf, float measurement);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //__KALMAN_FILTER_H
