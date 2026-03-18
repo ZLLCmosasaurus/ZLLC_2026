@@ -10,13 +10,13 @@
       <TargetName>ZLLC_2026</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
-      <pCCUsed>6190000::V6.19::ARMCLANG</pCCUsed>
+      <pCCUsed>6220000::V6.22::ARMCLANG</pCCUsed>
       <uAC6>1</uAC6>
       <TargetOption>
         <TargetCommonOption>
           <Device>STM32H723VGTx</Device>
           <Vendor>STMicroelectronics</Vendor>
-          <PackID>Keil.STM32H7xx_DFP.4.0.0</PackID>
+          <PackID>Keil.STM32H7xx_DFP.3.1.1</PackID>
           <PackURL>https://www.keil.com/pack/</PackURL>
           <Cpu>IRAM(0x20000000-0x2001FFFF) IRAM2(0x24000000-0x2401FFFF) IROM(0x8000000-0x80FFFFF) CLOCK(12000000) FPU3(DFPU) CPUTYPE("Cortex-M7") ELITTLE TZ</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
@@ -338,7 +338,7 @@
             <v6Rtti>0</v6Rtti>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define>USE_HAL_DRIVER,STM32H723xx,__FPU_PRESENT=1,__FPU_USED=1,ARM_MATH_CM7,USE_PWR_LDO_SUPPLY</Define>
+              <Define>USE_HAL_DRIVER,STM32H723xx,__FPU_PRESENT=1,__FPU_USED=1,ARM_MATH_CM7</Define>
               <Undefine></Undefine>
               <IncludePath>../Core/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;../USB_DEVICE/App;../USB_DEVICE/Target;../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;../Drivers/CMSIS/Device/ST/STM32H7xx/Include;../User/Congfig/Inc;../User/Task/Inc;../User/Interaction/Inc;../User/Chariot/Inc;../User/Device/Inc;../User/Driver/Inc;../User/Algorithm/Inc;../Drivers/CMSIS/Include</IncludePath>
             </VariousControls>
@@ -563,6 +563,11 @@
               <FileName>drv_usb.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\User\Driver\Src\drv_usb.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>drv_rs485.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User\Driver\Src\drv_rs485.cpp</FilePath>
             </File>
           </Files>
         </Group>

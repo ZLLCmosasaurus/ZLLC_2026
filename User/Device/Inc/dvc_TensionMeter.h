@@ -1,9 +1,9 @@
 /**
  * @file TensionMeter.h
- * @author lez
- * @brief HX711  tension meter
+ * @author mqx by
+ * @brief GYSA tension meter
  * @version 0.1
- * @date 2024-12-18 0.1 26赛季定稿
+ * @date 2026.1.29
  *
  * @copyright ZLLC 2026
  *
@@ -18,135 +18,65 @@
 
 /* Private types -------------------------------------------------------------*/
 
-// 卡尔曼滤波器结构体
-typedef struct 
-{
-    float x;  // 当前估计值
-    float P;  // 误差协方差
-    float K;  // 卡尔曼增益
-} KalmanFilter;
+#ifndef MODBUS_READ_REG
+#define MODBUS_READ_REG      0x03
+#endif
 
-/* 用于保存HX711的增益 */
-enum Enum_HX711_Gain{
-    GAIN_128 = 1,
-    GAIN_32,
-    GAIN_64,
-};
- 
-/* 结构体 用于实现HX711本身的属性 */
-struct Struct_HX711_Data{
-    Enum_HX711_Gain gain; /* 增益 */
-    bool isTare;    /* 判断传感器数据是否是皮重 true-是 false-否 */
-    float k;        /* 比例系数 */
-    float b;        /* 补偿值 */
-    float tare;     /* 皮重 */
-    float actual;   /* 实重 */
-	float tare_get_data[30];
-};
+#ifndef MODBUS_WRITE_REG
+#define MODBUS_WRITE_REG     0x06
+#endif
 
-class Class_TensionMeter
+class Class_TensionMeter 
 {
 public:
-    void Init(GPIO_TypeDef *_Gpio_Data, uint16_t _Pin_Data, GPIO_TypeDef * _Gpio_Clk, uint16_t _Pin_Clk);
+    // 构造函数：初始化站地址（默认0x01）
+    Class_TensionMeter(uint8_t id = 0x01);
 
-    void TensionMeter_Cal(void);
+    // --- 配置接口 ---
+     /**
+     * @brief 修改采样频率
+     * @param rate 可选值: 10, 40, 640, 1280 (Hz)
+     */
+    void Set_SamplingRate(uint16_t rate);
 
-    inline void Set_Ratio(float ratio);
-    inline void Set_OffsetValue(float offset);/* 设置传感器误差校正/补偿值 */
-    inline void Set_Gain(Enum_HX711_Gain gain);/* 设置传感器增益 */
+    /**
+     * @brief 修改波特率 (注意：修改后需断电重启，且驱动层波特率也需同步修改)
+     * @param index 1=2400, 3=9600, 8=115200, 10=500000
+     */
+    void Set_BaudRate(uint8_t index);
 
-    inline float Get_Tension_Meter(void);
-    inline float Get_Tare(void);
-    inline uint32_t Get_Raw_Data(void);
+    // --- 外部调度接口 ---
+    void Poll();                                      // 发送读取请求（建议 20-50ms 调用一次）
+    void Data_Process(uint8_t *pData, uint16_t len);  // 处理串口收到的原始数据
 
-protected:
+    void UART_RxCpltCallback(uint8_t *Rx_Data, uint16_t Length);
 
-    GPIO_TypeDef *Gpio_Data;
-    GPIO_TypeDef *Gpio_Clk;
-    uint16_t Pin_Data;
-    uint16_t Pin_Clk;
-
-    // 卡尔曼滤波参数
-    float Q = 0.01f; // 过程噪声协方差
-    float R = 1.0f;  // 观测噪声协方差
-    float A = 1.0f;  // 状态转移矩阵
-    float H = 1.0f; // 观测矩阵
-
-    // 传感器值转实际重量 系数
-    float Data_To_Weigth = 23.91304347f;
-
-    // 卡尔曼滤波器
-    KalmanFilter Kf;
-
-    // HX711 结构体
-    Struct_HX711_Data HX711;
-
-    // 测量值
-    float Measurement;
-    // 滤波输出
-    float Tension_Value;
-    // 原始数据
-    uint32_t Raw_Data;
-
-
-    uint32_t init_data_cal;
-    uint8_t init_cnt;
-
-    // 读取HX711原始数据 中断中调用
-    void Read_Raw_Data_FromISR();
-    // 读取HX711原始数据 阻塞方式
-    void Read_Raw_Data();
+    // --- 控制接口 ---
+    void Set_Zero();                                  // 远程归零/去皮
     
-    // 初始化卡尔曼滤波器
-    void kalman_init(float initial_value);
-    // 卡尔曼滤波更新函数
-    void kalman_update();
+    // --- 数据获取接口 ---
+    float Get_Tension() { return Tension; }           // 获取拉力值
+    bool Is_Online() { return (HAL_GetTick() - Last_Update_Time < 200); } // 离线检测
 
-    // 计算实际重量
-    void Cal_Actual_Weight();
+private:
 
-    // 读取数据引脚
-    GPIO_PinState READ_DT();
-    // 拉高数据引脚
-    void SCK_HIGH();
-    // 拉低数据引脚
-    void SCK_LOW();
+    uint8_t  Station_ID;        // 站地址
+    float    Tension;           // 转换后的拉力值
+    int32_t  Raw_Value;         // 原始16进制数值
+    uint32_t Last_Update_Time;  // 记录最后一次更新的时间戳
+
+    uint8_t Tx_Buffer[16]; // 发送缓冲区
+
+    // --- 内部协议工具 ---
+    uint16_t CRC16(uint8_t *ptr, uint16_t len);
 };
+
+
 /* Private variables ---------------------------------------------------------*/
 
 /* Private function declarations ---------------------------------------------*/
-/* 设置传感器转换系数 */
-void Class_TensionMeter::Set_Ratio(float ratio)
-{
-    HX711.k = ratio;
-}
- 
-/* 设置传感器误差校正/补偿值 */
-void Class_TensionMeter::Set_OffsetValue(float offset)
-{
-    HX711.b = offset;
-}
- 
-/* 设置传感器增益 */
-void Class_TensionMeter::Set_Gain(Enum_HX711_Gain gain)
-{
-    HX711.gain = gain;
-}
 
-float Class_TensionMeter::Get_Tension_Meter(void)
-{
-    return (Tension_Value);
-}
 
-float Class_TensionMeter::Get_Tare(void)
-{
-    return (HX711.tare);
-}
-
-uint32_t Class_TensionMeter::Get_Raw_Data(void)
-{
-    return (Raw_Data);
-}
 /* Function prototypes -------------------------------------------------------*/
 
 #endif

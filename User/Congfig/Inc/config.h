@@ -24,7 +24,7 @@
 #define DEBUG
 
 //功率控制相关
-#define POWER_CONTROL 1 //启用功率控制
+//#define POWER_CONTROL 1 //启用功率控制
 //#define BUFFER_LOOP
 
 //遥控器选择
@@ -32,12 +32,12 @@
 #define USE_DR16
 
 /* 兵种/底盘类型选择*/
-#define AGV      //舵轮底盘
+//#define AGV      //舵轮底盘
 //#define OMNI_WHEEL //全向轮底盘
 
 //#define INFANTRY //步兵
 //#define HERO  //英雄
-#define SENTRY //哨兵
+//#define SENTRY //哨兵
 
 /*轮组数据*/
 #ifdef INFANTRY

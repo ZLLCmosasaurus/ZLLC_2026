@@ -111,6 +111,8 @@ int main(void)
   MX_UART8_Init();
   MX_UART9_Init();
   MX_IWDG1_Init();
+  MX_TIM2_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   Task_Init();
   /* USER CODE END 2 */

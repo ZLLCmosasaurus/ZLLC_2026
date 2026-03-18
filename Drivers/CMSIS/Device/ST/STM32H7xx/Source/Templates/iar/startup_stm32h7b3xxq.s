@@ -48,7 +48,6 @@
 
         EXTERN  __iar_program_start
         EXTERN  SystemInit
-        EXTERN  ExitRun0Mode
         PUBLIC  __vector_table
 
         DATA
@@ -236,8 +235,6 @@ __vector_table
         SECTION .text:CODE:NOROOT:REORDER(2)
 Reset_Handler
 
-        LDR     R0, =ExitRun0Mode
-        BLX     R0
         LDR     R0, =SystemInit
         BLX     R0
         LDR     R0, =__iar_program_start
