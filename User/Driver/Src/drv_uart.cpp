@@ -68,6 +68,8 @@ void UART_Init(UART_HandleTypeDef *huart, UART_Call_Back Callback_Function, uint
         UART1_Manage_Object.Callback_Function = Callback_Function;
         UART1_Manage_Object.Rx_Buffer_Length = Rx_Buffer_Length;
         HAL_UARTEx_ReceiveToIdle_DMA(huart, UART1_Manage_Object.Rx_Buffer, UART1_Manage_Object.Rx_Buffer_Length);
+        __HAL_DMA_DISABLE_IT(&hdma_usart1_rx, DMA_IT_HT);
+        memset(UART1_Manage_Object.Rx_Buffer,0,UART1_Manage_Object.Rx_Buffer_Length);
     }
     else if (huart->Instance == UART5)
     {
@@ -103,6 +105,8 @@ void UART_Init(UART_HandleTypeDef *huart, UART_Call_Back Callback_Function, uint
         UART10_Manage_Object.Callback_Function = Callback_Function;
         UART10_Manage_Object.Rx_Buffer_Length = Rx_Buffer_Length;
         HAL_UARTEx_ReceiveToIdle_DMA(huart, UART10_Manage_Object.Rx_Buffer, UART10_Manage_Object.Rx_Buffer_Length);
+        __HAL_DMA_DISABLE_IT(&hdma_usart10_rx, DMA_IT_HT);
+        memset(UART10_Manage_Object.Rx_Buffer,0,UART10_Manage_Object.Rx_Buffer_Length);
     }
     
 }
@@ -145,7 +149,9 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
     if (huart->Instance == USART1)
     {
         UART1_Manage_Object.Rx_Length = Size;
+        UART1_Manage_Object.Callback_Function(UART1_Manage_Object.Rx_Buffer, Size);
         HAL_UARTEx_ReceiveToIdle_DMA(huart, UART1_Manage_Object.Rx_Buffer, UART1_Manage_Object.Rx_Buffer_Length*2);
+        __HAL_DMA_DISABLE_IT(&hdma_usart1_rx, DMA_IT_HT);
         // if( UART1_Manage_Object.Rx_Length<=UART1_Manage_Object.Rx_Buffer_Length)
         //     UART1_Manage_Object.Callback_Function(UART1_Manage_Object.Rx_Buffer, Size);
         // else
@@ -190,26 +196,30 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
     }
     else if (huart->Instance == USART10)
     {
-        UART10_Manage_Object.Rx_Length = Size;        
+        UART10_Manage_Object.Rx_Length = Size;
+        UART10_Manage_Object.Callback_Function(UART10_Manage_Object.Rx_Buffer, Size);      
         HAL_UARTEx_ReceiveToIdle_DMA(huart, UART10_Manage_Object.Rx_Buffer, UART10_Manage_Object.Rx_Buffer_Length);
-        if( UART10_Manage_Object.Rx_Length<=UART10_Manage_Object.Rx_Buffer_Length)
-            UART10_Manage_Object.Callback_Function(UART10_Manage_Object.Rx_Buffer, Size);
-        else
-        memset( UART10_Manage_Object.Rx_Buffer, 0, UART10_Manage_Object.Rx_Buffer_Length);
+        __HAL_DMA_DISABLE_IT(&hdma_usart10_rx, DMA_IT_HT);
+        // if( UART10_Manage_Object.Rx_Length<=UART10_Manage_Object.Rx_Buffer_Length)
+        //     UART10_Manage_Object.Callback_Function(UART10_Manage_Object.Rx_Buffer, Size);
+        // else
+        // memset( UART10_Manage_Object.Rx_Buffer, 0, UART10_Manage_Object.Rx_Buffer_Length);
     }
 }
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-    if (huart->Instance == USART1)
-    {
-        UART1_Manage_Object.Rx_Length = 28;
-        if( UART1_Manage_Object.Rx_Length<=UART1_Manage_Object.Rx_Buffer_Length)
-            UART1_Manage_Object.Callback_Function(UART1_Manage_Object.Rx_Buffer, 28);
-        else
-        memset( UART1_Manage_Object.Rx_Buffer, 0, UART1_Manage_Object.Rx_Buffer_Length);
-        HAL_UART_Receive_IT(huart, UART1_Manage_Object.Rx_Buffer, UART1_Manage_Object.Rx_Buffer_Length);//再开启接收中断
-    }
-}
+// void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+// {
+//     if (huart->Instance == USART1)
+//     {
+//         UART1_Manage_Object.Rx_Length = 21;
+//         if( UART1_Manage_Object.Rx_Length<=UART1_Manage_Object.Rx_Buffer_Length)
+//             UART1_Manage_Object.Callback_Function(UART1_Manage_Object.Rx_Buffer, 21);
+//         else
+//         memset( UART1_Manage_Object.Rx_Buffer, 0, UART1_Manage_Object.Rx_Buffer_Length);
+        
+//         HAL_UART_Receive_DMA(huart, UART1_Manage_Object.Rx_Buffer, UART1_Manage_Object.Rx_Buffer_Length);
+//         //HAL_UART_Receive_IT(huart, UART1_Manage_Object.Rx_Buffer, UART1_Manage_Object.Rx_Buffer_Length);//再开启接收中断
+//     }
+// }
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

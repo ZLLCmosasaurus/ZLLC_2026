@@ -469,15 +469,11 @@ void Class_Booster::Output()
         Motor_Friction_Left.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
         Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
 
-        // if (Referee->Get_Booster_17mm_1_Heat() + 30 < Referee->Get_Booster_17mm_1_Heat_Max())
-        // {
-
-        //     Drvier_Angle += 2.0f * PI / 9.0f;
-        //     Motor_Driver.Set_Target_Radian(Drvier_Angle);
-        // }
-
+        if (Referee->Get_Booster_17mm_1_Heat() + 30 < Referee->Get_Booster_17mm_1_Heat_Max())
+        {
             Driver_Angle += 2.5f * 2.0f * PI / 9.0f;
             Motor_Driver.Set_Target_Radian(Driver_Angle);
+        }    
 
         // 点一发立刻停火
         Booster_Control_Type = Booster_Control_Type_CEASEFIRE;
@@ -504,14 +500,14 @@ void Class_Booster::Output()
         Motor_Friction_Left.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
         Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
 
-        // if (Referee->Get_Booster_17mm_1_Heat() + 30 < Referee->Get_Booster_17mm_1_Heat_Max())
-        // {
+        if (Referee->Get_Booster_17mm_1_Heat() + 30 < Referee->Get_Booster_17mm_1_Heat_Max())
+        {
              Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega);
-        // }
-        // else
-        // {
-        //    Booster_Control_Type = Booster_Control_Type_CEASEFIRE;
-        // }
+        }
+        else
+        {
+            Booster_Control_Type = Booster_Control_Type_CEASEFIRE;
+        }
     }
     break;
     }
@@ -520,8 +516,8 @@ void Class_Booster::Output()
     if (Friction_Control_Type != Friction_Control_Type_DISABLE)
     {
 
-        Motor_Friction_Left.Set_Target_Omega_Radian(Friction_Omega);
-        Motor_Friction_Right.Set_Target_Omega_Radian(-Friction_Omega);
+        Motor_Friction_Left.Set_Target_Omega_Radian(-Friction_Omega);
+        Motor_Friction_Right.Set_Target_Omega_Radian(Friction_Omega);
     }
     else
     {
@@ -535,8 +531,7 @@ void Class_Booster::Output()
  *
  */
 void Class_Booster::TIM_Calculate_PeriodElapsedCallback()
-{     
-    
+{                          
     //无需裁判系统的热量控制计算
     //FSM_Heat_Detect.Reload_TIM_Status_PeriodElapsedCallback();
     //卡弹处理

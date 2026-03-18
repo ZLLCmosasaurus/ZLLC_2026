@@ -336,12 +336,13 @@ void TIM_CAN_PeriodElapsedCallback()
         //轮向 3508    
         CAN_Send_Data(&hfdcan1, 0x200, CAN1_0x200_Tx_Data, 8);		
 //        //舵向 3508
-        CAN_Send_Data(&hfdcan1, 0x1ff, CAN1_0x1ff_Tx_Data, 8);		
+        CAN_Send_Data(&hfdcan1, 0x1ff, CAN1_0x1ff_Tx_Data, 8);
+        CAN_Send_Data(&hfdcan2, 0x88, CAN2_Chassis_Tx_Gimbal_Data, 8);			
     }
 		
-    if (mod100 == 10) //10Hz
+    if (mod100 == 10) //100Hz
     {
-        CAN_Send_Data(&hfdcan2, 0x88, CAN2_Chassis_Tx_Gimbal_Data, 8);			
+        		
 //        CAN_Send_Data(&hfdcan3, 0x191, CAN3_Chassis_Tx_Data_G, 8);
         mod100 = 0;
     }
@@ -359,36 +360,34 @@ void TIM_CAN_PeriodElapsedCallback()
         mod20 = 0;
     }
     #elif defined (GIMBAL)
-        CAN_Send_Data(&hfdcan2, 0x141, CAN2_0x141_Tx_Data, 8);
+        // CAN_Send_Data(&hfdcan2, 0x141, CAN2_0x141_Tx_Data, 8);
         //CAN_Send_Data(&hfdcan2, 0xf1, CAN2_0xxf1_Tx_Data, 8);
 
-    static uint8_t mod5 = 0,mod2 = 0,mod20 = 0;
+    static uint8_t mod5 = 0,mod2 = 0,mod10 = 0;
     mod5++;
     mod2++;
-    mod20++;
+    mod10++;
     
     if(mod5 == 5)
     {
         mod5 = 0;
-        
         CAN_Send_Data(&hfdcan2, 0x77, CAN2_Gimbal_Tx_Chassis_Data, 8); //给底盘发送控制命令 按照0x77 ID 发送
-
         CAN_Send_Data(&hfdcan2, 0xf1, CAN2_0xxf1_Tx_Data, 8);
-
-       CAN_Send_Data(&hfdcan1, 0x200, CAN1_0x200_Tx_Data, 8);
-       CAN_Send_Data(&hfdcan2, 0x200, CAN2_0x200_Tx_Data, 8);
+        // CAN_Send_Data(&hfdcan1, 0xf1, CAN1_0xxf1_Tx_Data, 8);
+        CAN_Send_Data(&hfdcan1, 0x200, CAN1_0x200_Tx_Data, 8);
+        CAN_Send_Data(&hfdcan2, 0x200, CAN2_0x200_Tx_Data, 8);
         
     }
     if(mod2 == 2)
     {
         CAN_Send_Data(&hfdcan1, 0xa0, CAN1_MiniPc_Tx_Data, 8);
 			  //CAN_Send_Data(&hfdcan2, 0xf1, CAN2_0xxf1_Tx_Data, 8);
-        // CAN_Send_Data(&hfdcan2, 0x141, CAN2_0x141_Tx_Data, 8);
+        CAN_Send_Data(&hfdcan2, 0x141, CAN2_0x141_Tx_Data, 8);
         mod2 = 0;
     }   
-    if (mod20 == 20) //50Hz
+    if (mod10 == 10) //100Hz
     {
-        mod20 = 0;
+        mod10 = 0;
     }
     #endif
 

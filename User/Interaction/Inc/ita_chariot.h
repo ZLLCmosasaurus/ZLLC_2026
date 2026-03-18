@@ -25,6 +25,7 @@
 #include "config.h"
 #include "alg_filter.h"
 #include "dvc_dmimu.h"
+#include "buzzer.h"
 
 /* Exported macros -----------------------------------------------------------*/
 class Class_Chariot;
@@ -326,7 +327,7 @@ protected:
     //底盘转换后的角度（数据来源yaw电机）
     float Chassis_Angle;
     //底盘标定参考正方向角度(数据来源yaw电机)
-    float Reference_Angle = -7.15783691f;
+    float Reference_Angle = -34.387207;
 	float Reference_Radian = Reference_Angle * PI / 180.f;
 
     #ifdef CHASSIS
@@ -368,9 +369,9 @@ protected:
         float DR16_Pitch_Resolution = 0.003f * PI;
 
         //DR16鼠标云台yaw灵敏度系数, 不同鼠标不同参数
-        float DR16_Mouse_Yaw_Angle_Resolution = 57.8*4.0f;
+        float DR16_Mouse_Yaw_Angle_Resolution = 57.8f * 10.0f;
         //DR16鼠标云台pitch灵敏度系数, 不同鼠标不同参数
-        float DR16_Mouse_Pitch_Angle_Resolution = 57.8f;
+        float DR16_Mouse_Pitch_Angle_Resolution = 57.8f * 10.0f;
         
         //迷你主机云台pitch自瞄控制系数
         float MiniPC_Autoaiming_Yaw_Angle_Resolution = 0.003f;

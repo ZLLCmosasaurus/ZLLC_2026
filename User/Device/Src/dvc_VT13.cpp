@@ -56,13 +56,17 @@ bool verify_crc16_check_sum(uint8_t *p_msg, uint16_t len)
     return ((w_expected & 0xff) == p_msg[len - 2] && ((w_expected >> 8) & 0xff) == p_msg[len - 1]);
 }
 
+uint32_t err = 0;
+uint32_t err2 = 0;
 void Class_VT13::VT13_UART_RxCpltCallback(uint8_t *Rx_Data)
 { 
   if(*(Rx_Data + 0) != 0xA9 || *(Rx_Data + 1) != 0x53){
+    err++;
     return;
   }
  
   if(!verify_crc16_check_sum(Rx_Data, 21)){
+    err2++;
     return;
   }
 

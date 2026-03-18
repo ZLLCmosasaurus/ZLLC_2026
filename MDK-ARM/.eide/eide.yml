@@ -43,8 +43,9 @@ virtualFolder:
         - path: ../User/Device/Src/dvc_GraphicsSendTask.cpp
         - path: ../User/Device/Src/dvc_TensionMeter.cpp
         - path: ../User/Device/Src/dvc_servo.cpp
-        - path: ../User/Device/Src/dvc_buzzer.cpp
         - path: ../User/Device/Src/dvc_dmimu.cpp
+        - path: ../User/Device/Src/buzzer.c
+        - path: ../User/Device/Src/buzzer_bsp.c
       folders: []
     - name: Driver
       files:

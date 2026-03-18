@@ -18,7 +18,8 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "crt_chassis.h"
-
+#include "buzzer.h"
+#include "drv_math.h"
 /* Private macros ------------------------------------------------------------*/
 
 /* Private types -------------------------------------------------------------*/
@@ -95,7 +96,7 @@ void Class_Steering_Wheel_Chassis::Init(float __Velocity_X_Max, float __Velocity
     Chassis_Control_Type = Chassis_Control_Type_DISABLE;
 }
 
-
+float dsb;
 /**
  * @brief 速度解算
  *
@@ -106,6 +107,7 @@ void Class_Steering_Wheel_Chassis::Speed_Resolution()
 	if(Motor_Steer[0].Get_MA600_Status()==MA600_Status_DISABLE || Motor_Steer[1].Get_MA600_Status()==MA600_Status_DISABLE ||
        Motor_Steer[2].Get_MA600_Status()==MA600_Status_DISABLE || Motor_Steer[3].Get_MA600_Status()==MA600_Status_DISABLE)
 	{
+        buzzer_setTask(&buzzer, BUZZER_DJI_STARTUP_PRIORITY);
 		for(uint8_t i=0;i<4;i++)
 		{
 			Motor_Wheel[i].Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OPENLOOP);
@@ -118,7 +120,10 @@ void Class_Steering_Wheel_Chassis::Speed_Resolution()
 			Motor_Steer[i].Set_Out(0.0f);
 		}		
 		return;		
-	}		
+	}
+    // else{
+    //     buzzer_setTask(&buzzer, BUZZER_FREE_PRIORITY);
+    // }		
     #ifdef AGV 
     switch (Chassis_Control_Type)
     {
@@ -211,11 +216,12 @@ void Class_Steering_Wheel_Chassis::Speed_Resolution()
             float True_Vx[4], True_Vy[4], True_Target_Angle_Radian[4];
             
             //斜坡处理
-            True_Vx[0] = True_Vx[3] = Slope_Velocity_X.Get_Out() - sin((PI/2) - THETA) * Slope_Omega.Get_Out() *  R_DIST/ 2;
-            True_Vx[1] = True_Vx[2] = Slope_Velocity_X.Get_Out() + sin((PI/2) - THETA) * Slope_Omega.Get_Out() *  R_DIST/ 2;
+            dsb = R_DIST;
+            True_Vx[0] = True_Vx[3] = Slope_Velocity_X.Get_Out() - sinf((PI/2) - THETA) * Target_Omega *  R_DIST * 3.0f;
+            True_Vx[1] = True_Vx[2] = Slope_Velocity_X.Get_Out() + sinf((PI/2) - THETA) * Target_Omega *  R_DIST * 3.0f;
 
-            True_Vy[0] = True_Vy[1] = Slope_Velocity_Y.Get_Out() - cos((PI/2) - THETA) * Slope_Omega.Get_Out() *  R_DIST/ 2;
-            True_Vy[2] = True_Vy[3] = Slope_Velocity_Y.Get_Out() + cos((PI/2) - THETA) * Slope_Omega.Get_Out() *  R_DIST/ 2;
+            True_Vy[0] = True_Vy[1] = Slope_Velocity_Y.Get_Out() - cosf((PI/2) - THETA) * Target_Omega *  R_DIST * 3.0f;
+            True_Vy[2] = True_Vy[3] = Slope_Velocity_Y.Get_Out() + cosf((PI/2) - THETA) * Target_Omega *  R_DIST * 3.0f;
 
             //舵轮转动角度的优化处理
             for(int i = 0;i<4;i++){
@@ -225,7 +231,7 @@ void Class_Steering_Wheel_Chassis::Speed_Resolution()
                 //计算速度
                 float temp_Target_Omega = 0.0f;
                 arm_sqrt_f32(True_Vx[i] * True_Vx[i] + True_Vy[i] * True_Vy[i], &temp_Target_Omega);
-                temp_Target_Omega = temp_Target_Omega / WHEEL_RADIUS * 200.0f;//从线速度到角速度，速控底盘
+                temp_Target_Omega = temp_Target_Omega / WHEEL_RADIUS;//从线速度到角速度，速控底盘
 
                 //计算目标角度
                 if(fabs(temp_Target_Omega) < 0.0001 && True_Vy[i] == 0.0f && True_Vx[i] == 0.0f)
@@ -328,29 +334,32 @@ void Class_Steering_Wheel_Chassis::TIM_Calculate_PeriodElapsedCallback(Enum_Spri
     //计算限制功率
     if(Referee->Get_Referee_Status() == Referee_Status_ENABLE){
         //缓冲环限制功率
-        Chassis_Buffer = Referee->Get_Chassis_Energy_Buffer();
-        Power_Management.Buffer_Power = (sqrt(Chassis_Buffer) - sqrt(Power_Management.Min_Buffer)) * Power_Management.Buffer_K;
-        Math_Constrain(&Power_Management.Buffer_Power, -60.0f, 45.0f);
+//         Chassis_Buffer = Referee->Get_Chassis_Energy_Buffer();
+//         Power_Management.Buffer_Power = (sqrt(Chassis_Buffer) - sqrt(Power_Management.Min_Buffer)) * Power_Management.Buffer_K;
+//         Math_Constrain(&Power_Management.Buffer_Power, -60.0f, 45.0f);
 
-        if (Supercap.Get_Supercap_Status() == Supercap_Status_ENABLE)
-        {
-					a= Supercap.Get_Buffer_Power();
-					b=Power_Management.Buffer_Power;
-					c = Referee->Get_Chassis_Power_Max();
-					Power_Management.Max_Power = a+b+c;
-//            Power_Management.Max_Power = Supercap.Get_Buffer_Power() + Power_Management.Buffer_Power + Referee->Get_Chassis_Power_Max();
-        }
-        else
-        {
-            Power_Management.Max_Power = Power_Management.Buffer_Power + Referee->Get_Chassis_Power_Max();
-        }
+//         if (Supercap.Get_Supercap_Status() == Supercap_Status_ENABLE)
+//         {
+// 					a= Supercap.Get_Buffer_Power();
+// 					b=Power_Management.Buffer_Power;
+// 					c = Referee->Get_Chassis_Power_Max();
+// 					Power_Management.Max_Power = a+b+c;
+// //            Power_Management.Max_Power = Supercap.Get_Buffer_Power() + Power_Management.Buffer_Power + Referee->Get_Chassis_Power_Max();
+//         }
+//         else
+//         {
+//             Power_Management.Max_Power = Power_Management.Buffer_Power + Referee->Get_Chassis_Power_Max();
+//         }
+
+         Power_Management.Max_Power = Referee->Get_Chassis_Power_Max();
     }
     else{
         //裁判系统离线限制功率
         Power_Management.Max_Power = Max_Power_test;
         Chassis_Buffer = 0.0f;
     }
-    
+    //裁判系统通信有问题，临时加一下
+		Power_Management.Max_Power = Max_Power_test;
     Power_Management.Actual_Power = Supercap.Get_Chassis_Power();//Referee->Get_Chassis_Power();
     Power_Management.Total_error = 0.0f;
 
@@ -373,10 +382,10 @@ void Class_Steering_Wheel_Chassis::TIM_Calculate_PeriodElapsedCallback(Enum_Spri
 
     for (int i = 0; i < 4; i++)
     {
-        Motor_Wheel[i].Set_Out(Power_Management.Motor_Data[i].output);
-        //Motor_Wheel[i].Output();
+        // Motor_Wheel[i].Set_Out(Power_Management.Motor_Data[i].output);
+        // //Motor_Wheel[i].Output();
 
-        Motor_Steer[i].Set_Out(Power_Management.Motor_Data[i + 4].output);//set_out已经有output输出
+        // Motor_Steer[i].Set_Out(Power_Management.Motor_Data[i + 4].output);//set_out已经有output输出
         //Motor_Steer[i].Output();
     }
 

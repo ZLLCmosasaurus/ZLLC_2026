@@ -36,26 +36,27 @@
 #include "dvc_supercap.h"
 #include "config.h"
 #include "dvc_minipc.h"
+#include "drv_math.h"
 /* Exported macros -----------------------------------------------------------*/
-#define wheel_diameter 10.000000f   // 驱动轮直径，cm
-#define half_width 19.7f            // 车宽的一半，x方向为宽，cm
-#define half_length 22.5f           // 车长的一半，y方向为长，cm
+#define wheel_diameter 0.10f   // 驱动轮直径，m
+#define half_width 0.197f            // 车宽的一半，x方向为宽，m
+#define half_length 0.225f           // 车长的一半，y方向为长，m
 
-#define WHEEL_RADIUS wheel_diameter / 2
-#define THETA atan(half_length / half_width) // 转向轮在坐标系下与y轴的夹角（锐角）
-#define R_DIST half_width / cos(THETA) // 旋转中心与四个舵轮的距离
+#define WHEEL_RADIUS (wheel_diameter / 2)
+#define THETA atan2f(half_length, half_width) // 转向轮在坐标系下与y轴的夹角（锐角）
+#define R_DIST (half_width / cosf(THETA)) // 旋转中心与四个舵轮的距离(单位有点问题！)
 
 
 #define PI 3.141593f
-#define PI2 2 * PI
-#define RPM_TO_RAD PI2 / 60                // 将转速(RPM)转换为角速度(rad/s)  1 rpm = 2pi/60 rad/s
-#define RPM_TO_VEL PI * wheel_diameter / 60  // 将转速(RPM)转换为轮子线速度(cm/s)  vel = rpm*pi*D/60  cm/s
-#define VEL_TO_RPM 1 / RPM_TO_VEL            // 将轮子线速度(cm/s)转换为转速(RPM)
+#define PI2 (2 * PI)
+#define RPM_TO_RAD (PI2 / 60)                // 将转速(RPM)转换为角速度(rad/s)  1 rpm = 2pi/60 rad/s
+#define RPM_TO_VEL (PI * wheel_diameter / 60)  // 将转速(RPM)转换为轮子线速度(cm/s)  vel = rpm*pi*D/60  m/s
+#define VEL_TO_RPM (1 / RPM_TO_VEL)            // 将轮子线速度(m/s)转换为转速(RPM)
 #define M2006_REDUCTION_RATIO 36.000000f     // 定义M2006电机的减速比
 #define M3508_REDUCTION_RATIO 19.000000f     // 定义M3508电机的减速比
 #define MF7025_ENCODER_ANGLE 4096.0f         // 定义MF7025电机编码器每圈脉冲数
 
-#define RAD_TO_4096 4096.0f / PI / 2.0f      // 将弧度值转换为编码器计数值
+#define RAD_TO_4096 (4096.0f / PI / 2.0f)      // 将弧度值转换为编码器计数值
 /* Exported types ------------------------------------------------------------*/
 
 /**
@@ -115,7 +116,7 @@ public:
     //随动环
     //Class_PID Chassis_Follow_PID_Angle;
 
-    void Init(float __Velocity_X_Max = 12.0f, float __Velocity_Y_Max = 12.0f, float __Omega_Max = 4.0f, float __Steer_Power_Ratio = 0.5);
+    void Init(float __Velocity_X_Max = 8.0f, float __Velocity_Y_Max = 8.0f, float __Omega_Max = 6.0f, float __Steer_Power_Ratio = 0.5);
 
     inline Enum_Chassis_Control_Type Get_Chassis_Control_Type();
     inline float Get_Velocity_X_Max();
@@ -154,11 +155,11 @@ protected:
     //速度Y限制
     float Velocity_Y_Max=4.0f;
     //角速度限制
-    float Omega_Max = 0.7f;
+    float Omega_Max = 4.0f;
     //舵向电机功率上限比率
     float Steer_Power_Ratio = 0.5f;
     //底盘小陀螺模式角速度
-    float Spin_Omega = 10.0f;
+    float Spin_Omega = 5.0f;
     //常量
 
 

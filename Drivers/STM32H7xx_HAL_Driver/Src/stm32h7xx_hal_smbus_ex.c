@@ -6,8 +6,6 @@
   *          This file provides firmware functions to manage the following
   *          functionalities of SMBUS Extended peripheral:
   *           + Extended features functions
-  *           + WakeUp Mode Functions
-  *           + FastModePlus Functions
   *
   ******************************************************************************
   * @attention
