@@ -444,4 +444,20 @@ void HAL_FDCAN_TxBufferCompleteCallback(FDCAN_HandleTypeDef *hfdcan, uint32_t Bu
            the HAL_FDCAN_TxBufferCompleteCallback could be implemented in the user file
    */
 }
+
+void HAL_FDCAN_ErrorCallback(FDCAN_HandleTypeDef *hfdcan){
+    // FDCAN_FilterTypeDef fdcan_filter;
+
+    // fdcan_filter.IdType = FDCAN_STANDARD_ID;                       //标准ID
+    // fdcan_filter.FilterIndex = 0;                                  //滤波器索引                   
+    // fdcan_filter.FilterType = FDCAN_FILTER_MASK;                   
+    // fdcan_filter.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;           //过滤器0关联到FIFO0  
+    // fdcan_filter.FilterID1 = 0x00;                               
+    // fdcan_filter.FilterID2 = 0x00;
+
+    // HAL_FDCAN_ConfigFilter(hfdcan,&fdcan_filter); 		 				  //接收ID2		
+    // HAL_FDCAN_ActivateNotification(hfdcan, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
+    // HAL_FDCAN_Start(hfdcan); //开启FDCAN
+}
+
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

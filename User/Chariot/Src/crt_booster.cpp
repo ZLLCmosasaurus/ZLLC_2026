@@ -86,7 +86,7 @@ void Class_FSM_Heat_Detect::Reload_TIM_Status_PeriodElapsedCallback()
     //热量冷却到0
     if (Heat > 0)
     {
-        Heat -= 80.f / 1000.0f;//哨兵默认80
+        Heat -= 30.f / 1000.0f;//哨兵默认30
     }
     else
     {
@@ -139,7 +139,7 @@ void Class_FSM_Antijamming::Reload_TIM_Status_PeriodElapsedCallback()
             //卡弹反应状态->准备卡弹处理
             Booster->Motor_Driver.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
             //Booster->Driver_Angle = Booster->Motor_Driver.Get_Now_Radian() + PI / 12.0f;//原版本
-            Booster->Driver_Angle = Booster->Motor_Driver.Get_Now_Radian() - (2 * PI / 8.0f);
+            Booster->Driver_Angle = Booster->Motor_Driver.Get_Now_Radian() - (2 * PI / 16.0f);
             Booster->Motor_Driver.Set_Target_Radian(Booster->Driver_Angle);
             Set_Status(3);
         }
@@ -243,7 +243,18 @@ void Class_Booster::Output()
             Motor_Friction_Left.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
             Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
 
-            Driver_Angle = Now_Angle + 2.0f * PI / 8.0f;
+            if(Referee->Get_Referee_Status() == Referee_Status_ENABLE){
+                if(Referee->Get_Booster_17mm_1_Heat_Max() - Referee->Get_Booster_17mm_1_Heat() < 30){
+                    Driver_Angle = Now_Angle;
+                }
+                else{
+                    Driver_Angle = Now_Angle + 2.0f * PI / 8.0f;
+                }
+            }
+            else{
+                Driver_Angle = Now_Angle + 2.0f * PI / 8.0f;
+            }
+
             // Driver_Angle -= 2.0f * PI / 8.0f;
             Motor_Driver.Set_Target_Radian(Driver_Angle);
 
@@ -288,7 +299,7 @@ void Class_Booster::Output()
             }
             else
             {
-                Cooling_Value = Referee->Get_Booster_17mm_Heat_CD();
+                Cooling_Value = Referee->Get_Booster_17mm_1_Heat_CD();
             }
 
             if (shoot_time == 0)
@@ -305,14 +316,14 @@ void Class_Booster::Output()
             }
             else if (0 < shoot_time && shoot_time < ShootTime)
             {
-                Driver_Omega = shoot_speed * 2 * PI / 7.f;
+                Driver_Omega = shoot_speed * 2 * PI / 8.f;
                 Math_Constrain(&Driver_Omega, 0.0f, 18.0f);
                 Motor_Driver.Set_Target_Omega_Radian(Driver_Omega);
             }
             else
             {
                 shoot_speed = (Cooling_Value / Heat_Consumption);
-                Driver_Omega = shoot_speed * 2 * PI / 7.f;
+                Driver_Omega = shoot_speed * 2 * PI / 8.f;
                 Math_Constrain(&Driver_Omega, 0.0f, 18.0f);
                 Motor_Driver.Set_Target_Omega_Radian(Driver_Omega);
             }

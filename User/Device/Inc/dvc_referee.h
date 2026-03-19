@@ -3,9 +3,9 @@
  * @author lez by yssickjgd
  * @brief PM01裁判系统
  * @version 0.1
- * @date 2025-07-1 0.1 26赛季定稿
+ * @date 2024-07-1 0.1 24赛季定稿
  *
- * @copyright ZLLC 2026
+ * @copyright ZLLC 2024
  *
  */
 
@@ -17,32 +17,30 @@
 #include "drv_uart.h"
 #include "limits.h"
 #include "string.h"
-#include "drv_math.h"
 #include "config.h"
-
 /* Exported macros -----------------------------------------------------------*/
 
 class Class_Chariot;
 
 //设定当前车车
 
-// #define HERO_1            1
-// #define ENGINEER_2        2
-// #define INFANTRY_3        3
-// #define INFANTRY_4        4
-// #define INFANTRY_5        5
-// #define AERIAL_6          6
+#define HERO_1            1
+#define ENGINEER_2        2
+#define INFANTRY_3        3
+#define INFANTRY_4        4
+#define INFANTRY_5        5
+#define AERIAL_6          6
 #define SENTRY_7          7
-// #define DART_8            8
-// #define RADAR_9           9
-// #define BASE_10           10
-// #define OUTPOST_11        11
-//#define Robot_SENTRY_7 
+#define DART_8            8
+#define RADAR_9           9
+#define BASE_10           10
+#define OUTPOST_11        11
+
 #define RED 0
 #define BLUE 100
 
 //只需修改这里 UI发送者ID
-#define ROBOT_ID    (SENTRY_7 + BLUE)
+#define ROBOT_ID    (INFANTRY_3 + BLUE)
 
 const unsigned char CRC8_INIT = 0xff;
 const unsigned char CRC8_TAB[256] =
@@ -226,7 +224,10 @@ enum Enum_Referee_Command_ID : uint16_t
     Referee_Command_ID_ROBOT_REMAINING_AMMO,
     Referee_Command_ID_ROBOT_RFID,
     Referee_Command_ID_ROBOT_DART_COMMAND,
-    Referee_Command_ID_ROBOT_Sentry_Info = 0x020D,
+    Referee_Command_ID_ROBOT_Robot_Position,
+    Referee_Command_ID_ROBOT_Radar_Mark_Data,
+    Referee_Command_ID_ROBOT_Sentry_Info,
+    Referee_Command_ID_Interaction_Robot_Receive = 0x0210,
     Referee_Command_ID_ROBOT_Radar_Info = 0x020E,
     Referee_Command_ID_INTERACTION = 0x0301,
     Referee_Command_ID_INTERACTION_CUSTOM_CONTROLLER,
@@ -433,8 +434,7 @@ enum Enum_Referee_Data_Robot_Dart_Command_Target : uint8_t
 {
     Referee_Data_Robot_Dart_Command_Target_OUTPOST = 0,
     Referee_Data_Robot_Dart_Command_Target_BASE,
-    Referee_Data_Robot_Dart_Command_Target_Randam_BASE,
-    Referee_Data_Robot_Dart_Command_Target_Randam_Move_BASE,
+    Referee_Data_Robot_Dart_Command_Target_Randam_BASE
 };
 
 /**
@@ -491,16 +491,6 @@ enum Enum_Graphic_Color
     Graphic_Color_CYAN,
     Graphic_Color_BLACK,
     Graphic_Color_WHITE,
-};
-
-/**
- * @brief 哨兵复活状态
- *
- */
-enum Enum_Sentry_Revive_Status : uint8_t
-{
-    Revive_OFF = 0,
-    Revive_ON,
 };
 
 /**
@@ -727,22 +717,14 @@ struct Struct_Referee_Rx_Data_Game_Result
  */
 struct Struct_Referee_Rx_Data_Game_Robot_HP
 {
-    uint16_t Red_Hero_1;
-    uint16_t Red_Engineer_2;
-    uint16_t Red_Infantry_3;
-    uint16_t Red_Infantry_4;
-    uint16_t Red_Infantry_5;
-    uint16_t Red_Sentry_7;
-    uint16_t Red_Outpost_11;
-    uint16_t Red_Base_10;
-    uint16_t Blue_Hero_1;
-    uint16_t Blue_Engineer_2;
-    uint16_t Blue_Infantry_3;
-    uint16_t Blue_Infantry_4;
-    uint16_t Blue_Infantry_5;
-    uint16_t Blue_Sentry_7;
-    uint16_t Blue_Outpost_11;
-    uint16_t Blue_Base_10;
+    uint16_t ally_1_robot_HP;//己方1号英雄机器人血量，若该机器人未上场或者被罚下，则血量为0，下文同理 
+    uint16_t ally_2_robot_HP;//己方2号工程机器人血量
+    uint16_t ally_3_robot_HP;//己方3号步兵机器人血量
+    uint16_t ally_4_robot_HP;
+    uint16_t reserved;//保留位
+    uint16_t ally_7_robot_HP;
+    uint16_t ally_outpost_HP;//己方前哨站血量
+    uint16_t ally_base_HP;//己方基地血量
     uint16_t CRC_16;
 } __attribute__((packed));
 
@@ -752,19 +734,7 @@ struct Struct_Referee_Rx_Data_Game_Robot_HP
  */
 struct Struct_Referee_Rx_Data_Event_Data
 {
-    uint32_t Supply_1_Status_Enum : 1;
-    uint32_t Supply_2_Status_Enum : 1;
-    uint32_t Supply_3_Status_Enum : 1;
-    uint32_t Energy_Status_Enum : 1;
-    uint32_t Energy_Small_Status_Enum : 1;
-    uint32_t Energy_Big_Status_Enum : 1;
-    uint32_t Highland_2_Status_Enum : 2;
-    uint32_t Highland_3_Status_Enum : 2;
-    uint32_t Highland_4_Status_Enum : 2;
-    uint32_t Base_Shield_Remain_HP : 7; //己方基地虚拟护盾的剩余值百分比（四舍五入，保留整数）
-    uint32_t Dart_Outpost_Base_Time : 9; //飞镖最后一次击中己方前哨站或基地的时间（0-420，开局默认为0)
-    uint32_t Dart_Outpost_Base_Obeject :2; //飞镖最后一次击中己方前哨站或基地的具体目标，开局默认为 0，1 为击中前哨站，2 为击中基地固定目标，3 为击中基地随机目标
-    uint32_t Centre_Enable_Status : 2; //中心增益是否占领 0 为未被占领，1 为被己方占领，2 为被对方占领，3 为被双方占领。
+    uint32_t event_data;
     uint16_t CRC_16;
 } __attribute__((packed));
 
@@ -834,12 +804,11 @@ struct Struct_Referee_Rx_Data_Robot_Status
  */
 struct Struct_Referee_Rx_Data_Robot_Power_Heat
 {
-    uint16_t Chassis_Voltage;
-    uint16_t Chassis_Current;
-    float Chassis_Power;
+    uint16_t reserve_1;
+    uint16_t reserve_2;
+    float reserve_3;
     uint16_t Chassis_Energy_Buffer;
     uint16_t Booster_17mm_1_Heat;
-    uint16_t Booster_17mm_2_Heat;
     uint16_t Booster_42mm_Heat;
     uint16_t CRC_16;
 } __attribute__((packed));
@@ -863,7 +832,7 @@ struct Struct_Referee_Rx_Data_Robot_Position
 struct Struct_Referee_Rx_Data_Robot_Buff
 {
     uint8_t HP_Recovery_Buff_Rate ;
-    uint8_t Booster_Cooling_Buff_Rate ; 
+    uint16_t Booster_Cooling_Buff_Rate; 
     uint8_t Defend_Buff_Rate ; //机器人防御增益（百分比，值为 50 表示 50%防御增益）
     uint8_t Vulnerability_Buff_Rate; //机器人负防御增益（百分比，值为 30 表示-30%防御增益）
     uint16_t Damage_Buff_Rate ; //机器人攻击增益（百分比，值为 50 表示 50%攻击增益）
@@ -915,6 +884,7 @@ struct Struct_Referee_Rx_Data_Robot_Remaining_Ammo
     uint16_t Booster_Allowance_17mm;
     uint16_t Booster_Allowance_42mm;
     uint16_t Money;
+    uint16_t projectile_allowance_fortress;
     uint16_t CRC_16;
 } __attribute__((packed));
 
@@ -945,8 +915,10 @@ struct Struct_Referee_Rx_Data_Robot_RFID
     uint32_t Self_Exchange_Area_Status_Enum : 1;
     uint32_t Centre_Status_Enum : 1;
     uint32_t Reserved : 12;
+    uint8_t rfid_status_2;//bit 0：对方地形跨越增益点（隧道）（靠近对方梯形高地较低处） bit 1：对方地形跨越增益点（隧道）（靠近对方梯形高地较高处）
     uint16_t CRC_16;
 } __attribute__((packed));
+
 
 /**
  * @brief 裁判系统经过处理的数据, 0x020a飞镖状态, 10Hz发送
@@ -961,43 +933,6 @@ struct Struct_Referee_Rx_Data_Robot_Dart_Command
     uint16_t CRC_16;
 } __attribute__((packed));
 
-/**
- * @brief 裁判系统经过处理的数据, 0x020B机器人位置, 10Hz发送
- *
- */
-struct Struct_Referee_Rx_Data_Robot_Ally_Position
-{
-    float hero_x;  
-    float hero_y;  
-    float engineer_x;  
-    float engineer_y;  
-    float standard_3_x;  
-    float standard_3_y;  
-    float standard_4_x;  
-    float standard_4_y;  
-    float reserved_a;  
-    float reserved_b;
-} __attribute__((packed));
-/**
- * @brief 裁判系统经过处理的数据, 0x020D哨兵信息, 10Hz发送
- *
- */
-struct Struct_Referee_Rx_Data_Robot_Sentry_Info
-{
-    uint32_t sentry_info;
-    uint16_t sentry_info_2;
-    uint16_t CRC_16;
-} __attribute__((packed));
-
-/**
- * @brief 裁判系统经过处理的数据, 0x020E雷达信息, 10Hz发送
- *
- */
-struct Struct_Referee_Rx_Data_Robot_Radar_Info
-{
-    uint8_t radar_info;
-    uint16_t CRC_16;
-} __attribute__((packed));
 /**
  * @brief 裁判系统发送或接收的数据, 0x0301机器人间交互信息, 用户自主发送
  * TODO 视情况启用
@@ -1113,16 +1048,16 @@ struct Struct_Referee_Tx_Data_Interaction_Custom_Controller
 } __attribute__((packed));
 
 /**
- * @brief 裁判系统接收的数据, 0x0303雷达发送小地图交互信息, 用户自主最高30Hz发送
+ * @brief 裁判系统接收的数据, 0x0303云台手发送目标点位信息
  *
  */
-struct Struct_Referee_Tx_Data_Interaction_Map_Command
+struct Struct_Referee_Map_Command_Data
 {
-    float Coordinate_X;
-    float Coordinate_Y;
+    float Target_Position_X;
+    float Target_Position_Y;
     uint8_t Keyboard;
     Enum_Referee_Data_Robots_ID Robot_ID;
-    uint16_t cmd_source;
+    uint8_t Reserved;
     uint16_t CRC_16;
 } __attribute__((packed));
 
@@ -1158,27 +1093,12 @@ struct Struct_Referee_Tx_Data_Interaction_Remote_Control
 } __attribute__((packed));
 
 /**
- * @brief 裁判系统发送的数据, 0x210雷达接收小地图交互信息, 用户自主最高30Hz发送
+ * @brief 裁判系统发送的数据, 0x0305雷达发送的点位信息，发到选手界面
  *
  */
-struct Struct_Referee_Tx_Data_Interaction_Robot_Receive
+struct Struct_Referee_Tx_Data_Interaction_Client_Receive
 {
-    uint16_t Header;
-    uint16_t Sender;
-    uint16_t Receiver;
-    uint16_t hero_position_x; 
-    uint16_t hero_position_y; 
-    uint16_t engineer_position_x; 
-    uint16_t engineer_position_y; 
-    uint16_t infantry_3_position_x; 
-    uint16_t infantry_3_position_y; 
-    uint16_t infantry_4_position_x; 
-    uint16_t infantry_4_position_y; 
-    uint16_t infantry_5_position_x; 
-    uint16_t infantry_5_position_y; 
-    uint16_t sentry_position_x; 
-    uint16_t sentry_position_y; 
-    uint16_t CRC_16;
+    
 } __attribute__((packed));
 
 /**
@@ -1210,15 +1130,36 @@ struct Struct_Sentry_To_Radar_t
 } __attribute__((packed));
 
 /**
+ * @brief 雷达发送给哨兵的自定义数据包数据，0x0210
+ *
+ */
+struct Struct_Referee_Tx_Data_Interaction_Robot_Receive
+{
+    uint16_t Header;
+    uint16_t Sender;
+    uint16_t Receiver;
+    uint16_t hero_position_x; 
+    uint16_t hero_position_y; 
+    uint16_t engineer_position_x; 
+    uint16_t engineer_position_y; 
+    uint16_t infantry_3_position_x; 
+    uint16_t infantry_3_position_y; 
+    uint16_t infantry_4_position_x; 
+    uint16_t infantry_4_position_y; 
+    uint16_t infantry_5_position_x; 
+    uint16_t infantry_5_position_y; 
+    uint16_t sentry_position_x; 
+    uint16_t sentry_position_y; 
+    uint16_t CRC_16;
+} __attribute__((packed));
+
+/**
  * @brief Specialized, 裁判系统
  *
  */
 class Class_Referee
 {
 public:
-    //友元声明
-    friend class Class_Chariot;
-
     void Init(UART_HandleTypeDef *huart, uint8_t __Frame_Header = 0xa5);
 
     inline uint16_t Get_Circle_Index(uint16_t index){return (index%UART_Manage_Object->Rx_Buffer_Length);}
@@ -1246,22 +1187,18 @@ public:
     inline uint8_t Get_Level();
     inline uint16_t Get_HP();
     inline uint16_t Get_HP_Max();
-    inline uint16_t Get_Booster_17mm_Heat_CD();
+    inline uint16_t Get_Self_Base_HP();
+    inline uint16_t Get_Self_Outpose_HP();
+    inline uint16_t Get_Booster_17mm_1_Heat_CD();
     inline uint16_t Get_Booster_17mm_1_Heat_Max();
-    //inline uint16_t Get_Booster_17mm_2_Heat_CD();
-    inline uint16_t Get_Booster_17mm_2_Heat_Max();
     inline uint16_t Get_Booster_42mm_Heat_CD();
     inline uint16_t Get_Booster_42mm_Heat_Max();
     inline uint16_t Get_Chassis_Power_Max();
     inline Enum_Referee_Data_Status Get_PM01_Gimbal_Status();
     inline Enum_Referee_Data_Status Get_PM01_Chassis_Status();
     inline Enum_Referee_Data_Status Get_PM01_Booster_Status();
-    inline float Get_Chassis_Voltage();
-    inline float Get_Chassis_Current();
-    inline float Get_Chassis_Power();
     inline uint16_t Get_Chassis_Energy_Buffer();
     inline uint16_t Get_Booster_17mm_1_Heat();
-    inline uint16_t Get_Booster_17mm_2_Heat();
     inline uint16_t Get_Booster_42mm_Heat();
     inline float Get_Location_X();
     inline float Get_Location_Y();
@@ -1270,7 +1207,6 @@ public:
     inline uint8_t Get_Booster_Cooling_Buff_Rate();
     inline uint8_t Get_Defend_Buff_Rate();
     inline uint8_t Get_Damage_Buff_Rate();
-    inline uint8_t Get_Remaining_Energy();
     inline uint8_t Get_Aerial_Remaining_Time();
     inline uint8_t Get_Armor_Attacked_ID();
     inline Enum_Referee_Data_Event_Robot_Damage_Type Get_Attacked_Type();
@@ -1293,10 +1229,9 @@ public:
     inline Enum_Referee_Data_Robot_Dart_Command_Target Get_Dart_Command_Target();
     inline uint16_t Get_Dart_Change_Target_Timestamp();
     inline uint16_t Get_Dart_Last_Confirm_Timestamp();
-    inline Enum_Referee_Data_Robots_ID Get_Radar_Send_Robot_ID();
-    inline float Get_Map_Command_Coordinate_X();
-    inline float Get_Map_Command_Coordinate_Y();
-    inline uint32_t Get_Central_Data();
+    inline float Get_Map_Command_Taregt_Position_X();
+    inline float Get_Map_Command_Taregt_Position_Y();
+
     inline uint16_t Get_Hero_Position_X();
     inline uint16_t Get_Hero_Position_Y();
     inline uint16_t Get_Engineer_Position_X();
@@ -1307,45 +1242,43 @@ public:
     inline uint16_t Get_Infantry_4_Position_Y();
     inline uint16_t Get_Sentry_Position_X();
     inline uint16_t Get_Sentry_Position_Y();
-    inline uint8_t Get_Energy_Left_Rate();
-    inline uint8_t Get_Radar_Info();
-    inline uint32_t Get_Sentry_Info_1();
-    inline uint16_t Get_Sentry_Info_2();
 
-    template <typename T>
-    void Referee_UI_Packed_Data(T* __data);
 
+    //裁判系统状态
+    Enum_Referee_Status Referee_Status = Referee_Status_DISABLE;
+		
     #ifdef GIMBAL
     inline void Set_Robot_ID(Enum_Referee_Data_Robots_ID __Robot_ID);
-    inline void Set_Game_Stage(Enum_Referee_Game_Status_Stage __Game_Stage);  
+    inline void Set_Game_Stage(Enum_Referee_Game_Status_Stage __Game_Stage);
+    inline void Set_Booster_17mm_1_Heat(uint16_t __Booster_17mm_1_Heat);
     inline void Set_Booster_17mm_1_Heat_CD(uint16_t __Booster_17mm_1_Heat_CD);
     inline void Set_Booster_17mm_1_Heat_Max(uint16_t __Booster_17mm_1_Heat_Max);
-    inline void Set_Sentry_Revive_Status(Enum_Sentry_Revive_Status __Sentry_Revive_Status);
-    inline void Set_Sentry_Revive_Buy_Status(Enum_Sentry_Revive_Status __Sentry_Revive_Buy_Status);
+    inline void Set_Booster_Speed(float __booster_speed);
     #endif
 
     inline void Set_Sentry_Cmd(uint32_t __Sentry_Cmd);
     inline void Set_Robot_Position(uint16_t __Robot_Position_X, uint16_t __Robot_Position_Y);
 
-    // void Referee_UI_Draw_Line(uint8_t __Robot_ID, Enum_Referee_UI_Group_Index __Group_Index, uint8_t __Serial, uint8_t __Index, uint32_t __Color,uint32_t __Line_Width, uint32_t __Start_X, uint32_t __Start_Y,  uint32_t __End_X, uint32_t __End_Y,Enum_Referee_UI_Operate_Type __Operate_Type);
-    // void Referee_UI_Draw_Rectangle(uint8_t __Robot_ID, Enum_Referee_UI_Group_Index __Group_Index, uint8_t __Serial, uint8_t __Index, uint32_t __Color,uint32_t __Line_Width, uint32_t __Start_X, uint32_t __Start_Y,  uint32_t __End_X, uint32_t __End_Y,Enum_Referee_UI_Operate_Type __Operate_Type);
-    // void Referee_UI_Draw_Oval(uint8_t __Robot_ID, Enum_Referee_UI_Group_Index __Group_Index, uint8_t __Serial, uint8_t __Index, uint32_t __Color, uint32_t __Line_Width, uint32_t __Center_X, uint32_t __Center_Y, uint32_t __X_Length, uint32_t __Y_Length, Enum_Referee_UI_Operate_Type __Operate_Type);
-    // void Referee_UI_Draw_Circle(uint8_t __Robot_ID, Enum_Referee_UI_Group_Index __Group_Index, uint8_t __Serial, uint8_t __Index, uint32_t __Color, uint32_t __Line_Width, uint32_t __Center_X, uint32_t __Center_Y, uint32_t __Radius, Enum_Referee_UI_Operate_Type __Operate_Type);
-    // void Referee_UI_Draw_Float(uint8_t __Robot_ID, Enum_Referee_UI_Group_Index __Group_Index, uint8_t __Serial, uint8_t __Index, uint32_t __Color, uint32_t __Font_Size,uint32_t __Line_Width, uint32_t __Start_X, uint32_t __Start_Y, float __Number, Enum_Referee_UI_Operate_Type __Operate_Type);
-    // void Referee_UI_Draw_Integer(uint8_t __Robot_ID, Enum_Referee_UI_Group_Index __Group_Index, uint8_t __Serial, uint8_t __Index, uint32_t __Color, uint32_t __Font_Size,uint32_t __Line_Width, uint32_t __Start_X, uint32_t __Start_Y, int32_t __Number, Enum_Referee_UI_Operate_Type __Operate_Type);
-    // void Referee_UI_Draw_String(uint8_t __Robot_ID, Enum_Referee_UI_Group_Index __Group_Index, uint32_t __Serial, uint8_t __Index, uint32_t __Color, uint32_t __Font_Size,uint32_t __Line_Width, uint32_t __Start_X, uint32_t __Start_Y, char *__String ,uint32_t __String_Length, Enum_Referee_UI_Operate_Type __Operate_Type);
+    void Referee_UI_Draw_Line(uint8_t __Robot_ID, Enum_Referee_UI_Group_Index __Group_Index, uint8_t __Serial, uint8_t __Index, uint32_t __Color,uint32_t __Line_Width, uint32_t __Start_X, uint32_t __Start_Y,  uint32_t __End_X, uint32_t __End_Y,Enum_Referee_UI_Operate_Type __Operate_Type);
+    void Referee_UI_Draw_Rectangle(uint8_t __Robot_ID, Enum_Referee_UI_Group_Index __Group_Index, uint8_t __Serial, uint8_t __Index, uint32_t __Color,uint32_t __Line_Width, uint32_t __Start_X, uint32_t __Start_Y,  uint32_t __End_X, uint32_t __End_Y,Enum_Referee_UI_Operate_Type __Operate_Type);
+    void Referee_UI_Draw_Oval(uint8_t __Robot_ID, Enum_Referee_UI_Group_Index __Group_Index, uint8_t __Serial, uint8_t __Index, uint32_t __Color, uint32_t __Line_Width, uint32_t __Center_X, uint32_t __Center_Y, uint32_t __X_Length, uint32_t __Y_Length, Enum_Referee_UI_Operate_Type __Operate_Type);
+    void Referee_UI_Draw_Circle(uint8_t __Robot_ID, Enum_Referee_UI_Group_Index __Group_Index, uint8_t __Serial, uint8_t __Index, uint32_t __Color, uint32_t __Line_Width, uint32_t __Center_X, uint32_t __Center_Y, uint32_t __Radius, Enum_Referee_UI_Operate_Type __Operate_Type);
+    void Referee_UI_Draw_Float(uint8_t __Robot_ID, Enum_Referee_UI_Group_Index __Group_Index, uint8_t __Serial, uint8_t __Index, uint32_t __Color, uint32_t __Font_Size,uint32_t __Line_Width, uint32_t __Start_X, uint32_t __Start_Y, float __Number, Enum_Referee_UI_Operate_Type __Operate_Type);
+    void Referee_UI_Draw_Integer(uint8_t __Robot_ID, Enum_Referee_UI_Group_Index __Group_Index, uint8_t __Serial, uint8_t __Index, uint32_t __Color, uint32_t __Font_Size,uint32_t __Line_Width, uint32_t __Start_X, uint32_t __Start_Y, int32_t __Number, Enum_Referee_UI_Operate_Type __Operate_Type);
+    void Referee_UI_Draw_String(uint8_t __Robot_ID, Enum_Referee_UI_Group_Index __Group_Index, uint32_t __Serial, uint8_t __Index, uint32_t __Color, uint32_t __Font_Size,uint32_t __Line_Width, uint32_t __Start_X, uint32_t __Start_Y, char *__String ,uint32_t __String_Length, Enum_Referee_UI_Operate_Type __Operate_Type);
 
-    // void Referee_UI_Packed_String();
+    void Referee_UI_Packed_String();
 
-    //template <typename T>
-    // void Referee_UI_Packed_Data(T* __data);
+    template <typename T>
+    void Referee_UI_Packed_Data(T* __data);
 
-    // void UART_Tx_Referee_UI();
+    void UART_Tx_Referee_UI();
 
     void UART_RxCpltCallback(uint8_t *Rx_Data, uint16_t Size);
-    void TIM_UART_Tx_PeriodElapsedCallback();
-    void Sentry_Auto_cmd_Transmit();
     void TIM1msMod50_Alive_PeriodElapsedCallback();
+
+    void Sentry_Auto_cmd_Transmit();
+    void TIM_UART_Tx_PeriodElapsedCallback();
 
 protected:
     //初始化相关常量
@@ -1369,8 +1302,6 @@ protected:
 
     //读变量
 
-    //裁判系统状态
-    Enum_Referee_Status Referee_Status = Referee_Status_DISABLE;
     //比赛状态
     Struct_Referee_Rx_Data_Game_Status Game_Status;
     //比赛结果
@@ -1403,20 +1334,14 @@ protected:
     Struct_Referee_Rx_Data_Robot_Remaining_Ammo Robot_Remaining_Ammo;
     // RFID状态信息
     Struct_Referee_Rx_Data_Robot_RFID Robot_RFID;
-    // 哨兵状态信息
-    Struct_Referee_Rx_Data_Robot_Sentry_Info Sentry_Info;
-    // 雷达状态信息
-    Struct_Referee_Rx_Data_Robot_Radar_Info Radar_Info;
     //飞镖状态
     Struct_Referee_Rx_Data_Robot_Dart_Command Robot_Dart_Command;
-    //敌军位置
-    //客户端接收小地图交互信息
-    Struct_Referee_Tx_Data_Interaction_Robot_Receive Interaction_Robot_Receive;
+    //云台手发送的小地图交互数据
+    Struct_Referee_Map_Command_Data Robot_Map_Command_Data;
 
+    Struct_Referee_Data_Interaction_Students Interaction_Students;
 
-    //写变量
-
-    //图形删除交互信息
+    // 图形删除交互信息
     Struct_Referee_Tx_Data_Interaction_Layer_Delete Interaction_Layer_Delete;
     //画一个图形交互信息
     Struct_Referee_Tx_Data_Interaction_Graphic_1 Interaction_Graphic_1;
@@ -1428,18 +1353,23 @@ protected:
     Struct_Referee_Tx_Data_Interaction_Graphic_7 Interaction_Graphic_7;
     //画字符图形交互信息
     Struct_Referee_Tx_Data_Interaction_Graphic_String Interaction_Graphic_String;
-    //云台手发送小地图交互信息
-    Struct_Referee_Tx_Data_Interaction_Map_Command Interaction_Map_Command;
+    //雷达发送到选手端界面的点位信息
+    Struct_Referee_Tx_Data_Interaction_Client_Receive Interaction_Client_Receive;
+    //雷达发送到哨兵的地方点位信息
+    Struct_Referee_Tx_Data_Interaction_Robot_Receive Interaction_Robot_Receive;
+
     //哨兵自主决策
     Struct_Sentry_cmd_t Sentry_cmd;
     //哨兵发送雷达位置
     Struct_Sentry_To_Radar_t Sentry_To_Radar;
+    //服务器发送给哨兵的地方机器人点位
 
     //读写变量
 
     //内部函数 
-
-    void Data_Process();
+    uint8_t Verify_CRC_8(uint8_t *Message, uint32_t Length);
+    uint16_t Verify_CRC_16(uint8_t *Message, uint32_t Length);
+    void Data_Process(uint16_t Length);
     
 };
 
@@ -1547,144 +1477,6 @@ uint64_t Class_Referee::Get_Timestamp()
 Enum_Referee_Game_Result Class_Referee::Get_Result()
 {
     return (Game_Result.Result);
-}
-
-/**
- * @brief 获取机器人血量
- *
- * @param Robots_ID 通用双方机器人ID
- * @return uint16_t 机器人血量
- */
-uint16_t Class_Referee::Get_HP(Enum_Referee_Data_Robots_ID Robots_ID)
-{
-    switch (Robots_ID)
-    {
-    case (Referee_Data_Robots_ID_RED_HERO_1):
-        return (Game_Robot_HP.Red_Hero_1);
-    case (Referee_Data_Robots_ID_RED_ENGINEER_2):
-        return (Game_Robot_HP.Red_Engineer_2);
-    case (Referee_Data_Robots_ID_RED_INFANTRY_3):
-        return (Game_Robot_HP.Red_Infantry_3);
-    case (Referee_Data_Robots_ID_RED_INFANTRY_4):
-        return (Game_Robot_HP.Red_Infantry_4);
-    case (Referee_Data_Robots_ID_RED_INFANTRY_5):
-        return (Game_Robot_HP.Red_Infantry_5);
-    case (Referee_Data_Robots_ID_RED_SENTRY_7):
-        return (Game_Robot_HP.Red_Sentry_7);
-    case (Referee_Data_Robots_ID_RED_OUTPOST_11):
-        return (Game_Robot_HP.Red_Outpost_11);
-    case (Referee_Data_Robots_ID_RED_BASE_10):
-        return (Game_Robot_HP.Red_Base_10);
-    case (Referee_Data_Robots_ID_BLUE_HERO_1):
-        return (Game_Robot_HP.Blue_Hero_1);
-    case (Referee_Data_Robots_ID_BLUE_ENGINEER_2):
-        return (Game_Robot_HP.Blue_Engineer_2);
-    case (Referee_Data_Robots_ID_BLUE_INFANTRY_3):
-        return (Game_Robot_HP.Blue_Infantry_3);
-    case (Referee_Data_Robots_ID_BLUE_INFANTRY_4):
-        return (Game_Robot_HP.Blue_Infantry_4);
-    case (Referee_Data_Robots_ID_BLUE_INFANTRY_5):
-        return (Game_Robot_HP.Blue_Infantry_5);
-    case (Referee_Data_Robots_ID_BLUE_SENTRY_7):
-        return (Game_Robot_HP.Blue_Sentry_7);
-    case (Referee_Data_Robots_ID_BLUE_OUTPOST_11):
-        return (Game_Robot_HP.Blue_Outpost_11);
-    case (Referee_Data_Robots_ID_BLUE_BASE_10):
-        return (Game_Robot_HP.Blue_Base_10);
-    default:
-        return (Game_Robot_HP.Blue_Base_10); // 或者返回一个其他合适的默认值
-    }
-}
-
-/**
- * @brief 获取补给站占领状态
- *
- * @param Supply_ID 补给站ID, 1~3
- * @return Enum_Referee_Data_Status 补给站占领状态
- */
-Enum_Referee_Data_Status Class_Referee::Get_Event_Supply_Status(uint8_t Supply_ID)
-{
-    switch (Supply_ID)
-    {
-    case (1):
-        return static_cast<Enum_Referee_Data_Status>(Event_Data.Supply_1_Status_Enum);
-    case (2):
-        return static_cast<Enum_Referee_Data_Status>(Event_Data.Supply_2_Status_Enum);
-    case (3):
-        return static_cast<Enum_Referee_Data_Status>(Event_Data.Supply_3_Status_Enum);
-    default:
-        return static_cast<Enum_Referee_Data_Status>(Event_Data.Supply_1_Status_Enum); // 
-    }
-}
-
-/**
- * @brief 获取能量机关占领状态
- *
- * @return Enum_Referee_Data_Status 能量机关占领状态
- */
-Enum_Referee_Data_Status Class_Referee::Get_Event_Energy_Status()
-{
-    return (static_cast<Enum_Referee_Data_Status>(Event_Data.Energy_Status_Enum));
-}
-
-/**
- * @brief 获取小能量机关激活状态
- *
- * @return Enum_Referee_Data_Status 小能量机关激活状态
- */
-Enum_Referee_Data_Status Class_Referee::Get_Event_Energy_Small_Activate_Status()
-{
-    return (static_cast<Enum_Referee_Data_Status>(Event_Data.Energy_Small_Status_Enum));
-}
-
-/**
- * @brief 获取大能量机关激活状态
- *
- * @return Enum_Referee_Data_Status 大能量机关激活状态
- */
-Enum_Referee_Data_Status Class_Referee::Get_Event_Energy_Big_Activate_Status()
-{
-    return (static_cast<Enum_Referee_Data_Status>(Event_Data.Energy_Big_Status_Enum));
-}
-
-/**
- * @brief 获取高地占领状态
- *
- * @param Highland_ID 高地ID, 2~4
- * @return Enum_Referee_Data_Status 高地占领状态
- */
-Enum_Referee_Data_Status Class_Referee::Get_Event_Highland_Status(uint8_t Highland_ID)
-{
-    switch (Highland_ID)
-    {
-    case (2):
-    {
-        return (static_cast<Enum_Referee_Data_Status>(Event_Data.Highland_2_Status_Enum));
-    }
-    break;
-    case (3):
-    {
-        return (static_cast<Enum_Referee_Data_Status>(Event_Data.Highland_3_Status_Enum));
-    }
-    break;
-    case (4):
-    {
-        return (static_cast<Enum_Referee_Data_Status>(Event_Data.Highland_4_Status_Enum));
-    }
-    break;
-    default :
-	    return (static_cast<Enum_Referee_Data_Status>(Event_Data.Highland_4_Status_Enum));
-    }
-}
-
-/**
- * @brief 获取基地护盾状态
- *
- * @return Enum_Referee_Data_Status 基地护盾状态
- */
-uint32_t Class_Referee::Get_Event_Base_Shield_Remain_HP()
-{
-    return ((uint32_t)Event_Data.Base_Shield_Remain_HP);
 }
 
 
@@ -1798,12 +1590,22 @@ uint16_t Class_Referee::Get_HP_Max()
     return (Robot_Status.HP_Max);
 }
 
+inline uint16_t Class_Referee::Get_Self_Base_HP()
+{
+  return (Game_Robot_HP.ally_base_HP);
+}
+
+inline uint16_t Class_Referee::Get_Self_Outpose_HP()
+{
+  return (Game_Robot_HP.ally_outpost_HP);
+}
+
 /**
  * @brief 获取17mm1枪口冷却速度
  *
  * @return uint16_t 17mm1枪口冷却速度
  */
-uint16_t Class_Referee::Get_Booster_17mm_Heat_CD()
+uint16_t Class_Referee::Get_Booster_17mm_1_Heat_CD()
 {
 #ifdef Robot_SENTRY_7
     if (Robot_Status.Booster_17mm_1_Heat_CD == 0)
@@ -1829,40 +1631,6 @@ uint16_t Class_Referee::Get_Booster_17mm_1_Heat_Max()
 #endif
     return (Robot_Status.Shooter_Barrel_Heat_Limit);
 }
-
-
-// /**
-//  * @brief 获取17mm2枪口冷却速度
-//  *
-//  * @return uint16_t 17mm2枪口冷却速度
-//  */
-// uint16_t Class_Referee::Get_Booster_17mm_2_Heat_CD()
-// {
-// #ifdef Robot_SENTRY_7
-//     if (Robot_Status.Booster_17mm_2_Heat_CD == 0)
-//     {
-//         return (40);
-//     }
-// #endif
-//     return (Robot_Status.Shooter_Barrel_Cooling_Value);
-// }
-
-/**
- * @brief 获取17mm2枪口热量上限
- *
- * @return uint16_t 17mm2枪口热量上限
- */
-uint16_t Class_Referee::Get_Booster_17mm_2_Heat_Max()
-{
-#ifdef Robot_SENTRY_7
-    if (Robot_Status.Booster_17mm_2_Heat_Max == 0)
-    {
-        return (240);
-    }
-#endif
-    return (Robot_Status.Shooter_Barrel_Heat_Limit);
-}
-
 
 /**
  * @brief 获取42mm枪口冷却速度
@@ -1937,36 +1705,6 @@ Enum_Referee_Data_Status Class_Referee::Get_PM01_Booster_Status()
 }
 
 /**
- * @brief 获取底盘电压
- *
- * @return float 底盘电压
- */
-float Class_Referee::Get_Chassis_Voltage()
-{
-    return (Robot_Power_Heat.Chassis_Voltage / 1000.0f);
-}
-
-/**
- * @brief 获取底盘电流
- *
- * @return float 底盘电流
- */
-float Class_Referee::Get_Chassis_Current()
-{
-    return (Robot_Power_Heat.Chassis_Current / 1000.0f);
-}
-
-/**
- * @brief 获取底盘功率
- *
- * @return float 底盘功率
- */
-float Class_Referee::Get_Chassis_Power()
-{
-    return (Robot_Power_Heat.Chassis_Power);
-}
-
-/**
  * @brief 获取底盘能量缓冲
  *
  * @return uint16_t 底盘能量缓冲
@@ -1984,16 +1722,6 @@ uint16_t Class_Referee::Get_Chassis_Energy_Buffer()
 uint16_t Class_Referee::Get_Booster_17mm_1_Heat()
 {
     return (Robot_Power_Heat.Booster_17mm_1_Heat);
-}
-
-/**
- * @brief 获取17mm2热量
- *
- * @return uint16_t 17mm2热量
- */
-uint16_t Class_Referee::Get_Booster_17mm_2_Heat()
-{
-    return (Robot_Power_Heat.Booster_17mm_2_Heat);
 }
 
 /**
@@ -2056,10 +1784,7 @@ uint8_t Class_Referee::Get_Booster_Cooling_Buff_Rate()
 {
     return (Robot_Buff.Booster_Cooling_Buff_Rate);
 }
-uint32_t Class_Referee::Get_Central_Data()
-{
-    return (Event_Data.Centre_Enable_Status);
-}
+
 /**
  * @brief 获取防御加成buff状态
  *
@@ -2079,15 +1804,7 @@ uint8_t Class_Referee::Get_Damage_Buff_Rate()
 {
     return (Robot_Buff.Damage_Buff_Rate);
 }
-/**
- * @brief 获取剩余能量
- *
- * @return 
- */
-uint8_t Class_Referee::Get_Remaining_Energy()
-{
-    return (Robot_Buff.Energy_Left_Rate);
-}
+
 /**
  * @brief 获取无人机时间
  *
@@ -2308,35 +2025,26 @@ uint16_t Class_Referee::Get_Dart_Last_Confirm_Timestamp()
     return (Robot_Dart_Command.Last_Confirm_Timestamp);
 }
 
-// /**
-//  * @brief 获取雷达发送目标机器人ID
-//  *
-//  * @return Enum_Referee_Data_Robots_ID 雷达发送目标的机器人ID
-//  */
-// Enum_Referee_Data_Robots_ID Class_Referee::Get_Radar_Send_Robot_ID()
-// {
-//     return (Interaction_Client_Receive.Robot_ID);
-// }
-
 /**
- * @brief 云台手发送的目标点位
+ * @brief 获取云台手发送的目标点位X
  *
- * @return float 云台手发送的目标点位
+ * @return uint16_t 
  */
-float Class_Referee::Get_Map_Command_Coordinate_X()
+inline float Class_Referee::Get_Map_Command_Taregt_Position_X()
 {
-    return (Interaction_Map_Command.Coordinate_X);
+  return Robot_Map_Command_Data.Target_Position_X;
 }
 
 /**
- * @brief 获取雷达发送目标机器人位置y
+ * @brief 获取云台手发送的目标点位Y
  *
- * @return float 雷达发送目标机器人位置y
+ * @return uint16_t
  */
-float Class_Referee::Get_Map_Command_Coordinate_Y()
+inline float Class_Referee::Get_Map_Command_Taregt_Position_Y()
 {
-    return (Interaction_Map_Command.Coordinate_Y);
+  return Robot_Map_Command_Data.Target_Position_Y;
 }
+
 uint16_t Class_Referee::Get_Hero_Position_X()
 {
     return (Interaction_Robot_Receive.hero_position_x);
@@ -2384,22 +2092,7 @@ uint16_t Class_Referee::Get_Sentry_Position_Y()
 {
     return (Interaction_Robot_Receive.sentry_position_y);
 }
-uint8_t Class_Referee::Get_Energy_Left_Rate()
-{
-    return (Robot_Buff.Energy_Left_Rate);
-}
-uint8_t Class_Referee::Get_Radar_Info()
-{
-    return (Radar_Info.radar_info);
-}
-uint32_t Class_Referee::Get_Sentry_Info_1()
-{
-    return (Sentry_Info.sentry_info);
-}
-uint16_t Class_Referee::Get_Sentry_Info_2()
-{
-    return (Sentry_Info.sentry_info_2);
-}
+
 /**
  * @brief 设置机器人ID
  *
@@ -2426,19 +2119,20 @@ void Class_Referee::Set_Game_Stage(Enum_Referee_Game_Status_Stage __Game_Stage)
 #endif
 
 
-/**
- * @brief 设置17mm枪管冷却cd
- *
- * @param __Booster_17mm_1_Heat_CD 枪管冷却cd
- */
+
+#ifdef GIMBAL
+void Class_Referee::Set_Booster_17mm_1_Heat(uint16_t __Booster_17mm_1_Heat)
+{
+    this->Robot_Power_Heat.Booster_17mm_1_Heat = __Booster_17mm_1_Heat;
+}
+#endif
+
 #ifdef GIMBAL
 void Class_Referee::Set_Booster_17mm_1_Heat_CD(uint16_t __Booster_17mm_1_Heat_CD)
 {
     this->Robot_Status.Shooter_Barrel_Cooling_Value = __Booster_17mm_1_Heat_CD;
 }
 #endif
-
-
 /**
  * @brief 设置17mm枪管热量上限
  *
@@ -2449,29 +2143,10 @@ void Class_Referee::Set_Booster_17mm_1_Heat_Max(uint16_t __Booster_17mm_1_Heat_M
 {
     this->Robot_Status.Shooter_Barrel_Heat_Limit = __Booster_17mm_1_Heat_Max;
 }
-#endif
 
-/**
- * @brief 设置哨兵复活状态
- *
- * @param __Sentry_Revive_Status 复活模式
- */
-#ifdef GIMBAL
-void Class_Referee::Set_Sentry_Revive_Status(Enum_Sentry_Revive_Status __Sentry_Revive_Status)
+void Class_Referee::Set_Booster_Speed(float __booster_speed)
 {
-    Sentry_cmd.sentry_cmd = (Sentry_cmd.sentry_cmd & ~ 0x1u) | (static_cast<uint32_t>(__Sentry_Revive_Status) & 0x1u);
-}
-#endif
-
-/**
- * @brief 设置哨兵买活状态
- *
- * @param __Sentry_Revive_Status 买活模式
- */
-#ifdef GIMBAL
-void Class_Referee::Set_Sentry_Revive_Buy_Status(Enum_Sentry_Revive_Status __Sentry_Revive_Status)
-{
-    Sentry_cmd.sentry_cmd = (Sentry_cmd.sentry_cmd & ~ 0x2u) | ((static_cast<uint32_t>(__Sentry_Revive_Status ) & 0x2u) << 1);
+    Robot_Booster.Speed=__booster_speed;
 }
 #endif
 
@@ -2491,6 +2166,7 @@ inline void Class_Referee::Set_Robot_Position(uint16_t __Robot_Position_X, uint1
     Sentry_To_Radar.Robot_Position_X = __Robot_Position_X;
     Sentry_To_Radar.Robot_Position_Y = __Robot_Position_Y;
 }
+
 
 #endif
 

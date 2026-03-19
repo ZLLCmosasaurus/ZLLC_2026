@@ -144,16 +144,23 @@ void Class_PID::TIM_Adjust_PeriodElapsedCallback()
 
     //计算d项
 
-    if (D_First == PID_D_First_DISABLE)
-    {
-        //没有微分先行
-        d_out = K_D * (error - Pre_Error) / D_T;
-    }
-    else
+    //计算d项
+    if(D_First == PID_D_First_ENABLE)
     {
         //微分先行使能
         d_out = K_D * (Out - Pre_Out) / D_T;
     }
+    else if(D_Extern == PID_D_Extern_ENABLE)
+    {
+        d_out = K_D * D_Extern_Value;
+    }
+    else{
+        d_out = K_D * (error - Pre_Error) / D_T;
+    }
+
+    d_out = (1.0f - d_alpha) * d_out + d_alpha * last_d_out;
+
+    last_d_out = d_out;
 
     //计算前馈
 

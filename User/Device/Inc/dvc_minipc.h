@@ -246,18 +246,19 @@ struct Struct_MiniPC_Tx_Data
     uint8_t Game_process;                               // 比赛阶段
     uint16_t Self_blood;                                // 自身hp
     uint16_t Self_Outpost_HP;                           // 己方前哨战hp
-    uint16_t Oppo_Outpost_HP;                           // 对方前哨战hp
+    uint16_t Oppo_Outpost_HP;                           // 对方前哨战hp（没有了）
     uint16_t Self_Base_HP;                              // 己方基地hp
     uint16_t Projectile_allowance;                      // 允许发弹量
     uint16_t Remaining_Time;                            // 比赛剩余时间
-    uint8_t Color_Invincible_State;                     // 敌对方无敌状态/自身颜色
+    uint8_t Color_Invincible_State;                     // 敌对方无敌状态/自身颜色（全部为0了）
     uint16_t Robot_Position_X;                          //雷达发送的敌方位置X
     uint16_t Robot_Position_Y;                          //雷达发送的敌方位置Y
-    uint8_t Remaining_Energy;                           //超电剩余能量
-    uint8_t Supercap_Proportion;                        //
+    uint8_t Remaining_Energy;                           //20000J虚弱状态能量剩余数值
+    uint8_t Supercap_Proportion;                        //超电能量百分比
     int16_t Target_Position_X;                          //云台手打点点位
-    int16_t Target_Position_Y;
-    uint8_t Dart_Target;
+    int16_t Target_Position_Y;                          //云台手打点点位
+    uint8_t Dart_Target;                                //飞镖选定的击打目标，开局默认或未选定/选定前哨站时为  0，
+                    //选中基地固定目标为  1，选中基地随机固定目标为  2，选中基地随机移动目标为 3，选中基地末端移动目标为 4
     uint16_t crc16;
 } __attribute__((packed));
 

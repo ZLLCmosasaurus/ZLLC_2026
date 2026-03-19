@@ -26,9 +26,9 @@ void Class_IMU::Init()
     IMU_MahonyAHRS.init(INS_Quat);
  
     //EKF初始化                         第三个加速度参数加大，减小运动过程中的影响    过于不相信加速度导致静止到目标收敛慢，看起来在飘
-    IMU_QuaternionEKF_Init(10, 0.001, 1000000, 0.9996, 0.1, -0.0015f, &QEKF_INS);
+    IMU_QuaternionEKF_Init(10, 0.001, 10000, 0.9996, 0.273, -0.0015f, &QEKF_INS);
 
-    INS.AccelLPF = 0.1f;
+    INS.AccelLPF = 0.273f;
 
     //初始化温控pid参数 积分和输出限幅是一周期满占空比的计数240M/24/10000=1000
     PID_IMU_Tempture.Init(200, 300, 0, 0.0, 250, 500);

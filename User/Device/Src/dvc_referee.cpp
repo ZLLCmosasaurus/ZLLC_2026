@@ -1,11 +1,11 @@
 /**
  * @file dvc_referee.cpp
- * @author cjw by yssickjgd
+ * @author lez by yssickjgd
  * @brief PM01裁判系统
  * @version 0.1
- * @date 2025-07-1 0.1 26赛季定稿
+ * @date 2024-07-1 0.1 24赛季定稿
  *
- * @copyright ZLLC 2026
+ * @copyright ZLLC 2024
  *
  */
 
@@ -13,6 +13,8 @@
 
 #include "dvc_referee.h"
 
+#include "drv_math.h"
+#include "dvc_dwt.h"
 /* Private macros ------------------------------------------------------------*/
 
 /* Private types -------------------------------------------------------------*/
@@ -55,266 +57,214 @@ void Class_Referee::Init(UART_HandleTypeDef *huart, uint8_t __Frame_Header)
     {
         UART_Manage_Object = &UART6_Manage_Object;
     }
-    else if (huart->Instance == UART7)
-    {
-        UART_Manage_Object = &UART7_Manage_Object;
-    }
-    else if(huart->Instance == USART10)
-    {
+    else if(huart->Instance == USART10){
         UART_Manage_Object = &UART10_Manage_Object;
     }
 
     Frame_Header = __Frame_Header;
 }
 
-
 /**
+ * @brief 裁判系统8bit循环冗余检验
+ *
+ * @param Message 消息
+ * @param Length 字节数
+ * @return uint8_t 校验码
+ */
+uint8_t Class_Referee::Verify_CRC_8(uint8_t *Message, uint32_t Length)
+{
+    uint8_t index;
+    uint8_t check = 0xff;
+
+    if (Message == nullptr)
+    {
+        return (check);
+    }
+
+    while (Length--)
+    {
+        index = *Message;
+        Message++;
+        check = CRC8_TAB[check ^ index];
+    }
+    return (check);
+}
+/**
+ * @brief 裁判系统16bit循环冗余检验
+ *
+ * @param Message 消息
+ * @param Length 字节数
+ * @return uint8_t 校验码
+ */
+uint16_t Class_Referee::Verify_CRC_16(uint8_t *Message, uint32_t Length)
+{
+    uint8_t index;
+    uint16_t check = 0xffff;
+
+    if (Message == nullptr)
+    {
+        return (check);
+    }
+
+    while (Length--)
+    {
+        index = *Message;
+        Message++;
+        check = ((uint16_t) (check) >> 8) ^ CRC16_Table[((uint16_t) (check) ^ (uint16_t) (index)) & 0xff];
+    }
+    return (check);
+}
+
+
+uint32_t last_cnt[5] = {0};
+float Dt0[5] = {0};
+    /**
  * @brief 数据处理过程, 为节约性能不作校验但提供了接口
  * 如遇到大规模丢包或错乱现象, 可重新启用校验过程
  *
- */    
-//以前版本
-// uint16_t buffer_index = 0;
-// uint16_t cmd_id,data_length;
-//test
-uint16_t buffer_index = 0;
-uint16_t cmd_id,data_length;
-uint16_t temp_cmd_id;
-uint16_t buffer_index_max;
-int receive_flag = 0;
-void Class_Referee::Data_Process()
+ */
+void Class_Referee::Data_Process(uint16_t Length)
 {
-    buffer_index = 0;
-    buffer_index_max = UART_Manage_Object->Rx_Buffer_Length;
-    
-    // 遍历整个接收缓冲区寻找帧头
-    while (buffer_index < buffer_index_max)
-    {
-        // 通过校验和帧头
-        if (UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index)] == 0xA5)
-        {
-            // 数据处理过程
-            cmd_id = (UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 6)]) & 0xff;
-            cmd_id = (cmd_id << 8) | UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 5)];
-            data_length = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 2)] & 0xff;
-            data_length = (data_length << 8) | UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 1)];
-            Math_Constrain(&data_length,(uint16_t)0,(uint16_t)(128));  //限制数据段最大长度
-            Enum_Referee_Command_ID CMD_ID = (Enum_Referee_Command_ID)cmd_id;
+    // 数据处理过程
+    Struct_Referee_UART_Data *tmp_buffer;
 
-            uint8_t *data_temp = new uint8_t[5];
-            uint8_t *sum_data = new uint8_t[data_length + 9];
-            for (int i = 0; i < 5; i++)
-            {
-                data_temp[i] = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + i)];
-            }
-            if (Verify_CRC8_Check_Sum(data_temp, 5) == 1) //校验帧头
-            {
-                for (int i = 0; i < data_length + 9; i++)
-                {
-                    sum_data[i] = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + i)];
-                }
-                if (Verify_CRC16_Check_Sum(sum_data, data_length + 9) == 1) //校验整个帧
-                {
-                    switch (CMD_ID)
-                    {
-                    case Referee_Command_ID_GAME_STATUS:
-                    {
-                        for (int i = 0; i < data_length + 2; i++)
-                        {
-                            reinterpret_cast<uint8_t *>(&Game_Status)[i] = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 7 + i)];
-                        }
-                        buffer_index += sizeof(Struct_Referee_Rx_Data_Game_Status) + 7;
-                        //FPS = FPS_Counter_Update();
-                    }
-                    break;
-                    case (Referee_Command_ID_GAME_RESULT):
-                    {
-                        for (int i = 0; i < data_length + 2; i++)
-                        {
-                            reinterpret_cast<uint8_t *>(&Game_Result)[i] = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 7 + i)];
-                        }
-                        buffer_index += sizeof(Struct_Referee_Rx_Data_Game_Result) + 7;
-                    }
-                    break;
-                    case (Referee_Command_ID_GAME_ROBOT_HP):
-                    {
-                        for (int i = 0; i < data_length + 2; i++)
-                        {
-                            reinterpret_cast<uint8_t *>(&Game_Robot_HP)[i] = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 7 + i)];
-                        }
-                        buffer_index += sizeof(Struct_Referee_Rx_Data_Game_Robot_HP) + 7;
-                    }
-                    break;
-                    // 不确定为什么解包这里会导致其他数据错乱
-                    // case (Referee_Command_ID_EVENT_DATA):
-                    // {
-                    //     for (int i = 0; i < data_length + 2; i++)
-                    //     {
-                    //         reinterpret_cast<uint8_t *>(&Event_Data)[i] = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 7 + i)];
-                    //     }
-                    //     buffer_index += sizeof(Struct_Referee_Rx_Data_Event_Data) + 7;
-                    // }
-                    // break;
-                    case (Referee_Command_ID_EVENT_SUPPLY):
-                    {
-                        for (int i = 0; i < data_length + 2; i++)
-                        {
-                            reinterpret_cast<uint8_t *>(&Event_Supply)[i] = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 7 + i)];
-                        }
-                        buffer_index += sizeof(Struct_Referee_Rx_Data_Event_Supply) + 7;
-                    }
-                    break;
-                    case (Referee_Command_ID_EVENT_REFEREE_WARNING):
-                    {
-                        for (int i = 0; i < data_length + 2; i++)
-                        {
-                            reinterpret_cast<uint8_t *>(&Event_Referee_Warning)[i] = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 7 + i)];
-                        }
-                        buffer_index += sizeof(Struct_Referee_Rx_Data_Event_Referee_Warning) + 7;
-                    }
-                    break;
-                    case (Referee_Command_ID_EVENT_DART_REMAINING_TIME):
-                    {
-                        for (int i = 0; i < data_length + 2; i++)
-                        {
-                            reinterpret_cast<uint8_t *>(&Event_Dart_Remaining_Time)[i] = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 7 + i)];
-                        }
-                        buffer_index += sizeof(Struct_Referee_Rx_Data_Event_Dart_Remaining_Time) + 7;
-                    }
-                    break;
-                    case (Referee_Command_ID_ROBOT_STATUS):
-                    {
-                        for (int i = 0; i < data_length + 2; i++)
-                        {
-                            reinterpret_cast<uint8_t *>(&Robot_Status)[i] = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 7 + i)];
-                        }
-                        buffer_index += sizeof(Struct_Referee_Rx_Data_Robot_Status) + 7;
-                    }
-                    break;
-                    case (Referee_Command_ID_ROBOT_POWER_HEAT):
-                    {
-                        for (int i = 0; i < data_length + 2; i++)
-                        {
-                            reinterpret_cast<uint8_t *>(&Robot_Power_Heat)[i] = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 7 + i)];
-                        }
-                        buffer_index += sizeof(Struct_Referee_Rx_Data_Robot_Power_Heat) + 7;
-                    }
-                    break;
-                    case (Referee_Command_ID_ROBOT_POSITION):
-                    {
-                        for (int i = 0; i < data_length + 2; i++)
-                        {
-                            reinterpret_cast<uint8_t *>(&Robot_Position)[i] = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 7 + i)];
-                        }
-                        buffer_index += sizeof(Struct_Referee_Rx_Data_Robot_Position) + 7;
-                    }
-                    break;
-                    case (Referee_Command_ID_ROBOT_BUFF):
-                    {
-                        for (int i = 0; i < data_length + 2; i++)
-                        {
-                            reinterpret_cast<uint8_t *>(&Robot_Buff)[i] = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 7 + i)];
-                        }
-                        buffer_index += sizeof(Struct_Referee_Rx_Data_Robot_Buff) + 7;
-                    }
-                    break;
-                    case (Referee_Command_ID_ROBOT_AERIAL_ENERGY):
-                    {
-                        for (int i = 0; i < data_length + 2; i++)
-                        {
-                            reinterpret_cast<uint8_t *>(&Robot_Aerial_Energy)[i] = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 7 + i)];
-                        }
-                        buffer_index += sizeof(Struct_Referee_Rx_Data_Robot_Aerial_Energy) + 7;
-                    }
-                    break;
-                    case (Referee_Command_ID_ROBOT_DAMAGE):
-                    {
-                        for (int i = 0; i < data_length + 2; i++)
-                        {
-                            reinterpret_cast<uint8_t *>(&Robot_Damage)[i] = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 7 + i)];
-                        }
-                        buffer_index += sizeof(Struct_Referee_Rx_Data_Robot_Damage) + 7;
-                    }
-                    break;
-                    case (Referee_Command_ID_ROBOT_BOOSTER):
-                    {
-                        for (int i = 0; i < data_length + 2; i++)
-                        {
-                            reinterpret_cast<uint8_t *>(&Robot_Booster)[i] = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 7 + i)];
-                        }
-                        buffer_index += sizeof(Struct_Referee_Rx_Data_Robot_Booster) + 7;
-                    }
-                    break;
-                    case (Referee_Command_ID_ROBOT_REMAINING_AMMO):
-                    {
-                        for (int i = 0; i < data_length + 2; i++)
-                        {
-                            reinterpret_cast<uint8_t *>(&Robot_Remaining_Ammo)[i] = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 7 + i)];
-                        }
-                        buffer_index += sizeof(Struct_Referee_Rx_Data_Robot_Remaining_Ammo) + 7;
-                    }
-                    break;
-                    case (Referee_Command_ID_ROBOT_RFID):
-                    {
-                        for (int i = 0; i < data_length + 2; i++)
-                        {
-                            reinterpret_cast<uint8_t *>(&Robot_RFID)[i] = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 7 + i)];
-                        }
-                        buffer_index += sizeof(Struct_Referee_Rx_Data_Robot_RFID) + 7;
-                    }
-                    break;
-                    case (Referee_Command_ID_ROBOT_DART_COMMAND):
-                    {
-                        for (int i = 0; i < data_length + 2; i++)
-                        {
-                            reinterpret_cast<uint8_t *>(&Robot_Dart_Command)[i] = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 7 + i)];
-                        }
-                        buffer_index += sizeof(Struct_Referee_Rx_Data_Robot_Dart_Command) + 7;
-                    }
-                    break;
-                    case (Referee_Command_ID_ROBOT_Sentry_Info):
-                    {
-                        for (int i = 0; i < data_length + 2; i++)
-                        {
-                            reinterpret_cast<uint8_t *>(&Sentry_Info)[i] = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 7 + i)];
-                        }
-                        buffer_index += sizeof(Struct_Referee_Rx_Data_Robot_Sentry_Info) + 7;
-                    }
-                    break;
-                    case (Referee_Command_ID_ROBOT_Radar_Info):
-                    {
-                        for (int i = 0; i < data_length + 2; i++)
-                        {
-                            reinterpret_cast<uint8_t *>(&Radar_Info)[i] = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 7 + i)];
-                        }
-                        buffer_index += sizeof(Struct_Referee_Rx_Data_Robot_Radar_Info) + 7;
-                    }
-                    break;
-                    case (Referee_Command_ID_INTERACTION):
-                    {
-                        for (int i = 0; i < data_length + 2; i++)
-                        {
-                            reinterpret_cast<uint8_t *>(&Interaction_Robot_Receive)[i] = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 7 + i)];
-                        }
-                        buffer_index += sizeof(Struct_Referee_Tx_Data_Interaction_Robot_Receive) + 7;
-                    }
-                    break;
-                    case (Referee_Command_ID_INTERACTION_MAP_COMMAND):
-                    {
-                        for (int i = 0; i < data_length + 2; i++)
-                        {
-                            reinterpret_cast<uint8_t *>(&Interaction_Map_Command)[i] = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 7 + i)];
-                        }
-                        buffer_index += sizeof(Struct_Referee_Tx_Data_Interaction_Map_Command) + 7;
-                    }
-                    break;
-                    }
-                }
-            }
-            delete[] sum_data;
-            delete[] data_temp;
+    for (int i = 0; i < Length;)
+    {
+        tmp_buffer = (Struct_Referee_UART_Data *)&UART_Manage_Object->Rx_Buffer[i];
+
+        // 未通过头校验
+        if (tmp_buffer->Frame_Header != Frame_Header)
+        {
+            i++;
+            continue;
         }
-        buffer_index++;
+        // 未通过CRC8校验, 顺一位继续判断
+        if (Verify_CRC_8((uint8_t *)tmp_buffer, 4) != tmp_buffer->CRC_8)
+        {
+            i++;
+            continue;
+        }
+        // 未通过CRC16校验, 跨过当前包继续判断
+        if (Verify_CRC_16((uint8_t *)tmp_buffer, 7 + tmp_buffer->Data_Length) != *(uint16_t *)((uint32_t)tmp_buffer + 7 + tmp_buffer->Data_Length))
+        {
+            i += 9 + tmp_buffer->Data_Length;
+            continue;
+        }
+        // 通过校验但帧不够长
+        if (i + 7 + tmp_buffer->Data_Length + 2 > Length)
+        {
+            break;
+        }
+
+        switch (tmp_buffer->Referee_Command_ID)
+        {
+        case Referee_Command_ID_GAME_STATUS:
+        {
+            memcpy(&Game_Status, tmp_buffer->Data, sizeof(Struct_Referee_Rx_Data_Game_Status));
+            Dt0[1] = DWT_GetDeltaT(&last_cnt[1]);
+            break;
+        }
+
+        case (Referee_Command_ID_GAME_RESULT):
+        {
+            memcpy(&Game_Result, tmp_buffer->Data, sizeof(Struct_Referee_Rx_Data_Game_Result));
+
+            break;
+        }
+        case (Referee_Command_ID_GAME_ROBOT_HP):
+        {
+            memcpy(&Game_Robot_HP, tmp_buffer->Data, sizeof(Struct_Referee_Rx_Data_Game_Robot_HP));
+
+            break;
+        }
+        case (Referee_Command_ID_EVENT_DATA):
+        {
+            memcpy(&Event_Data, tmp_buffer->Data, sizeof(Struct_Referee_Rx_Data_Event_Data));
+
+            break;
+        }
+        case (Referee_Command_ID_EVENT_SUPPLY):
+        {
+            memcpy(&Event_Supply, tmp_buffer->Data, sizeof(Struct_Referee_Rx_Data_Event_Supply));
+
+            break;
+        }
+        case (Referee_Command_ID_EVENT_REFEREE_WARNING):
+        {
+            memcpy(&Event_Referee_Warning, tmp_buffer->Data, sizeof(Struct_Referee_Rx_Data_Event_Referee_Warning));
+
+            break;
+        }
+        case (Referee_Command_ID_ROBOT_STATUS):
+        {
+            memcpy(&Robot_Status, tmp_buffer->Data, sizeof(Struct_Referee_Rx_Data_Robot_Status));
+            Dt0[2] = DWT_GetDeltaT(&last_cnt[2]);
+            break;
+        }
+        case (Referee_Command_ID_ROBOT_POWER_HEAT):
+        {
+            memcpy(&Robot_Power_Heat, tmp_buffer->Data, sizeof(Struct_Referee_Rx_Data_Robot_Power_Heat));
+            Dt0[0] = DWT_GetDeltaT(last_cnt);
+
+            break;
+        }
+        case (Referee_Command_ID_ROBOT_POSITION):
+        {
+            memcpy(&Robot_Position, tmp_buffer->Data, sizeof(Struct_Referee_Rx_Data_Robot_Position));
+
+            break;
+        }
+        case (Referee_Command_ID_ROBOT_BUFF):
+        {
+            memcpy(&Robot_Buff, tmp_buffer->Data, sizeof(Struct_Referee_Rx_Data_Robot_Buff));
+
+            break;
+        }
+        case (Referee_Command_ID_ROBOT_DAMAGE):
+        {
+            memcpy(&Robot_Damage, tmp_buffer->Data, sizeof(Struct_Referee_Rx_Data_Robot_Damage));
+
+            break;
+        }
+        case (Referee_Command_ID_ROBOT_BOOSTER):
+        {
+            memcpy(&Robot_Booster, tmp_buffer->Data, sizeof(Struct_Referee_Rx_Data_Robot_Booster));
+
+            break;
+        }
+        case (Referee_Command_ID_ROBOT_REMAINING_AMMO):
+        {
+            memcpy(&Robot_Remaining_Ammo, tmp_buffer->Data, sizeof(Struct_Referee_Rx_Data_Robot_Remaining_Ammo));
+
+            break;
+        }
+        case (Referee_Command_ID_ROBOT_RFID):
+        {
+            memcpy(&Robot_RFID, tmp_buffer->Data, sizeof(Struct_Referee_Rx_Data_Robot_RFID));
+
+            break;
+        }
+        case (Referee_Command_ID_ROBOT_DART_COMMAND):
+        {
+            memcpy(&Robot_Dart_Command, tmp_buffer->Data, sizeof(Struct_Referee_Rx_Data_Robot_Dart_Command));
+
+            break;
+        }
+        case(Referee_Command_ID_INTERACTION_MAP_COMMAND):{
+            memcpy(&Robot_Map_Command_Data, tmp_buffer->Data, sizeof(Struct_Referee_Map_Command_Data));
+
+            break;
+        }
+        case(Referee_Command_ID_Interaction_Robot_Receive):{
+            memcpy(&Interaction_Robot_Receive, tmp_buffer->Data, sizeof(Struct_Referee_Tx_Data_Interaction_Robot_Receive));
+
+            break;
+        }
+
+        }
+
+        // 缓冲区直接推移
+        i += 7 + tmp_buffer->Data_Length + 2;
     }
 }
 
@@ -327,7 +277,8 @@ void Class_Referee::UART_RxCpltCallback(uint8_t *Rx_Data,uint16_t Length)
 {
     //滑动窗口, 判断裁判系统是否在线
     Flag += 1;
-    Data_Process();
+
+    Data_Process(Length);
 }
 
 /**
@@ -383,6 +334,7 @@ void Class_Referee::Sentry_Auto_cmd_Transmit()
     Referee_UI_Packed_Data(&Sentry_cmd);
     HAL_UART_Transmit_IT(UART_Manage_Object->UART_Handler, UART_Manage_Object->Tx_Buffer, UART_Manage_Object->Tx_Length);
 }
+
 
 unsigned char Get_CRC8_Check_Sum(unsigned  char  *pchMessage,unsigned  int dwLength,unsigned char ucCRC8)
 {
@@ -472,3 +424,4 @@ void Append_CRC16_Check_Sum(uint8_t * pchMessage,uint32_t dwLength)
 	pchMessage[dwLength-1] = (uint8_t)((wCRC >> 8)& 0x00ff);
 }
 
+/************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

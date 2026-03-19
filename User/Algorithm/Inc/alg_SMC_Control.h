@@ -4,7 +4,7 @@
 #include "arm_math.h"
 
 #define GM6020_TORQUE_CONST 0.741f
-#define GM6020_I_TO_OUT 16384.0f / 3.0f
+#define GM6020_I_TO_OUT (16384.0f / 3.0f)
 
 class Class_SMC{
   public:

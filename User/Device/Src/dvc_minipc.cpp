@@ -58,7 +58,7 @@ void Class_MiniPC::Data_Process(Enum_MiniPC_Data_Source Data_Source)
    
     Rx_Angle_Yaw=Data_NUC_To_MCU.Target_Yaw_Angle / 100.f;
     Rx_Angle_Pitch=Data_NUC_To_MCU.Target_Pitch_Angle / 100.f;
-    Math_Constrain(&Rx_Angle_Pitch, -25.0f, 23.0f);
+    Math_Constrain(&Rx_Angle_Pitch, -25.0f, 22.0f);
     
     Rx_Chassis_Target_Omega               = Data_NUC_To_MCU.MiniPC_To_Chassis_Target_Omega / 100.0f;
     Rx_Chassis_Target_Velocity_X          = Data_NUC_To_MCU.MiniPC_To_Chassis_Target_Velocity_X / 100.0f;
@@ -90,63 +90,11 @@ extern Referee_Rx_G_t CAN3_Chassis_Rx_Data_G;
 volatile int index = 0;
 void Class_MiniPC::Output()
 {
-  static uint8_t  Color = 0, Invincible_Flag[6];
-  static uint16_t HP[6], Pre_HP[6];
-  static float Pre_Count[6];
-  static uint16_t Self_Outpost_HP, Oppo_Outpost_HP, Self_Base_HP;
+  static uint8_t  Color = 0, Invincible_Flag[6] = {0,0,0,0,0,0};
+  static uint16_t Self_Outpost_HP = 0, Oppo_Outpost_HP = 0, Self_Base_HP = 0;
 
-  if (Referee->Get_ID() == Referee_Data_Robots_ID_RED_SENTRY_7)
-  {
-    Color = 1;
-    Oppo_Outpost_HP = Referee->Get_HP(Referee_Data_Robots_ID_BLUE_OUTPOST_11);
-    Self_Outpost_HP = Referee->Get_HP(Referee_Data_Robots_ID_RED_OUTPOST_11);
-    Self_Base_HP = Referee->Get_HP(Referee_Data_Robots_ID_RED_BASE_10);
-
-    for (int i = 0; i < 6; i++)
-    {
-      Pre_HP[i] = HP[i];
-    }
-
-    HP[0] = Referee->Get_HP(Referee_Data_Robots_ID_BLUE_HERO_1);
-    HP[1] = Referee->Get_HP(Referee_Data_Robots_ID_BLUE_ENGINEER_2);
-    HP[2] = Referee->Get_HP(Referee_Data_Robots_ID_BLUE_INFANTRY_3);
-    HP[3] = Referee->Get_HP(Referee_Data_Robots_ID_BLUE_INFANTRY_4);
-    HP[4] = Referee->Get_HP(Referee_Data_Robots_ID_BLUE_INFANTRY_5);
-    HP[5] = Referee->Get_HP(Referee_Data_Robots_ID_BLUE_SENTRY_7);
-  }
-  else if (Referee->Get_ID() == Referee_Data_Robots_ID_BLUE_SENTRY_7)
-  {
-    Color = 0;
-    Oppo_Outpost_HP = Referee->Get_HP(Referee_Data_Robots_ID_RED_OUTPOST_11);
-    Self_Outpost_HP = Referee->Get_HP(Referee_Data_Robots_ID_BLUE_OUTPOST_11);
-    Self_Base_HP = Referee->Get_HP(Referee_Data_Robots_ID_BLUE_BASE_10);
-
-    for (int i = 0; i < 6; i++)
-    {
-      Pre_HP[i] = HP[i];
-    }
-
-    HP[0] = Referee->Get_HP(Referee_Data_Robots_ID_RED_HERO_1);
-    HP[1] = Referee->Get_HP(Referee_Data_Robots_ID_RED_ENGINEER_2);
-    HP[2] = Referee->Get_HP(Referee_Data_Robots_ID_RED_INFANTRY_3);
-    HP[3] = Referee->Get_HP(Referee_Data_Robots_ID_RED_INFANTRY_4);
-    HP[4] = Referee->Get_HP(Referee_Data_Robots_ID_RED_INFANTRY_5);
-    HP[5] = Referee->Get_HP(Referee_Data_Robots_ID_RED_SENTRY_7);
-  }
-
-  for (int i = 0; i < 6; i++) // 无敌状态辨认
-  {
-    if (HP[i] > 0 && Pre_HP[i] == 0)
-    {
-      Invincible_Flag[i] = 1;
-      Pre_Count[i] = DWT_GetTimeline_s();
-    }
-    if ((DWT_GetTimeline_s() - Pre_Count[i]) > 7.f && Invincible_Flag[i] == 1)
-    {
-      Invincible_Flag[i] = 0;
-      Pre_Count[i] = 0;
-    }
-  }
+  Self_Base_HP = Referee->Get_Self_Base_HP();
+  Self_Outpost_HP = Referee->Get_Self_Outpose_HP();
 
   Data_MCU_To_NUC.header                         = Frame_Header;
   Data_MCU_To_NUC.Gimbal_Now_Yaw_Angle           = int16_t(Now_Angle_Yaw * 100.0f);
@@ -160,13 +108,13 @@ void Class_MiniPC::Output()
   Data_MCU_To_NUC.Remaining_Time                 = Referee->Get_Remaining_Time();
   Data_MCU_To_NUC.Oppo_Outpost_HP                = Oppo_Outpost_HP;
   Data_MCU_To_NUC.Self_Base_HP                   = Self_Base_HP;
-  //无敌状态辨认改了，不确定是不是这样写
+  //无敌状态辨认没有了，都是0
   Data_MCU_To_NUC.Color_Invincible_State         = Color << 7 | Invincible_Flag[5] << 5 | Invincible_Flag[4] << 4 | Invincible_Flag[3] << 3 | Invincible_Flag[2] << 2 | Invincible_Flag[1] << 1 | Invincible_Flag[0] << 0;
   Data_MCU_To_NUC.Projectile_allowance           = Referee->Get_17mm_Remaining();
-  Data_MCU_To_NUC.Remaining_Energy               = Referee->Get_Remaining_Energy();
+  Data_MCU_To_NUC.Remaining_Energy               = 20000.0f - Supercap->Get_Consuming_Power();
   Data_MCU_To_NUC.Supercap_Proportion            = Supercap->Get_Supercap_Proportion();                                 //通过上下板通信传输
-  Data_MCU_To_NUC.Target_Position_X              = Referee->Get_Map_Command_Coordinate_X() * 100.0f;
-  Data_MCU_To_NUC.Target_Position_Y              = Referee->Get_Map_Command_Coordinate_Y() * 100.0f;
+  Data_MCU_To_NUC.Target_Position_X              = Referee->Get_Map_Command_Taregt_Position_X() * 100.0f;
+  Data_MCU_To_NUC.Target_Position_Y              = Referee->Get_Map_Command_Taregt_Position_Y() * 100.0f;
   Data_MCU_To_NUC.Dart_Target                    = Referee->Get_Dart_Command_Target();
 
   //顺序发送版本    可以从雷达获取敌方车辆位置，发送给上位机

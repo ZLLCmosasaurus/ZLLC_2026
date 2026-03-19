@@ -574,7 +574,7 @@ void Class_Chariot::Control_Gimbal()
     tmp_gimbal_yaw -= dr16_y * DR16_Yaw_Angle_Resolution;
     tmp_gimbal_pitch -= dr16_r_y * DR16_Pitch_Angle_Resolution;
 
-    if(tmp_gimbal_pitch > 23.0f)tmp_gimbal_pitch = 23.0f;
+    if(tmp_gimbal_pitch > 22.0f)tmp_gimbal_pitch = 22.0f;
     if(tmp_gimbal_pitch < -25.0f)tmp_gimbal_pitch = -25.0f;
 
     if(tmp_gimbal_yaw > 180.0f) tmp_gimbal_yaw -= 360.0f;

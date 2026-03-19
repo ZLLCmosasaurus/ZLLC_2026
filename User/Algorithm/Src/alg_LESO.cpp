@@ -79,6 +79,8 @@ void Class_LESO::TIM_Adjust_PeriodElapsedCallback(){
 
   }
 
+  Math_Constrain(&Disturbance_hat, -10.0f / J, 10.0f / J);
+
   Disturbance_Torque = J * Disturbance_hat;
   if (Motor_Type == Motor_GM6020){
     Compensation_Out = -(Disturbance_Torque * GM6020_I_TO_OUT) / (GM6020_TORQUE_CONST * Gearbox_Rate);

@@ -255,6 +255,7 @@ public:
 
     Class_Filter_Kalman External_IMU_Gyro_Yaw;
     Class_Filter_Kalman External_IMU_Gyro_Pitch;
+    Class_Filter_Kalman Motor_Yaw_Angle_Filter;
 
     void Init();
 
@@ -287,7 +288,7 @@ protected:
     // pitch轴最小值
     float Min_Pitch_Angle = -25.0f;
     // pitch轴最大值
-    float Max_Pitch_Angle = 23.0f ; //多10°
+    float Max_Pitch_Angle = 22.0f ; //多10°
 
     float Yaw_Compensite_KF = 150.0f;
     float Yaw_Compensite_Output = 0.0f;

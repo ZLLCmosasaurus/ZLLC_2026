@@ -2,9 +2,10 @@
 #define __ALG_LESO_H
 
 #include "stdint.h"
+#include "drv_math.h"
 
 #define GM6020_TORQUE_CONST 0.741f
-#define GM6020_I_TO_OUT 16384.0f / 3.0f
+#define GM6020_I_TO_OUT (16384.0f / 3.0f)
 
 #define M3508_TORQUE_CONSTANT 0.3f                                                             // 3508带标准减速箱的转矩常数
 #define M3508_TORQUE_CURRENT_TO_CMD_CURRENT (16384.0f / 20.0f)                                 // Icmd映射到Itorque

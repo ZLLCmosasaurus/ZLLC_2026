@@ -63,7 +63,7 @@ void SystemClock_Config(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 void __aeabi_atexit(void) {
-    // ¿ÕÊµÏÖ
+    // ï¿½ï¿½Êµï¿½ï¿½
 }
 /* USER CODE END 0 */
 
@@ -76,7 +76,6 @@ int main(void)
 
   /* USER CODE BEGIN 1 */
 
-  /* USER CODE END 1 */
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -112,7 +111,7 @@ int main(void)
   MX_TIM4_Init();
   MX_UART8_Init();
   MX_UART9_Init();
-  //MX_IWDG1_Init();
+  // MX_IWDG1_Init();
   /* USER CODE BEGIN 2 */
   Task_Init();
   /* USER CODE END 2 */

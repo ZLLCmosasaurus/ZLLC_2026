@@ -466,7 +466,7 @@ void Task100us_TIM4_Callback()
 
         //生成正弦信号测试
         Single_Time ++;
-        Sin_Single = 15.0f * sinf(2.0f * PI * 3.0f * Single_Time / 1000.0f);
+        Sin_Single = 3.0f * sinf(2.0f * PI * 6.0f * Single_Time / 1000.0f);
 
 #endif
 }
@@ -603,7 +603,7 @@ extern "C" void Task_Init()
 
     /********************************* 交互层初始化 *********************************/
 
-    chariot.Init(0.05);
+    chariot.Init(0.0);
 
     /********************************* 使能调度时钟 *********************************/
 
