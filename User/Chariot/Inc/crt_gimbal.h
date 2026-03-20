@@ -27,6 +27,7 @@
 #include "dvc_imu.h"
 #include "dvc_lkmotor.h"
 #include "dvc_dmmotor.h"
+#include "dvc_jd_motor.h"
 #include "alg_fsm.h"
 #include "arm_model.h"
 #include "dvc_dwt.h"
@@ -276,6 +277,7 @@ public:
     #endif
 
     Class_DJI_Motor_C610 Motor_C610_Gripper;     // 夹爪 - C610
+    Class_Jodell_Motor Jodell_ERG150T;  // 钧舵ERG150T夹爪电机，兼具Roll和夹爪功能
 
     /*SCARA臂*/
     Class_DM_Motor_J4310 J0_Pitch_4340;
