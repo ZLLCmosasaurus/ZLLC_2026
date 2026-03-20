@@ -10,24 +10,27 @@ enum Enum_Gripper_Status
     Gripper_Release    // 松开
 };
 
-enum Jodell_Motor_Status
+// 电机通信状态
+enum Jodell_Motor_Comm_Status
 {
-    Jodell_Motor_Status_OFFLINE = 0,
-    Jodell_Motor_Status_ONLINE
+    Jodell_Motor_Comm_OFFLINE = 0,
+    Jodell_Motor_Comm_ONLINE
 };
 
+// 电机运行状态（使能/未使能）
+enum Jodell_Motor_Working_Status
+{
+    Jodell_Motor_Working_DISABLE = 0,
+    Jodell_Motor_Working_ENABLE
+};
+
+// 控制电机运行状态（使能/未使能）
 enum Jodell_Motor_Control_Status
 {
-    Jodell_Motor_Control_DISABLE = 0,
-    Jodell_Motor_Control_ENABLE
-};
-
-enum Jodell_Control_Type
-{
-    Jodell_Control_Type_ENABLE = 0,
-    Jodell_Control_Type_DISABLE,
-    Jodell_Control_Type_GRIPPER,
-    Jodell_Control_Type_ROLL_ANGLE
+    Jodell_Motor_Control_ENABLE = 0,
+    Jodell_Motor_Control_DISABLE,
+    Jodell_Motor_Control_GRIPPER,
+    Jodell_Motor_Control_ANGLE
 };
 
 struct Jodell_Roll_Rx_Data
@@ -91,9 +94,12 @@ private:
     // 前一时刻的电机通信flag
     uint32_t Pre_Flag = 0;
 
-    Jodell_Motor_Status Motor_Status = Jodell_Motor_Status_OFFLINE;
+    // 电机通信状态
+    Jodell_Motor_Comm_Status Motor_Communication_Status = Jodell_Motor_Comm_OFFLINE;
+    // 电机控制状态
     Jodell_Motor_Control_Status Motor_Control_Status = Jodell_Motor_Control_DISABLE;
-    Jodell_Control_Type Control_Type = Jodell_Control_Type_ENABLE;
+    // 电机运行状态
+    Jodell_Motor_Working_Status Motor_Working_Status = Jodell_Motor_Working_DISABLE;
 
     float Target_Roll;
     float Target_Omega;
