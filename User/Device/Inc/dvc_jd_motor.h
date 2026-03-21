@@ -17,7 +17,7 @@ enum Jodell_Motor_Comm_Status
     Jodell_Motor_Comm_ONLINE
 };
 
-// 电机运行状态（使能/未使能）
+// 电机返回的运行状态（使能/未使能）
 enum Jodell_Motor_Working_Status
 {
     Jodell_Motor_Working_DISABLE = 0,
@@ -33,6 +33,12 @@ enum Jodell_Motor_Control_Status
     Jodell_Motor_Control_ANGLE
 };
 
+enum Jodell_Tx_Frame_Type
+{
+    Jodell_Tx_Frame_READ,
+    Jodell_Tx_Frame_WRITE
+};
+
 struct Jodell_Roll_Rx_Data
 // 查询帧返回的电机旋转轴数据
 {
@@ -46,7 +52,7 @@ struct Jodell_Gripper_Rx_Data
 // 查询帧返回的夹爪轴数据
 {
     bool Enable_Status;
-    float Now_Position;
+    uint8_t Now_Position;
     float Now_Omega;
     float Now_Torque;
 };
@@ -70,9 +76,8 @@ public:
     inline float Get_Target_Omega();
     inline float Get_Target_Torque();
 
-    inline void Set_Gripper_Status(Enum_Gripper_Status __Gripper_Status);
-    inline void Set_Gripper_Clamp(uint8_t __Clamp_Position);
-    inline Enum_Gripper_Status Get_Gripper_Status();
+    inline void Set_Gripper_Position(uint8_t __Target_Gripper_Position);
+    inline uint8_t Get_Gripper_Position();
 
 private:
 
@@ -83,9 +88,9 @@ private:
     agile_modbus_rtu_t ctx_rtu;
     agile_modbus_t *ctx = &ctx_rtu._ctx;
     // Modbus发送缓冲区
-    uint8_t Modbus_Tx_Buffer[256];
+    uint8_t Modbus_Tx_Buffer[128];
     // Modbus接收缓冲区
-    uint8_t Modbus_Rx_Buffer[256];
+    uint8_t Modbus_Rx_Buffer[128];
     // 电机的从机地址
     int Slave_Address;
 
@@ -96,16 +101,17 @@ private:
 
     // 电机通信状态
     Jodell_Motor_Comm_Status Motor_Communication_Status = Jodell_Motor_Comm_OFFLINE;
-    // 电机控制状态
+    // 电机控制状态，影响控制帧的发送
     Jodell_Motor_Control_Status Motor_Control_Status = Jodell_Motor_Control_DISABLE;
-    // 电机运行状态
+    // 电机返回的使能状态
     Jodell_Motor_Working_Status Motor_Working_Status = Jodell_Motor_Working_DISABLE;
+    // 电机通信帧类型，控制帧或查询帧
+    Jodell_Tx_Frame_Type Motor_Tx_Frame_Type = Jodell_Tx_Frame_WRITE;
 
-    float Target_Roll;
-    float Target_Omega;
-    float Target_Torque;
-    Enum_Gripper_Status Gripper_Status;
-    uint8_t Target_Clamp_Position;
+    float Target_Roll = 0.0f;
+    float Target_Omega = 5.0f;
+    float Target_Torque = 0.0f;
+    uint8_t Target_Gripper_Position = 0;
 
     // 查询帧电机返回的数据
     Jodell_Gripper_Rx_Data Gripper_Data;
@@ -115,3 +121,38 @@ private:
 
     void Modbus_Clear_Receive_Buffer();
 };
+
+inline uint8_t Class_Jodell_Motor::Get_Gripper_Position()
+{
+    return Target_Gripper_Position;
+}
+
+inline float Class_Jodell_Motor::Get_Target_Omega()
+{
+    return Target_Omega;
+}
+
+inline float Class_Jodell_Motor::Get_Target_Roll()
+{
+    return Target_Roll;
+}
+
+inline void Class_Jodell_Motor::Set_Gripper_Position(uint8_t __Target_Gripper_Position)
+{
+    Target_Gripper_Position = __Target_Gripper_Position;
+}
+
+inline void Class_Jodell_Motor::Set_Target_Omega(float __Target_Omega)
+{
+    Target_Omega = __Target_Omega;
+}
+
+inline void Class_Jodell_Motor::Set_Target_Roll(float __Target_Roll)
+{
+    Target_Roll = __Target_Roll;
+}
+
+inline void Class_Jodell_Motor::Set_Target_Torque(float __Target_Torque)
+{
+    Target_Torque = __Target_Torque;
+}

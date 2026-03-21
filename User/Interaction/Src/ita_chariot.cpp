@@ -1323,6 +1323,8 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
         Gimbal.J5_Yaw_4340P.TIM_Alive_PeriodElapsedCallback();
         Gimbal.Motor_C610_Gripper.TIM_Alive_PeriodElapsedCallback();
 
+        Gimbal.Jodell_ERG150T.TIM1msMod50_Alive_PeriodElapsedCallback();
+
         is_arm_online = (Gimbal.J0_Pitch_4340.Get_DM_Motor_Status() == DJI_Motor_Status_ENABLE ||
                          Gimbal.J1_Yaw_8009P.Get_DM_Motor_Status() == DJI_Motor_Status_ENABLE ||
                          Gimbal.J2_Yaw_4340P.Get_DM_Motor_Status() == DJI_Motor_Status_ENABLE ||

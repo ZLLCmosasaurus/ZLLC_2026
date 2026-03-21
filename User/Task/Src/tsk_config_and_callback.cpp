@@ -566,6 +566,11 @@ void MiniPC_UART_Callback(uint8_t *Buffer, uint16_t Length)
 {
     chariot.MiniPC.UART_RxCpltCallback(Buffer);
 }
+
+void Jodell_Motor_UART2_Callback(uint8_t *Buffer, uint16_t Length)
+{
+    chariot.Gimbal.Jodell_ERG150T.Jodell_Motor_UART_RxCplt_Callback(Buffer, Length);
+}
 #endif
 /**
  * @brief TIM4任务回调函数
@@ -677,6 +682,8 @@ void Task1ms_TIM5_Callback()
         /****************************** 驱动层回调函数 1ms *****************************************/
         // 统一打包发送
         TIM_CAN_PeriodElapsedCallback();
+        // 钧舵电机Modbus发送
+        chariot.Gimbal.Jodell_ERG150T.TIM_UART_Tx_PeriodElapsedCallback();
 
         static int mod5 = 0, mod100 = 0, mod68 = 0;
         mod5++;
@@ -811,6 +818,8 @@ extern "C" void Task_Init()
     UART_Init(&huart8, MiniPC_UART_Callback, 56);
     // 离线状态自定义控制器
     UART_Init(&huart1, Offline_Controller_UART1_Callback, 14);
+    // Jodell夹爪电机
+    UART_Init(&huart2, Jodell_Motor_UART2_Callback, 64);
 
 #endif
 

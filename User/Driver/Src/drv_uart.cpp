@@ -69,6 +69,16 @@ void UART_Init(UART_HandleTypeDef *huart, UART_Call_Back Callback_Function, uint
         UART1_Manage_Object.Rx_Buffer_Length = Rx_Buffer_Length;
         HAL_UARTEx_ReceiveToIdle_DMA(huart, UART1_Manage_Object.Rx_Buffer, UART1_Manage_Object.Rx_Buffer_Length);
     }
+    else if(huart->Instance == USART2)
+    {
+        UART2_Manage_Object.UART_Handler = huart;
+        UART2_Manage_Object.Callback_Function = Callback_Function;
+        UART2_Manage_Object.Rx_Buffer_Length = Rx_Buffer_Length;
+        HAL_UARTEx_ReceiveToIdle_DMA(huart, UART2_Manage_Object.Rx_Buffer, UART2_Manage_Object.Rx_Buffer_Length);
+
+        __HAL_DMA_DISABLE_IT(&hdma_usart2_rx, DMA_IT_HT);
+        memset(UART2_Manage_Object.Rx_Buffer, 0, UART2_Manage_Object.Rx_Buffer_Length);
+    }
     else if (huart->Instance == UART5)
     {
         UART5_Manage_Object.UART_Handler = huart;
@@ -154,6 +164,16 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
         memset( UART1_Manage_Object.Rx_Buffer, 0, UART1_Manage_Object.Rx_Buffer_Length);
 
     }
+    else if(huart->Instance == USART2)
+    {
+        UART2_Manage_Object.Rx_Length = Size;
+        HAL_UARTEx_ReceiveToIdle_DMA(huart, UART2_Manage_Object.Rx_Buffer, UART2_Manage_Object.Rx_Buffer_Length);
+
+        if(UART2_Manage_Object.Rx_Length<=UART2_Manage_Object.Rx_Buffer_Length)
+            UART2_Manage_Object.Callback_Function(UART2_Manage_Object.Rx_Buffer, Size);
+        else
+            memset(UART2_Manage_Object.Rx_Buffer, 0, UART2_Manage_Object.Rx_Buffer_Length);
+    }
     else if (huart->Instance == UART5)
     {
         UART5_Manage_Object.Rx_Length = Size;              
@@ -212,6 +232,11 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
         // memset( UART1_Manage_Object.Rx_Buffer, 0, UART1_Manage_Object.Rx_Buffer_Length);
         // HAL_UART_Receive_IT(huart, UART1_Manage_Object.Rx_Buffer, UART1_Manage_Object.Rx_Buffer_Length);//再开启接收中断
     }
+    else if(huart->Instance == USART2)
+    {
+        HAL_UARTEx_ReceiveToIdle_DMA(huart, UART2_Manage_Object.Rx_Buffer, UART2_Manage_Object.Rx_Buffer_Length*2);
+    }
+    
 }
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/
