@@ -105,7 +105,7 @@ void Class_Supercap::Data_Process()
     //数据处理过程
     memcpy(&Supercap_Data, CAN_Manage_Object->Rx_Buffer.Data, sizeof(Struct_Supercap_CAN_Data));    
 
-    //Data.Chassis_Actual_Power = (float)Supercap_Data.Chassis_Actual_Power / 10.0f;
+    Data.Chassis_Actual_Power = (float)Supercap_Data.Chassis_Actual_Power / 10.0f;
     Data.Supercap_Buffer_Power = (float)Supercap_Data.Supercap_Buffer_Power / 100.0f;
     Data.Supercap_Charge_Percentage = (float)Supercap_Data.Supercap_Charge_Percentage;
     Data.Supercup_Control_Level_Status = Supercap_Data.Supercup_Control_Level_Status;
@@ -192,8 +192,8 @@ void Class_Supercap::Output()
     memcpy(CAN_Tx_Data, &Supercap_Tx_Data, sizeof(Struct_Supercap_Tx_Data));
 		uint8_t max = (uint8_t)Chassis_Device_LimitPower;
     //给舵小板can发送打包
-    memcpy(CAN1_0x01E_Tx_Data, &max, sizeof(uint8_t));
-	memcpy(CAN1_0x01E_Tx_Data+1,&(Data.Chassis_Actual_Power),sizeof(float));
+    // memcpy(CAN1_0x01E_Tx_Data, &max, sizeof(uint8_t));
+	// memcpy(CAN1_0x01E_Tx_Data+1,&(Data.Chassis_Actual_Power),sizeof(float));
 }
 
 void Class_Supercap::Use_SuperCap_Strategy()

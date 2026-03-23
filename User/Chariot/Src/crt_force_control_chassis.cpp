@@ -383,7 +383,7 @@ void Class_Chassis::Output_To_Motor()
         // 归一化到[-1, 1]范围，中心点在30J
         float normalized = (energyBuffer - 30.0f) / 30.0f;
         // 使用tanh实现平滑过渡，范围[-30, 30]
-        float bufferPower = 30.0f * tanhf(normalized);
+        float bufferPower = 25.0f * tanhf(normalized);
         
         Power_Management.Max_Power = Referee->Get_Chassis_Power_Max() + bufferPower;
     }
@@ -391,7 +391,6 @@ void Class_Chassis::Output_To_Motor()
     {
         Power_Management.Max_Power = 100.0f;
     }
-    //Power_Management.Total_error = 0.0;
     Power_Limit.Power_Task(Power_Management);
 
     for (int i = 1, j = 0; i < 8; i+=2, ++j)

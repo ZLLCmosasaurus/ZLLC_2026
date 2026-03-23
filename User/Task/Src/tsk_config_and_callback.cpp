@@ -52,7 +52,8 @@
 /* Private types -------------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
-
+uint32_t last_cnt_1 ,last_cnt_2;
+float dt_receive1,dt_receive2;
 uint32_t init_finished =0 ;
 bool start_flag=0;
 //机器人控制对象
@@ -164,7 +165,7 @@ void Chassis_Device_CAN3_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage){
     switch (CAN_RxMessage->Header.Identifier)
     {
 
-        case (0x77)://留给上板通讯
+        case (0x52)://留给上板通讯
         {
             chariot.CAN_Chassis_Rx_Gimbal_Callback();
             break;
@@ -273,11 +274,13 @@ void Gimbal_Device_CAN3_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage){
     {
     case (0x51): //留给下板通讯
     {
+        dt_receive1 = DWT_GetDeltaT(&last_cnt_1);
         chariot.CAN_Gimbal_Rx_Chassis_Callback();
     }
     break;
-    case (0x52):
+    case (0x20):
     {
+        dt_receive2 = DWT_GetDeltaT(&last_cnt_2);
         chariot.CAN_Gimbal_Rx_Chassis_Callback_1();
     }
     break;
@@ -443,6 +446,8 @@ void MiniPC_UART_Callback(uint8_t *Buffer, uint16_t Length)
  */
 uint32_t a =0;
 uint32_t b =0;
+uint32_t Last_cnt3 = 0;
+//float Dt3 = 0;
 void Task100us_TIM4_Callback()
 {
     #ifdef CHASSIS
@@ -462,27 +467,29 @@ void Task100us_TIM4_Callback()
         // 单给IMU消息开的定时器 ims
         chariot.Gimbal.Boardc_BMI.TIM_Calculate_PeriodElapsedCallback();
 
-        // uint8_t Cmd_if_Fire1 = 0;
-        // static uint16_t shoot_cnt = 0;
-        // shoot_cnt++;
-        // if (shoot_cnt > 1000)
-        // {
-        //     Cmd_if_Fire1 = 1; //= Get_Shoot_Cmd(FSM_Heat_Detect.Heat,200);
-        //     shoot_cnt = 0;
-        // }
-        // else
-        // {
-        //     Cmd_if_Fire1 = 0;
-        // }
+    //     // 静态变量记录上次开火的系统时间（毫秒）
+    // static uint32_t last_fire_time = 0;
 
-        // if(chariot.DR16.Get_Left_Switch() == DR16_Switch_Status_DOWN && chariot.DR16.Get_Right_Switch()==DR16_Switch_Status_UP)
-        // {
-        //    if(chariot.MiniPC.Get_MiniPC_Status() == MiniPC_Status_ENABLE && Cmd_if_Fire1 == 1)
-        //    {
-        //         //chariot.Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
-        //    }
-						
+    // // 获取当前上位机开火信号（0或1）
+    // uint8_t current_fire = chariot.MiniPC.Get_Fire_Status();
+
+    // // 获取当前系统时间（毫秒，由HAL_GetTick()提供）
+    // uint32_t now = HAL_GetTick();
+
+    // // 开火条件：信号为真，且距离上次开火已超过1500ms
+    // if (current_fire == 1 && (now - last_fire_time) >= 1500)
+    // {
+    //     // 可选：检查遥控器开关状态（根据实际需求）
+    //     if (chariot.DR16.Get_Left_Switch() == DR16_Switch_Status_DOWN &&
+    //         chariot.DR16.Get_Right_Switch() == DR16_Switch_Status_UP)
+    //     {
+    //         // 执行开火动作（例如设置拨弹盘为单发模式）
+    //         chariot.Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+
+    //         // 记录本次开火时间，开始冷却
+    //         last_fire_time = now;
         // }
+    // }
         static uint8_t mod2 = 0;  
         mod2++;
         if(mod2%2 == 0)
@@ -528,15 +535,6 @@ void Task100us_TIM4_Callback()
                         chariot.Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
                     }
                 #else
-                if(CAN3_Chassis_Rx_Data_A.game_process != 4)
-                {
-                    if (chariot.VT13.Get_VT13_Status() == VT13_Status_DISABLE)
-                    {
-                        chariot.Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_DISABLE);
-                        chariot.Booster.Set_Booster_Control_Type(Booster_Control_Type_DISABLE);
-                        chariot.Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
-                    }
-                }
                 #endif
 
         #endif
@@ -582,6 +580,7 @@ void Task1ms_TIM5_Callback()
     init_finished++;
     if(init_finished>2000)
     start_flag=1;
+    
 
     /************ 判断设备在线状态判断 50ms (所有device:电机，遥控器，裁判系统等) ***************/
     
@@ -605,11 +604,14 @@ void Task1ms_TIM5_Callback()
         chariot.FSM_Alive_Control.Reload_TIM_Status_PeriodElapsedCallback();
         #endif
         #endif
+        __disable_irq();
         chariot.TIM_Calculate_PeriodElapsedCallback();
+        __enable_irq();
         
     /****************************** 驱动层回调函数 1ms *****************************************/ 
         //统一打包发送
         TIM_CAN_PeriodElapsedCallback();
+        buzzer_taskScheduler(&buzzer);
         #ifdef GIMBAL
         if(chariot.DR16.Get_Right_Switch()==DR16_Switch_Status_TRIG_MIDDLE_DOWN)
         {
@@ -706,8 +708,8 @@ extern "C" void Task_Init()
         //遥控器接收
         #ifdef USE_DR16
         UART_Init(&huart5, DR16_UART5_Callback, 18);
-		    //UART_Init(&huart6, Image_UART6_Callback, 40);
-        #elif defined(USE_VT13)
+        #endif
+        #ifdef USE_VT13
         //图传
         UART_Init(&huart1, VT13_UART_Callback, 60);
         #endif
@@ -732,6 +734,7 @@ extern "C" void Task_Init()
     /********************************* 交互层初始化 *********************************/
 
     chariot.Init();
+	buzzer_setTask(&buzzer, BUZZER_DJI_STARTUP_PRIORITY);
 
     /********************************* 使能调度时钟 *********************************/
 
@@ -768,8 +771,8 @@ extern "C" void Task_Init()
         JudgeReceiveData.Supercap_State = chariot.Sprint_Status;
         JudgeReceiveData.booster_fric_omega_left = chariot.Booster_fric_omega_left; // 左摩擦轮速度; 
         JudgeReceiveData.booster_fric_omega_right = chariot.Booster_fric_omega_right; // 右摩擦轮速度
-		JudgeReceiveData.Booster_bullet_num=chariot.Booster_bullet_num-chariot.Booster_bullet_num_before;
-        // JudgeReceiveData.Minipc_Mode = chariot.MiniPC_Type;
+		JudgeReceiveData.Booster_bullet_num = chariot.Booster_bullet_num-chariot.Booster_bullet_num_before;
+        JudgeReceiveData.MiniPC_Aim_Status = chariot.Aim_Status;      // 自瞄是否控制打弹
 		// JudgeReceiveData.Antispin_Type=chariot.Antispin_Type;
         if (chariot.Referee_UI_Refresh_Status == Referee_UI_Refresh_Status_ENABLE)
             Init_Cnt = 10;

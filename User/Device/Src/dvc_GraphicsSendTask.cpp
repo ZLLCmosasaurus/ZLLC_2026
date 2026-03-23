@@ -905,7 +905,7 @@ void GraphicSendtask(void)
 		PitchUI_Change(JudgeReceiveData.Pitch_Angle, Init_Cnt);
 		CarPosture_Change(JudgeReceiveData.Chassis_Gimbal_Diff, Init_Cnt); // 直接传入弧度值
 		CapDraw(JudgeReceiveData.Supercap_Voltage, Init_Cnt);
-		// MiniPC_Aim_Change(Init_Cnt);
+		MiniPC_Aim_Change(Init_Cnt);
 		FrictSpeed_Draw(JudgeReceiveData.booster_fric_omega_left, JudgeReceiveData.booster_fric_omega_right, Init_Cnt);
 		BulletNum_Draw(JudgeReceiveData.Booster_bullet_num, Init_Cnt);
 		Antispin_Draw(Init_Cnt);
@@ -1026,7 +1026,7 @@ void GraphicSendtask(void)
 			Last_JudgeReceiveData.Chassis_Control_Type = JudgeReceiveData.Chassis_Control_Type;
 			break;
 		case 2: // MiniPC状态
-			// MiniPC_Aim_Change(0);
+			MiniPC_Aim_Change(0);
 			Last_JudgeReceiveData.Minipc_Status = JudgeReceiveData.Minipc_Status;
 			break;
 		case 3: // 发射机构用户控制类型

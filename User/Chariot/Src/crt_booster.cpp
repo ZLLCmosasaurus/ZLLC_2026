@@ -104,7 +104,8 @@ void Class_FSM_Heat_Detect::Reload_TIM_Status_PeriodElapsedCallback()
     // 热量冷却到0
     if (Heat > 0)
     {
-        Heat -= 48.f / 1000.0f; // 哨兵默认80
+        Heat -= Booster->Cooling_Value / 1000.0f;
+
     }
     else
     {
@@ -591,17 +592,6 @@ void Class_Booster::TIM_Calculate_PeriodElapsedCallback()
         Speed = Referee->Get_Shoot_Speed();
     }
 
-    // static uint16_t shoot_cnt = 0;
-    // shoot_cnt ++;
-    // if(shoot_cnt > 500)
-    // {
-    //     Cmd_if_Fire  = 1;//= Get_Shoot_Cmd(FSM_Heat_Detect.Heat,200);
-    //     shoot_cnt = 0;
-    // }
-    // else
-    // {
-    //     Cmd_if_Fire = 0;
-    // }
 
     Cmd_if_Fire = Get_Shoot_Cmd(FSM_Heat_Detect.Heat,100);
     

@@ -153,7 +153,8 @@ protected:
 
     //常量
     uint16_t Heat_Max = 400;
-    uint16_t Cooling_Value = 80;
+    //热量冷却值,从裁判系统读取，否则默认为24
+    uint16_t Cooling_Value = 24;
     float Heat_Consumption = 10.f;
     //拨弹盘堵转扭矩阈值, 超出被认为卡弹
     uint16_t Driver_Torque_Threshold = 13000;
@@ -181,8 +182,8 @@ protected:
     // Enum_Booster_Type Booster_Type;
     //摩擦轮角速度
     float Friction_Omega = 650.0f;
-    int16_t Fric_High_Rpm = 4000;
-    int16_t Fric_Low_Rpm = 3400;
+    int16_t Fric_High_Rpm = 3750;
+    int16_t Fric_Low_Rpm = 3000;
     //拨弹盘实际的目标速度, 一圈八发子弹
     float Driver_Omega = -2.0f * PI;
     //拨弹轮目标绝对角度 加圈数

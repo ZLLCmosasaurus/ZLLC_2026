@@ -26,6 +26,7 @@
 #include "config.h"
 #include "alg_filter.h"
 #include "dvc_GraphicsSendTask.h"
+#include "buzzer.h"
 /* Exported macros -----------------------------------------------------------*/
 class Class_Chariot;
 /* Exported types ------------------------------------------------------------*/
@@ -122,6 +123,16 @@ enum Enum_Active_Controller
 };
 
 /**
+ * @brief 自瞄控制打弹类型
+ * 
+ */
+enum Enum_AimShoot_Control_Type
+{
+    Aim_disallowed =0,
+    Aim_allowed,
+};
+
+/**
  * @brief 机器人是否离线 控制模式有限自动机
  *
  */
@@ -205,8 +216,8 @@ public:
 
         uint16_t Booster_fric_omega_left = 0;
         uint16_t Booster_fric_omega_right = 0;
-		uint16_t Booster_bullet_num_before=0;
-		uint16_t Booster_bullet_num=0;
+		uint16_t Booster_bullet_num_before = 0;
+		uint16_t Booster_bullet_num = 0;
         #ifdef TRACK_LEG
         float Get_Chassis_Coordinate_System_Angle_Rad();
         void TIM1msMod50_Gimbal_Communicate_Alive_PeriodElapsedCallback();
@@ -272,6 +283,8 @@ public:
     Enum_Bulletcap_Status Bulletcap_Status = Bulletcap_Status_CLOSE;
     //摩擦轮开关
     Enum_Fric_Status Fric_Status = Fric_Status_CLOSE;
+    //自瞄打弹开关
+    Enum_AimShoot_Control_Type Aim_Status = Aim_disallowed;
     //超级电容超级放电状态
     Enum_Supercap_Control_Status  Supercap_Control_Status = Supercap_Control_Status_DISABLE;
     //自瞄锁住状态
@@ -306,7 +319,7 @@ protected:
 
     #ifdef CHASSIS
         //底盘标定参考正方向角度(数据来源yaw电机)
-        float Reference_Angle =  0.0f;//1.56926239f;//2.02542996f;//0.980980754f;
+        float Reference_Angle =  0.0063f;//1.56926239f;//2.02542996f;//0.980980754f;
         //小陀螺云台坐标系稳定偏转角度 用于矫正
         float Offset_Angle = 0.0f;  //7.5°
         //底盘转换后的角度（数据来源yaw电机）

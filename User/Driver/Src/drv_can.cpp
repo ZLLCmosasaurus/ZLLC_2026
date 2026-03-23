@@ -350,53 +350,64 @@ void TIM_CAN_PeriodElapsedCallback()
 {
     
     #ifdef CHASSIS
-    static uint8_t mod5 = 0,mod100 = 0,mod20 = 0,mod50 = 0;
-    mod5++, mod100++, mod20++, mod50++;
+    static uint8_t mod5 = 0,mod100 = 0,mod20 = 0,mod50 = 0,mod10 = 0;
+    mod5++, mod10++, mod20++, mod50++;
     if (mod5 == 5)  //200Hz
     {
         mod5 = 0;
         
         #ifdef TRACK_LEG
-        //CAN_Send_Data(&hfdcan2, 0x200, CAN2_0x200_Tx_Data, 8); // 履带3508电机
+        CAN_Send_Data(&hfdcan2, 0x200, CAN2_0x200_Tx_Data, 8); // 履带3508电机、导轮电机
         CAN_Send_Data(&hfdcan1, 0x200, CAN1_0x200_Tx_Data, 8); // 行进3508电机
         #endif
 
- 
+        CAN_Send_Data(&hfdcan3, 0x20, CAN3_Chassis_Tx_Gimbal_Data_1, 8);
     }
     
-    if (mod100 == 100) //10Hz
+    if (mod10 == 10) //100Hz
     {
-
-        CAN_Send_Data(&hfdcan3, 0x51, CAN3_Chassis_Tx_Gimbal_Data, 8);
-        CAN_Send_Data(&hfdcan3, 0x52, CAN3_Chassis_Tx_Gimbal_Data_1, 8);
-        mod100 = 0;
+		// CAN_Send_Data(&hfdcan3, 0x51, CAN3_Chassis_Tx_Gimbal_Data, 8);
+        
+        mod10 = 0;
     }
     #ifdef TRACK_LEG
     if (mod20 == 20) //50Hz
     {
+				
         mod20 == 0;
     }
     #endif
 
     #elif defined (GIMBAL)
 
-    static uint8_t mod5 = 0,mod4 = 0,mod3 = 0,mod20 = 0;
+    static uint8_t mod5 = 0,mod4 = 0,mod3 = 0,mod20 = 0,mod10 = 0;
     mod5++;
     mod4++;
 	mod3++;
     mod20++;
+		mod10++;
     
     if(mod5 == 5)
     {
         mod5 = 0;
-
-        //YAW PITCH轴4310
-         CAN_Send_Data(&hfdcan3,0x03,CAN3_0xxf3_Tx_Data,8);// YAW
-         CAN_Send_Data(&hfdcan2,0x04,CAN2_0xxf4_Tx_Data,8);//PITCH
-        //  CAN3  下板       
+        // CAN1
+        CAN_Send_Data(&hfdcan1, 0x200, CAN1_0x200_Tx_Data, 8); // 摩擦轮
+        // CAN2
+        CAN_Send_Data(&hfdcan2,0x04,CAN2_0xxf4_Tx_Data,8);//PITCH
+        // CAN3         
+        // CAN_Send_Data(&hfdcan3,0x03,CAN3_0xxf3_Tx_Data,8);// YAW
+        // CAN_Send_Data(&hfdcan3, 0x200, CAN3_0x200_Tx_Data, 8); //拨弹盘  按照0x200 ID 发送 可控制多个电机
+        CAN_Send_Data(&hfdcan3, 0x52, CAN3_Gimbal_Tx_Chassis_Data, 8); //给底盘发送控制命令 按照0x77 ID 发送
+        
+        
+    }
+     if(mod5 == 4)
+    {
+        CAN_Send_Data(&hfdcan3,0x03,CAN3_0xxf3_Tx_Data,8);// YAW
+    }
+     if(mod5 == 3)
+    {
         CAN_Send_Data(&hfdcan3, 0x200, CAN3_0x200_Tx_Data, 8); //拨弹盘  按照0x200 ID 发送 可控制多个电机
-        
-        
     }
     if(mod4 == 4)
     {
@@ -405,13 +416,17 @@ void TIM_CAN_PeriodElapsedCallback()
     }
     if(mod3 == 3)
     {
-        CAN_Send_Data(&hfdcan1, 0x200, CAN1_0x200_Tx_Data, 8); // 摩擦轮
+    
         mod3 = 0;
     }   
-    if (mod20 == 20) //50Hz
+    if (mod10 == 10) //100Hz
     {
-				CAN_Send_Data(&hfdcan3, 0x77, CAN3_Gimbal_Tx_Chassis_Data, 8); //给底盘发送控制命令 按照0x77 ID 发送
-        CAN_Send_Data(&hfdcan3, 0x78, CAN3_Gimbal_Tx_Chassis_Data_1, 8);
+		CAN_Send_Data(&hfdcan3, 0x78, CAN3_Gimbal_Tx_Chassis_Data_1, 8);
+        mod10 = 0;
+    }
+    if(mod20 == 20) //50Hz
+    {
+        
         mod20 = 0;
     }
     #endif

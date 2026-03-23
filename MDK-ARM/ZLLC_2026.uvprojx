@@ -314,7 +314,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>2</Optim>
+            <Optim>1</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -523,6 +523,16 @@
               <FileName>dvc_dmimu.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\User\Device\Src\dvc_dmimu.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>buzzer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Device\Src\buzzer.c</FilePath>
+            </File>
+            <File>
+              <FileName>buzzer_bsp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Device\Src\buzzer_bsp.c</FilePath>
             </File>
           </Files>
         </Group>
