@@ -86,9 +86,9 @@ void Class_Tricycle_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max
     Motor_Steer[3].Init(&hfdcan1, DJI_Motor_ID_0x208);
 
     //舵向电机零点位置初始化
-    Motor_Steer[0].Set_Zero_Position(-0.5600000f);               //应该是轮子朝向的正方向，行进轮超前，并且顺时针转动为正方向的角度
+    Motor_Steer[0].Set_Zero_Position(0.36000001f);               //应该是轮子朝向的正方向，行进轮超前，并且顺时针转动为正方向的角度
     Motor_Steer[1].Set_Zero_Position(0.47999999f);
-    Motor_Steer[2].Set_Zero_Position(-1.46000004f);
+    Motor_Steer[2].Set_Zero_Position(1.63);
     Motor_Steer[3].Set_Zero_Position(-2.51999998f);
     #endif
 
@@ -393,27 +393,47 @@ void Class_Tricycle_Chassis::TIM_Calculate_PeriodElapsedCallback()
     Power_Limit.TIM_Adjust_PeriodElapsedCallback(Motor_Wheel);
 
     #elif defined (POWER_LIMIT_2)
+    static uint8_t supercap_flag = 0;                   //超电能量低于50J的标志位
 
     // 计算限制功率
     if (Referee->Get_Referee_Status() == Referee_Status_ENABLE)
     {
         // 缓冲环限制功率
-        Power_Management.Buffer_Power = Referee->Get_Chassis_Energy_Buffer() - 30.0f;
-        Math_Constrain(&Power_Management.Buffer_Power, -30.0f, 30.0f);
+        Power_Management.Buffer_Power = 0.0f;    //Referee->Get_Chassis_Energy_Buffer() - 30.0f; 
+        // Power_Management.Buffer_Power = (Referee->Get_Chassis_Energy_Buffer() - 30.0f) * 1.5f;
+        Math_Constrain(&Power_Management.Buffer_Power, -50.0f, 30.0f);
 
-        if (Supercap.Get_Supercap_Status() != Supercap_Status_DISABLE && Sprint_Status == Sprint_Status_ENABLE)
+        if (Supercap.Get_Supercap_Status() != Supercap_Status_DISABLE)              //&& Sprint_Status == Sprint_Status_ENABLE
         {
-            Power_Management.Max_Power = Supercap.Get_Buffer_Power() + Power_Management.Buffer_Power + Referee->Get_Chassis_Power_Max();
+            if(supercap_flag == 1){                     //超电低电量了
+                Power_Management.Max_Power = Referee->Get_Chassis_Power_Max();
+                if(Supercap.Get_Supercap_Proportion() > (uint8_t)55){
+                    supercap_flag = 0;                  //充满电可以使用
+                }
+            }
+            else{
+                if (Supercap.Get_Supercap_Proportion() > (uint8_t)25)
+                {
+                    Power_Management.Max_Power = Supercap.Get_Buffer_Power() + Power_Management.Buffer_Power + Referee->Get_Chassis_Power_Max();
+                }
+                else
+                {
+                    supercap_flag = 1;
+                    Power_Management.Max_Power = Referee->Get_Chassis_Power_Max();
+                }
+            }
         }
         else
         {
             // Power_Management.Max_Power = Power_Management.Buffer_Power + Referee->Get_Chassis_Power_Max();
+            supercap_flag = 0;
             Power_Management.Max_Power = Referee->Get_Chassis_Power_Max();              //不吃缓冲能量
         }
     }
     else
     {
         // 裁判系统离线限制功率
+        supercap_flag = 0;
         Power_Management.Max_Power = 100.0f;
         Power_Management.Buffer_Power = 0.0f;
     }
@@ -469,7 +489,9 @@ void Class_Tricycle_Chassis::TIM_Calculate_PeriodElapsedCallback()
     #endif
 
     Supercap.Set_Supercap_Mode(Supercap_ENABLE);
-    Supercap.Set_Limit_Power(Power_Management.Max_Power + Power_Management.Buffer_Power);               //这样子是优先使用的缓冲功率
+    Supercap.Set_Limit_Power(Power_Management.Max_Power);               //这样子是优先使用的缓冲功率
+    Supercap.Set_Referee_Limit_Power((uint8_t)Referee->Get_Chassis_Power_Max());
+    Supercap.Set_Referee_Buffer_Power(Referee->Get_Chassis_Energy_Buffer());
     Supercap.TIM_Supercap_PeriodElapsedCallback();
 
     #endif

@@ -137,9 +137,10 @@ void Class_FSM_Antijamming::Reload_TIM_Status_PeriodElapsedCallback()
         case (2):
         {
             //卡弹反应状态->准备卡弹处理
+            Booster->shoot_time = 0;
             Booster->Motor_Driver.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
             //Booster->Driver_Angle = Booster->Motor_Driver.Get_Now_Radian() + PI / 12.0f;//原版本
-            Booster->Driver_Angle = Booster->Motor_Driver.Get_Now_Radian() - (2 * PI / 16.0f);
+            Booster->Driver_Angle = Booster->Motor_Driver.Get_Now_Radian() - (2 * PI / 27.0f);      //1/3个弹丸
             Booster->Motor_Driver.Set_Target_Radian(Booster->Driver_Angle);
             Set_Status(3);
         }
@@ -248,11 +249,11 @@ void Class_Booster::Output()
                     Driver_Angle = Now_Angle;
                 }
                 else{
-                    Driver_Angle = Now_Angle + 2.0f * PI / 8.0f;
+                    Driver_Angle = Now_Angle + 2.0f * PI / 9.0f;
                 }
             }
             else{
-                Driver_Angle = Now_Angle + 2.0f * PI / 8.0f;
+                Driver_Angle = Now_Angle + 2.0f * PI / 9.0f;
             }
 
             // Driver_Angle -= 2.0f * PI / 8.0f;
@@ -271,7 +272,7 @@ void Class_Booster::Output()
             Motor_Friction_Left.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
             Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
 
-            Driver_Angle = Now_Angle + 2.0f * PI / 8.0f * 5.0f; //五连发5
+            Driver_Angle = Now_Angle + 2.0f * PI / 9.0f * 5.0f; //五连发5
             // Driver_Angle -= 2.0f * PI / 8.0f * 5.0f; //五连发
             Motor_Driver.Set_Target_Radian(Driver_Angle);
 
@@ -289,23 +290,13 @@ void Class_Booster::Output()
             Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
 
             // 根据冷却计算拨弹盘默认速度, 此速度下与冷却均衡
-            Default_Driver_Omega = 30.f / 10.0f / 8.0f * 2.0f * PI;
+            Default_Driver_Omega = 30.f / 10.0f / 9.0f * 2.0f * PI;
             Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega);
 
-            // 冷却时间获取
-            if (Referee->Get_Referee_Status() == Referee_Status_DISABLE)
-            {
-                Cooling_Value = 30;                                     //裁判系统没反馈用默认速度
-            }
-            else
-            {
-                Cooling_Value = Referee->Get_Booster_17mm_1_Heat_CD();
-            }
-
-            if (shoot_time == 0)
+            if (shoot_time == 0)                    //说明停火进来的
             {
                 ShootTime = ((Heat_Max - Heat) + 2 * Cooling_Value) * 10;
-                if (Heat_Max - Heat < 100)
+                if (Heat_Max - Heat < 100)              //分级弹频
                 {
                     shoot_speed = (10 * (Heat_Max - Heat) - Cooling_Value - 3 * Heat_Consumption) / (Heat_Consumption * (ShootTime / 100.f)) + Cooling_Value / Heat_Consumption;
                 }
@@ -316,31 +307,33 @@ void Class_Booster::Output()
             }
             else if (0 < shoot_time && shoot_time < ShootTime)
             {
-                Driver_Omega = shoot_speed * 2 * PI / 8.f;
+                Driver_Omega = shoot_speed * 2 * PI / 9.f;
                 Math_Constrain(&Driver_Omega, 0.0f, 18.0f);
                 Motor_Driver.Set_Target_Omega_Radian(Driver_Omega);
             }
             else
             {
                 shoot_speed = (Cooling_Value / Heat_Consumption);
-                Driver_Omega = shoot_speed * 2 * PI / 8.f;
+                Driver_Omega = shoot_speed * 2 * PI / 9.f;
                 Math_Constrain(&Driver_Omega, 0.0f, 18.0f);
                 Motor_Driver.Set_Target_Omega_Radian(Driver_Omega);
             }
+
             if (shoot_time < ShootTime)
             {
-                shoot_time++;                           //注意这里应该和运算频率有关
+                //10 * 控制周期(s)
+                shoot_time += 2;                           //注意这里应该和运算频率有关
             }
 
             // Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega * 2.5f);//测试用 平常注释
-            if (Heat > 300)
+            if (Heat > Heat_Max * 0.95f)         //这里和最大热量有关
             {
                 Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega * 0.4f);
             }
-            if (Heat > 340)
-            {
-                Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega * 0.25f);
-            }
+            // if (Heat > 340)
+            // {
+            //     Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega * 0.25f);
+            // }
 
             Set_Friction_Control_Type(Friction_Control_Type_ENABLE);
         }
@@ -366,8 +359,22 @@ void Class_Booster::Output()
  */
 void Class_Booster::TIM_Calculate_PeriodElapsedCallback()
 {     
-    //无需裁判系统的热量控制计算
-    FSM_Heat_Detect.Reload_TIM_Status_PeriodElapsedCallback();
+
+    // 冷却时间获取
+    if (Referee->Get_Referee_Status() == Referee_Status_DISABLE)
+    {
+        Heat_Max = 260;
+        Cooling_Value = 30; // 裁判系统没反馈用默认速度
+        //无需裁判系统的热量控制计算
+        FSM_Heat_Detect.Reload_TIM_Status_PeriodElapsedCallback();
+    }
+    else
+    {
+        Heat = Referee->Get_Booster_17mm_1_Heat();
+        Heat_Max = Referee->Get_Booster_17mm_1_Heat_Max();
+        Cooling_Value = Referee->Get_Booster_17mm_1_Heat_CD();
+    }
+
     //卡弹处理
     FSM_Antijamming.Reload_TIM_Status_PeriodElapsedCallback();
     //PID输出

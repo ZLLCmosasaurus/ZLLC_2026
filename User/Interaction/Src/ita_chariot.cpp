@@ -293,22 +293,22 @@ void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback(uint8_t *Rx_Data)
             Chassis.Set_Target_Velocity_X(chassis_velocity_x);
             Chassis.Set_Target_Velocity_Y(chassis_velocity_y);
             Chassis.Set_Target_Omega(chassis_omega);                    //线速度    会根据模式选择是否控制
-            Chassis.Set_Sprint_Status(sprint_status);
+            // Chassis.Set_Sprint_Status(sprint_status);                //超电现在由下位机控制使用
             break;
         }
         case (0x95):
         {
-            uint32_t tmp_Sentry_cmd = 0;
-            uint16_t Robot_Position_X = 0, Robot_Position_Y = 0;
+            // uint32_t tmp_Sentry_cmd = 0;
+            // uint16_t Robot_Position_X = 0, Robot_Position_Y = 0;
 
-            tmp_Sentry_cmd   = (CAN_Manage_Object->Rx_Buffer.Data[3] << 24) | (CAN_Manage_Object->Rx_Buffer.Data[2] << 16) |
-                               (CAN_Manage_Object->Rx_Buffer.Data[1] << 8) | (CAN_Manage_Object->Rx_Buffer.Data[0]);
-            Robot_Position_X = (CAN_Manage_Object->Rx_Buffer.Data[5] << 8) | (CAN_Manage_Object->Rx_Buffer.Data[4]);
-            Robot_Position_Y = (CAN_Manage_Object->Rx_Buffer.Data[7] << 8) | (CAN_Manage_Object->Rx_Buffer.Data[6]);
+            // tmp_Sentry_cmd   = (CAN_Manage_Object->Rx_Buffer.Data[3] << 24) | (CAN_Manage_Object->Rx_Buffer.Data[2] << 16) |
+            //                    (CAN_Manage_Object->Rx_Buffer.Data[1] << 8) | (CAN_Manage_Object->Rx_Buffer.Data[0]);
+            // Robot_Position_X = (CAN_Manage_Object->Rx_Buffer.Data[5] << 8) | (CAN_Manage_Object->Rx_Buffer.Data[4]);
+            // Robot_Position_Y = (CAN_Manage_Object->Rx_Buffer.Data[7] << 8) | (CAN_Manage_Object->Rx_Buffer.Data[6]);
             
-            Referee.Sentry_cmd.sentry_cmd =  tmp_Sentry_cmd;
-            Referee.Sentry_To_Radar.Robot_Position_X = Robot_Position_X;
-            Referee.Sentry_To_Radar.Robot_Position_Y = Robot_Position_Y;
+            // Referee.Sentry_cmd.sentry_cmd =  tmp_Sentry_cmd;
+            // Referee.Sentry_To_Radar.Robot_Position_X = Robot_Position_X;
+            // Referee.Sentry_To_Radar.Robot_Position_Y = Robot_Position_Y;
             break;
         }
     }
@@ -600,6 +600,7 @@ void Class_Chariot::Control_Gimbal()
  *
  */
 #ifdef GIMBAL
+float single_shoot_pre_time = 0;
 void Class_Chariot::Control_Booster()
 {
     static uint8_t booster_sign = 0;
@@ -624,12 +625,20 @@ void Class_Chariot::Control_Booster()
 
                 //当目标突然丢失0.5s以内，上位机会依然发送自瞄状态，下位机保持上一个瞄准的地方继续打弹
                 //MiniPC.Get_Rx_Yaw_Angle_A() == 0.f && MiniPC.Get_Rx_Pitch_Angle_A() == 0.f（相当于给了0.5s的误差）
-                if((MiniPC.Get_Auto_aim_Status() == Auto_aim_Status_ENABLE) && MiniPC.Get_Fire_Flag()==1 &&
-                  (MiniPC.Get_Rx_Yaw_Angle() != 0.f || MiniPC.Get_Rx_Pitch_Angle() != 0.f))                 //后边两个判断似乎不需要
-                    Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                // if((MiniPC.Get_Auto_aim_Status() == Auto_aim_Status_ENABLE) && MiniPC.Get_Fire_Flag()==1 && (DWT_GetTimeline_s() - single_shoot_pre_time) > 0.066f  &&
+                //   (MiniPC.Get_Rx_Yaw_Angle() != 0.f || MiniPC.Get_Rx_Pitch_Angle() != 0.f)){                 //后边两个判断似乎不需要
+                //     single_shoot_pre_time = DWT_GetTimeline_s();
+                //     Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                // }           //打完后会自动切到停火
+
+                if((MiniPC.Get_Auto_aim_Status() == Auto_aim_Status_ENABLE) &&
+                  (MiniPC.Get_Rx_Yaw_Angle() != 0.f || MiniPC.Get_Rx_Pitch_Angle() != 0.f)){                 //后边两个判断似乎不需要
+                    Booster.Set_Booster_Control_Type(Booster_Control_Type_REPEATED);
+                }           //打完后会自动切到停火
                     
-                else if (MiniPC.Get_Auto_aim_Status() == Auto_aim_Status_DISABLE)
+                else if (MiniPC.Get_Auto_aim_Status() == Auto_aim_Status_DISABLE){    
                     Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+                }
                 break;
             }
             case (DR16_Switch_Status_UP):
@@ -780,7 +789,6 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
         mod50_mod3++;
         //TIM_Unline_Protect_PeriodElapsedCallback();
         #ifdef CHASSIS
-            Referee.TIM1msMod50_Alive_PeriodElapsedCallback();
             Chassis.Supercap.TIM_Alive_PeriodElapsedCallback();
             for (auto& wheel : Chassis.Motor_Wheel) {
                 wheel.TIM_Alive_PeriodElapsedCallback();
@@ -791,6 +799,7 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
             }          
             if(mod50_mod3%3 == 0)
             {
+                Referee.TIM1msMod50_Alive_PeriodElapsedCallback();
                 Motor_Main_Yaw.TIM_Alive_PeriodElapsedCallback();
                 TIM1msMod50_Gimbal_Communicate_Alive_PeriodElapsedCallback();
                 mod50_mod3 = 0;

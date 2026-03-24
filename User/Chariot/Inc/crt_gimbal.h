@@ -31,9 +31,9 @@
 #define YAW_ENCODER_OFFSET  3400
 #define MAIN_YAW_ENCODER_OFFSET 2048
 
-#define CRUISE_PITCH_SPEED 0.05 * 57.3f          //angle
+#define CRUISE_PITCH_SPEED 0.025 * 57.3f          //angle
 #define CRUISE_YAW_SPEED   1.8f                 //rad
-#define LIMIT_YAW_ANGLE    75.0f
+#define LIMIT_YAW_ANGLE    60.0f
 
 /**
  * @brief 云台控制类型
