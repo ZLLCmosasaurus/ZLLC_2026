@@ -26,6 +26,10 @@
 
 /* Exported macros -----------------------------------------------------------*/
 
+extern uint16_t Shooter_Barrel_Heat_Limit; 
+extern uint16_t Shooter_Barrel_Cooling_Value;
+extern uint16_t tmp_heat;
+
 /* Exported types ------------------------------------------------------------*/
 
 class Class_Booster;
@@ -64,7 +68,7 @@ class Class_FSM_Heat_Detect : public Class_FSM
 public:
     Class_Booster *Booster;
 
-    float Heat;
+    float Fsm_Heat = 0;
 
     void Reload_TIM_Status_PeriodElapsedCallback();
 };
@@ -227,13 +231,20 @@ protected:
     // 常量
 
     // 拨弹盘堵转扭矩阈值, 超出被认为卡弹
-    uint16_t Driver_Torque_Threshold = 5500;
+    uint16_t Driver_Torque_Threshold = 6000;
     // 摩擦轮单次判定发弹阈值, 超出被认为发射子弹
     uint16_t Friction_Torque_Threshold = 2000;
     // 摩擦轮速度判定发弹阈值, 超出则说明已经开机
     float Friction_Omega_Threshold = 600;
 
     // 内部变量
+    uint8_t shoot_time = 0;
+    float ShootTime = 0;
+    uint16_t Heat;
+    uint16_t Heat_Max;
+    uint16_t Cooling_Value = 14;
+    float shoot_speed;
+    float Heat_Consumption = 10.0f;
 
     // 读变量
 
@@ -246,7 +257,7 @@ protected:
     Enum_Booster_Control_Type Booster_Control_Type = Booster_Control_Type_DISABLE;
     Enum_Friction_Control_Type Friction_Control_Type = Friction_Control_Type_DISABLE;
     // 摩擦轮角速度
-    float Friction_Omega = 750.0f;
+    float Friction_Omega = 680.0f;
     float Target_Bullet_Speed = 23.5f;
     // 拨弹盘实际的目标速度
     float Driver_Omega = 2.0f * PI;

@@ -48,6 +48,8 @@ void Class_Supercap::Init(FDCAN_HandleTypeDef *hcan, float __Limit_Power_Max)
     }
     Supercap_Tx_Data.Limit_Power = __Limit_Power_Max;
     CAN_Tx_Data = CAN_Supercap_Tx_Data;
+
+    Buffer_Power_Kalman.Init(0.90f, 0.10f);
 }
 /**
  * @brief 初始化超级电容通信
@@ -102,45 +104,48 @@ void Class_Supercap::Init_UART(UART_HandleTypeDef *__huart, uint8_t __fame_heade
 void Class_Supercap::Data_Process()
 {
     //数据处理过程
-//    switch(CAN_Manage_Object->Rx_Buffer.Header.Identifier){
-//        case (0x67):{
-//            memcpy(&CAN_Supercap_Rx_Data_Normal, CAN_Manage_Object->Rx_Buffer.Data, sizeof(Supercap_Rx_Data_A));
-//            Chassis_Power = CAN_Supercap_Rx_Data_Normal.Chassis_Power/10.f;
-//            if(Referee->Get_Game_Stage() == Referee_Game_Status_Stage_BATTLE)
-//            {
-//                Consuming_Power -= (float)(Get_Consuming_Power_Now() / 10000);
-//            }
-//            break;
-//        }
-//        case (0x55):{
-//            memcpy(&CAN_Supercap_Rx_Data_Error, CAN_Manage_Object->Rx_Buffer.Data, sizeof(Supercap_Rx_Data_B));
-//            break;
-//        }
-//    }   
+    static float buffer_power_now = 0.0f;
+    switch(CAN_Manage_Object->Rx_Buffer.Header.Identifier)
+    {
+        case (0x67):{
             memcpy(&CAN_Supercap_Rx_Data_Normal, CAN_Manage_Object->Rx_Buffer.Data, sizeof(Supercap_Rx_Data_A));
-            Chassis_Power = CAN_Supercap_Rx_Data_Normal.Chassis_Power/10.f;
+            Chassis_Power = CAN_Supercap_Rx_Data_Normal.Chassis_Power / 10.f;
+            buffer_power_now = CAN_Supercap_Rx_Data_Normal.Buffer_Power / 100.0f;
+
+            Buffer_Power_Kalman.Set_Now(buffer_power_now);
+            Buffer_Power_Kalman.Recv_Adjust_PeriodElapsedCallback();
+            Buffer_Power = Buffer_Power_Kalman.Get_Out();                   //传回来的功率很抖，做一个滤波
+
             if(Referee->Get_Game_Stage() == Referee_Game_Status_Stage_BATTLE)
             {
                 Consuming_Power -= (float)(Get_Consuming_Power_Now() / 10000);
-            }    
+            }
+            break;
+        }
+        case (0x55):{
+            memcpy(&CAN_Supercap_Rx_Data_Error, CAN_Manage_Object->Rx_Buffer.Data, sizeof(Supercap_Rx_Data_B));
+            break;
+        }
+    }  
+  
 }
 
 /**
  * @brief 
  * 
  */
+float power = 10.0f;
+uint8_t referee_Power =10;
 void Class_Supercap::Output()
 {
-    // if(Get_Supercap_Mode() == Supercap_ENABLE)
-    // {
-    //     Set_Working_Status(Working_Status_ON);
-    // }
-    // else
-    // {
-    //     Set_Working_Status(Working_Status_OFF);
-    // }
-    // Set_Working_Status(Working_Status_ON);
-    // Set_Working_Status(Working_Status_OFF);
+    if(Get_Supercap_Mode() == Supercap_ENABLE)
+    {
+        Set_Working_Status(Working_Status_ON);
+    }
+    else
+    {
+        Set_Working_Status(Working_Status_OFF);
+    }
     memcpy(CAN_Tx_Data, &Supercap_Tx_Data, sizeof(Struct_Supercap_Tx_Data));
 }
 /**
@@ -149,22 +154,7 @@ void Class_Supercap::Output()
  */
 void Class_Supercap::Output_UART()
 {
-    //float now_power = Supercap_Data.Now_Power;
-    
 
-    // UART_Manage_Object->Tx_Buffer[0] = Fame_Header;
-    // UART_Manage_Object->Tx_Buffer[1] = 13;
-
-    // UART_Manage_Object->Tx_Buffer[2] = (uint8_t)(Limit_Power_Max/100)%10;
-    // UART_Manage_Object->Tx_Buffer[3] = (uint8_t)(Limit_Power_Max/10)%10;
-    // UART_Manage_Object->Tx_Buffer[4] = (uint8_t)Limit_Power_Max%10;
-
-    // UART_Manage_Object->Tx_Buffer[5] = (uint8_t)(now_power/100)%10;
-    // UART_Manage_Object->Tx_Buffer[6] = (uint8_t)(now_power/10)%10;
-    // UART_Manage_Object->Tx_Buffer[7] = (uint8_t)now_power%10;
-    // UART_Manage_Object->Tx_Buffer[8] = (uint8_t)(now_power*10)%10;
-
-    // UART_Manage_Object->Tx_Buffer[9] = Fame_Tail;
 }
 
 /**
@@ -173,12 +163,7 @@ void Class_Supercap::Output_UART()
  */
 void Class_Supercap::Data_Process_UART()
 {
-    //数据处理过程
-    if(UART_Manage_Object->Rx_Buffer[0]!='*' && UART_Manage_Object->Rx_Buffer[1]!=12 && UART_Manage_Object->Rx_Buffer[10]!=';') return;
-    else
-    {
-        Supercap_Data.Stored_Energy = (float)(UART_Manage_Object->Rx_Buffer[4]/10.0f);
-    }
+
 }
 
 

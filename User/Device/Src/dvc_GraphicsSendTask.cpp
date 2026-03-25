@@ -310,16 +310,19 @@ graphic_data_struct_t *Arc_Draw(uint8_t layer, int Op_Type, uint16_t startx, uin
  *形    参: 无
  *返 回 值: 无
  **********************************************************************************************************/
+float ll = 0.41; float lx = 0.31;
+float rl = 0.59; float rx = 0.69;
+
 void Lanelines_Init(void)
 {
 	static uint8_t LaneLineName1[] = "LL1";
 	static uint8_t LaneLineName2[] = "LL2";
 	graphic_data_struct_t *P_graphic_data;
 	// 第一条车道线
-	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.41, SCREEN_WIDTH * 0.45, SCREEN_LENGTH * 0.31, 0, 4, Orange, LaneLineName1);
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * ll, SCREEN_WIDTH * 0.3, SCREEN_LENGTH * 0.25, 0, 4, Orange, LaneLineName1);
 	memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
 	// 第二条车道线
-	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.59, SCREEN_WIDTH * 0.45, SCREEN_LENGTH * 0.69, 0, 4, Orange, LaneLineName2);
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * rl, SCREEN_WIDTH * 0.3, SCREEN_LENGTH * 0.75, 0, 4, Orange, LaneLineName2);
 	memcpy(&data_pack[DRAWING_PACK], (uint8_t *)P_graphic_data, DRAWING_PACK);
 	Send_UIPack(Drawing_Graphic2_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK * 2); // 发送两个图形
 }
@@ -430,14 +433,14 @@ void FrictSpeed_Draw(uint16_t omega_left, uint16_t omega_right, uint8_t Init_Cnt
 		omega_right = 0;
 
 	// 恢复条件更新逻辑，确保数值变化时才更新显示
-	if (abs((int)last_omega_left - (int)omega_left) > 10 ||
-		abs((int)last_omega_right - (int)omega_right) > 10 ||
-		(last_omega_left > 0 && omega_left == 0) ||
-		(last_omega_left == 0 && omega_left > 0) ||
-		(last_omega_right > 0 && omega_right == 0) ||
-		(last_omega_right == 0 && omega_right > 0) ||
-		Init_Cnt > 0)
-	{
+	// if (abs((int)last_omega_left - (int)omega_left) > 10 ||
+	// 	abs((int)last_omega_right - (int)omega_right) > 10 ||
+	// 	(last_omega_left > 0 && omega_left == 0) ||
+	// 	(last_omega_left == 0 && omega_left > 0) ||
+	// 	(last_omega_right > 0 && omega_right == 0) ||
+	// 	(last_omega_right == 0 && omega_right > 0) ||
+	// 	Init_Cnt > 0)
+	// {
 		// 将整数转换为字符串
 		uint8_t speed_str_left[8];
 		snprintf((char *)speed_str_left, sizeof(speed_str_left), "%d", omega_left);
@@ -445,19 +448,19 @@ void FrictSpeed_Draw(uint16_t omega_left, uint16_t omega_right, uint8_t Init_Cnt
 		snprintf((char *)speed_str_right, sizeof(speed_str_right), "%d", omega_right);
 
 		// 动态更新数值
-		if (omega_left < 600)
+		if (omega_right < 600)
 		{
 			Char_Draw(0, optype,
 					  0.9 * SCREEN_LENGTH, 0.35 * SCREEN_WIDTH, // 数值位置 (X, Y)
-					  20, strlen((char *)speed_str_left), 2,
-					  Green, FricSpeedValueName_left, speed_str_left);
+					  20, strlen((char *)speed_str_right), 2,
+					  Green, FricSpeedValueName_right, speed_str_right);
 		}
 		else
 		{
 			Char_Draw(0, optype,
 					  0.9 * SCREEN_LENGTH, 0.35 * SCREEN_WIDTH, // 数值位置 (X, Y)
-					  20, strlen((char *)speed_str_left), 2,
-					  Orange, FricSpeedValueName_left, speed_str_left);
+					  20, strlen((char *)speed_str_right), 2,
+					  Orange, FricSpeedValueName_right, speed_str_right);
 		}
 
 		// if (omega_right < 600)
@@ -472,7 +475,7 @@ void FrictSpeed_Draw(uint16_t omega_left, uint16_t omega_right, uint8_t Init_Cnt
 		// 更新记录的值
 		last_omega_left = omega_left;
 		last_omega_right = omega_right;
-	}
+	//}
 }
 void BulletNum_Draw(uint16_t bullet_num, uint8_t Init_Cnt)
 {
@@ -866,6 +869,56 @@ void Antispin_Draw(uint8_t Init_Cnt)
 		break;
 	}
 }
+
+/**
+ * @brief 绘制枪口热量进度条UI
+ *
+ * @param heat 当前热量值
+ * @param heat_max 当前热量上限
+ * @param Init_Flag 初始化标志 >1:初始化绘制，0:更新
+ */
+void Booster_Heat_Draw(uint16_t heat, uint16_t heat_max, uint8_t Init_Flag)
+{
+	static float Length;
+	static uint8_t HeatOuterName[] = "Hot"; // 外框
+	static uint8_t HeatInnerName[] = "Hin"; // 内填充线
+
+	graphic_data_struct_t *P_graphic_data;
+
+	if (Init_Flag)
+	{
+		// 外框矩形
+		P_graphic_data = Rectangle_Draw(0, Op_Add,
+										0.31f * SCREEN_LENGTH - 15, 0.75f * SCREEN_WIDTH + 2,
+										0.31f * SCREEN_LENGTH + 15, 0.25f * SCREEN_WIDTH - 2,
+										5, Cyan, HeatOuterName);
+		memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+		// 内填充线（初始化时长度为0，即起点=终点）
+		P_graphic_data = Line_Draw(0, Op_Add,
+								   0.31f * SCREEN_LENGTH, 0.25f * SCREEN_WIDTH,
+								   0.31f * SCREEN_LENGTH, 0.25f * SCREEN_WIDTH,
+								   27, Green, HeatInnerName);
+		memcpy(&data_pack[DRAWING_PACK], (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+		Send_UIPack(Drawing_Graphic2_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK * 2);
+	}
+	else
+	{
+		// 计算填充长度（归一化比例 * 总长0.3*屏幕长度）
+		float ratio = (heat_max > 0) ? ((float)heat / heat_max) : 0.0f;
+		if (ratio > 1.0f)
+			ratio = 1.0f;
+		Length = ratio * (0.5f * SCREEN_WIDTH);
+
+		P_graphic_data = Line_Draw(0, Op_Change,
+								   0.31f * SCREEN_LENGTH, 0.25f * SCREEN_WIDTH,
+								   0.31f * SCREEN_LENGTH, 0.25f * SCREEN_WIDTH + Length,
+								   27, (ratio <= 0.5f) ? Green : Orange, HeatInnerName);
+		memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
+		Send_UIPack(Drawing_Graphic1_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK);
+	}
+}
 /**********************************************************************************************************
  *函 数 名: GraphicSendtask
  *功能说明: ͼ�η�������
@@ -903,28 +956,26 @@ void GraphicSendtask(void)
 	// 初始化阶段发送所有UI元素
 	if (Init_Cnt > 0)
 	{
-		ChassisChange(Init_Cnt);
-		PitchUI_Change(JudgeReceiveData.Pitch_Angle, Init_Cnt);
-		CarPosture_Change(JudgeReceiveData.Chassis_Gimbal_Diff, Init_Cnt); // 直接传入弧度值
-		CapDraw(JudgeReceiveData.Supercap_Voltage, Init_Cnt);
-		// MiniPC_Aim_Change(Init_Cnt);
 		FrictSpeed_Draw(JudgeReceiveData.booster_fric_omega_left, JudgeReceiveData.booster_fric_omega_right, Init_Cnt);
-		BulletNum_Draw(JudgeReceiveData.Booster_bullet_num, Init_Cnt);
-		Antispin_Draw(Init_Cnt);
-		// CapUI_Change(JudgeReceiveData.Supercap_Voltage, Init_Cnt);
 		BoosterMode_Draw(Init_Cnt);
+		ChassisChange(Init_Cnt);
 		GimbalStatus_Draw(Init_Cnt);
-		RadarDoubleDamage_Draw(Init_Cnt);
-		MiniPCMode_Draw(Init_Cnt); // 添加MiniPC模式初始化
+		// PitchUI_Change(JudgeReceiveData.Pitch_Angle, Init_Cnt);
+		// CarPosture_Change(JudgeReceiveData.Chassis_Gimbal_Diff, Init_Cnt); // 直接传入弧度值
+		// CapDraw(JudgeReceiveData.Supercap_Voltage, Init_Cnt);
+		// MiniPC_Aim_Change(Init_Cnt);
+		// BulletNum_Draw(JudgeReceiveData.Booster_bullet_num, Init_Cnt);
+		// Antispin_Draw(Init_Cnt);
+		//// CapUI_Change(JudgeReceiveData.Supercap_Voltage, Init_Cnt);
+		// RadarDoubleDamage_Draw(Init_Cnt);
+		// MiniPCMode_Draw(Init_Cnt); // 添加MiniPC模式初始化
+		// Booster_Heat_Draw(JudgeReceiveData.Booster_17mm_Heat, JudgeReceiveData.Booster_17mm_Heat_Max, Init_Cnt); // 枪口热量
 
 		Init_Cnt--;
 
 		Char_Init();	   // 字符
 		ShootLines_Init(); // 枪口线
 		Lanelines_Init();  // 车道线
-
-		static uint8_t ENE[] = "ene";
-		Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.40 * SCREEN_WIDTH, 20, sizeof(JudgeReceiveData.Energy_Left_Rate), 2, Yellow, ENE, &JudgeReceiveData.Energy_Left_Rate);
 
 		// 初始化完成后，保存当前数据作为比较基准
 		memcpy(&Last_JudgeReceiveData, &JudgeReceiveData, sizeof(JudgeReceive_t));
@@ -1058,7 +1109,11 @@ void GraphicSendtask(void)
 			BulletNum_Draw(JudgeReceiveData.Booster_bullet_num, 0);
 			Last_JudgeReceiveData.Booster_bullet_num = JudgeReceiveData.Booster_bullet_num;
 			break;
-		}
+		case 9:
+		Booster_Heat_Draw(JudgeReceiveData.Booster_17mm_Heat, JudgeReceiveData.Booster_17mm_Heat_Max, 0);
+		Last_JudgeReceiveData.Booster_17mm_Heat = JudgeReceiveData.Booster_17mm_Heat;
+			break;
+	}
 
 		// 增加重试次数
 		status_update_retry++;

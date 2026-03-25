@@ -246,6 +246,8 @@ public:
 
         void CAN_Chassis_Rx_Gimbal_Callback(uint8_t *Rx_Data);
         void CAN_Chassis_Tx_Gimbal_Callback();
+        void CAN_Chassis_Rx_Gimbal_Callback_1();
+        void CAN_Chassis_Tx_Gimbal_Callback_1();
         void TIM1msMod50_Gimbal_Communicate_Alive_PeriodElapsedCallback();
         inline void Set_Gimbal_Status(Enum_Gimbal_Status __Gimbal_Status);
         inline Enum_Gimbal_Status Get_Gimbal_Status();
@@ -258,6 +260,7 @@ public:
             uint16_t Booster_fric_omega_right = 0;
             uint16_t Booster_bullet_num_before=0;
             uint16_t Booster_bullet_num=0;
+            uint16_t Booster_Heat;
 
     #elif defined(GIMBAL)
 
@@ -280,6 +283,8 @@ public:
 
         void CAN_Gimbal_Rx_Chassis_Callback();
         void CAN_Gimbal_Tx_Chassis_Callback();
+        void CAN_Gimbal_Rx_Chassis_Callback_1();
+        void CAN_Gimbal_Tx_Chassis_Callback_1();
         
         void TIM_Control_Callback();
         void Contorl_Fold_Pitch();
@@ -322,7 +327,7 @@ protected:
     //初始化相关常量
 
     //绑定的CAN
-    Struct_CAN_Manage_Object *CAN_Manage_Object = &CAN3_Manage_Object;
+    Struct_CAN_Manage_Object *CAN_Manage_Object = &CAN2_Manage_Object;
 
     //底盘转换后的角度（数据来源yaw电机）
     float Chassis_Angle;

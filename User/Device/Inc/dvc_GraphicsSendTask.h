@@ -195,10 +195,11 @@ typedef struct
 	uint8_t Antispin_Type;
 	uint8_t Gimbal_Control_Type; // 添加云台控制状态字段
 	uint8_t Booster_User_Control_Type;
-	uint8_t Energy_Left_Rate; //底盘剩余能量
 	uint16_t booster_fric_omega_left;
 	uint16_t booster_fric_omega_right;
 	uint16_t Booster_bullet_num;
+	uint16_t Booster_17mm_Heat;
+	uint16_t Booster_17mm_Heat_Max;
 	float Supercap_Voltage;
 	float Pitch_Angle;
 	 float Chassis_Gimbal_Diff;

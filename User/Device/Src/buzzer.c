@@ -83,6 +83,8 @@ BUZZER_RETURN_T buzzer_taskScheduler(buzzer_t *buzzer)
 		case BUZZER_DEVICE_OFFLINE_PRIORITY:
 			buzzer_playDeviceOffline(buzzer); // 设备离线音
 			break;
+		// case BUZZER_TEST_1:
+		// 	buzzer_playtest1(buzzer); // 调试警报1
 		default:
 			ret = BUZZER_ERROR;
 			break;
@@ -193,6 +195,24 @@ BUZZER_RETURN_T buzzer_playDeviceOffline(buzzer_t *buzzer)
 		buzzer->status.currentTask = BUZZER_FREE_PRIORITY; // 任务完成，释放优先级
 
 }
+
+// BUZZER_RETURN_T buzzer_playtest1(buzzer_t *buzzer)
+// {
+// 	uint32_t current_tick, wait;
+// 	buzzer_getTick(buzzer, &current_tick); // 获取当前 Tick
+// 	wait = current_tick - buzzer->status.tickStart;
+// 	if (!buzzerBsp_checkTickTolerance(BUZZER_DEVICE_OFFLINE_STEP1_PLAY_TONE_C5, wait, BUZZER_TASK_TICK_DIFFERENCE_TOLERANCE))
+// 		buzzer_playTone(buzzer, TONE_C5);
+// 	else if	(!buzzerBsp_checkTickTolerance(BUZZER_DEVICE_OFFLINE_STEP1_PLAY_TONE_C5, wait, BUZZER_TASK_TICK_DIFFERENCE_TOLERANCE))
+// 		buzzer_playTone(buzzer, TONE_C5);
+// 	else if (!buzzerBsp_checkTickTolerance(BUZZER_DEVICE_OFFLINE_STEP1_PLAY_TONE_C5, wait, BUZZER_TASK_TICK_DIFFERENCE_TOLERANCE))
+// 		buzzer_setState(buzzer, TONE_C5);
+// 	else if (!buzzerBsp_checkTickTolerance(BUZZER_DEVICE_OFFLINE_STEP1_PLAY_TONE_C5, wait, BUZZER_TASK_TICK_DIFFERENCE_TOLERANCE))
+// 		buzzer_setState(buzzer, TONE_C5);
+// 	else if (!buzzerBsp_checkTickTolerance(BUZZER_DEVICE_OFFLINE_STEP4_BUZZER_RELEASE, wait, BUZZER_TASK_TICK_DIFFERENCE_TOLERANCE))
+// 		buzzer->status.currentTask = BUZZER_FREE_PRIORITY; // 任务完成，释放优先级
+
+// }
 
 BUZZER_RETURN_T buzzer_handleInit(buzzer_t *buzzer, buzzer_parameter_t param)
 {
