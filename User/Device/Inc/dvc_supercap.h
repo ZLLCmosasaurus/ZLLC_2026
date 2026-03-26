@@ -16,10 +16,9 @@
 
 #include "drv_math.h"
 #include "drv_can.h"
+#include "dvc_referee.h"
 #include "drv_uart.h"
-#include "dvc_minipc.h"
 #include "alg_filter.h"
-
 /* Exported macros -----------------------------------------------------------*/
 
 /* Exported types ------------------------------------------------------------*/
@@ -98,11 +97,11 @@ struct Struct_Supercap_Tx_Data
 
 struct Supercap_Rx_Data_A
 {
-    int16_t Chassis_Power;
-    uint16_t Buffer_Power;
-    uint8_t Cap_Proportion;
+    int16_t Chassis_Power;                  //底盘实际功率
+    uint16_t Buffer_Power;                  //超电可用焦耳
+    uint8_t Cap_Proportion;                 //超电电量百分比
     Enum_Control_Status Control_Status;
-    uint16_t Consuming_Power_Now;
+    uint16_t Consuming_Power_Now;           //超电两帧之间相差的能量（焦耳）
 }__attribute__((packed));
 
 struct Supercap_Rx_Data_B
@@ -118,6 +117,8 @@ struct Supercap_Rx_Data_B
 class Class_Supercap
 {
 public:
+    friend class Class_Chariot;
+
     void Init(FDCAN_HandleTypeDef *__hcan, float __Limit_Power_Max = 45);
     void Init_UART(UART_HandleTypeDef *__huart, uint8_t __fame_header = '*', uint8_t __fame_tail = ';', float __Limit_Power_Max = 45.0f);
 
@@ -188,6 +189,7 @@ protected:
     Enum_Supercap_Mode Supercap_Mode = Supercap_DISABLE;
     //超级电容对外接口信息
     Struct_Supercap_CAN_Data Supercap_Data;
+
     //写变量
     Struct_Supercap_Tx_Data Supercap_Tx_Data;
 
@@ -273,26 +275,32 @@ float Class_Supercap::Get_Now_Voltage()
 {
     return (Supercap_Data.Supercap_Voltage);
 }
+
 float Class_Supercap::Get_Consuming_Power()
 {
     return (Consuming_Power);
 }
+
 Enum_Supercap_Mode Class_Supercap::Get_Supercap_Mode()
 {
     return(Supercap_Mode);
 }
+
 uint16_t Class_Supercap::Get_Buffer_Power()
 {
     return(Buffer_Power);
 }
+
 uint8_t Class_Supercap::Get_Supercap_Proportion()
 {
     return(CAN_Supercap_Rx_Data_Normal.Cap_Proportion);
 }
+
 uint16_t Class_Supercap::Get_Consuming_Power_Now()
 {
     return(CAN_Supercap_Rx_Data_Normal.Consuming_Power_Now);
 }
+
 /**
  * @brief 设定绝对最大限制功率
  *

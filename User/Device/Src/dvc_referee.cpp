@@ -338,7 +338,7 @@ uint16_t Class_Referee::Verify_CRC_16(uint8_t *Message, uint32_t Length)
 uint32_t last_cnt[5] = {0};
 float Dt0[5] = {0};
     /**
- * @brief 数据处理过程, 为节约性能不作校验但提供了接口
+ * @brief 数据处理过程, 为节约性能不作校验但提供了接Dt0口
  * 如遇到大规模丢包或错乱现象, 可重新启用校验过程
  *
  */

@@ -6,8 +6,7 @@ packDir: null
 srcDirs: []
 virtualFolder:
   name: <virtual_root>
-  files:
-    - path: ../Src/arm_cortexM7l_math.lib
+  files: []
   folders:
     - name: Config
       files:
@@ -147,7 +146,8 @@ virtualFolder:
             - path: ../Core/Src/system_stm32h7xx.c
           folders: []
     - name: Middlewares
-      files: []
+      files:
+        - path: ../Src/arm_cortexM7l_math.lib
       folders:
         - name: USB_Device_Library
           files:

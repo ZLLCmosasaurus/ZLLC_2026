@@ -326,7 +326,7 @@ void Class_Chariot::CAN_Gimbal_Tx_Chassis_Callback_1()
     tmp_fric_omega_right = (uint16_t)abs(Booster.Motor_Friction_Right.Get_Now_Omega_Radian());
     tmp_actual_bullet_num = Booster.actual_bullet_num;
     CAN2_Gimbal_Tx_Chassis_Data_1[0] = MiniPC.Get_MiniPC_Type();
-    Heat = Booster.FSM_Heat_Detect.Fsm_Heat;
+    Heat = Booster.FSM_Heat_Detect.Heat;
     //CAN2_Gimbal_Tx_Chassis_Data_1[1] = MiniPC.Get_Antispin_Type();
     memcpy(CAN2_Gimbal_Tx_Chassis_Data_1 + 2, &Heat, sizeof(uint16_t));
     memcpy(CAN2_Gimbal_Tx_Chassis_Data_1 + 4, &tmp_fric_omega_right, sizeof(uint16_t));

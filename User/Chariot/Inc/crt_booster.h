@@ -68,7 +68,7 @@ class Class_FSM_Heat_Detect : public Class_FSM
 public:
     Class_Booster *Booster;
 
-    float Fsm_Heat = 0;
+    float Heat = 0;
 
     void Reload_TIM_Status_PeriodElapsedCallback();
 };
@@ -260,7 +260,7 @@ protected:
     float Friction_Omega = 680.0f;
     float Target_Bullet_Speed = 23.5f;
     // 拨弹盘实际的目标速度
-    float Driver_Omega = 2.0f * PI;
+    float Driver_Omega = 2.0f * PI * 2.5f * 2.f;
     // 拨弹轮目标绝对角度 加圈数
     float Driver_Angle = 0.0f;
     // 读写变量
