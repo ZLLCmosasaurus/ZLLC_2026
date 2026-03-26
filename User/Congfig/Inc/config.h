@@ -20,6 +20,11 @@
 #define CHASSIS
 //#define GIMBAL
 
+#ifdef CHASSIS
+//#define RADIAN_CONTROL
+#define OMEGA_CONTROL
+#endif
+
 //调试或比赛状态
 #define DEBUG
 
@@ -36,7 +41,7 @@
 //#define MOTOR_TEST_CHASSIS
 
 //底盘测试入口
-#define CHASSIS_TEST
+//#define CHASSIS_TEST
 
 //功率控制相关
 #define POWER_CONTROL 1 //启用功率控制

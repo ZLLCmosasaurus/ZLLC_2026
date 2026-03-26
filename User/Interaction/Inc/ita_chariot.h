@@ -32,42 +32,6 @@ class Class_Chariot;
 /* Exported types ------------------------------------------------------------*/
 
 /**
- * @brief 云台Pitch状态枚举
- *
- */
-enum Enum_Pitch_Control_Status
-{
-    Pitch_Status_Control_Free = 0,
-    Pitch_Status_Control_Lock,
-};
-
-enum Enum_MinPC_Aim_Status
-{
-    MinPC_Aim_Status_DISABLE = 0,
-    MinPC_Aim_Status_ENABLE,
-};
-
-/**
- * @brief 摩擦轮状态
- *
- */
-enum Enum_Fric_Status : uint8_t
-{
-    Fric_Status_CLOSE = 0,
-    Fric_Status_OPEN,
-};
-
-/**
- * @brief 弹舱状态类型
- *
- */
-enum Enum_Bulletcap_Status : uint8_t
-{
-    Bulletcap_Status_CLOSE = 0,
-    Bulletcap_Status_OPEN,
-};
-
-/**
  * @brief 底盘通讯状态
  *
  */
@@ -129,6 +93,11 @@ public:
     void Reload_TIM_Status_PeriodElapsedCallback();
 };
 
+struct Struct_Offline_Controller_Data
+{
+  float Angle[6];
+}__attribute__((packed));
+
 /**
  * @brief 控制对象
  *
@@ -153,6 +122,11 @@ public:
     Class_Gimbal Gimbal;
     // 发射机构
     Class_Booster Booster;
+
+    // 离线状态下自定义控制器数据
+    Struct_Offline_Controller_Data Offline_Controller_Data;
+
+    uint8_t UART1_Buffer[14];
 
     // 遥控器离线保护控制状态机
     Class_FSM_Alive_Control FSM_Alive_Control;
@@ -231,12 +205,6 @@ public:
     // 底盘云台通讯变量
     // 冲刺
     Enum_Sprint_Status Sprint_Status = Sprint_Status_DISABLE;
-    // 弹仓开关
-    Enum_Bulletcap_Status Bulletcap_Status = Bulletcap_Status_CLOSE;
-    // 摩擦轮开关
-    Enum_Fric_Status Fric_Status = Fric_Status_CLOSE;
-    // 自瞄锁住状态
-    Enum_MinPC_Aim_Status MiniPC_Aim_Status = MinPC_Aim_Status_DISABLE;
     // 迷你主机状态
     Enum_MiniPC_Status MiniPC_Status = MiniPC_Status_DISABLE;
     // 裁判系统UI刷新状态
@@ -250,14 +218,12 @@ public:
     void Control_Chassis();
 
     // 角度目标值
-    float tmp_arm_yaw, tmp_arm_pitch1, tmp_arm_pitch2, tmp_arm_pitch3, tmp_arm_roll, tmp_arm_roll_2, tmp_gripper_radian;
+    float tmp_j0_pitch_radian, tmp_j1_yaw_radian, tmp_j2_yaw_radian, tmp_j3_yaw_radian, tmp_j4_pitch_radian, tmp_j5_yaw_radian;
+    float tmp_gripper_radian;
     // 遥控器摇杆值
     float dr16_right_x, dr16_right_y, dr16_left_x, dr16_left_y, dr16_yaw;
 
 protected:
-    // pitch控制状态 锁定和自由控制
-    Enum_Pitch_Control_Status Pitch_Control_Status = Pitch_Status_Control_Free;
-
     // 初始化相关常量
 
     // 绑定的CAN
@@ -279,43 +245,16 @@ protected:
     // 常量
     // 键鼠模式按住shift 最大速度缩放系数
     float DR16_Mouse_Chassis_Shift = 2.0f;
-    // 舵机占空比 默认关闭弹舱
-    uint16_t Compare = 400;
-    // DR16底盘加速灵敏度系数(0.001表示底盘加速度最大为1m/s2)
-    float DR16_Keyboard_Chassis_Speed_Resolution_Small = 0.001f;
-    // DR16底盘减速灵敏度系数(0.001表示底盘加速度最大为1m/s2)
-    float DR16_Keyboard_Chassis_Speed_Resolution_Big = 0.01f;
 
-    // DR16云台yaw灵敏度系数(0.001PI表示yaw速度最大时为1rad/s)
-    float DR16_Yaw_Angle_Resolution = 0.010f * PI * 57.29577951308232;
-    // DR16云台pitch灵敏度系数(0.001PI表示pitch速度最大时为1rad/s)
-    float DR16_Pitch_Angle_Resolution = 0.010f * PI * 57.29577951308232;
-
-    // DR16机械臂yaw灵敏度系数(0.001PI表示每秒抬高1rad，这里暂时给到1/3rad)
-    float DR16_Yaw_Resolution = 0.0025f * PI;
-    // DR16机械臂pitch_1灵敏度系数(0.001PI表示每秒抬高1rad，这里暂时给到1/3rad)
-    float DR16_Pitch_1_Resolution = 0.0015f * PI;
-    // DR16机械臂pitch_2灵敏度系数(0.001PI表示每秒抬高1rad，这里暂时给到1/3rad)
-    float DR16_Pitch_2_Resolution = 0.0015f * PI;
-    // DR16机械臂Pitch3灵敏度系数(0.001PI表示每秒抬高1rad，这里暂时给到1/3rad)
-    float DR16_Pitch_3_Resolution = 0.0020f * PI;
-    // DR16机械臂roll_1灵敏度系数，对应的系数和输出轴的转动速度待测，这里用的是之前测试时相对稳定（缓慢）的数据
-    float DR16_Roll_Resolution = 0.10f * PI;
-    // DR16机械臂roll_2灵敏度系数，还没测，暂时给到0
-    float DR16_Roll_2_Resolution = 0.004f * PI;
+    float DR16_J0_Pitch_Resolution = 0.001f * PI;
+    float DR16_J1_Yaw_Resolution = 0.00075f * PI;
+    float DR16_J2_Yaw_Resolution = 0.00075f * PI;
+    float DR16_J3_Yaw_Resolution = 0.0015f * PI;
+    float DR16_J4_Pitch_Resolution = 0.0015f * PI;
+    float DR16_J5_Yaw_Resolution = 0.0015f * PI;
 
     // DR16控制夹爪的速度，因为夹爪可移动范围是0.0 rad - 0.95 rad，所以现在给到0.05rad/s，
     float DR16_Gripper_Resolution = 0.005f * PI;
-
-    // DR16鼠标云台yaw灵敏度系数, 不同鼠标不同参数
-    float DR16_Mouse_Yaw_Angle_Resolution = 57.8 * 4.0f;
-    // DR16鼠标云台pitch灵敏度系数, 不同鼠标不同参数
-    float DR16_Mouse_Pitch_Angle_Resolution = 57.8f;
-
-    // 迷你主机云台pitch自瞄控制系数
-    float MiniPC_Autoaiming_Yaw_Angle_Resolution = 0.003f;
-    // 迷你主机云台pitch自瞄控制系数
-    float MiniPC_Autoaiming_Pitch_Angle_Resolution = 0.003f;
 
     // 内部变量
     // 遥控器离线计数

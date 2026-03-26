@@ -11,7 +11,7 @@ void Class_Chassis::Init()
     PID_Velocity_Y.Init(70.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1000.0f, 0.002f);
 
     // 底盘角度PID，输出目标角速度rad/s，最大速度 5rad/s
-    PID_Radian.Init(9.0f, 0.0f, 0.0f, 0.0f, 0.0f, 4.5f, 0.002f);
+    PID_Radian.Init(10.5f, 0.0f, 0.0f, 0.0f, 0.0f, 4.5f, 0.002f);
 
     // 底盘角速度PID, 输出扭矩
     PID_Omega.Init(12.0f, 0.0f, 0.0f, 0.0f, 0.0f, 100.0f, 0.002f);
@@ -370,5 +370,7 @@ void Class_Chassis::PID_Radian_Output()
     
     PID_Radian.TIM_Adjust_PeriodElapsedCallback();
 
+    #ifdef RADIAN_CONTROL
     Set_Target_Omega(PID_Radian.Get_Out());
+    #endif
 }

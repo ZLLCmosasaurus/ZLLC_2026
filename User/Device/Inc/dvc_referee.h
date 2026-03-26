@@ -1435,6 +1435,9 @@ protected:
     //哨兵发送雷达位置
     Struct_Sentry_To_Radar_t Sentry_To_Radar;
 
+    // 自定义控制器
+    Struct_Referee_Tx_Data_Interaction_Custom_Controller Interaction_Custom_Controller;
+
     //读写变量
 
     //内部函数 

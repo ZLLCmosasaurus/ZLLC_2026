@@ -206,19 +206,24 @@ void Chassis_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
     }
     break;
 #else
-    case (0x202):
+    case (0x201):
     {
         chariot.Chassis.Uplift_Motor[0].CAN_RxCpltCallback(CAN_RxMessage->Data);
     }
     break;
-    case (0x203):
+    case (0x202):
     {
         chariot.Chassis.Uplift_Motor[1].CAN_RxCpltCallback(CAN_RxMessage->Data);
     }
     break;
-    case (0x204):
+    case (0x203):
     {
         chariot.Chassis.Uplift_Motor[2].CAN_RxCpltCallback(CAN_RxMessage->Data);
+    }
+    break;
+    case (0x204):
+    {
+        chariot.Chassis.Uplift_Motor[3].CAN_RxCpltCallback(CAN_RxMessage->Data);
     }
     break;
 
@@ -317,35 +322,6 @@ void Chassis_Device_CAN3_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 #ifdef GIMBAL
 void Gimbal_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
-#ifdef PUMA
-    switch (CAN_RxMessage->Header.Identifier)
-    {
-    case (0xA1): // J0 - DM4310 (Yaw)
-    {
-        chariot.Gimbal.Motor_DM_J0_Yaw.CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
-
-    case (0xA2): // J1 - DM8009P (Pitch)
-    {
-        chariot.Gimbal.Motor_DM_J1_Pitch.CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
-
-    case (0xA3): // J2 - 4340
-    {
-        chariot.Gimbal.Motor_DM_J2_Pitch_2.CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
-
-    case (0xA4): // J3 - 2325
-    {
-        chariot.Gimbal.Motor_DM_J3_Roll.CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
-    }
-#endif
-
     switch (CAN_RxMessage->Header.Identifier)
     {
     case (0xA1): // J0 - 4340 - Pitch
@@ -365,12 +341,7 @@ void Gimbal_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
         chariot.Gimbal.J2_Yaw_4340P.CAN_RxCpltCallback(CAN_RxMessage->Data);
     }
     break;
-
-    case (0xA4): // J3 - 4340P - Yaw
-    {
-        chariot.Gimbal.J3_Yaw_4340P.CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
+    
     }
 }
 #endif
@@ -383,42 +354,29 @@ void Gimbal_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 #ifdef GIMBAL
 void Gimbal_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
-#ifdef PUMA
     switch (CAN_RxMessage->Header.Identifier)
     {
-    case (0x205):
+    case (0xA4): // J3 - 4340P - Yaw
     {
-        chariot.Gimbal.Motor_6020_J5_Roll_2.CAN_RxCpltCallback(CAN_RxMessage->Data);
-        break;
-    }
-    case (0x206):
-    {
-        chariot.Gimbal.Motor_C610_Gripper.CAN_RxCpltCallback(CAN_RxMessage->Data);
-        break;
-    }
-    case (0xA5): // J4 - 4340
-    {
-        chariot.Gimbal.Motor_DM_J4_Pitch_3.CAN_RxCpltCallback(CAN_RxMessage->Data);
+        chariot.Gimbal.J3_Yaw_4340P.CAN_RxCpltCallback(CAN_RxMessage->Data);
     }
     break;
-    }
-#endif
 
-    switch (CAN_RxMessage->Header.Identifier)
-    {
-    case (0xA5):  // J4 - 4340P - Pitch
+    case (0xA5): // J4 - 4340P - Pitch
     {
         chariot.Gimbal.J4_Pitch_4340P.CAN_RxCpltCallback(CAN_RxMessage->Data);
-        break;
     }
+    break;
+
     case (0xA6): // J5 - 4340P - Yaw
     {
         chariot.Gimbal.J5_Yaw_4340P.CAN_RxCpltCallback(CAN_RxMessage->Data);
     }
+    break;
+    
     case (0x206):
     {
         chariot.Gimbal.Motor_C610_Gripper.CAN_RxCpltCallback(CAN_RxMessage->Data);
-        break;
     }
     break;
     }
@@ -430,6 +388,17 @@ void Gimbal_Device_CAN3_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
     switch (CAN_RxMessage->Header.Identifier)
     {
+    case (0x188):
+    case (0x199):
+    case (0x178):
+    case (0x198):
+    case (0x197):
+    case (0x196):
+    case (0x191):
+    {
+        chariot.CAN_Gimbal_Rx_Chassis_Callback();
+        break;
+    }
     }
 }
 #endif
@@ -489,7 +458,6 @@ void DR16_UART5_Callback(uint8_t *Buffer, uint16_t Length)
 void VT13_UART_Callback(uint8_t *Buffer, uint16_t Length)
 {
     chariot.VT13.VT13_UART_RxCpltCallback(Buffer);
-
     // 底盘 云台 发射机构 的控制策略
     chariot.TIM_Control_Callback();
 }
@@ -512,6 +480,46 @@ void Ist8310_IIC3_Callback(uint8_t *Tx_Buffer, uint8_t *Rx_Buffer, uint16_t Tx_L
  * @param Length 长度
  */
 #ifdef CHASSIS
+void Referee_UART10_Callback(uint8_t *Buffer, uint16_t Length)
+{
+    chariot.Referee.UART_RxCpltCallback(Buffer, Length);
+}
+#endif
+
+#ifdef GIMBAL
+/**
+ * @brief 自定义控制器串口回调函数，直接通过串口连接主控板
+ *
+ * @param Buffer 串口收到的自定义控制器的消息
+ * @param Length 长度
+ */
+
+void Offline_Controller_UART1_Callback(uint8_t *Buffer, uint16_t Length)
+{
+    memcpy(chariot.UART1_Buffer, Buffer, 14);
+
+    int i;
+    for (i = 0; i < 14; i++)
+    {
+        if (chariot.UART1_Buffer[i] == 0xA5)
+        {
+            break;
+        }
+    }
+
+    bool flag = chariot.UART1_Buffer[(i+13) % 14] == 0x11;
+
+    if (flag)
+    {
+        for (int j = 0; j < 6; j++)
+        {
+            int index = 2 * j + i;
+            int16_t temp = (Buffer[index + 2] << 8) | Buffer[index + 1];
+            chariot.Offline_Controller_Data.Angle[j] = temp / 100.f;
+        }
+    }
+}
+
 void Referee_UART10_Callback(uint8_t *Buffer, uint16_t Length)
 {
     chariot.Referee.UART_RxCpltCallback(Buffer, Length);
@@ -568,9 +576,9 @@ void MiniPC_UART_Callback(uint8_t *Buffer, uint16_t Length)
 extern Referee_Rx_A_t CAN3_Chassis_Rx_Data_A;
 void Task100us_TIM4_Callback()
 {
+#ifdef CHASSIS
     // 测试
     chariot.Force_Chassis.Boardc_BMI.TIM_Calculate_PeriodElapsedCallback();
-#ifdef CHASSIS
 
 #elif defined(GIMBAL)
     // 单给IMU消息开的定时器 ims
@@ -639,7 +647,7 @@ void Task1ms_TIM5_Callback()
     /************ 判断设备在线状态判断 50ms (所有device:电机，遥控器，裁判系统等) ***************/
 
     chariot.TIM1msMod50_Alive_PeriodElapsedCallback();
-    HAL_IWDG_Refresh(&hiwdg1);
+    // HAL_IWDG_Refresh(&hiwdg1);
 
     /****************************** 交互层回调函数 1ms *****************************************/
     if (start_flag == 1)
@@ -653,7 +661,6 @@ void Task1ms_TIM5_Callback()
         {
             // 强制使能云台
             chariot.Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
-
         }
         else
 #endif
@@ -677,11 +684,13 @@ void Task1ms_TIM5_Callback()
         mod5++;
         mod100++;
         mod68++;
+#ifdef CHASSIS
         if (mod5 == 4)
         {
             chariot.Chassis.Track_Motor[0].TIM_Process_PeriodElapsedCallback();
             chariot.Chassis.Track_Motor[1].TIM_Process_PeriodElapsedCallback();
         }
+#endif
         if (mod5 == 5)
         {
             // 上位机
@@ -802,6 +811,8 @@ extern "C" void Task_Init()
     USB_Init(&MiniPC_USB_Manage_Object, MiniPC_USB_Callback);
     // 上位机串口
     UART_Init(&huart8, MiniPC_UART_Callback, 56);
+    // 离线状态自定义控制器
+    UART_Init(&huart10, Offline_Controller_UART1_Callback, 14);
 
 #endif
 
@@ -823,8 +834,8 @@ extern "C" void Task_Init()
 
     /********************************* 交互层初始化 *********************************/
 
-    // 遥控器死区给0.3f
-    chariot.Init(0.3f);
+    // 遥控器死区给0.15f
+    chariot.Init(0.15f);
 
     /********************************* 使能调度时钟 *********************************/
 
