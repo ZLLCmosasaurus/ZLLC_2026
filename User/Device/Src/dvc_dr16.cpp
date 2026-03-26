@@ -362,6 +362,9 @@ void Class_DR16::TIM1msMod50_Alive_PeriodElapsedCallback()
     }
     Pre_DR16_Flag = DR16_Flag;
     Pre_Image_Flag = Image_Flag;
+    
+    //调试用 一定记得关！
+    DR16_Status = DR16_Status_ENABLE;
 }
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

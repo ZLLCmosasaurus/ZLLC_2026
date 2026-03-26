@@ -1040,7 +1040,6 @@ HAL_SRAM_StateTypeDef HAL_SRAM_GetState(const SRAM_HandleTypeDef *hsram)
   */
 static void SRAM_DMACplt(MDMA_HandleTypeDef *hmdma)
 {
-  /* Derogation MISRAC2012-Rule-11.5 */
   SRAM_HandleTypeDef *hsram = (SRAM_HandleTypeDef *)(hmdma->Parent);
 
   /* Disable the MDMA channel */
@@ -1063,7 +1062,6 @@ static void SRAM_DMACplt(MDMA_HandleTypeDef *hmdma)
   */
 static void SRAM_DMACpltProt(MDMA_HandleTypeDef *hmdma)
 {
-  /* Derogation MISRAC2012-Rule-11.5 */
   SRAM_HandleTypeDef *hsram = (SRAM_HandleTypeDef *)(hmdma->Parent);
 
   /* Disable the MDMA channel */
@@ -1086,7 +1084,6 @@ static void SRAM_DMACpltProt(MDMA_HandleTypeDef *hmdma)
   */
 static void SRAM_DMAError(MDMA_HandleTypeDef *hmdma)
 {
-  /* Derogation MISRAC2012-Rule-11.5 */
   SRAM_HandleTypeDef *hsram = (SRAM_HandleTypeDef *)(hmdma->Parent);
 
   /* Disable the MDMA channel */

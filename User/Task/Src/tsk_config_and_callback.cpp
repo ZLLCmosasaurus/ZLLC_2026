@@ -38,6 +38,7 @@
 #include "tsk_config_and_callback.h"
 #include "drv_bsp-boarda.h"
 #include "drv_tim.h"
+#include "drv_rs485.h"
 #include "dvc_boardc_bmi088.h"
 #include "dvc_dmmotor.h"
 #include "ita_chariot.h"
@@ -225,7 +226,30 @@ void Gimbal_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
     switch (CAN_RxMessage->Header.Identifier)
     {
-
+        case(0x201):
+        {
+            chariot.Booster.Motor_Pull.CAN_RxCpltCallback(CAN_RxMessage->Data);
+        }
+        break;
+        case(0x202):
+        {
+            chariot.Booster.Motor_Push_L.CAN_RxCpltCallback(CAN_RxMessage->Data);
+        }
+        break;
+        case(0x203):
+        {
+            chariot.Booster.Motor_Push_R.CAN_RxCpltCallback(CAN_RxMessage->Data);
+        }
+        break;
+        case(0x204):
+        {
+            chariot.Booster.Motor_Reload_Linear.CAN_RxCpltCallback(CAN_RxMessage->Data);
+        }
+        break;
+        case(0x205):
+        {
+            chariot.Booster.Motor_Reload_Angle.CAN_RxCpltCallback(CAN_RxMessage->Data);
+        }
 	}
 }
 #endif
@@ -240,21 +264,21 @@ void Gimbal_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
     switch (CAN_RxMessage->Header.Identifier)
     {
-    case (0x201):
-    {
-        chariot.Gimbal.Motor_Pitch_L.CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
-    case (0x202):
-    {
-        chariot.Gimbal.Motor_Pitch_R.CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
-    case (0x203):
-    {
-        chariot.Gimbal.Motor_Yaw.CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
+        case (0x201):
+        {
+            chariot.Gimbal.Motor_Pitch_L.CAN_RxCpltCallback(CAN_RxMessage->Data);
+        }
+        break;
+        case (0x202):
+        {
+            chariot.Gimbal.Motor_Pitch_R.CAN_RxCpltCallback(CAN_RxMessage->Data);
+        }
+        break;
+        case (0x203):
+        {
+            chariot.Gimbal.Motor_Yaw.CAN_RxCpltCallback(CAN_RxMessage->Data);
+        }
+        break;
     }
 		
 }
@@ -362,6 +386,29 @@ void SuperCAP_UART1_Callback(uint8_t *Buffer, uint16_t Length)
     chariot.Chassis.Supercap.UART_RxCpltCallback(Buffer);
 }
 #endif
+
+// /**
+//  * @brief UART1拉力计回调函数
+//  *
+//  * @param Buffer UART1收到的消息
+//  * @param Length 长度
+//  */
+// #if defined GIMBAL
+// void Tension_UART1_Callback(uint8_t *Buffer, uint16_t Length)
+// {
+//     chariot.Booster.TensionMeter.UART_RxCpltCallback(Buffer, Length);
+// }
+// #endif
+
+extern "C" void RS485_Receive_Handler(uint8_t *pData, uint16_t len)
+{
+    // 只要有数据进来，就丢给对象去解析
+    // chariot.Booster.TensionMeter.Data_Process(pData, len);
+    chariot.Booster.TensionMeter.UART_RxCpltCallback(pData, len);
+    // 测试回显
+    //RS485_Send_DMA(pData, len);
+}
+
 /**
  * @brief USB MiniPC回调函数
  *
@@ -400,7 +447,8 @@ void Task100us_TIM4_Callback()
 
     #elif defined(GIMBAL)
         // 单给IMU消息开的定时器 ims
-        chariot.Gimbal.Boardc_BMI.TIM_Calculate_PeriodElapsedCallback();     
+        //chariot.Gimbal.Boardc_BMI.TIM_Calculate_PeriodElapsedCallback();     
+
     static int mod100 = 0;
     mod100++;
     if(mod100 = 100)
@@ -473,13 +521,15 @@ void Task1ms_TIM5_Callback()
     if(start_flag==1)
     {
         #ifdef GIMBAL
-        chariot.FSM_Alive_Control.Reload_TIM_Status_PeriodElapsedCallback();
+        //chariot.FSM_Alive_Control.Reload_TIM_Status_PeriodElapsedCallback();
         #endif
         chariot.TIM_Calculate_PeriodElapsedCallback();
         
     /****************************** 驱动层回调函数 1ms *****************************************/ 
-        //统一打包发送
+        //CAN统一打包发送
         TIM_CAN_PeriodElapsedCallback();
+        //RS485统一发送(dart)
+        TIM_RS485_PeriodElapsedCallback();
         
         static int mod5 = 0,mod100 = 0,mod68 = 0;
         mod5++;
@@ -562,6 +612,9 @@ extern "C" void Task_Init()
         USB_Init(&MiniPC_USB_Manage_Object,MiniPC_USB_Callback);
         //上位机串口
         UART_Init(&huart8, MiniPC_UART_Callback, 56);
+        //初始化拉力机RS485
+        RS485_Init();
+
 
     #endif
 
@@ -579,7 +632,7 @@ extern "C" void Task_Init()
 
     /********************************* 使能调度时钟 *********************************/
 
-    HAL_TIM_Base_Start_IT(&htim4);
+    //HAL_TIM_Base_Start_IT(&htim4);
     HAL_TIM_Base_Start_IT(&htim5);
 }
 

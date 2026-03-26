@@ -136,7 +136,7 @@
   *          - SUCCESS: DMA2D registers are de-initialized
   *          - ERROR: DMA2D registers are not de-initialized
   */
-ErrorStatus LL_DMA2D_DeInit(const DMA2D_TypeDef *DMA2Dx)
+ErrorStatus LL_DMA2D_DeInit(DMA2D_TypeDef *DMA2Dx)
 {
   ErrorStatus status = SUCCESS;
 
@@ -150,6 +150,7 @@ ErrorStatus LL_DMA2D_DeInit(const DMA2D_TypeDef *DMA2Dx)
 
     /* Release reset of DMA2D clock */
     LL_AHB3_GRP1_ReleaseReset(LL_AHB3_GRP1_PERIPH_DMA2D);
+
   }
   else
   {
@@ -438,7 +439,7 @@ void LL_DMA2D_ConfigOutputColor(DMA2D_TypeDef *DMA2Dx, LL_DMA2D_ColorTypeDef *DM
   *         @arg @ref LL_DMA2D_OUTPUT_MODE_ARGB4444
   * @retval Output Blue color value between Min_Data=0 and Max_Data=0xFF
   */
-uint32_t LL_DMA2D_GetOutputBlueColor(const DMA2D_TypeDef *DMA2Dx, uint32_t ColorMode)
+uint32_t LL_DMA2D_GetOutputBlueColor(DMA2D_TypeDef *DMA2Dx, uint32_t ColorMode)
 {
   uint32_t color;
 
@@ -482,7 +483,7 @@ uint32_t LL_DMA2D_GetOutputBlueColor(const DMA2D_TypeDef *DMA2Dx, uint32_t Color
   *         @arg @ref LL_DMA2D_OUTPUT_MODE_ARGB4444
   * @retval Output Green color value between Min_Data=0 and Max_Data=0xFF
   */
-uint32_t LL_DMA2D_GetOutputGreenColor(const DMA2D_TypeDef *DMA2Dx, uint32_t ColorMode)
+uint32_t LL_DMA2D_GetOutputGreenColor(DMA2D_TypeDef *DMA2Dx, uint32_t ColorMode)
 {
   uint32_t color;
 
@@ -526,7 +527,7 @@ uint32_t LL_DMA2D_GetOutputGreenColor(const DMA2D_TypeDef *DMA2Dx, uint32_t Colo
   *         @arg @ref LL_DMA2D_OUTPUT_MODE_ARGB4444
   * @retval Output Red color value between Min_Data=0 and Max_Data=0xFF
   */
-uint32_t LL_DMA2D_GetOutputRedColor(const DMA2D_TypeDef *DMA2Dx, uint32_t ColorMode)
+uint32_t LL_DMA2D_GetOutputRedColor(DMA2D_TypeDef *DMA2Dx, uint32_t ColorMode)
 {
   uint32_t color;
 
@@ -570,7 +571,7 @@ uint32_t LL_DMA2D_GetOutputRedColor(const DMA2D_TypeDef *DMA2Dx, uint32_t ColorM
   *         @arg @ref LL_DMA2D_OUTPUT_MODE_ARGB4444
   * @retval Output Alpha color value between Min_Data=0 and Max_Data=0xFF
   */
-uint32_t LL_DMA2D_GetOutputAlphaColor(const DMA2D_TypeDef *DMA2Dx, uint32_t ColorMode)
+uint32_t LL_DMA2D_GetOutputAlphaColor(DMA2D_TypeDef *DMA2Dx, uint32_t ColorMode)
 {
   uint32_t color;
 

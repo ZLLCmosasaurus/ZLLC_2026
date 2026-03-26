@@ -20,13 +20,10 @@
 #include "dvc_dwt.h"
 #include "alg_filter.h"
 #include "alg_SMC_Control.h"
+#include "kalman_filter.h"
 /* Exported macros -----------------------------------------------------------*/
 
 /* Exported types ------------------------------------------------------------*/
-
-
-
-
 
 /**
  * @brief 大疆状态
@@ -92,10 +89,10 @@ struct Struct_DJI_Motor_CAN_Data
  */
 struct Struct_DJI_Motor_Data
 {
-    float Now_Angle;  //输出轴多圈角度（角度制）
-    float Now_Radian;   //输出轴多圈角度（弧度制）
-    float Now_Omega_Radian; //输出轴角速度（弧度制）
-    float Now_Omega_Angle;  //输出轴角速度（角度制）
+    float Now_Angle;        // 输出轴多圈角度（角度制）
+    float Now_Radian;       // 输出轴多圈角度（弧度制）
+    float Now_Omega_Radian; // 输出轴角速度（弧度制）
+    float Now_Omega_Angle;  // 输出轴角速度（角度制）
     float Now_Torque;
     float Now_Temperature;
     uint32_t Pre_Encoder;
@@ -105,17 +102,18 @@ struct Struct_DJI_Motor_Data
     float Pre_Angle;
 };
 
-typedef struct avg {
+typedef struct avg
+{
     int data[5];
 
     int read;
     int write;
 
-    void (* push)(struct avg*, int *);
-    void (* pop)(struct avg* a);
-    float (* getAvg)(struct avg* a);
+    void (*push)(struct avg *, int *);
+    void (*pop)(struct avg *a);
+    float (*getAvg)(struct avg *a);
 
-}AVG;
+} AVG;
 /**
  * @brief GM6020无刷电机, 单片机控制输出电压
  *
@@ -130,7 +128,7 @@ public:
     // PID扭矩环控制
     Class_PID PID_Torque;
 
-    //滑模控制算法，目前只适用于Yaw
+    // 滑模控制算法，目前只适用于Yaw
     Class_SMC SMC_Control;
 
     void Init(FDCAN_HandleTypeDef *__hcan, Enum_DJI_Motor_ID __CAN_ID, Enum_DJI_Motor_Control_Method __Control_Method = DJI_Motor_Control_Method_ANGLE, int32_t __Encoder_Offset = 0, float __Omega_Max = 320.0f * RPM_TO_RADPS);
@@ -139,6 +137,8 @@ public:
     inline Enum_DJI_Motor_Status Get_DJI_Motor_Status();
     inline float Get_Now_Angle();
     inline float Get_Now_Radian();
+    inline uint16_t Get_Now_Encoder_Single();
+    inline float Get_Now_Radian_Single();
     inline float Get_Now_Omega_Angle();
     inline float Get_Now_Omega_Radian();
     inline float Get_Now_Torque();
@@ -159,6 +159,8 @@ public:
     inline void Set_DJI_Motor_Control_Method(Enum_DJI_Motor_Control_Method __DJI_Motor_Control_Method);
     inline void Set_Target_Angle(float __Target_Angle);
     inline void Set_Target_Radian(float __Target_Radian);
+    void Set_Target_SingleTurn_Encoder_Nearest(uint16_t __Target_Single_Encoder);
+    void Set_Target_SingleTurn_Radian_Nearest(float __Target_Single_Radian);
     inline void Set_Target_Omega_Angle(float __Target_Omega_Angle);
     inline void Set_Target_Omega_Radian(float __Target_Omega_Radian);
     inline void Set_Target_Torque(float __Target_Torque);
@@ -182,72 +184,81 @@ public:
     float t_yaw = 0.0f;
     float rpm = 1.0f;
 
-    int invert_flag = 0; //正反转标志位
+    int invert_flag = 0; // 正反转标志位
 
-
+    KalmanFilter Kf_Omega;
     SpikeFilter filter;
-protected:
-    //初始化相关变量
 
-    //绑定的CAN
+protected:
+    // 初始化相关变量
+
+    // 接收稳定计数（用于上电前几帧屏蔽）
+    uint8_t Rx_Stable_Count = 0;
+
+    // 首次反馈后是否已做 target=now 对齐
+    uint8_t Angle_Target_Synced = 0;
+
+    // 绑定的CAN
     Struct_CAN_Manage_Object *CAN_Manage_Object;
-    //收数据绑定的CAN ID, C6系列0x201~0x208, GM系列0x205~0x20b
+    // 收数据绑定的CAN ID, C6系列0x201~0x208, GM系列0x205~0x20b
     Enum_DJI_Motor_ID CAN_ID;
-    //发送缓存区
+    // 发送缓存区
     uint8_t *CAN_Tx_Data;
-    //编码器偏移
+    // 编码器偏移
     uint32_t Encoder_Offset;
-    //最大速度, 需根据不同负载测量后赋值, 也就开环输出用得到, 不过我感觉应该没有奇葩喜欢开环输出这玩意
+    // 最大速度, 需根据不同负载测量后赋值, 也就开环输出用得到, 不过我感觉应该没有奇葩喜欢开环输出这玩意
     float Omega_Max;
 
-    //常量
-    float Zero_Position;//rad
-    //电机上电第一帧标志位
+    // 常量
+    float Zero_Position; // rad
+    // 电机上电第一帧标志位
     uint8_t Start_Falg = 0;
-    //一圈编码器刻度
+    // 一圈编码器刻度
     uint16_t Encoder_Num_Per_Round = 8192;
-    //最大输出电压
-    uint16_t Output_Max = 16000;
+    // 最大输出电压
+    uint16_t Output_Max = 25000;
 
-    //内部变量
+    // 内部变量
     float zero_position = 0.0f;
     float Transform_Angle = 0.0f;
     float Transform_Omega = 0.0f;
     float Transform_Torque = 0.0f;
     float Transform_Target_Omega = 0.0f;
-    
-    //当前时刻的电机接收flag
+    uint16_t Now_Encoder_Single = 0;
+    float Now_Radian_Single = 0.0f;
+
+    // 当前时刻的电机接收flag
     uint32_t Flag = 0;
-    //前一时刻的电机接收flag
+    // 前一时刻的电机接收flag
     uint32_t Pre_Flag = 0;
 
-    //读变量
+    // 读变量
 
-    //电机状态
+    // 电机状态
     Enum_DJI_Motor_Status DJI_Motor_Status = DJI_Motor_Status_DISABLE;
-    //电机对外接口信息
+    // 电机对外接口信息
     Struct_DJI_Motor_Data Data;
 
-    //写变量
+    // 写变量
 
-    //读写变量
+    // 读写变量
 
-    //电机控制方式
+    // 电机控制方式
     Enum_DJI_Motor_Control_Method DJI_Motor_Control_Method = DJI_Motor_Control_Method_IMU_ANGLE;
-    //目标的角度, °
+    // 目标的角度, °
     float Target_Angle = 0.0f;
-    //目标的速度, °/s
+    // 目标的速度, °/s
     float Target_Omega_Angle = 0.0f;
-    //目标的角度, rad
+    // 目标的角度, rad
     float Target_Radian = 0.0f;
-    //目标的速度, rad/s
+    // 目标的速度, rad/s
     float Target_Omega_Radian = 0.0f;
-    //目标的扭矩, 直接采用反馈值
+    // 目标的扭矩, 直接采用反馈值
     float Target_Torque = 0.0f;
-    //输出量
+    // 输出量
     float Out = 0.0f;
 
-    //内部函数
+    // 内部函数
 
     void Data_Process();
     void Output();
@@ -275,8 +286,7 @@ public:
     inline float Get_Now_Omega_Radian();
     inline float Get_Now_Torque();
     inline uint8_t Get_Now_Temperature();
-    
-    
+
     inline Enum_DJI_Motor_Control_Method Get_Control_Method();
     inline float Get_Target_Angle();
     inline float Get_Target_Radian();
@@ -291,7 +301,9 @@ public:
     inline void Set_Target_Omega_Angle(float __Target_Omega_Angle);
     inline void Set_Target_Omega_Radian(float __Target_Omega_Radian);
     inline void Set_Target_Torque(float __Target_Torque);
-    
+    inline void Set_Transform_Angle(float __Transform_Angle);
+    inline void Set_Transform_Omega(float __Transform_Omega);
+
     inline void Set_Out(float __Out);
 
     void CAN_RxCpltCallback(uint8_t *Rx_Data);
@@ -299,61 +311,64 @@ public:
     void TIM_PID_PeriodElapsedCallback();
 
 protected:
-    //初始化相关常量
+    // 初始化相关常量
 
-    //绑定的CAN
+    // 绑定的CAN
     Struct_CAN_Manage_Object *CAN_Manage_Object;
-    //收数据绑定的CAN ID, C6系列0x201~0x208, GM系列0x205~0x20b
+    // 收数据绑定的CAN ID, C6系列0x201~0x208, GM系列0x205~0x20b
     Enum_DJI_Motor_ID CAN_ID;
-    //发送缓存区
+    // 发送缓存区
     uint8_t *CAN_Tx_Data;
-    //减速比, 默认带减速箱
+    // 减速比, 默认带减速箱
     float Gearbox_Rate = 36.0f;
-    //最大扭矩, 需根据不同负载测量后赋值, 也就开环和扭矩环输出用得到, 不过我感觉应该没有奇葩喜欢开环输出这玩意
+    // 最大扭矩, 需根据不同负载测量后赋值, 也就开环和扭矩环输出用得到, 不过我感觉应该没有奇葩喜欢开环输出这玩意
     float Torque_Max;
 
-    //常量
-    //电机上电第一帧标志位
+    // 常量
+    // 电机上电第一帧标志位
     uint8_t Start_Falg = 0;
-    //一圈编码器刻度
+    // 一圈编码器刻度
     uint16_t Encoder_Num_Per_Round = 8192;
-    //最大输出扭矩
+    // 最大输出扭矩
     uint16_t Output_Max = 10000;
 
-    //内部变量
+    // 内部变量
 
-    //当前时刻的电机接收flag
+    // 当前时刻的电机接收flag
     uint32_t Flag = 0;
-    //前一时刻的电机接收flag
+    // 前一时刻的电机接收flag
     uint32_t Pre_Flag = 0;
 
-    //读变量
+    // 读变量
 
-    //电机状态
+    // 电机状态
     Enum_DJI_Motor_Status DJI_Motor_Status = DJI_Motor_Status_DISABLE;
-    //电机对外接口信息
+    // 电机对外接口信息
     Struct_DJI_Motor_Data Data;
 
-    //写变量
+    // 写变量
 
-    //读写变量
+    // 读写变量
 
-    //电机控制方式
+    // 电机控制方式
     Enum_DJI_Motor_Control_Method DJI_Motor_Control_Method = DJI_Motor_Control_Method_ANGLE;
-    //目标的角度, °
+    // 目标的角度, °
     float Target_Angle = 0.0f;
-    //目标的速度, °/s
+    // 目标的速度, °/s
     float Target_Omega_Angle = 0.0f;
-    //目标的角度, rad
+    // 目标的角度, rad
     float Target_Radian = 0.0f;
-    //目标的速度, rad/s
+    // 目标的速度, rad/s
     float Target_Omega_Radian = 0.0f;
-    //目标的扭矩, 直接采用反馈值
+    // 目标的扭矩, 直接采用反馈值
     float Target_Torque = 0.0f;
-    //输出量
+    // 输出量
     float Out = 0.0f;
 
-    //内部函数
+    float Transform_Angle = 0.f;
+    float Transform_Omega = 0.f;
+
+    // 内部函数
 
     void Data_Process();
     void Output();
@@ -370,8 +385,8 @@ public:
     Class_PID PID_Angle;
     // PID角速度环控制
     Class_PID PID_Omega;
-    
-    //功率限制友元函数
+
+    // 功率限制友元函数
     friend class Class_Power_Limit;
 
     void Init(FDCAN_HandleTypeDef *__hcan, Enum_DJI_Motor_ID __CAN_ID, Enum_DJI_Motor_Control_Method __Control_Method = DJI_Motor_Control_Method_OMEGA, float __Gearbox_Rate = 13.933f, float __Torque_Max = 16384.0f);
@@ -399,6 +414,8 @@ public:
     inline void Set_Target_Omega_Radian(float __Target_Omega_Radian);
     inline void Set_Target_Torque(float __Target_Torque);
     inline void Set_Out(float __Out);
+    inline void Set_Transform_Angle(float __Transform_Angle);
+    inline void Set_Transform_Omega(float __Transform_Omega);
 
     void CAN_RxCpltCallback(uint8_t *Rx_Data);
     void TIM_Alive_PeriodElapsedCallback();
@@ -410,68 +427,72 @@ public:
     uint8_t *CAN_Tx_Data;
 
 protected:
-    //初始化相关变量
+    // 初始化相关变量
 
-    //绑定的CAN
+    // 绑定的CAN
     Struct_CAN_Manage_Object *CAN_Manage_Object;
-    //收数据绑定的CAN ID, C6系列0x201~0x208, GM系列0x205~0x20b
+    // 收数据绑定的CAN ID, C6系列0x201~0x208, GM系列0x205~0x20b
     Enum_DJI_Motor_ID CAN_ID;
-    //发送缓存区
-    //uint8_t *CAN_Tx_Data;
-    //减速比, 默认带减速箱
+    // 发送缓存区
+    // uint8_t *CAN_Tx_Data;
+    // 减速比, 默认带减速箱
     float Gearbox_Rate;
-    //最大扭矩, 需根据不同负载测量后赋值, 也就开环和扭矩环输出用得到, 不过我感觉应该没有奇葩喜欢开环输出这玩意
+    // 最大扭矩, 需根据不同负载测量后赋值, 也就开环和扭矩环输出用得到, 不过我感觉应该没有奇葩喜欢开环输出这玩意
     float Torque_Max;
 
-    //常量
+    // 常量
 
-    //电机上电第一帧标志位
+    // 电机上电第一帧标志位
     uint8_t Start_Falg = 0;
-    //一圈编码器刻度
+    // 一圈编码器刻度
     uint16_t Encoder_Num_Per_Round = 8192;
-    //最大输出扭矩
+    // 最大输出扭矩
     uint16_t Output_Max = 16384;
 
-    //内部变量
+    // 内部变量
 
-    //当前时刻的电机接收flag
+    // 当前时刻的电机接收flag
     uint32_t Flag = 0;
-    //前一时刻的电机接收flag
+    // 前一时刻的电机接收flag
     uint32_t Pre_Flag = 0;
 
-    //读变量
+    // 读变量
 
-    //电机状态
+    // 电机状态
     Enum_DJI_Motor_Status DJI_Motor_Status = DJI_Motor_Status_DISABLE;
-    //电机对外接口信息
+    // 电机对外接口信息
     Struct_DJI_Motor_Data Data;
 
-    //写变量
+    // 写变量
 
-    //读写变量
+    // 读写变量
 
-    //电机控制方式
+    // 电机控制方式
     Enum_DJI_Motor_Control_Method DJI_Motor_Control_Method = DJI_Motor_Control_Method_ANGLE;
-    //目标的角度, °
+    // 目标的角度, °
     float Target_Angle = 0.0f;
-    //目标的速度, °/s
+    // 目标的速度, °/s
     float Target_Omega_Angle = 0.0f;
-    //目标的角度, rad
+    // 目标的角度, rad
     float Target_Radian = 0.0f;
-    //目标的速度, rad/s
+    // 目标的速度, rad/s
     float Target_Omega_Radian = 0.0f;
-    //目标的扭矩, 直接采用反馈值
+    // 目标的扭矩, 直接采用反馈值
     float Target_Torque = 0.0f;
-    //输出量
+    // 输出量
     float Out = 0.0f;
 
-    //内部函数
+    float Transform_Angle = 0.f;
+    float Transform_Omega = 0.f;
+
+    // 内部函数
 
     void Data_Process();
     void Output();
 };
 
-class Class_DJI_Motor_C620_Steer : public Class_DJI_Motor_C620{
+class Class_DJI_Motor_C620_Steer : public Class_DJI_Motor_C620
+{
 
 public:
     inline float Get_Now_Zero_Offset_Radian();
@@ -485,8 +506,9 @@ public:
 
     void TIM_PID_PeriodElapsedCallback();
 
-protected :
-    struct {
+protected:
+    struct
+    {
         float Single_Radian;
         float Multi_Radian;
         float Omega;
@@ -495,9 +517,9 @@ protected :
     float Transform_Radian = 0.0f;
     float Transform_Radian_Omega = 0.0f;
 
-    //软件上的编码器零点    0 --- 2PI
+    // 软件上的编码器零点    0 --- 2PI
     float Zero_Position = 0.0f;
-    //相对软件0点的偏移 rad   0 --- 2PI
+    // 相对软件0点的偏移 rad   0 --- 2PI
     float Zero_Offset_Radian = 0.0f;
 };
 
@@ -543,6 +565,16 @@ float Class_DJI_Motor_GM6020::Get_Now_Angle()
 float Class_DJI_Motor_GM6020::Get_Now_Radian()
 {
     return (Data.Now_Radian);
+}
+
+uint16_t Class_DJI_Motor_GM6020::Get_Now_Encoder_Single()
+{
+    return (Now_Encoder_Single);
+}
+
+float Class_DJI_Motor_GM6020::Get_Now_Radian_Single()
+{
+    return (Now_Radian_Single);
 }
 
 /**
@@ -684,8 +716,6 @@ float Class_DJI_Motor_GM6020::Get_Transform_Torque()
 {
     return (Transform_Torque);
 }
-
-
 
 /**
  * @brief 设定电机控制方式
@@ -908,9 +938,9 @@ float Class_DJI_Motor_C610::Get_Target_Omega_Angle()
 }
 
 /**
- * @brief 获取目标的速度, rad/s  
+ * @brief 获取目标的速度, rad/s
  *
- * @return float 目标的速度, rad/s 
+ * @return float 目标的速度, rad/s
  */
 float Class_DJI_Motor_C610::Get_Target_Omega_Radian()
 {
@@ -1008,6 +1038,15 @@ void Class_DJI_Motor_C610::Set_Out(float __Out)
     Output();
 }
 
+void Class_DJI_Motor_C610::Set_Transform_Angle(float __Transform_Angle)
+{
+    Transform_Angle = __Transform_Angle;
+}
+
+void Class_DJI_Motor_C610::Set_Transform_Omega(float __Transform_Omega)
+{
+    Transform_Omega = __Transform_Omega;
+}
 
 /**
  * @brief 获取最大输出电流
@@ -1230,15 +1269,28 @@ void Class_DJI_Motor_C620::Set_Out(float __Out)
     Output();
 }
 
-inline float Class_DJI_Motor_C620_Steer::Get_Now_Zero_Offset_Radian(){
+void Class_DJI_Motor_C620::Set_Transform_Angle(float __Transform_Angle)
+{
+    Transform_Angle = __Transform_Angle;
+}
+
+void Class_DJI_Motor_C620::Set_Transform_Omega(float __Transform_Omega)
+{
+    Transform_Omega = __Transform_Omega;
+}
+
+inline float Class_DJI_Motor_C620_Steer::Get_Now_Zero_Offset_Radian()
+{
     return Zero_Offset_Radian;
 }
 
-inline float Class_DJI_Motor_C620_Steer::Get_Zero_Position(){
+inline float Class_DJI_Motor_C620_Steer::Get_Zero_Position()
+{
     return Zero_Position;
 }
 
-inline void Class_DJI_Motor_C620_Steer::Set_Zero_Position(float __Zero_Position){
+inline void Class_DJI_Motor_C620_Steer::Set_Zero_Position(float __Zero_Position)
+{
     Zero_Position = Normalize_Angle_Radian_PI_to_PI(__Zero_Position);
 }
 
@@ -1247,7 +1299,8 @@ inline void Class_DJI_Motor_C620_Steer::Set_Transform_Radian(float __Transform_R
     Transform_Radian = __Transform_Radian;
 }
 
-inline void Class_DJI_Motor_C620_Steer::Set_Transform_Radian_Omega(float __Transform_Radian_Omega){
+inline void Class_DJI_Motor_C620_Steer::Set_Transform_Radian_Omega(float __Transform_Radian_Omega)
+{
     Transform_Radian_Omega = __Transform_Radian_Omega;
 }
 

@@ -44,7 +44,6 @@
   * @{
   */
 
-#if defined (SDMMC1) || defined (SDMMC2)
 #ifdef HAL_SD_MODULE_ENABLED
 
 /* Private typedef -----------------------------------------------------------*/
@@ -304,7 +303,6 @@ HAL_StatusTypeDef HAL_SDEx_ChangeDMABuffer(SD_HandleTypeDef *hsd, HAL_SDEx_DMABu
   */
 
 #endif /* HAL_SD_MODULE_ENABLED */
-#endif /* SDMMC1 || SDMMC2 */
 
 /**
   * @}

@@ -61,7 +61,7 @@
   * @{
   */
 #if defined(HAL_NOR_MODULE_ENABLED) || defined(HAL_NAND_MODULE_ENABLED) || defined(HAL_SDRAM_MODULE_ENABLED)\
-    || defined(HAL_SRAM_MODULE_ENABLED)
+ || defined(HAL_SRAM_MODULE_ENABLED)
 
 /** @defgroup FMC_LL  FMC Low Layer
   * @brief FMC driver modules
@@ -188,7 +188,7 @@
   * @retval HAL status
   */
 HAL_StatusTypeDef  FMC_NORSRAM_Init(FMC_NORSRAM_TypeDef *Device,
-                                    const FMC_NORSRAM_InitTypeDef *Init)
+                                    FMC_NORSRAM_InitTypeDef *Init)
 {
   uint32_t flashaccess;
   uint32_t btcr_reg;
@@ -322,7 +322,7 @@ HAL_StatusTypeDef FMC_NORSRAM_DeInit(FMC_NORSRAM_TypeDef *Device,
   * @retval HAL status
   */
 HAL_StatusTypeDef FMC_NORSRAM_Timing_Init(FMC_NORSRAM_TypeDef *Device,
-                                          const FMC_NORSRAM_TimingTypeDef *Timing, uint32_t Bank)
+                                          FMC_NORSRAM_TimingTypeDef *Timing, uint32_t Bank)
 {
   uint32_t tmpr;
 
@@ -338,14 +338,13 @@ HAL_StatusTypeDef FMC_NORSRAM_Timing_Init(FMC_NORSRAM_TypeDef *Device,
   assert_param(IS_FMC_NORSRAM_BANK(Bank));
 
   /* Set FMC_NORSRAM device timing parameters */
-  Device->BTCR[Bank + 1U] =
-    (Timing->AddressSetupTime << FMC_BTRx_ADDSET_Pos) |
-    (Timing->AddressHoldTime << FMC_BTRx_ADDHLD_Pos) |
-    (Timing->DataSetupTime << FMC_BTRx_DATAST_Pos) |
-    (Timing->BusTurnAroundDuration << FMC_BTRx_BUSTURN_Pos) |
-    ((Timing->CLKDivision - 1U) << FMC_BTRx_CLKDIV_Pos) |
-    ((Timing->DataLatency - 2U) << FMC_BTRx_DATLAT_Pos) |
-    Timing->AccessMode;
+  MODIFY_REG(Device->BTCR[Bank + 1U], BTR_CLEAR_MASK, (Timing->AddressSetupTime                                  |
+                                                       ((Timing->AddressHoldTime)        << FMC_BTRx_ADDHLD_Pos)  |
+                                                       ((Timing->DataSetupTime)          << FMC_BTRx_DATAST_Pos)  |
+                                                       ((Timing->BusTurnAroundDuration)  << FMC_BTRx_BUSTURN_Pos) |
+                                                       (((Timing->CLKDivision) - 1U)     << FMC_BTRx_CLKDIV_Pos)  |
+                                                       (((Timing->DataLatency) - 2U)     << FMC_BTRx_DATLAT_Pos)  |
+                                                       (Timing->AccessMode)));
 
   /* Configure Clock division value (in NORSRAM bank 1) when continuous clock is enabled */
   if (HAL_IS_BIT_SET(Device->BTCR[FMC_NORSRAM_BANK1], FMC_BCR1_CCLKEN))
@@ -371,7 +370,7 @@ HAL_StatusTypeDef FMC_NORSRAM_Timing_Init(FMC_NORSRAM_TypeDef *Device,
   * @retval HAL status
   */
 HAL_StatusTypeDef FMC_NORSRAM_Extended_Timing_Init(FMC_NORSRAM_EXTENDED_TypeDef *Device,
-                                                   const FMC_NORSRAM_TimingTypeDef *Timing, uint32_t Bank,
+                                                   FMC_NORSRAM_TimingTypeDef *Timing, uint32_t Bank,
                                                    uint32_t ExtendedMode)
 {
   /* Check the parameters */
@@ -516,7 +515,7 @@ HAL_StatusTypeDef FMC_NORSRAM_WriteOperation_Disable(FMC_NORSRAM_TypeDef *Device
   * @param  Init Pointer to NAND Initialization structure
   * @retval HAL status
   */
-HAL_StatusTypeDef FMC_NAND_Init(FMC_NAND_TypeDef *Device, const FMC_NAND_InitTypeDef *Init)
+HAL_StatusTypeDef FMC_NAND_Init(FMC_NAND_TypeDef *Device, FMC_NAND_InitTypeDef *Init)
 {
   /* Check the parameters */
   assert_param(IS_FMC_NAND_DEVICE(Device));
@@ -549,7 +548,7 @@ HAL_StatusTypeDef FMC_NAND_Init(FMC_NAND_TypeDef *Device, const FMC_NAND_InitTyp
   * @retval HAL status
   */
 HAL_StatusTypeDef FMC_NAND_CommonSpace_Timing_Init(FMC_NAND_TypeDef *Device,
-                                                   const FMC_NAND_PCC_TimingTypeDef *Timing, uint32_t Bank)
+                                                   FMC_NAND_PCC_TimingTypeDef *Timing, uint32_t Bank)
 {
   /* Check the parameters */
   assert_param(IS_FMC_NAND_DEVICE(Device));
@@ -563,10 +562,10 @@ HAL_StatusTypeDef FMC_NAND_CommonSpace_Timing_Init(FMC_NAND_TypeDef *Device,
   UNUSED(Bank);
 
   /* NAND bank 3 registers configuration */
-  Device->PMEM = (Timing->SetupTime |
-                  ((Timing->WaitSetupTime) << FMC_PMEM_MEMWAIT_Pos) |
-                  ((Timing->HoldSetupTime) << FMC_PMEM_MEMHOLD_Pos) |
-                  ((Timing->HiZSetupTime) << FMC_PMEM_MEMHIZ_Pos));
+  MODIFY_REG(Device->PMEM, PMEM_CLEAR_MASK, (Timing->SetupTime                                 |
+                                             ((Timing->WaitSetupTime) << FMC_PMEM_MEMWAIT_Pos) |
+                                             ((Timing->HoldSetupTime) << FMC_PMEM_MEMHOLD_Pos) |
+                                             ((Timing->HiZSetupTime)  << FMC_PMEM_MEMHIZ_Pos)));
 
   return HAL_OK;
 }
@@ -580,7 +579,7 @@ HAL_StatusTypeDef FMC_NAND_CommonSpace_Timing_Init(FMC_NAND_TypeDef *Device,
   * @retval HAL status
   */
 HAL_StatusTypeDef FMC_NAND_AttributeSpace_Timing_Init(FMC_NAND_TypeDef *Device,
-                                                      const FMC_NAND_PCC_TimingTypeDef *Timing, uint32_t Bank)
+                                                      FMC_NAND_PCC_TimingTypeDef *Timing, uint32_t Bank)
 {
   /* Check the parameters */
   assert_param(IS_FMC_NAND_DEVICE(Device));
@@ -594,10 +593,10 @@ HAL_StatusTypeDef FMC_NAND_AttributeSpace_Timing_Init(FMC_NAND_TypeDef *Device,
   UNUSED(Bank);
 
   /* NAND bank 3 registers configuration */
-  Device->PATT = (Timing->SetupTime |
-                  ((Timing->WaitSetupTime) << FMC_PATT_ATTWAIT_Pos) |
-                  ((Timing->HoldSetupTime) << FMC_PATT_ATTHOLD_Pos) |
-                  ((Timing->HiZSetupTime)  << FMC_PATT_ATTHIZ_Pos));
+  MODIFY_REG(Device->PATT, PATT_CLEAR_MASK, (Timing->SetupTime                                 |
+                                             ((Timing->WaitSetupTime) << FMC_PATT_ATTWAIT_Pos) |
+                                             ((Timing->HoldSetupTime) << FMC_PATT_ATTHOLD_Pos) |
+                                             ((Timing->HiZSetupTime)  << FMC_PATT_ATTHIZ_Pos)));
 
   return HAL_OK;
 }
@@ -701,7 +700,7 @@ HAL_StatusTypeDef FMC_NAND_ECC_Disable(FMC_NAND_TypeDef *Device, uint32_t Bank)
   * @param  Timeout Timeout wait value
   * @retval HAL status
   */
-HAL_StatusTypeDef FMC_NAND_GetECC(const FMC_NAND_TypeDef *Device, uint32_t *ECCval, uint32_t Bank,
+HAL_StatusTypeDef FMC_NAND_GetECC(FMC_NAND_TypeDef *Device, uint32_t *ECCval, uint32_t Bank,
                                   uint32_t Timeout)
 {
   uint32_t tickstart;
@@ -738,6 +737,7 @@ HAL_StatusTypeDef FMC_NAND_GetECC(const FMC_NAND_TypeDef *Device, uint32_t *ECCv
 /**
   * @}
   */
+
 
 
 /** @defgroup FMC_LL_SDRAM
@@ -786,7 +786,7 @@ HAL_StatusTypeDef FMC_NAND_GetECC(const FMC_NAND_TypeDef *Device, uint32_t *ECCv
   * @param  Init Pointer to SDRAM Initialization structure
   * @retval HAL status
   */
-HAL_StatusTypeDef FMC_SDRAM_Init(FMC_SDRAM_TypeDef *Device, const FMC_SDRAM_InitTypeDef *Init)
+HAL_StatusTypeDef FMC_SDRAM_Init(FMC_SDRAM_TypeDef *Device, FMC_SDRAM_InitTypeDef *Init)
 {
   /* Check the parameters */
   assert_param(IS_FMC_SDRAM_DEVICE(Device));
@@ -849,7 +849,7 @@ HAL_StatusTypeDef FMC_SDRAM_Init(FMC_SDRAM_TypeDef *Device, const FMC_SDRAM_Init
   * @retval HAL status
   */
 HAL_StatusTypeDef FMC_SDRAM_Timing_Init(FMC_SDRAM_TypeDef *Device,
-                                        const FMC_SDRAM_TimingTypeDef *Timing, uint32_t Bank)
+                                        FMC_SDRAM_TimingTypeDef *Timing, uint32_t Bank)
 {
   /* Check the parameters */
   assert_param(IS_FMC_SDRAM_DEVICE(Device));
@@ -979,7 +979,7 @@ HAL_StatusTypeDef FMC_SDRAM_WriteProtection_Disable(FMC_SDRAM_TypeDef *Device, u
   * @retval HAL state
   */
 HAL_StatusTypeDef FMC_SDRAM_SendCommand(FMC_SDRAM_TypeDef *Device,
-                                        const FMC_SDRAM_CommandTypeDef *Command, uint32_t Timeout)
+                                        FMC_SDRAM_CommandTypeDef *Command, uint32_t Timeout)
 {
   /* Check the parameters */
   assert_param(IS_FMC_SDRAM_DEVICE(Device));

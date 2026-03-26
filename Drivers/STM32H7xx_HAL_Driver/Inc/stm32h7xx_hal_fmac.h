@@ -243,7 +243,10 @@ typedef struct
   * @}
   */
 
+
 /* Exported constants --------------------------------------------------------*/
+
+
 /** @defgroup FMAC_Exported_Constants FMAC Exported Constants
   * @{
   */
@@ -353,6 +356,7 @@ typedef struct
 /**
   * @}
   */
+
 
 /* Exported variables --------------------------------------------------------*/
 /** @defgroup FMAC_Exported_variables FMAC Exported variables
@@ -495,7 +499,7 @@ typedef struct
   * @}
   */
 
-/* Private Macros-------------------------------------------------------------*/
+/* Private Macros-----------------------------------------------------------*/
 /** @addtogroup  FMAC_Private_Macros FMAC Private Macros
   * @{
   */
@@ -574,9 +578,9 @@ typedef struct
   * @param  __FUNCTION__ ID of the filter function.
   * @retval SET (__Q__ is a valid value) or RESET (__Q__ is invalid)
   */
-#define IS_FMAC_PARAM_Q(__FUNCTION__, __Q__) (((__FUNCTION__) == FMAC_FUNC_CONVO_FIR)                || \
-                                              (((__FUNCTION__) == FMAC_FUNC_IIR_DIRECT_FORM_1)       && \
-                                               (((__Q__) >= FMAC_PARAM_Q_MIN) && ((__Q__) <= FMAC_PARAM_Q_MAX))))
+#define IS_FMAC_PARAM_Q(__FUNCTION__, __Q__) ( ((__FUNCTION__) == FMAC_FUNC_CONVO_FIR)                || \
+                                               (((__FUNCTION__) == FMAC_FUNC_IIR_DIRECT_FORM_1)       && \
+                                                (((__Q__) >= FMAC_PARAM_Q_MIN) && ((__Q__) <= FMAC_PARAM_Q_MAX))) )
 
 /**
   * @brief  Verify the FMAC filter parameter R.
