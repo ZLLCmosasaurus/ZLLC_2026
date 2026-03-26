@@ -18,8 +18,9 @@
 /* Private types -------------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
-int shoot_num;
-int test_period = 90;
+// int shoot_num;
+int test_period = 100;
+float dt_output;uint32_t cnt2;
 /* Private function declarations ---------------------------------------------*/
 
 /* Function prototypes -------------------------------------------------------*/
@@ -33,65 +34,95 @@ void Class_FSM_Heat_Detect::Reload_TIM_Status_PeriodElapsedCallback()
 {
     Status[Now_Status_Serial].Time++;
 
-    //自己接着编写状态转移函数
+    static Enum_Friction_Control_Type Last_Friction_Control_Type = Friction_Control_Type_DISABLE;
+    // 自己接着编写状态转移函数
     switch (Now_Status_Serial)
     {
     case (0):
     {
-        //正常状态
+        // 正常状态
 
-        if (abs(Booster->Motor_Friction_Right.Get_Now_Torque()) >= Booster->Friction_Torque_Threshold)
+        if ((abs(Booster->Fric[0].Get_Now_Torque()) >= Booster->Friction_Torque_Threshold) && (abs(Booster->Fric[0].Get_Now_Torque()) < 10000.0f))
         {
-            //大扭矩->检测状态
+            // 大扭矩->检测状态
             Set_Status(1);
         }
         else if (Booster->Booster_Control_Type == Booster_Control_Type_DISABLE)
         {
-            //停机->停机状态
+            // 停机->停机状态
             Set_Status(3);
         }
     }
     break;
     case (1):
     {
-        //发射嫌疑状态
+        // 发射嫌疑状态
 
         if (Status[Now_Status_Serial].Time >= test_period)
         {
-            //长时间大扭矩->确认是发射了
+            // 长时间大扭矩->确认是发射了
             Set_Status(2);
         }
     }
     break;
     case (2):
     {
-        //发射完成状态->加上热量进入下一轮检测
-        shoot_num ++;
-        Heat += 10.0f;
-        Set_Status(0);
+        if (Last_Friction_Control_Type == Friction_Control_Type_DISABLE && Booster->Friction_Control_Type == Friction_Control_Type_ENABLE)
+        {
+            //Heat += 100.0f;
+            Set_Status(0);
+        }
+        else if(Last_Friction_Control_Type == Friction_Control_Type_ENABLE && Booster->Friction_Control_Type == Friction_Control_Type_DISABLE)
+        {
+            //Heat += 100.0f;
+            Set_Status(0);
+        }
+        else
+        {
+            // 发射完成状态->加上热量进入下一轮检测
+            Booster->actual_bullet_num++;
+            // shoot_num ++;
+            Heat += 100.0f;
+            Set_Status(0);
+        }
+        Last_Friction_Control_Type = Booster->Get_Friction_Control_Type();
     }
     break;
     case (3):
     {
-        //停机状态
+        // 停机状态
 
-        if (abs(Booster->Motor_Friction_Right.Get_Now_Omega_Radian()) >= Booster->Friction_Omega_Threshold)
+        if (abs(Booster->Fric[0].Get_Now_Omega_Radian()) >= Booster->Friction_Omega_Threshold)
         {
-            //开机了->正常状态
+            // 开机了->正常状态
             Set_Status(0);
         }
     }
     break;
     }
 
-    //热量冷却到0
+    // 热量冷却到0
     if (Heat > 0)
     {
-        Heat -= 80.f / 1000.0f;//哨兵默认80
+        Heat -= Booster->Cooling_Value / 1000.0f;
+
     }
     else
     {
         Heat = 0;
+    }
+
+}
+
+uint8_t Get_Shoot_Cmd(float Heat_Now, float Heat_Max)
+{
+    if (Heat_Now + 100 <= Heat_Max)
+    {
+        return 1;   // 可以射击
+    }
+    else
+    {
+        return 0;   // 不可以射击
     }
 }
 
@@ -123,7 +154,7 @@ void Class_FSM_Antijamming::Reload_TIM_Status_PeriodElapsedCallback()
             //卡弹嫌疑状态
             Booster->Output();
 
-            if (Status[Now_Status_Serial].Time >= 100)
+            if (Status[Now_Status_Serial].Time >= 500)
             {
                 //长时间大扭矩->卡弹反应状态
                 Set_Status(2);
@@ -139,8 +170,8 @@ void Class_FSM_Antijamming::Reload_TIM_Status_PeriodElapsedCallback()
         {
             //卡弹反应状态->准备卡弹处理
             Booster->Motor_Driver.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
-            //Booster->Driver_Angle = Booster->Motor_Driver.Get_Now_Radian() + PI / 12.0f;//原版本
-            Booster->Driver_Angle = Booster->Motor_Driver.Get_Now_Radian() + (2 * PI / 8.0f);
+            Original_Angle = Booster->Motor_Driver.Get_Now_Radian();
+            Booster->Driver_Angle = Original_Angle + (PI / 9.0f);//回退20度
             Booster->Motor_Driver.Set_Target_Radian(Booster->Driver_Angle);
             Set_Status(3);
         }
@@ -149,11 +180,45 @@ void Class_FSM_Antijamming::Reload_TIM_Status_PeriodElapsedCallback()
         {
             //卡弹处理状态
 
-            if (Status[Now_Status_Serial].Time >= 300)
+            if (Status[Now_Status_Serial].Time >= 100)
             {
-                //长时间回拨->正常状态
-                Set_Status(0);
+                Booster->Driver_Angle = Original_Angle;
+                Booster->Motor_Driver.Set_Target_Radian(Booster->Driver_Angle);
+                Set_Status(4);
             }
+        }
+        break;
+        case (4):
+        {
+            static uint8_t Torque_tim_cnt1 = 0;
+			if((abs(Booster->Motor_Driver.Get_Now_Torque()) < 0.3f*Booster->Driver_Torque_Threshold))
+			{
+				Torque_tim_cnt1++;
+				if(Torque_tim_cnt1 > 50)
+				{
+					Set_Status(0);
+					Torque_tim_cnt1 = 0;
+				}
+			}
+			else
+			{
+				Torque_tim_cnt1 = 0;
+			}
+					
+			static uint8_t Torque_tim_cnt2 = 0;
+			if((abs(Booster->Motor_Driver.Get_Now_Torque()) > Booster->Driver_Torque_Threshold))
+			{
+			Torque_tim_cnt2++;
+			if(Torque_tim_cnt2 > 50)
+			{
+				Set_Status(2);
+				Torque_tim_cnt2 = 0;
+			}
+			}
+			else
+			{
+				Torque_tim_cnt2 = 0;
+			}
         }
         break;
     }
@@ -196,15 +261,17 @@ void Class_Booster::Init()
     FSM_Heat_Detect.Booster = this;
     FSM_Heat_Detect.Init(3, 3);
 
-    //正常状态, 卡弹嫌疑状态, 卡弹反应状态, 卡弹处理状态
+    //正常状态, 卡弹嫌疑状态, 卡弹反应状态, 卡弹处理状态, 卡弹处理反应状态
     FSM_Antijamming.Booster = this;
-    FSM_Antijamming.Init(4, 0);
+    FSM_Antijamming.Init(5, 0);
 
     //拨弹盘电机
-    Motor_Driver.PID_Angle.Init(25.0f, 0.0f, 0.0f, 0.0f, 5.0f * PI, 5.0f * PI);
-    Motor_Driver.PID_Omega.Init(2500.0f, 500.0f, 0.0f, 0.0f, Motor_Driver.Get_Output_Max(), Motor_Driver.Get_Output_Max());
-    Motor_Driver.Init(&hfdcan3, DJI_Motor_ID_0x202, DJI_Motor_Control_Method_OMEGA);
-
+    Motor_Driver.PID_Angle.Init(20.0f, 0.0f, 0.0f, 0.0f, 0.0f,0.0f);
+    Motor_Driver.PID_Omega.Init(1200.0f, 20.0f, 0.0f, 0.0f, 16000.0f, 16000.0f);
+    // Motor_Driver.PID_Angle.Init(10.0f, 0.0f, 0.0f, 0.0f, 0.0f,0.0f);
+    // Motor_Driver.PID_Omega.Init(600.0f, 10.0f, 0.0f, 0.0f, 16000.0f, 16000.0f);
+    Motor_Driver.Init(&hfdcan3, DJI_Motor_ID_0x204, DJI_Motor_Control_Method_OMEGA, 50.0f);
+    kalman_init(&Kf_Omega,0.0f);
     //注意初始化ID 此版本6020为电流环版本 可能会有ID冲突
     #ifdef Single_Friction
     //摩擦轮电机左
@@ -236,9 +303,9 @@ void Class_Booster::Init()
  * @brief 输出到电机
  *
  */
-extern Referee_Rx_B_t CAN3_Chassis_Rx_Data_B;
 void Class_Booster::Output()
 {
+    dt_output = DWT_GetDeltaT(&cnt2);
     Now_Angle = Motor_Driver.Get_Now_Radian();
     //Booster_Control_Type = Booster_Control_Type_CEASEFIRE;
     //控制拨弹轮
@@ -453,6 +520,7 @@ void Class_Booster::Output()
             }
 
             Driver_Angle -= 2.0f * PI / 6.0f;
+
             Motor_Driver.Set_Target_Radian(Driver_Angle);
 
             // 点一发立刻停火
@@ -478,10 +546,10 @@ void Class_Booster::Output()
     #ifdef Double_Friction
     if (Friction_Control_Type != Friction_Control_Type_DISABLE)
     {
-        Fric[0].Set_Target_Omega_Rpm(-Fric_High_Rpm);
-        Fric[1].Set_Target_Omega_Rpm(Fric_High_Rpm);
-        Fric[2].Set_Target_Omega_Rpm(Fric_Low_Rpm);
-        Fric[3].Set_Target_Omega_Rpm(-Fric_Low_Rpm);
+        Fric[0].Set_Target_Omega_Rpm(Fric_High_Rpm);
+        Fric[1].Set_Target_Omega_Rpm(Fric_Low_Rpm);
+        Fric[2].Set_Target_Omega_Rpm(-Fric_Low_Rpm);
+        Fric[3].Set_Target_Omega_Rpm(-Fric_High_Rpm);
     }
     else
     {
@@ -504,6 +572,8 @@ void Class_Booster::TIM_Calculate_PeriodElapsedCallback()
     FSM_Heat_Detect.Reload_TIM_Status_PeriodElapsedCallback();
     //卡弹处理
     FSM_Antijamming.Reload_TIM_Status_PeriodElapsedCallback();
+    //  Output();
+     kalman_update(&Kf_Omega,Motor_Driver.Get_Now_Omega_Radian());
     //PID输出
     Motor_Driver.TIM_PID_PeriodElapsedCallback();
     #ifdef Single_Friction
@@ -521,6 +591,11 @@ void Class_Booster::TIM_Calculate_PeriodElapsedCallback()
     {
         Speed = Referee->Get_Shoot_Speed();
     }
+
+
+    Cmd_if_Fire = Get_Shoot_Cmd(FSM_Heat_Detect.Heat,100);
+    
+
 }
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

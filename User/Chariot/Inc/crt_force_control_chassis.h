@@ -56,6 +56,8 @@ public:
     //超电
     Class_Supercap Supercap;
 
+    Class_Referee *Referee;
+
     //低通滤波器
     Class_Filter_Fourier Acceleration_X_Filter;
     Class_Filter_Fourier Acceleration_Y_Filter;
@@ -122,7 +124,7 @@ public:
     void TIM_2ms_Resolution_PeriodElapsedCallback();
     void TIM_2ms_Control_PeriodElapsedCallback();
 protected:
-    const float Wheel_Radius = 0.12f/2.0f; // 轮子半径
+    const float Wheel_Radius = 0.14f/2.0f; // 轮子半径
     const float Wheel_To_Core_Distance = 0.18466f; // 轮投影点距离中心距离
     // 内部变量
     //观测车体的速度

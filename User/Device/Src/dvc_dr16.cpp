@@ -148,6 +148,7 @@ void Class_DR16::Judge_Switch(Enum_DR16_Switch_Status *Switch, uint8_t Status, u
         case (SWITCH_DOWN):
         {
             *Switch = DR16_Switch_Status_TRIG_MIDDLE_DOWN;
+            Check_Flag ++;
         }
         break;
         case (SWITCH_MIDDLE):

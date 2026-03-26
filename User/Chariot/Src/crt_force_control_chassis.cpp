@@ -48,7 +48,7 @@ void xvEstimateKF_Update(KalmanFilter_t *EstimateKF ,float acc,float vel)
     EstimateKF->MeasuredVector[1] = acc;//测量加速度
     		
     //卡尔曼滤波器更新函数
-    Kalman_Filter_Update(EstimateKF);
+    // Kalman_Filter_Update(EstimateKF);
 
     // 提取估计值
     for (uint8_t i = 0; i < 2; i++)
@@ -377,8 +377,20 @@ void Class_Chassis::Output_To_Motor()
     }
 
     //进行功率限制
-    Power_Management.Max_Power = 100.0f;
-    //Power_Management.Total_error = 0.0;
+    if(Referee->Get_Referee_Status() == Referee_Status_ENABLE)
+    {
+        float energyBuffer = Referee->Get_Chassis_Energy_Buffer();
+        // 归一化到[-1, 1]范围，中心点在30J
+        float normalized = (energyBuffer - 30.0f) / 30.0f;
+        // 使用tanh实现平滑过渡，范围[-30, 30]
+        float bufferPower = 25.0f * tanhf(normalized);
+        
+        Power_Management.Max_Power = Referee->Get_Chassis_Power_Max() + bufferPower;
+    }
+    else
+    {
+        Power_Management.Max_Power = 100.0f;
+    }
     Power_Limit.Power_Task(Power_Management);
 
     for (int i = 1, j = 0; i < 8; i+=2, ++j)

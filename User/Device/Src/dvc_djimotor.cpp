@@ -18,7 +18,7 @@
 /* Private types -------------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
-
+uint32_t cnt1;
 /* Private function declarations ---------------------------------------------*/
 
 /* Function prototypes -------------------------------------------------------*/
@@ -662,6 +662,8 @@ void Class_DJI_Motor_C620::Init(FDCAN_HandleTypeDef *hcan, Enum_DJI_Motor_ID __C
     Gearbox_Rate = __Gearbox_Rate;
     Torque_Max = __Torque_Max;
     this->CAN_Tx_Data = allocate_tx_data(hcan, __CAN_ID);
+
+
 }
 
 /**
@@ -811,6 +813,7 @@ void Class_DJI_Motor_C620::TIM_PID_PeriodElapsedCallback()
     }
     //Out = 0.0f;//test
     Output();
+    dt_pid = DWT_GetDeltaT(&cnt1);
 }
 
 

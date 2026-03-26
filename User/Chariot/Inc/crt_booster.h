@@ -23,7 +23,7 @@
 #include "dvc_referee.h"
 #include "dvc_djimotor.h"
 #include "dvc_minipc.h"
-
+#include "dvc_dwt.h"
 /* Exported macros -----------------------------------------------------------*/
 
 /* Exported types ------------------------------------------------------------*/
@@ -77,7 +77,7 @@ class Class_FSM_Antijamming : public Class_FSM
 {
 public:
     Class_Booster *Booster;
-
+    float Original_Angle;//在卡弹反应状态读取的拨弹盘电机的角度（弧度制）
     void Reload_TIM_Status_PeriodElapsedCallback();
 };
 
@@ -98,11 +98,13 @@ public:
 class Class_Booster
 {
 public:
+    uint8_t Cmd_if_Fire = 0;
     uint8_t Shoot_Flag = 0; //0关闭 1开启 测试发射机构
     float Speed;
     //热量检测有限自动机
     Class_FSM_Heat_Detect FSM_Heat_Detect;
     friend class Class_FSM_Heat_Detect;
+    uint16_t actual_bullet_num=0;
 
     //卡弹策略有限自动机
     Class_FSM_Antijamming FSM_Antijamming;
@@ -114,7 +116,8 @@ public:
     Class_MiniPC *MiniPC;
 
     //拨弹盘电机
-    Class_DJI_Motor_C610 Motor_Driver;
+    Class_DJI_Motor_C620 Motor_Driver;
+    KalmanFilter Kf_Omega;
 
     //摩擦轮电机左
     Class_DJI_Motor_C620 Motor_Friction_Left;
@@ -138,7 +141,7 @@ public:
     inline void Set_Friction_Control_Type(Enum_Friction_Control_Type __Friction_Control_Type);
     inline void Set_Friction_Omega(float __Friction_Omega);
     inline void Set_Driver_Omega(float __Driver_Omega);
-    inline void Set_Booster_Type(Enum_Booster_Type __Booster_Type);
+    // inline void Set_Booster_Type(Enum_Booster_Type __Booster_Type);
     inline void Set_Heat(uint16_t __Heat);
     inline void Set_Cooling_Value(uint16_t __Cooling_Value);
 
@@ -150,12 +153,13 @@ protected:
 
     //常量
     uint16_t Heat_Max = 400;
-    uint16_t Cooling_Value = 80;
+    //热量冷却值,从裁判系统读取，否则默认为24
+    uint16_t Cooling_Value = 24;
     float Heat_Consumption = 10.f;
     //拨弹盘堵转扭矩阈值, 超出被认为卡弹
-    uint16_t Driver_Torque_Threshold = 8500;
+    uint16_t Driver_Torque_Threshold = 13000;
     //摩擦轮单次判定发弹阈值, 超出被认为发射子弹
-    uint16_t Friction_Torque_Threshold = 2000;
+    uint16_t Friction_Torque_Threshold = 3000;
     //摩擦轮速度判定发弹阈值, 超出则说明已经开机
     float Friction_Omega_Threshold = 200;
 
@@ -175,11 +179,11 @@ protected:
     //发射机构状态
     Enum_Booster_Control_Type Booster_Control_Type = Booster_Control_Type_CEASEFIRE;
     Enum_Friction_Control_Type Friction_Control_Type = Friction_Control_Type_DISABLE;
-    Enum_Booster_Type Booster_Type;
+    // Enum_Booster_Type Booster_Type;
     //摩擦轮角速度
     float Friction_Omega = 650.0f;
-    int16_t Fric_High_Rpm = 4100;
-    int16_t Fric_Low_Rpm = 4100;
+    int16_t Fric_High_Rpm = 3750;
+    int16_t Fric_Low_Rpm = 3000;
     //拨弹盘实际的目标速度, 一圈八发子弹
     float Driver_Omega = -2.0f * PI;
     //拨弹轮目标绝对角度 加圈数
@@ -253,10 +257,6 @@ void Class_Booster::Set_Friction_Control_Type(Enum_Friction_Control_Type __Frict
 }
 
 
-void Class_Booster::Set_Booster_Type(Enum_Booster_Type __Booster_Type)
-{
-    Booster_Type = __Booster_Type;
-}
 /**
  * @brief 获得发射机构状态
  *

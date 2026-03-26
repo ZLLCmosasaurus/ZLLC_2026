@@ -366,24 +366,24 @@ void Kalman_Filter_P_Update(KalmanFilter_t *kf)
  * @param kf kf类型定义
  * @return float* 返回滤波值
  */
-float *Kalman_Filter_Update(KalmanFilter_t *kf)
+float *Kalman_Filter_Update(KalmanFilter_t *kf, void* Para1)
 {
     // 0. 获取量测信息
     Kalman_Filter_Measure(kf);
     if (kf->User_Func0_f != NULL)
-        kf->User_Func0_f(kf);
+        kf->User_Func0_f(kf, Para1);
 
     // 先验估计
     // 1. xhat'(k)= A·xhat(k-1) + B·u
     Kalman_Filter_xhatMinusUpdate(kf);
     if (kf->User_Func1_f != NULL)
-        kf->User_Func1_f(kf);
+        kf->User_Func1_f(kf, Para1);
 
     // 预测更新
     // 2. P'(k) = A·P(k-1)·AT + Q
     Kalman_Filter_PminusUpdate(kf);
     if (kf->User_Func2_f != NULL)
-        kf->User_Func2_f(kf);
+        kf->User_Func2_f(kf, Para1);
 
     if (kf->MeasurementValidNum != 0 || kf->UseAutoAdjustment == 0)
     {
@@ -392,14 +392,14 @@ float *Kalman_Filter_Update(KalmanFilter_t *kf)
         Kalman_Filter_SetK(kf);
 
         if (kf->User_Func3_f != NULL)
-            kf->User_Func3_f(kf);
+            kf->User_Func3_f(kf, Para1);
 
         // 融合
         // 4. xhat(k) = xhat'(k) + K(k)·(z(k) - H·xhat'(k))
         Kalman_Filter_xhatUpdate(kf);
 
         if (kf->User_Func4_f != NULL)
-            kf->User_Func4_f(kf);
+            kf->User_Func4_f(kf, Para1);
 
         // 修正方差
         // 5. P(k) = (1-K(k)·H)·P'(k) ==> P(k) = P'(k)-K(k)·H·P'(k)
@@ -416,7 +416,7 @@ float *Kalman_Filter_Update(KalmanFilter_t *kf)
 
     // 自定义函数,可以提供后处理等
     if (kf->User_Func5_f != NULL)
-        kf->User_Func5_f(kf);
+        kf->User_Func5_f(kf, Para1);
 
     // 避免滤波器过度收敛
     // suppress filter excessive convergence
@@ -429,7 +429,7 @@ float *Kalman_Filter_Update(KalmanFilter_t *kf)
     memcpy(kf->FilteredValue, kf->xhat_data, sizeof_float * kf->xhatSize);
 
     if (kf->User_Func6_f != NULL)
-        kf->User_Func6_f(kf);
+        kf->User_Func6_f(kf, Para1);
 
     return kf->FilteredValue;
 }
@@ -477,4 +477,26 @@ static void H_K_R_Adjustment(KalmanFilter_t *kf)
     kf->K.numRows = kf->xhatSize;
     kf->K.numCols = kf->MeasurementValidNum;
     kf->z.numRows = kf->MeasurementValidNum;
+}
+// 初始化卡尔曼滤波器
+void kalman_init(KalmanFilter *kf, float initial_value) {
+    kf->Q = 0.1f;  // 过程噪声协方差
+    kf->R = 1.0f;  // 观测噪声协方差
+    kf->A = 1.0f;  // 状态转移矩阵
+    kf->H = 1.0f;  // 观测矩阵
+    
+    kf->x = initial_value;  // 初始估计值
+    kf->P = 1000.0;  // 初始误差协方差，较大值表示初始的不确定性
+}
+
+// 卡尔曼滤波更新函数
+void kalman_update(KalmanFilter *kf, float measurement) {
+    // 预测步骤
+    float x_pred = kf->A * kf->x;  // 预测的值
+    float P_pred = kf->A * kf->P * kf->A + kf->Q;  // 预测的协方差
+
+    // 更新步骤
+    kf->K = P_pred * kf->H / (kf->H * P_pred * kf->H + kf->R);  // 计算卡尔曼增益
+    kf->x = x_pred + kf->K * (measurement - kf->H * x_pred);  // 更新估计值
+    kf->P = (1 - kf->K * kf->H) * P_pred;  // 更新协方差
 }

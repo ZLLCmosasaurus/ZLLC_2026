@@ -20,6 +20,8 @@
 #include "dvc_lkmotor.h"
 #include "alg_fsm.h"
 #include "dvc_dmmotor.h"
+#include "dvc_dmimu.h"
+#include "kalman_filter.h"
 /* Exported macros -----------------------------------------------------------*/
 
 /* Exported types ------------------------------------------------------------*/
@@ -99,6 +101,70 @@ float Class_Gimbal_Yaw_Motor_GM6020::Get_True_Gyro_Yaw()
 }
 
 float Class_Gimbal_Yaw_Motor_GM6020::Get_True_Angle_Yaw()
+{
+    return (True_Angle_Yaw);
+}
+
+/**
+ * @brief Specialized, yaw轴电机类
+ *
+ */
+class Class_Gimbal_Yaw_Motor_DM4310 : public Class_DM_Motor_J4310
+{
+public:
+    //陀螺仪获取云台角速度
+    Class_IMU *IMU;
+    // Class_DM_IMU *IMU;
+    float Service_time = 0;
+    float K =  0.0242 / 1000000.0f; 
+    // 加速度计KF
+    KalmanFilter Kf_Gyro_Yaw;
+    
+    // Class_PID PID_Angle;
+    // Class_PID PID_Omega;
+
+    inline float Get_Trer_Rad_Yaw();
+    inline float Get_True_Gyro_Yaw();
+    inline float Get_True_Angle_Yaw();
+    inline float Get_True_Angle_Yaw_From_Encoder();
+
+    void Transform_Angle();
+    void Disable();
+    void Transform_EmcoderAngle_To_TrueAngle(); // 0-360°转为-180°至180°
+    void TIM_PID_PeriodElapsedCallback();
+
+protected:
+    //初始化相关常量
+
+    //常量
+
+    //内部变量
+    //IMU获取的欧拉角
+    float True_Rad_Yaw = 0.0f;
+    float True_Angle_Yaw = 0.0f;
+    float True_Gyro_Yaw = 0.0f;
+    //卡尔曼滤波后的Yaw角加速度
+    //编码器获取的相对角度值
+    float EmcoderAngle_To_TrueAngle = 0.0f;
+    //读变量
+
+    //写变量
+
+    //读写变量
+
+    //内部函数    
+};
+float Class_Gimbal_Yaw_Motor_DM4310::Get_Trer_Rad_Yaw()
+{
+    return (True_Rad_Yaw);
+} 
+
+float Class_Gimbal_Yaw_Motor_DM4310::Get_True_Gyro_Yaw()
+{
+    return (True_Gyro_Yaw);
+}
+
+float Class_Gimbal_Yaw_Motor_DM4310::Get_True_Angle_Yaw()
 {
     return (True_Angle_Yaw);
 }
@@ -214,6 +280,60 @@ float Class_Gimbal_Pitch_Motor_LK6010::Get_True_Gyro_Pitch()
     return (True_Gyro_Pitch);
 
 }
+/**
+ * @brief Specialized, pitch轴电机类
+ *
+ */
+class Class_Gimbal_Pitch_Motor_DM4310 : public Class_DM_Motor_J4310
+{
+public:
+    //陀螺仪获取云台角速度
+    Class_IMU *IMU;
+    // Class_DM_IMU *IMU;
+
+
+    inline float Get_True_Rad_Pitch();
+    inline float Get_True_Gyro_Pitch();
+    inline float Get_True_Angle_Pitch();
+
+    void Transform_Angle();
+    void Disable();
+    void TIM_PID_PeriodElapsedCallback();
+protected:
+    //初始化相关变量
+
+    //常量
+
+    // 重力补偿
+    float Gravity_Compensate = 0.0f;
+
+    //内部变量 
+    float True_Rad_Pitch = 0.0f;
+    float True_Angle_Pitch = 0.0f;
+    float True_Gyro_Pitch = 0.0f;
+    //读变量
+
+    //写变量
+
+    //读写变量
+
+    //内部函数
+};
+float Class_Gimbal_Pitch_Motor_DM4310::Get_True_Rad_Pitch()
+{
+    return (True_Rad_Pitch);
+}
+
+float Class_Gimbal_Pitch_Motor_DM4310::Get_True_Angle_Pitch()
+{
+    return (True_Angle_Pitch);
+}
+
+float Class_Gimbal_Pitch_Motor_DM4310::Get_True_Gyro_Pitch()
+{
+    return (True_Gyro_Pitch);
+
+}
 
 /**
  * @brief Specialized, 云台类
@@ -225,18 +345,20 @@ public:
 
     //imu对象
     Class_IMU Boardc_BMI;
+    Class_DM_IMU dmIMU;
+    
+    // DWT_Time_t SysTime;
 
     Class_MiniPC *MiniPC;
 
     /*后期yaw pitch这两个类要换成其父类，大疆电机类*/
 
     // yaw轴电机
-    Class_DJI_Motor_GM6020 Motor_Yaw;
-    Class_DM_Motor_J4310 Motor_Yaw_DM4310;
-    Class_DM_Motor_J4310 Joint_Test;
+    Class_DM_Motor_J4310 Motor_Yaw;
+    Class_Gimbal_Yaw_Motor_DM4310 Motor_Yaw_DM4310;
     // pitch轴电机
-    Class_DJI_Motor_GM6020 Motor_Pitch;
-    Class_DM_Motor_J4310 Motor_Pitch_DM4310;
+    Class_DM_Motor_J4310 Motor_Pitch;
+    Class_Gimbal_Pitch_Motor_DM4310 Motor_Pitch_DM4310;
     //相机pitch轴电机
     Class_DJI_Motor_C610 Motor_Camera;
 
@@ -271,9 +393,11 @@ protected:
     float Yaw_Half_Turns;
 
     // pitch轴最小值
-    float Min_Pitch_Angle = -15.0f;
+    float Min_Pitch_Angle = -20.0f;
+    float Min_Pitch_Angle_Radian = - PI *(20.0/180.0);
     // pitch轴最大值
-    float Max_Pitch_Angle = 25.0f ; //多10°
+    float Max_Pitch_Angle = 35.0f ; //
+    float Max_Pitch_Angle_Radian = PI *(35.0/180.0);
 
     //内部变量 
 
@@ -289,9 +413,13 @@ protected:
 
     // yaw轴角度
     float Target_Yaw_Angle = 0.0f;
+    float SupposedDeg_Yaw = 0.0f;
+    float SupposedSpe_Yaw = 0.0f;
 
     // pitch轴角度
     float Target_Pitch_Angle = 0.0f;
+    float SupposedDeg_Pitch = 0.0f;
+    float SupposedSpe_Pitch = 0.0f;
 
 
     //内部函数

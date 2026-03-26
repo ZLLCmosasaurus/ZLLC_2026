@@ -29,6 +29,7 @@
 #include "config.h"
 #include "dvc_minipc.h"
 #include "drv_math.h"
+#include "alg_fsm.h"
 /* Exported macros -----------------------------------------------------------*/
 #ifdef AGV
 #define MAX_MOTOR_SPEED 796.06f    //当速度为500rpm时，对应每个舵轮速度的最大值为3.14m/s左右 当速度为636.62rpm时，对应每个舵轮速度的最大值为4.09m/s左右 当速度为796.06rpm时，对应每个舵轮速度的最大值为5m/s左右
@@ -80,7 +81,7 @@
 #define RAD_TO_8191 8191.0f / PI / 2.0f
 #endif
 /* Exported types ------------------------------------------------------------*/
-
+class Class_HybridTrackLeg_Chassis;
 /**
  * @brief 底盘冲刺状态枚举
  *
@@ -128,6 +129,26 @@ enum Enum_Pose_Control_Type : uint8_t
     Pose_STANDBY,
     Pose_ENABLE,
     Pose_FLEXIBLE,
+};
+
+enum Enum_Track_Control_Type: uint8_t
+{
+    Track_Off = 0,
+    Track_On,
+};
+
+/**
+ * @brief Specialized, 过热检测有限自动机
+ *
+ */
+class Class_FSM_OverHeated_Detect : public Class_FSM
+{
+public:
+    Class_HybridTrackLeg_Chassis *Chassis;
+
+    float Heat;
+
+    void Reload_TIM_Status_PeriodElapsedCallback();
 };
 
 /**
@@ -178,7 +199,7 @@ public:
     inline float Get_Target_Omega();
     inline float Get_Spin_Omega();
     inline float Get_Relative_Angle();
-    inline Enum_Supercap_Mode Get_Supercap_Mode();
+    // inline Enum_Supercap_Mode Get_Supercap_Mode();
 
     inline void Set_Chassis_Control_Type(Enum_Chassis_Control_Type __Chassis_Control_Type);
     inline void Set_Target_Velocity_X(float __Target_Velocity_X);
@@ -188,7 +209,6 @@ public:
     inline void Set_Now_Velocity_Y(float __Now_Velocity_Y);
     inline void Set_Now_Omega(float __Now_Omega);
     inline void Set_Relative_Angle(float __Relative_Angle);
-    inline void Set_Supercap_Mode(Enum_Supercap_Mode __Supercap_Mode);
 
     inline void Set_Velocity_Y_Max(float __Velocity_Y_Max);
     inline void Set_Velocity_X_Max(float __Velocity_X_Max);
@@ -244,7 +264,7 @@ protected:
 
     //底盘控制方法
     Enum_Chassis_Control_Type Chassis_Control_Type = Chassis_Control_Type_DISABLE;
-    Enum_Supercap_Mode Supercap_Mode = Supercap_DISABLE;
+
     //目标速度X
     float Target_Velocity_X = 0.0f;
     //目标速度Y
@@ -271,6 +291,9 @@ class Class_HybridTrackLeg_Chassis
 public:
     //debug测试用
     uint8_t Chassis_Flag = 0;
+    //过温检测状态机
+    Class_FSM_OverHeated_Detect FSM_OverHeated_Detect;
+    friend class Class_FSM_OverHeated_Detect;
     //斜坡函数加减速速度X
     Class_Slope Slope_Velocity_X;
     //斜坡函数加减速速度Y
@@ -299,6 +322,9 @@ public:
     //履带驱动电机
     Class_DJI_Motor_C620 Motor_Track[2];
 
+    //底部导轮电机
+    Class_DJI_Motor_C620 Motor_Guider[2];
+
     //随动环
     Class_PID Chassis_Follow_PID_Angle;
 
@@ -306,12 +332,14 @@ public:
 
     inline Enum_Chassis_Control_Type Get_Chassis_Control_Type();
     inline Enum_Pose_Control_Type Get_Pose_Control_Type();
+    inline Enum_Track_Control_Type Get_Track_Control_Type();
     inline float Get_Velocity_X_Max();
     inline float Get_Velocity_Y_Max();
     inline float Get_Omega_Max();
     inline float Get_Now_Power();
     inline float Get_Now_Wheel_Power();
     inline float Get_Now_Joint_Power();
+    inline float Get_Now_Joint_Heat();
     inline float Get_Target_Wheel_Power();
     inline float Get_Target_Joint_Power();
     inline float Get_Target_Velocity_X();
@@ -321,13 +349,13 @@ public:
 
     inline void Set_Chassis_Control_Type(Enum_Chassis_Control_Type __Chassis_Control_Type);
     inline void Set_Pose_Control_Type(Enum_Pose_Control_Type __Pose_Control_Type);
+    inline void Set_Track_Control_Type(Enum_Track_Control_Type __Track_Control_Type);
     inline void Set_Target_Velocity_X(float __Target_Velocity_X);
     inline void Set_Target_Velocity_Y(float __Target_Velocity_Y);
     inline void Set_Target_Omega(float __Target_Omega);
     inline void Set_Now_Velocity_X(float __Now_Velocity_X);
     inline void Set_Now_Velocity_Y(float __Now_Velocity_Y);
     inline void Set_Now_Omega(float __Now_Omega);
-    inline void Set_Supercap_Mode(Enum_Supercap_Mode __Supercap_Mode);
 
     inline void Set_Velocity_Y_Max(float __Velocity_Y_Max);
     inline void Set_Velocity_X_Max(float __Velocity_X_Max);
@@ -345,9 +373,13 @@ protected:
     //角速度限制
     float Omega_Max;
     //底盘小陀螺模式角速度
-    float Spin_Omega = 6.0f;
+    float Spin_Omega = 8.0f;
     //常量
 
+    //履带的角速度
+    float Target_Track_Omega = 10.0f;
+    //导轮的角速度
+    float Target_Guider_Omega = 10.0f;
     //电机理论上最大输出
     float Wheel_Max_Output = 16384.0f;
 
@@ -361,6 +393,8 @@ protected:
     //距离车体水平的差值角度
     float Error_Pitch = 0.0f;
 
+    //当前关节电机温度
+    float Joint_Heat = 0.0f;
 
     //当前总功率
     float Now_Power = 0.0f;
@@ -375,8 +409,8 @@ protected:
 
     //底盘控制方法
     Enum_Chassis_Control_Type Chassis_Control_Type = Chassis_Control_Type_DISABLE;
-    Enum_Supercap_Mode Supercap_Mode = Supercap_DISABLE;
     Enum_Pose_Control_Type Pose_Control_Type = Pose_DISABLE;
+    Enum_Track_Control_Type Track_Control_Type = Track_Off;
     //目标速度X
     float Target_Velocity_X = 0.0f;
     //目标速度Y
@@ -390,13 +424,16 @@ protected:
     //当前角速度
     float Now_Omega = 0.0f;
     //缩伸腿角度
-    float Set_Leg_Angle[2] = {0.0f,PI / 3.0f};
+    float Set_Leg_Angle[2] = {-5.0f,35.0f};//{PI / 24.0f,PI / 3.0f};
     //缩伸腿速度
-    float Set_Leg_Velocity[2] = {PI,1.0f};
+    float Set_Leg_Velocity[2] = {2.0f,0.8f};
 
     //内部函数
     void Speed_Resolution();
     void Switch_Pose();
+    void Jointleg_Controller();
+    void Track_Controller();
+    void Guider_Controller();
 };
 
 struct Struct_Streeing_wheel
@@ -590,6 +627,16 @@ Enum_Chassis_Control_Type Class_Streeing_Chassis::Get_Chassis_Control_Type()
 Enum_Pose_Control_Type Class_HybridTrackLeg_Chassis::Get_Pose_Control_Type()
 {
     return (Pose_Control_Type);
+}
+
+/**
+ * @brief 获取履带控制模式
+ * 
+ * @return Enum_Track_Control_Type 履带控制模式
+ */
+Enum_Track_Control_Type Class_HybridTrackLeg_Chassis::Get_Track_Control_Type()
+{
+    return (Track_Control_Type);
 }
 
 /**
@@ -805,10 +852,7 @@ float Class_Tricycle_Chassis::Get_Relative_Angle()
 {
     return (Relative_Angle);
 }
-Enum_Supercap_Mode Class_Tricycle_Chassis::Get_Supercap_Mode()
-{
-    return (Supercap_Mode);
-}
+
 /**
  * @brief 设定底盘控制方法
  *
@@ -835,6 +879,16 @@ void Class_Streeing_Chassis::Set_Chassis_Control_Type(Enum_Chassis_Control_Type 
 void Class_HybridTrackLeg_Chassis::Set_Pose_Control_Type(Enum_Pose_Control_Type __Pose_Control_Type)
 {
     Pose_Control_Type = __Pose_Control_Type;
+}
+
+/**
+ * @brief 设定履带控制模式
+ * 
+ * @param __Track_Control_Type 
+ */
+void Class_HybridTrackLeg_Chassis::Set_Track_Control_Type(Enum_Track_Control_Type __Track_Control_Type)
+{
+    Track_Control_Type = __Track_Control_Type;
 }
 
 /**
@@ -987,15 +1041,12 @@ void Class_Tricycle_Chassis::Set_Relative_Angle(float __Relative_Angle)
 {
     Relative_Angle = __Relative_Angle;
 }
-void Class_Tricycle_Chassis::Set_Supercap_Mode(Enum_Supercap_Mode __Supercap_Mode)
-{
-    Supercap_Mode = __Supercap_Mode;
-}
-void Class_HybridTrackLeg_Chassis::Set_Supercap_Mode(Enum_Supercap_Mode __Supercap_Mode)
-{
-    Supercap_Mode = __Supercap_Mode;
-}
 
+
+float Class_HybridTrackLeg_Chassis::Get_Now_Joint_Heat()
+{
+    return (Joint_Heat);
+}
 #endif
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/
