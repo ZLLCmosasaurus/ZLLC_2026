@@ -75,8 +75,8 @@ void Class_FSM_OverHeated_Detect::Reload_TIM_Status_PeriodElapsedCallback()
  */
 void Class_HybridTrackLeg_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max, float __Omega_Max)
 {
-    //Power_Limit.Init(400,3500);
-    Supercap.Init(&hfdcan2,45.f);
+    //超级电容初始化
+    // Supercap.Init(&hfdcan1,45.f);
 
     Velocity_X_Max = __Velocity_X_Max;
     Velocity_Y_Max = __Velocity_Y_Max;

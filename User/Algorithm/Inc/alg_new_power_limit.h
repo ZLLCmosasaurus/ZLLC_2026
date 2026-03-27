@@ -75,9 +75,9 @@ public:
 protected:
 
     float k1 = 0.0200000001f;
-    float k2 = 530.00f;
-    float k3 = 2.4f / 4.0f;
+    float k2 = 560.00f;
+    float k3 = 2.9f / 4.0f;//2.4f / 4.0f;
 
-    uint8_t Control_Status; // 控制状态
+    uint8_t Control_Status = 0; // 控制状态
 };
 #endif

@@ -59,6 +59,7 @@ void Class_Chariot::Init(float __DR16_Dead_Zone)
         #endif
         //超电
         Chassis.Supercap.Referee = &Referee;
+        Force_Control_Chassis.Supercap.Referee = &Referee;
 
     #elif defined(GIMBAL)
         
@@ -323,12 +324,13 @@ void Class_Chariot::CAN_Gimbal_Rx_Chassis_Callback()
     Chassis_Alive_Flag++;
     Enum_Referee_Data_Robots_ID robo_id;
     Enum_Referee_Game_Status_Stage game_stage;
-    float shoot_speed;
+    int16_t shoot_speed;
     memcpy(&robo_id,CAN_Manage_Object->Rx_Buffer.Data,sizeof(uint8_t));
     memcpy(&game_stage,CAN_Manage_Object->Rx_Buffer.Data+1,sizeof(uint8_t));
-    memcpy(&shoot_speed,CAN_Manage_Object->Rx_Buffer.Data+2,sizeof(float));
+    memcpy(&shoot_speed,CAN_Manage_Object->Rx_Buffer.Data+2,sizeof(int16_t));
     Referee.Set_Robot_ID(robo_id);
     Referee.Set_Game_Stage(game_stage);
+    Booster.Set_Referee_Bullet_Velocity((float)shoot_speed / 1000.0f);
 
 }
 
@@ -1057,45 +1059,40 @@ void Class_Chariot::Control_Booster()
                     Booster.Set_Friction_Control_Type(Friction_Control_Type_ENABLE);
                     Fric_Status = Fric_Status_OPEN;
                 }
-                if(Fric_Status == Fric_Status_OPEN)
+                
+            }
+            if(Fric_Status == Fric_Status_OPEN)
+            {
+                if (VT13.Get_Button_Right() == VT13_Button_PRESSED)
                 {
-                    if (VT13.Get_Button_Right() == VT13_Button_PRESSED)
+                    //自瞄模式
+                    // 静态变量记录上次开火时间
+                    static uint32_t last_fire_time = 0;
+
+                    // 当前 Fire 信号
+                    uint8_t current_fire = MiniPC.Get_Fire_Status();
+
+                    // 获取当前系统时间（毫秒）
+                    uint32_t now = HAL_GetTick();
+
+                    // 开火条件：Fire 有效、冷却完成、热量允许
+                    if (current_fire == 1 &&
+                        (now - last_fire_time) >= 500 &&
+                        Booster.Cmd_if_Fire == 1)   // 假设热量上限为100
                     {
-                        //自瞄模式
-                        // 静态变量记录上次开火时间
-                        static uint32_t last_fire_time = 0;
-
-                        // 当前 Fire 信号
-                        uint8_t current_fire = MiniPC.Get_Fire_Status();
-
-                        // 获取当前系统时间（毫秒）
-                        uint32_t now = HAL_GetTick();
-
-                        // 开火条件：Fire 有效、冷却完成、热量允许
-                        if (current_fire == 1 &&
-                            (now - last_fire_time) >= 500 &&
-                            Booster.Cmd_if_Fire == 1)   // 假设热量上限为100
-                        {
-                            Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
-                            last_fire_time = now;
-                        }
-                    }
-                    else
-                    {
-                        if (VT13.Get_Yaw() < 0.2 && VT13.Get_Yaw() > -0.2)
-                        {
-                            booster_sign = 0;
-                        }
-                        else if (VT13.Get_Yaw() > 0.8 && booster_sign == 0)
-                        {
-                            Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
-                            booster_sign = 1;
-                        }
+                        Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                        last_fire_time = now;
                     }
                 }
-                
-                
-                
+                if (VT13.Get_Yaw() < 0.2 && VT13.Get_Yaw() > -0.2)
+                {
+                    booster_sign = 0;
+                }
+                if (VT13.Get_Yaw() < -0.8 && booster_sign == 0)
+                {
+                    Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                    booster_sign = 1;
+                }
             }
             
         }
@@ -1277,6 +1274,16 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
         Control_Chassis_Omega_TIM_PeriodElapsedCallback();
         //底盘姿态控制
         Chassis.TIM_Calculate_PeriodElapsedCallback(Sprint_Status);
+        //超电使用策略
+        if(Supercap_Control_Status == Supercap_Control_Status_ENABLE)
+        {
+            Force_Control_Chassis.Supercap.Set_Supercap_Usage_Stratage(Supercap_Usage_Stratage_Supercap_BufferPower);
+        }
+        else
+        {
+            Force_Control_Chassis.Supercap.Set_Supercap_Usage_Stratage(Supercap_Usage_Stratage_Referee_BufferPower);
+        }
+        Force_Control_Chassis.Supercap.TIM_Supercap_PeriodElapsedCallback();
         static uint8_t mod2 = 0;
         mod2++;
         if (mod2 == 2)
@@ -1286,6 +1293,7 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
             Force_Control_Chassis.TIM_2ms_Resolution_PeriodElapsedCallback();
             mod2 = 0;
         }
+        Force_Control_Chassis.TIM_1ms_Kalmancale_PeriodElapsedCallback();
     #endif	
     #elif defined(GIMBAL)
 
@@ -1436,7 +1444,6 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
         #ifdef CHASSIS
 						
             Motor_Yaw_DM4310.TIM_Alive_PeriodElapsedCallback();
-            Chassis.Supercap.TIM_Alive_PeriodElapsedCallback();
             #ifndef AGV
             for (auto& wheel : Chassis.Motor_Wheel) {
                 wheel.TIM_Alive_PeriodElapsedCallback();
@@ -1456,6 +1463,7 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
             {
                 TIM1msMod50_Gimbal_Communicate_Alive_PeriodElapsedCallback();
                 Referee.TIM1msMod50_Alive_PeriodElapsedCallback();
+                Force_Control_Chassis.Supercap.TIM_Alive_PeriodElapsedCallback();
                 mod50_mod3 = 0;
             }  
             #ifdef Only_Chassis

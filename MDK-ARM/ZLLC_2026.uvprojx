@@ -654,6 +654,11 @@
               <FileType>8</FileType>
               <FilePath>..\User\Algorithm\Src\alg_new_power_limit.cpp</FilePath>
             </File>
+            <File>
+              <FileName>my_kalman.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User\Algorithm\Src\my_kalman.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

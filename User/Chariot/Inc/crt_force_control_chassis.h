@@ -9,6 +9,7 @@
 #include "kalman_filter.h"
 #include "alg_filter.h"
 #include "alg_slope.h"
+#include "my_kalman.h"
 /**
  * @brief 底盘控制类型
  *
@@ -73,6 +74,10 @@ public:
     // 斜坡函数加减速角速度
     Class_Slope Slope_Omega;
 
+    my_kalman kalman_Now_VelocityX;
+    my_kalman kalman_Now_VelocityY;
+    my_kalman kalman_Now_VelocityZ;
+
     inline float Get_Now_Motor_Power();
 
     inline float Get_Now_Steer_Motor_Power();
@@ -123,6 +128,7 @@ public:
     void TIM_100ms_Alive_PeriodElapsedCallback();
     void TIM_2ms_Resolution_PeriodElapsedCallback();
     void TIM_2ms_Control_PeriodElapsedCallback();
+    void TIM_1ms_Kalmancale_PeriodElapsedCallback();
 protected:
     const float Wheel_Radius = 0.14f/2.0f; // 轮子半径
     const float Wheel_To_Core_Distance = 0.18466f; // 轮投影点距离中心距离
