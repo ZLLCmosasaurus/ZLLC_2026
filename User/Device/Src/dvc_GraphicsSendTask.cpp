@@ -586,7 +586,7 @@ void Char_Init(void)
 	uint8_t bullet_num_label[] = "BULLET :";
 	Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.60 * SCREEN_WIDTH, 20, sizeof(bullet_num_label), 2, Yellow, BulletNumName, bullet_num_label);
 
-	uint8_t antispintype_label[] = "Antispin :";
+	uint8_t antispintype_label[] = "ALIVE :";//临时改了
 	Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.65 * SCREEN_WIDTH, 20, sizeof(antispintype_label), 2, Yellow, BulletNumName, antispintype_label);
 	/*              MINIPC MODE字符*/
 	uint8_t minipc_mode_label[] = "MINIPC :";
@@ -792,23 +792,24 @@ void GimbalStatus_Draw(uint8_t Init_Cnt)
  **********************************************************************************************************/
 void BoosterMode_Draw(uint8_t Init_Cnt)
 {
+	//临时刷一下
 	static uint8_t BoosterModeStatusName[] = "bms";
 	static uint8_t optype;
-	static uint8_t SINGLE[] = "SINGLE";
-	static uint8_t MULTI[] = "MULTI ";
+	static uint8_t ON[] = "ON";
+	static uint8_t OFF[] = "OFF ";
 
 	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
 
-	switch (JudgeReceiveData.Booster_User_Control_Type)
+	switch (JudgeReceiveData.Minipc_Status)
 	{
-	case 0: // Booster_User_Control_Type_SINGLE
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.50 * SCREEN_WIDTH, 20, sizeof(SINGLE), 2, Green, BoosterModeStatusName, SINGLE);
+	case 1: // Booster_User_Control_Type_SINGLE
+		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.55 * SCREEN_WIDTH, 20, sizeof(ON), 2, Green, BoosterModeStatusName, ON);
 		break;
-	case 1: // Booster_User_Control_Type_MULTI
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.50 * SCREEN_WIDTH, 20, sizeof(MULTI), 2, Orange, BoosterModeStatusName, MULTI);
+	case 0: // Booster_User_Control_Type_MULTI
+		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.55 * SCREEN_WIDTH, 20, sizeof(OFF), 2, Orange, BoosterModeStatusName, OFF);
 		break;
 	default:
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.50 * SCREEN_WIDTH, 20, sizeof(SINGLE), 2, Green, BoosterModeStatusName, SINGLE);
+		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.55 * SCREEN_WIDTH, 20, sizeof(OFF), 2, Green, BoosterModeStatusName, OFF);
 		break;
 	}
 }
@@ -849,6 +850,7 @@ void MiniPCMode_Draw(uint8_t Init_Cnt)
  **********************************************************************************************************/
 void Antispin_Draw(uint8_t Init_Cnt)
 {
+	//借一下显示minipc存活
 	static uint8_t AntispinTypeName[] = "atn";
 	static uint8_t optype;
 	static uint8_t On[] = "ON  ";
@@ -856,7 +858,7 @@ void Antispin_Draw(uint8_t Init_Cnt)
 
 	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
 
-	switch (JudgeReceiveData.Minipc_Mode)
+	switch (JudgeReceiveData.Minipc_Status)
 	{
 	case 0: // MiniPC_Mode_ARMOR
 		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.65 * SCREEN_WIDTH, 20, sizeof(Off), 2, Green, AntispinTypeName, Off);
@@ -865,7 +867,7 @@ void Antispin_Draw(uint8_t Init_Cnt)
 		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.65 * SCREEN_WIDTH, 20, sizeof(On), 2, Orange, AntispinTypeName, On);
 		break;
 	default:
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.65 * SCREEN_WIDTH, 20, sizeof(On), 2, Green, AntispinTypeName, On);
+		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.65 * SCREEN_WIDTH, 20, sizeof(Off), 2, Green, AntispinTypeName, Off);
 		break;
 	}
 }
@@ -956,8 +958,8 @@ void GraphicSendtask(void)
 	// 初始化阶段发送所有UI元素
 	if (Init_Cnt > 0)
 	{
-		FrictSpeed_Draw(JudgeReceiveData.booster_fric_omega_left, JudgeReceiveData.booster_fric_omega_right, Init_Cnt);
 		BoosterMode_Draw(Init_Cnt);
+		FrictSpeed_Draw(JudgeReceiveData.booster_fric_omega_left, JudgeReceiveData.booster_fric_omega_right, Init_Cnt);
 		ChassisChange(Init_Cnt);
 		GimbalStatus_Draw(Init_Cnt);
 		// PitchUI_Change(JudgeReceiveData.Pitch_Angle, Init_Cnt);
@@ -965,7 +967,7 @@ void GraphicSendtask(void)
 		// CapDraw(JudgeReceiveData.Supercap_Voltage, Init_Cnt);
 		// MiniPC_Aim_Change(Init_Cnt);
 		// BulletNum_Draw(JudgeReceiveData.Booster_bullet_num, Init_Cnt);
-		// Antispin_Draw(Init_Cnt);
+		//Antispin_Draw(Init_Cnt);
 		//// CapUI_Change(JudgeReceiveData.Supercap_Voltage, Init_Cnt);
 		// RadarDoubleDamage_Draw(Init_Cnt);
 		// MiniPCMode_Draw(Init_Cnt); // 添加MiniPC模式初始化
@@ -976,6 +978,8 @@ void GraphicSendtask(void)
 		Char_Init();	   // 字符
 		ShootLines_Init(); // 枪口线
 		Lanelines_Init();  // 车道线
+
+		BoosterMode_Draw(0);
 
 		// 初始化完成后，保存当前数据作为比较基准
 		memcpy(&Last_JudgeReceiveData, &JudgeReceiveData, sizeof(JudgeReceive_t));
@@ -1098,7 +1102,8 @@ void GraphicSendtask(void)
 			Last_JudgeReceiveData.Radar_Double_Damage_Flag = JudgeReceiveData.Radar_Double_Damage_Flag;
 			break;
 		case 6: // MiniPC模式
-			MiniPCMode_Draw(0);
+			//MiniPCMode_Draw(0);
+			BoosterMode_Draw(0);
 			Last_JudgeReceiveData.Minipc_Mode = JudgeReceiveData.Minipc_Mode;
 			break;
 		case 7:

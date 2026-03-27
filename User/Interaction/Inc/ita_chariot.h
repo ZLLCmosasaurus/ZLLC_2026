@@ -316,6 +316,9 @@ public:
     //底盘云台通讯数据
     float Gimbal_Tx_Pitch_Angle = 0;
 
+    //临时加的上位机存活变量
+    uint8_t minipc_alive = 0;
+
 protected:
 
     //遥控器拨动的死区, 0~1

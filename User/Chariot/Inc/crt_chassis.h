@@ -116,7 +116,7 @@ public:
     //随动环
     //Class_PID Chassis_Follow_PID_Angle;
 
-    void Init(float __Velocity_X_Max = 8.0f, float __Velocity_Y_Max = 8.0f, float __Omega_Max = 6.0f, float __Steer_Power_Ratio = 0.5);
+    void Init(float __Velocity_X_Max = 8.0f, float __Velocity_Y_Max = 8.0f, float __Omega_Max = 20.0f, float __Steer_Power_Ratio = 0.5);
 
     inline Enum_Chassis_Control_Type Get_Chassis_Control_Type();
     inline float Get_Velocity_X_Max();

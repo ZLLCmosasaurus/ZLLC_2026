@@ -195,6 +195,7 @@ typedef struct
 	uint8_t Antispin_Type;
 	uint8_t Gimbal_Control_Type; // 添加云台控制状态字段
 	uint8_t Booster_User_Control_Type;
+	uint8_t minipc_alive;
 	uint16_t booster_fric_omega_left;
 	uint16_t booster_fric_omega_right;
 	uint16_t Booster_bullet_num;

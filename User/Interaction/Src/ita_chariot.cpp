@@ -44,7 +44,7 @@ void Class_Chariot::Init(float __DR16_Dead_Zone)
         Chassis.Init();
 
         // 底盘随动PID环初始化
-        PID_Chassis_Follow.Init(-0.16f, 0.0f, -0.0026f, 0.0f, 2.5f, 4.5f);
+        PID_Chassis_Follow.Init(-0.16f, 0.0f, -0.0013f, 0.0f, 2.5f, 4.5f);
 
         
 		Motor_Yaw.Init(&hfdcan2, LK_Motor_ID_0x141, 200.f, 0, 33.0f, LK_Motor_Control_Method_IMU_ANGLE, LK_Motor_Control_Torque);
@@ -219,7 +219,8 @@ void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback_1()
 {
     uint16_t before_game_bullet_num = 0;
     MiniPC_Type = Enum_MiniPC_Type(CAN_Manage_Object->Rx_Buffer.Data[0]);
-    Antispin_Type = Enum_Antispin_Type(CAN_Manage_Object->Rx_Buffer.Data[1]);
+    //Antispin_Type = Enum_Antispin_Type(CAN_Manage_Object->Rx_Buffer.Data[1]);
+    memcpy(&minipc_alive, &CAN_Manage_Object->Rx_Buffer.Data[1], sizeof(uint8_t));
     memcpy(&Booster_Heat, &CAN_Manage_Object->Rx_Buffer.Data[2], sizeof(uint16_t));
     memcpy(&Booster_fric_omega_right, &CAN_Manage_Object->Rx_Buffer.Data[4], sizeof(uint16_t));
     memcpy(&Booster_bullet_num, &CAN_Manage_Object->Rx_Buffer.Data[6], sizeof(uint16_t));
@@ -322,15 +323,18 @@ void Class_Chariot::CAN_Gimbal_Tx_Chassis_Callback_1()
     uint16_t tmp_fric_omega_right = 0;
     uint16_t tmp_actual_bullet_num = 0;
     uint16_t Heat = 0;
+    uint8_t minipc_alive = 0;
     tmp_fric_omega_left = (uint16_t)abs(Booster.Motor_Friction_Left.Get_Now_Omega_Radian());
     tmp_fric_omega_right = (uint16_t)abs(Booster.Motor_Friction_Right.Get_Now_Omega_Radian());
     tmp_actual_bullet_num = Booster.actual_bullet_num;
     CAN2_Gimbal_Tx_Chassis_Data_1[0] = MiniPC.Get_MiniPC_Type();
     Heat = Booster.FSM_Heat_Detect.Heat;
-    //CAN2_Gimbal_Tx_Chassis_Data_1[1] = MiniPC.Get_Antispin_Type();
+    minipc_alive = MiniPC.Get_Alive_Status();
+    memcpy(CAN2_Gimbal_Tx_Chassis_Data_1 + 1, &minipc_alive, sizeof(uint8_t));
     memcpy(CAN2_Gimbal_Tx_Chassis_Data_1 + 2, &Heat, sizeof(uint16_t));
     memcpy(CAN2_Gimbal_Tx_Chassis_Data_1 + 4, &tmp_fric_omega_right, sizeof(uint16_t));
     memcpy(CAN2_Gimbal_Tx_Chassis_Data_1 + 6, &tmp_actual_bullet_num, sizeof(uint16_t));
+    memcpy(CAN2_Gimbal_Tx_Chassis_Data_1 + 7, &minipc_alive, sizeof(uint8_t));
 }
 #endif
 
@@ -809,6 +813,7 @@ void Class_Chariot::Control_Gimbal()
  *
  */
 #ifdef GIMBAL
+#define DISABLE_ZD_SHOOT
 void Class_Chariot::Control_Booster()
 {
     // 先判断当前活动的控制器
@@ -826,9 +831,14 @@ void Class_Chariot::Control_Booster()
 
             if(DR16.Get_Left_Switch() == DR16_Switch_Status_DOWN)
             {         //自瞄模式火控 上位机控制打弹ee
-                if(MiniPC.Get_Fire_Status() == 1 && MiniPC.Get_MiniPC_Status() == MiniPC_Data_Status_ENABLE){
-                     Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
-                    //Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+                if (MiniPC.Get_MiniPC_Status() == MiniPC_Data_Status_ENABLE)
+                {
+                    // Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                    if (DR16.Get_Yaw() > 0.8f) // 五连发
+                    {
+                        Booster.Set_Booster_Control_Type(Booster_Control_Type_REPEATED);
+                        // Shoot_Flag = 1;
+                    }
                 }
             }
             else
@@ -843,10 +853,10 @@ void Class_Chariot::Control_Booster()
                     Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
                     Shoot_Flag = 1;
                 }
-                if (DR16.Get_Yaw() > 0.8f && Shoot_Flag == 0) // 五连发
+                if (DR16.Get_Yaw() > 0.8f) // 五连发
                 {
-                    Booster.Set_Booster_Control_Type(Booster_Control_Type_MULTI);
-                    Shoot_Flag = 1;
+                    Booster.Set_Booster_Control_Type(Booster_Control_Type_REPEATED);
+                    //Shoot_Flag = 1;
                 }
                 // if (DR16.Get_Yaw() > 0.8f) // 五连发
                 // {
@@ -1031,6 +1041,8 @@ void Class_Chariot::Control_Booster()
 #endif
 
 uint8_t change_time = 0;
+uint32_t Last_Cnt_Omega;
+float Dt_Omega;
 /**
  * @brief 计算回调函数
  *
@@ -1098,7 +1110,13 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
 		
     else if(Chassis.Get_Chassis_Control_Type() == Chassis_Control_Type_SPIN_Positive)
 	{
-		Chassis.Set_Target_Omega(-Chassis.Get_Spin_Omega());
+		//Chassis.Set_Target_Omega(Chassis.Get_Spin_Omega());
+        //补充力控底盘
+        Dt_Omega += DWT_GetDeltaT(&Last_Cnt_Omega);
+
+        float Control_Omega = (4.0f + 1.0f * sinf(2.0 * PI * Dt_Omega)) * PI;
+
+        Chassis.Set_Target_Omega(Control_Omega);
 	}
 		
 	else if(Chassis.Get_Chassis_Control_Type() == Chassis_Control_Type_SPIN_NePositive)
@@ -1441,6 +1459,11 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
             VT13.TIM1msMod50_Alive_PeriodElapsedCallback();
             mod50_mod3 = 0;
         }
+        if (mod50_mod7 % 7 == 0)
+        {
+            MiniPC.TIM1msMod50_Alive_PeriodElapsedCallback();
+            mod50_mod7 = 0;
+        }
 
         Gimbal.Motor_Pitch.TIM_Alive_PeriodElapsedCallback();
         Gimbal.Motor_Pitch_2.TIM_Alive_PeriodElapsedCallback();
@@ -1451,7 +1474,6 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
         Booster.Motor_Friction_Left.TIM_Alive_PeriodElapsedCallback();
         Booster.Motor_Friction_Right.TIM_Alive_PeriodElapsedCallback();
 
-        MiniPC.TIM1msMod50_Alive_PeriodElapsedCallback();
 
 #endif
 

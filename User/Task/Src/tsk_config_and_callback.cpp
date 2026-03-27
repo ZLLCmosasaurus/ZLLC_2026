@@ -621,6 +621,7 @@ extern "C" void Task_Init()
         JudgeReceiveData.Booster_17mm_Heat_Max = chariot.Referee.Get_Booster_17mm_1_Heat_Max();
         JudgeReceiveData.Minipc_Mode = chariot.MiniPC_Type;
 		JudgeReceiveData.Antispin_Type=chariot.Antispin_Type;
+        JudgeReceiveData.minipc_alive = chariot.minipc_alive;
         //JudgeReceiveData.Energy_Left_Rate = chariot.Referee.Get_Energy_Left_Rate();
         // if (chariot.Referee_UI_Refresh_Status == Referee_UI_Refresh_Status_ENABLE)
         //     Init_Cnt = 10;

@@ -219,6 +219,7 @@ public:
     inline void Set_Friction_Control_Type(Enum_Friction_Control_Type __Friction_Control_Type);
     inline void Set_Friction_Omega(float __Friction_Omega);
     inline void Set_Driver_Omega(float __Driver_Omega);
+    inline void Set_Target_Drvier_Angle(float __Driver_Angle);
 
     void TIM_Calculate_PeriodElapsedCallback();
     void Output();
@@ -269,7 +270,10 @@ protected:
 };
 
 /* Exported variables --------------------------------------------------------*/
-
+void Class_Booster::Set_Target_Drvier_Angle(float __Driver_Angle)
+{
+    Driver_Angle = __Driver_Angle;
+}
 /* Exported function declarations --------------------------------------------*/
 
 /**

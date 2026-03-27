@@ -497,7 +497,7 @@ void Class_Booster::Output()
         }
 
 #ifdef Heat_Detect_ENABLE
-        if (FSM_Heat_Detect.Heat + 10 < Referee->Get_Booster_17mm_1_Heat_Max())
+        if (FSM_Heat_Detect.Heat + 30 < Referee->Get_Booster_17mm_1_Heat_Max())
         {
 
             Driver_Angle +=  2.5f * 2.0f * PI / 9.0f;
@@ -552,7 +552,7 @@ void Class_Booster::Output()
         else
         {
             float tmp_omega;
-            tmp_omega = (Default_Driver_Omega - Driver_Omega) / Referee->Get_Booster_17mm_1_Heat_Max() * (FSM_Heat_Detect.Heat + 10.0f) + Driver_Omega;
+            tmp_omega = (Default_Driver_Omega - Driver_Omega) / Referee->Get_Booster_17mm_1_Heat_Max() * (FSM_Heat_Detect.Heat + 20.0f) + Driver_Omega;
             Motor_Driver.Set_Target_Omega_Radian(tmp_omega);
         }
 

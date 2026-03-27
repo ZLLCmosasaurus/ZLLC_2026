@@ -342,7 +342,7 @@ void Class_Steering_Wheel_Chassis::TIM_Calculate_PeriodElapsedCallback(Enum_Spri
 
         if (Supercap.Get_Supercap_Status() != Supercap_Status_DISABLE && __Sprint_Status == Sprint_Status_ENABLE)
         {
-            Power_Management.Max_Power = 40.f + Power_Management.Buffer_Power + Referee->Get_Chassis_Power_Max();
+            Power_Management.Max_Power = 60.f + Power_Management.Buffer_Power + Referee->Get_Chassis_Power_Max();
         }
         else
         {
@@ -392,7 +392,7 @@ void Class_Steering_Wheel_Chassis::TIM_Calculate_PeriodElapsedCallback(Enum_Spri
 
     Supercap.Set_Supercap_Mode(Supercap_ENABLE);
     //Supercap.Set_Limit_Power(Power_Management.Max_Power);               //这样子是优先使用的缓冲功率
-    Supercap.Set_Limit_Power((float)Referee->Get_Chassis_Power_Max() - 10.f);
+    Supercap.Set_Limit_Power((float)Referee->Get_Chassis_Power_Max());
     Supercap.Set_Referee_Limit_Power((uint8_t)Referee->Get_Chassis_Power_Max());
     Supercap.Set_Referee_Buffer_Power(Referee->Get_Chassis_Energy_Buffer());
     Supercap.TIM_Supercap_PeriodElapsedCallback();          //向超电发送信息

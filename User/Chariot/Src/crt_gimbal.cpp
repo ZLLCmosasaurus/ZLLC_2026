@@ -322,9 +322,11 @@ void Class_Gimbal::Output()
             //控制方式
             Motor_Yaw.Set_LK_Motor_Control_Method(LK_Motor_Control_Method_IMU_ANGLE);
             Motor_Pitch.Set_DM_Motor_Control_Method(DM_Motor_Control_Method_MIT_IMU_Angle);
-
-            Target_Yaw_Angle = MiniPC->Get_Rx_Yaw_Angle();
-            Target_Pitch_Angle = MiniPC->Get_Rx_Pitch_Angle();
+            if (MiniPC->Get_Alive_Status())
+            {
+                Target_Yaw_Angle = MiniPC->Get_Rx_Yaw_Angle();
+                Target_Pitch_Angle = MiniPC->Get_Rx_Pitch_Angle();
+            }
             // 限制角度
             Math_Constrain(&Target_Pitch_Angle, Min_Pitch_Angle, Max_Pitch_Angle);
             Math_Constrain(&Target_Yaw_Angle, Min_Yaw_Angle, Max_Yaw_Angle);
