@@ -49,6 +49,7 @@ virtualFolder:
         - path: ../User/Device/Src/dvc_buzzer.cpp
         - path: ../User/Device/Src/dvc_motor_dji.cpp
         - path: ../User/Device/Src/dvc_jd_motor.cpp
+        - path: ../User/Device/Src/dvc_TOFSense.cpp
       folders: []
     - name: Driver
       files:

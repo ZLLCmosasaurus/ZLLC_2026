@@ -233,6 +233,7 @@ public:
     bool Motor_Calibration(Class_DJI_Motor_C610 *Motor, float Cali_Omega, float locked_torque, uint16_t &locked_cnt);
 
     inline bool Get_roll_cali_status();
+    inline bool Get_Pitch_cali_status();
     inline bool Get_Gripper_cali_status();
 
 protected:
@@ -241,17 +242,15 @@ protected:
     float locked_torque = 4.5f;    // 堵转力矩
     bool roll_cali_status = false; // 校准状态，初始为false
 
+    /*Pitch轴校准相关变量*/
+    bool pitch_cali_status = false;
+
     float gripper_offset = 0.0f;           // 夹爪校准后的偏差角度，rad
     float gripper_locked_torque = 1600.0f; // 暂定为8.0f，待测
     bool gripper_cali_status = false;
 
-    float uplift_offset[2] = {0.0f};
-    float uplift_cali_torque; // 待测
-    bool uplift_cali_status[2] = {false};
-
     uint16_t locked_cnt = 0;             // 堵转时间计数
     uint16_t gripper_locked_cnt = 0;     // 夹爪堵转时间计数
-    uint16_t uplift_locked_cnt[2] = {0}; // 抬升堵转时间计数
 };
 
 /**
@@ -276,13 +275,13 @@ public:
     Class_DJI_Motor_GM6020 Motor_6020_J5_Roll_2; // J5 - DJI-G6020
     #endif
 
-    Class_DJI_Motor_C610 Motor_C610_Gripper;     // 夹爪 - C610
     Class_Jodell_Motor Jodell_ERG150T;  // 钧舵ERG150T夹爪电机，兼具Roll和夹爪功能
 
     /*SCARA臂*/
     Class_DM_Motor_J4310 J0_Pitch_4340;
     Class_DM_Motor_J4310 J1_Yaw_8009P;
     Class_DM_Motor_J4310 J2_Yaw_4340P;
+    Class_DM_Motor_J4310 J3_Roll_2325;
     Class_DM_Motor_J4310 J3_Yaw_4340P;
     Class_DM_Motor_J4310 J4_Pitch_4340P;
     Class_DM_Motor_J4310 J5_Yaw_4340P;
@@ -323,6 +322,7 @@ public:
     inline float Get_Target_J0_Pitch_Radian();
     inline float Get_Target_J1_Yaw_Radian();
     inline float Get_Target_J2_Yaw_Radian();
+    inline float Get_Target_J3_Roll_Radian();
     inline float Get_Target_J3_Yaw_Radian();
     inline float Get_Target_J4_Pitch_Radian();
     inline float Get_Target_J5_Yaw_Radian();
@@ -359,6 +359,7 @@ public:
     inline void Set_Target_J0_Pitch_Radian(float __Target_J0_Pitch_Radian);
     inline void Set_Target_J1_Yaw_Radian(float __Target_J1_Yaw_Radian);
     inline void Set_Target_J2_Yaw_Radian(float __Target_J2_Yaw_Radian);
+    inline void Set_Target_J3_Roll_Radian(float __Target_J3_Roll_Radian);
     inline void Set_Target_J3_Yaw_Radian(float __Target_J3_Yaw_Radian);
     inline void Set_Target_J4_Pitch_Radian(float __Target_J4_Pitch_Radian);
     inline void Set_Target_J5_Yaw_Radian(float __Target_J5_Yaw_Radian);
@@ -495,6 +496,9 @@ protected:
     float J2_Yaw_Min_Radian = -2.094f;
     float J2_Yaw_Max_Radian = 2.094f;
 
+    float J3_Roll_Min_Radian = -(150.0f / 180.0f) * PI * GEAR_RATIO;
+    float J3_Roll_Max_Radian = (150.0f / 180.0f) * PI * GEAR_RATIO;
+
     float J3_Yaw_Min_Radian = -0.5f * PI;
     float J3_Yaw_Max_Radian = 0.5f * PI;
 
@@ -555,6 +559,10 @@ protected:
 
     float Target_J2_Yaw_Radian = 0.0f;
     float Target_J2_Yaw_Omega = 0.75f * PI;
+
+    // Set函数中会自己乘以减速比
+    float Target_J3_Roll_Radian;
+    float Target_J3_Roll_Omega;
 
     float Target_J3_Yaw_Radian = 0.0f;
     float Target_J3_Yaw_Omega = 1.25f * PI;
@@ -877,9 +885,14 @@ bool Class_FSM_Calibration::Get_roll_cali_status()
 
 #endif
 
+bool Class_FSM_Calibration::Get_Pitch_cali_status()
+{
+    return (pitch_cali_status);
+}
+
 bool Class_FSM_Calibration::Get_Gripper_cali_status()
 {
-    return gripper_cali_status;
+    return (gripper_cali_status);
 }
 
 float Class_Gimbal::Get_Target_J0_Pitch_Radian()
@@ -895,6 +908,11 @@ float Class_Gimbal::Get_Target_J1_Yaw_Radian()
 float Class_Gimbal::Get_Target_J2_Yaw_Radian()
 {
     return (Target_J2_Yaw_Radian);
+}
+
+float Class_Gimbal::Get_Target_J3_Roll_Radian()
+{
+    return (Target_J3_Roll_Radian);
 }
 
 float Class_Gimbal::Get_Target_J3_Yaw_Radian()
@@ -928,6 +946,12 @@ void Class_Gimbal::Set_Target_J2_Yaw_Radian(float __Target_J2_Yaw_Radian)
 {
     Target_J2_Yaw_Radian = __Target_J2_Yaw_Radian;
     Math_Constrain(&Target_J2_Yaw_Radian, J2_Yaw_Min_Radian, J2_Yaw_Max_Radian);
+}
+
+void Class_Gimbal::Set_Target_J3_Roll_Radian(float __Target_J3_Roll_Radian)
+{
+    Target_J3_Roll_Radian = __Target_J3_Roll_Radian * GEAR_RATIO;
+    Math_Constrain(&Target_J3_Roll_Radian, J3_Roll_Min_Radian, J3_Roll_Max_Radian);
 }
 
 void Class_Gimbal::Set_Target_J3_Yaw_Radian(float __Target_J3_Yaw_Radian)

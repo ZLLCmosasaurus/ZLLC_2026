@@ -24,6 +24,7 @@
 #include "dvc_referee.h"
 #include "dvc_djimotor.h"
 #include "dvc_dmmotor.h"
+#include "dvc_TOFSense.h"
 #include "alg_power_limit.h"
 #include "dvc_supercap.h"
 #include "config.h"
@@ -584,6 +585,9 @@ public:
     Class_DM_Motor_J4310 Track_Motor[2];
     // 抬升机构电机
     Class_DJI_Motor_C620 Uplift_Motor[4];
+
+    // 激光测距模块
+    Class_TOFSense TOFSense;
 
     // 抬升机构校准状态机
     Class_FSM_Calibration_Chassis Calibration_FSM;

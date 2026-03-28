@@ -465,6 +465,9 @@ void Class_Mecanum_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max,
     Track_Motor[0].Init(&hfdcan2, DM_Motor_ID_0xA1, DM_Motor_Control_Method_OMEGA);
     Track_Motor[1].Init(&hfdcan2, DM_Motor_ID_0xA2, DM_Motor_Control_Method_OMEGA);
 
+    // 激光测距模块初始化
+    TOFSense.Init(&huart7, 0);
+
     // 底盘控制方式初始化
     Chassis_Control_Type = Chassis_Control_Type_DISABLE;
 

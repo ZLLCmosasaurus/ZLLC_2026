@@ -341,7 +341,6 @@ void Gimbal_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
         chariot.Gimbal.J2_Yaw_4340P.CAN_RxCpltCallback(CAN_RxMessage->Data);
     }
     break;
-    
     }
 }
 #endif
@@ -358,6 +357,7 @@ void Gimbal_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
     {
     case (0xA4): // J3 - 4340P - Yaw
     {
+        chariot.Gimbal.J3_Roll_2325.CAN_RxCpltCallback(CAN_RxMessage->Data);
         chariot.Gimbal.J3_Yaw_4340P.CAN_RxCpltCallback(CAN_RxMessage->Data);
     }
     break;
@@ -373,12 +373,8 @@ void Gimbal_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
         chariot.Gimbal.J5_Yaw_4340P.CAN_RxCpltCallback(CAN_RxMessage->Data);
     }
     break;
-    
-    case (0x206):
-    {
-        chariot.Gimbal.Motor_C610_Gripper.CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
+
+        break;
     }
 }
 #endif
@@ -540,6 +536,11 @@ void SuperCAP_UART1_Callback(uint8_t *Buffer, uint16_t Length)
 
     chariot.Force_Chassis.Supercap.Set_Now_Power((float)tmp_power / 75.0f);
 }
+
+void TOFSense_UART7_Callback(uint8_t *Buffer, uint16_t Length)
+{
+    chariot.Chassis.TOFSense.TOFSense_UART_RxCplt_Callback(Buffer, Length);
+}
 #endif
 /**
  * @brief USB MiniPC回调函数
@@ -682,8 +683,10 @@ void Task1ms_TIM5_Callback()
         /****************************** 驱动层回调函数 1ms *****************************************/
         // 统一打包发送
         TIM_CAN_PeriodElapsedCallback();
+#ifdef GIMBAL
         // 钧舵电机Modbus发送
         chariot.Gimbal.Jodell_ERG150T.TIM_UART_Tx_PeriodElapsedCallback();
+#endif
 
         static int mod5 = 0, mod100 = 0, mod68 = 0;
         mod5++;
@@ -786,6 +789,7 @@ extern "C" void Task_Init()
     // 裁判系统
     UART_Init(&huart10, Referee_UART10_Callback, 128); // 并未使用环形队列 尽量给长范围增加检索时间 减少丢包
     UART_Init(&huart1, SuperCAP_UART1_Callback, 32);
+    UART_Init(&huart7, TOFSense_UART7_Callback, 32);
 
     SPI_Init(&hspi2, Device_SPI2_Callback);
 #ifdef POWER_LIMIT

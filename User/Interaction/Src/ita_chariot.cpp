@@ -1218,6 +1218,7 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
         if (mod50_mod3 % 3 == 0)
         {
             TIM1msMod50_Gimbal_Communicate_Alive_PeriodElapsedCallback();
+            Chassis.TOFSense.TIM1msMod150_Alive_PeriodElapsedCallback();
             mod50_mod3 = 0;
         }
         if (Get_Gimbal_Status() == Gimbal_Status_DISABLE)
@@ -1318,11 +1319,10 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
         Gimbal.J0_Pitch_4340.TIM_Alive_PeriodElapsedCallback();
         Gimbal.J1_Yaw_8009P.TIM_Alive_PeriodElapsedCallback();
         Gimbal.J2_Yaw_4340P.TIM_Alive_PeriodElapsedCallback();
+        Gimbal.J3_Roll_2325.TIM_Alive_PeriodElapsedCallback();
         Gimbal.J3_Yaw_4340P.TIM_Alive_PeriodElapsedCallback();
         Gimbal.J4_Pitch_4340P.TIM_Alive_PeriodElapsedCallback();
         Gimbal.J5_Yaw_4340P.TIM_Alive_PeriodElapsedCallback();
-        Gimbal.Motor_C610_Gripper.TIM_Alive_PeriodElapsedCallback();
-
         Gimbal.Jodell_ERG150T.TIM1msMod50_Alive_PeriodElapsedCallback();
 
         is_arm_online = (Gimbal.J0_Pitch_4340.Get_DM_Motor_Status() == DJI_Motor_Status_ENABLE ||

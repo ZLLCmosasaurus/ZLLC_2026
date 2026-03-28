@@ -75,15 +75,13 @@ void Class_Gimbal::Init()
     J0_Pitch_4340.Init(&hfdcan1, DM_Motor_ID_0xA1, DM_Motor_Control_Method_POSITION_OMEGA, 0, 20.0f, 20.0f);
     J1_Yaw_8009P.Init(&hfdcan1, DM_Motor_ID_0xA2, DM_Motor_Control_Method_POSITION_OMEGA, 0, 20.0f, 10.0f);
     J2_Yaw_4340P.Init(&hfdcan1, DM_Motor_ID_0xA3, DM_Motor_Control_Method_POSITION_OMEGA, 0, 20.0f, 10.0f);
+    J3_Roll_2325.Init(&hfdcan2, DM_Motor_ID_0xA4, DM_Motor_Control_Method_POSITION_OMEGA);
     J3_Yaw_4340P.Init(&hfdcan2, DM_Motor_ID_0xA4, DM_Motor_Control_Method_POSITION_OMEGA, 0, 20.0f, 10.0f);
     J4_Pitch_4340P.Init(&hfdcan2, DM_Motor_ID_0xA5, DM_Motor_Control_Method_POSITION_OMEGA, 0, 20.0f, 20.0f);
     J5_Yaw_4340P.Init(&hfdcan2, DM_Motor_ID_0xA6, DM_Motor_Control_Method_POSITION_OMEGA, 0, 20.0f, 10.0f);
 
     Jodell_ERG150T.Init(&huart2, 9);
 
-    Motor_C610_Gripper.PID_Angle.Init(42.5f, 5.0f, 0.0f, 0.0f, 500, 500, 500);
-    Motor_C610_Gripper.PID_Omega.Init(1800.0f, 0.0f, 0.0f, 0.0f, 2000, 4000, 10.f, 50.f); // 尝试把速度环的Ki禁用，用于夹爪夹紧
-    Motor_C610_Gripper.Init(&hfdcan2, DJI_Motor_ID_0x206, DJI_Motor_Control_Method_ANGLE);
     /*初始化状态机，不进行初始化的话状态机没法访问云台对象中的电机*/
     Calibration_FSM.Gimbal = this;
     /*初始化轨迹追踪器*/
@@ -117,15 +115,11 @@ void Class_Gimbal::Output()
         J0_Pitch_4340.Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
         J1_Yaw_8009P.Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
         J2_Yaw_4340P.Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
+        J3_Roll_2325.Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
         J3_Yaw_4340P.Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
         J4_Pitch_4340P.Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
         J5_Yaw_4340P.Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
 
-        Motor_C610_Gripper.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
-        Motor_C610_Gripper.PID_Angle.Set_Integral_Error(0.0f);
-        Motor_C610_Gripper.PID_Omega.Set_Integral_Error(0.0f);
-        Motor_C610_Gripper.Set_Target_Omega_Angle(0.0f);
-        Motor_C610_Gripper.Set_Out(0.0f);
         arm_init = false;
     }
     else // 非失能模式
@@ -143,6 +137,9 @@ void Class_Gimbal::Output()
                 J2_Yaw_4340P.Set_Target_Omega(Target_J2_Yaw_Omega);
                 J2_Yaw_4340P.Set_Target_Angle(Target_J2_Yaw_Radian);
 
+                J3_Roll_2325.Set_Target_Omega(Target_J3_Roll_Omega);
+                J3_Roll_2325.Set_Target_Angle(Target_J3_Roll_Radian);
+
                 J3_Yaw_4340P.Set_Target_Omega(Target_J3_Yaw_Omega);
                 J3_Yaw_4340P.Set_Target_Angle(Target_J3_Yaw_Radian);
 
@@ -154,8 +151,7 @@ void Class_Gimbal::Output()
 
                 if (Calibration_FSM.Get_Gripper_cali_status())
                 {
-                    Motor_C610_Gripper.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE); // 用Motor_Test调试时删这一行，因为上面Motor_Test的代码块里写了标志位用于使能和失能
-                    Motor_C610_Gripper.Set_Target_Radian(Target_Gripper_Radian);
+
                 }
             }
             else if ((Get_Gimbal_Control_Type() == Gimbal_Control_Type_MINIPC) && (MiniPC->Get_MiniPC_Status() != MiniPC_Status_DISABLE))
@@ -171,6 +167,7 @@ void Class_Gimbal::Output()
             J0_Pitch_4340.Set_DM_Motor_Control_Method(DM_Motor_Control_Method_POSITION_OMEGA);
             J1_Yaw_8009P.Set_DM_Motor_Control_Method(DM_Motor_Control_Method_POSITION_OMEGA);
             J2_Yaw_4340P.Set_DM_Motor_Control_Method(DM_Motor_Control_Method_POSITION_OMEGA);
+            J3_Roll_2325.Set_DM_Motor_Control_Method(DM_Motor_Control_Method_POSITION_OMEGA);
             J3_Yaw_4340P.Set_DM_Motor_Control_Method(DM_Motor_Control_Method_POSITION_OMEGA);
             J4_Pitch_4340P.Set_DM_Motor_Control_Method(DM_Motor_Control_Method_POSITION_OMEGA);
             J5_Yaw_4340P.Set_DM_Motor_Control_Method(DM_Motor_Control_Method_POSITION_OMEGA);
@@ -178,6 +175,7 @@ void Class_Gimbal::Output()
             J0_Pitch_4340.Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
             J1_Yaw_8009P.Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
             J2_Yaw_4340P.Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
+            J3_Roll_2325.Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
             J3_Yaw_4340P.Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
             J4_Pitch_4340P.Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
             J5_Yaw_4340P.Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
@@ -248,11 +246,11 @@ void Class_Gimbal::TIM_Calculate_PeriodElapsedCallback()
     case (3):
     {
         J2_Yaw_4340P.TIM_Process_PeriodElapsedCallback();
-        Motor_C610_Gripper.TIM_PID_PeriodElapsedCallback();
         break;
     }
     case (4):
     {
+        J3_Roll_2325.TIM_Process_PeriodElapsedCallback();
         J3_Yaw_4340P.TIM_Process_PeriodElapsedCallback();
         break;
     }
@@ -279,34 +277,13 @@ void Class_FSM_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
     case (0):
         /*校准状态*/
         {
-            /*夹爪2006的校准状态机*/
-            if (Gimbal->Motor_C610_Gripper.Get_DJI_Motor_Status() == DJI_Motor_Status_ENABLE && !gripper_cali_status)
-            {
-                gripper_cali_status = Motor_Calibration(&Gimbal->Motor_C610_Gripper, 0.75f, gripper_locked_torque, gripper_locked_cnt);
-            }
-
-            if (gripper_cali_status)
-            {
-                Gimbal->gripper_cali_offset = gripper_offset;
-                Gimbal->Min_gripper_Radian = Gimbal->gripper_cali_offset;
-                Gimbal->Max_gripper_Radian = Gimbal->gripper_cali_offset + 0.95f; // 夹爪张开最大时为0.95f
-            }
-
-            if (gripper_cali_status)
-            {
-                Set_Status(1);
-            }
 
             break;
         }
     case (1):
         /*校准完成状态*/
         {
-            if (Gimbal->Motor_C610_Gripper.Get_DJI_Motor_Status() == DJI_Motor_Status_DISABLE)
-            {
-                gripper_cali_status = false;
-                Set_Status(0);
-            }
+
             break;
         }
     }

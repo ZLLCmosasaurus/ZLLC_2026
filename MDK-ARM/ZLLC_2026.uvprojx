@@ -537,6 +537,11 @@
               <FileType>1</FileType>
               <FilePath>..\User\Driver\Src\agile_modbus.c</FilePath>
             </File>
+            <File>
+              <FileName>dvc_TOFSense.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User\Device\Src\dvc_TOFSense.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
