@@ -196,6 +196,8 @@ targets:
         - .cmsis/libdsp
     excludeList:
       - <virtual_root>/::CMSIS/arm_cortexM7l_math.lib
+    settings:
+      debugger: cortex-debug
     toolchain: AC6
     toolchainConfigMap:
       AC6:
@@ -344,6 +346,8 @@ targets:
         - ../DSP/Include
       libList: []
     excludeList: []
+    settings:
+      debugger: cortex-debug
     toolchain: AC6
     toolchainConfigMap:
       AC6:

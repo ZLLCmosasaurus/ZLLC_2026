@@ -42,7 +42,7 @@ void Class_FSM_Heat_Detect::Reload_TIM_Status_PeriodElapsedCallback()
     {
         // 正常状态
 
-			if (abs(Booster->Motor_Friction_Right.Get_Now_Torque()) >= Booster->Friction_Torque_Threshold && abs(Booster->Motor_Friction_Right.Get_Now_Torque())<=10000 )
+			if (abs(Booster->Motor_Friction_Right.Get_Now_Torque()) >= Booster->Friction_Torque_Threshold && abs(Booster->Motor_Friction_Right.Get_Now_Torque())<=4000 )
         {
             // 大扭矩->检测状态
             Set_Status(1);
@@ -59,7 +59,7 @@ void Class_FSM_Heat_Detect::Reload_TIM_Status_PeriodElapsedCallback()
     {
         // 发射嫌疑状态
 
-        if (Status[Now_Status_Serial].Time >= 30)
+        if (Status[Now_Status_Serial].Time >= 45)
         {
             // 长时间大扭矩->确认是发射了
             Set_Status(2);
@@ -545,17 +545,23 @@ void Class_Booster::Output()
         //根据冷却计算拨弹盘默认速度, 此速度下与冷却均衡
         Default_Driver_Omega = Referee->Get_Booster_17mm_1_Heat_CD() / 10.0f / 9.0f * 2.0f * PI * 2.5f;
         //热量控制
-        if (Driver_Omega <= Default_Driver_Omega)
+        if (FSM_Heat_Detect.Heat + 30 < Referee->Get_Booster_17mm_1_Heat_Max())
         {
-            Motor_Driver.Set_Target_Omega_Radian(Driver_Omega);
+            Motor_Driver.Set_Target_Omega_Radian(2.0f * PI * 2.5f);
         }
         else
         {
-            float tmp_omega;
-            tmp_omega = (Default_Driver_Omega - Driver_Omega) / Referee->Get_Booster_17mm_1_Heat_Max() * (FSM_Heat_Detect.Heat + 20.0f) + Driver_Omega;
-            Motor_Driver.Set_Target_Omega_Radian(tmp_omega);
+            if (Driver_Omega <= Default_Driver_Omega)
+            {
+                Motor_Driver.Set_Target_Omega_Radian(Driver_Omega);
+            }
+            else
+            {
+                float tmp_omega;
+                tmp_omega = (Default_Driver_Omega - Driver_Omega) / Referee->Get_Booster_17mm_1_Heat_Max() * (FSM_Heat_Detect.Heat + 10.0f) + Driver_Omega;
+                Motor_Driver.Set_Target_Omega_Radian(tmp_omega);
+            }
         }
-
         Swtich_To_Angle_Control_Flag = 1;
 
         #endif

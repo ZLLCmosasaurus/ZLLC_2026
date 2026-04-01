@@ -234,7 +234,7 @@ protected:
     // 拨弹盘堵转扭矩阈值, 超出被认为卡弹
     uint16_t Driver_Torque_Threshold = 6000;
     // 摩擦轮单次判定发弹阈值, 超出被认为发射子弹
-    uint16_t Friction_Torque_Threshold = 2000;
+    uint16_t Friction_Torque_Threshold = 1900;
     // 摩擦轮速度判定发弹阈值, 超出则说明已经开机
     float Friction_Omega_Threshold = 600;
 
@@ -261,7 +261,7 @@ protected:
     float Friction_Omega = 680.0f;
     float Target_Bullet_Speed = 23.5f;
     // 拨弹盘实际的目标速度
-    float Driver_Omega = 2.0f * PI * 2.5f * 2.f;
+    float Driver_Omega = 2.0f * PI * 2.5f ;
     // 拨弹轮目标绝对角度 加圈数
     float Driver_Angle = 0.0f;
     // 读写变量

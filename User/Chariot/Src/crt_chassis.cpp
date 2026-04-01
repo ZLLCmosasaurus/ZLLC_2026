@@ -343,6 +343,10 @@ void Class_Steering_Wheel_Chassis::TIM_Calculate_PeriodElapsedCallback(Enum_Spri
         if (Supercap.Get_Supercap_Status() != Supercap_Status_DISABLE && __Sprint_Status == Sprint_Status_ENABLE)
         {
             Power_Management.Max_Power = 60.f + Power_Management.Buffer_Power + Referee->Get_Chassis_Power_Max();
+            if(Supercap.Get_Buffer_Power() <= 60.f)
+            {
+                Power_Management.Max_Power = Referee->Get_Chassis_Power_Max(); 
+            }
         }
         else
         {

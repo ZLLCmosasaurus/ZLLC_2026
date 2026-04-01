@@ -334,6 +334,11 @@
           <WinNumber>1</WinNumber>
           <ItemText>Supercap_Tx_Data,0x0A</ItemText>
         </Ww>
+        <Ww>
+          <count>37</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>hfdcan1</ItemText>
+        </Ww>
       </WatchWindow1>
       <WatchWindow2>
         <Ww>

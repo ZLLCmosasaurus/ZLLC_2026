@@ -1112,11 +1112,12 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
 	{
 		//Chassis.Set_Target_Omega(Chassis.Get_Spin_Omega());
         //补充力控底盘
-        Dt_Omega += DWT_GetDeltaT(&Last_Cnt_Omega);
+        // Dt_Omega += DWT_GetDeltaT(&Last_Cnt_Omega);
 
-        float Control_Omega = (4.0f + 1.0f * sinf(2.0 * PI * Dt_Omega)) * PI;
+        // float Control_Omega = (4.0f + 1.0f * sinf(2.0 * PI * Dt_Omega)) * PI;
 
-        Chassis.Set_Target_Omega(Control_Omega);
+        // Chassis.Set_Target_Omega(Control_Omega);
+        Chassis.Set_Target_Omega(Chassis.Get_Spin_Omega());
 	}
 		
 	else if(Chassis.Get_Chassis_Control_Type() == Chassis_Control_Type_SPIN_NePositive)
