@@ -561,6 +561,26 @@ protected:
     Enum_DR16_Switch_Status Judge_DR16_Switch_Status(Enum_DR16_Switch_Status Now_Status, Enum_DR16_Switch_Status Pre_Status);
 };
 
+class Class_FSM_Off_Ledder : public Class_FSM_Ledder
+{
+public:
+    void Reload_TIM_Status_PeriodElapsedCallback();
+protected:
+    // ToF测距模块回传的底盘离地高度
+    float Height_Meter;
+    // 抬升触地时的底盘阈值高度
+    float Trigger_Height;
+    // 底盘高度判断误差量，数值越小判断越严格，不可超过台阶高度的1/2
+    float Trigger_Offset;
+
+    // 下到第一个台阶时，抬升机构全部接触台阶的高度
+    float ledder_prepare[4];
+    // 底盘前端/后端腾空时，对应测抬升机构触地的高度
+    float ledder_touch[4];
+    // 底盘完全腾空后抬升机构收起
+    float ledder_finish[4];
+};
+
 class Class_Mecanum_Chassis
 {
 public:

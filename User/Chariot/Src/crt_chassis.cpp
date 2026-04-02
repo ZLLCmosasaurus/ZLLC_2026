@@ -830,6 +830,7 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
 {
     Status[Now_Status_Serial].Time++;
 
+    /*获取Yaw拨盘状态，用于控制状态机*/
     Switch_Status = Judge_DR16_Switch_Status(DR16_Right, DR16_Pre_Right);
     if (Yaw >= 0.95f)
     {
@@ -844,12 +845,14 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
         Yaw_cnt = 0;
     }
 
+    // 获取当前抬升机构高度用于做增量赋值
     float target_rad[4] = {0.0f};
     for (int i = 0; i < 4; i++)
     {
         target_rad[i] = Chassis->Get_Target_Uplift_Radian(i);
     }
 
+    // 状态机具体逻辑
     switch (Now_Status_Serial)
     {
     case (0): // 准备阶段，抬升机构抬高，准备触地
@@ -859,7 +862,8 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
         Chassis->Set_Target_Uplift_Radian(2, ledder_prepare[2]);
         Chassis->Set_Target_Uplift_Radian(3, ledder_prepare[3]);
 
-        if(TRIGGER_CNT > 1) TRIGGER_CNT = 0;
+        if (TRIGGER_CNT > 1)
+            TRIGGER_CNT = 0;
 
         bool is_ready = true;
         for (int i = 0; i < 4; i++)
@@ -882,7 +886,8 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
         Chassis->Set_Target_Uplift_Radian(2, ledder_1_touch[2]);
         Chassis->Set_Target_Uplift_Radian(3, ledder_1_touch[3]);
 
-        if(TRIGGER_CNT > 2) TRIGGER_CNT = 1;
+        if (TRIGGER_CNT > 2)
+            TRIGGER_CNT = 1;
 
         bool is_ready = true;
         for (int i = 0; i < 4; i++)
@@ -900,7 +905,8 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
 
     case (2): // 此状态抬升机构将整车抬起
     {
-        if(TRIGGER_CNT > 3) TRIGGER_CNT = 2;
+        if (TRIGGER_CNT > 3)
+            TRIGGER_CNT = 2;
 
         for (int i = 0; i < 4; i++)
         {
@@ -926,7 +932,8 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
 
     case (3): // 此状态为登上第一个台阶后的抬升机构复位状态
     {
-        if(TRIGGER_CNT > 4) TRIGGER_CNT = 3;
+        if (TRIGGER_CNT > 4)
+            TRIGGER_CNT = 3;
 
         Chassis->Set_Target_Uplift_Radian(0, ledder_1_over[0]);
         Chassis->Set_Target_Uplift_Radian(1, ledder_1_over[1]);
@@ -949,7 +956,8 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
 
     case (4): // 次状态为抬升机构下降至第二个台阶触地位置
     {
-        if(TRIGGER_CNT > 5) TRIGGER_CNT = 4;
+        if (TRIGGER_CNT > 5)
+            TRIGGER_CNT = 4;
 
         Chassis->Set_Target_Uplift_Radian(0, ledder_2_touch[0]);
         Chassis->Set_Target_Uplift_Radian(1, ledder_2_touch[1]);
@@ -972,7 +980,8 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
 
     case (5): // 此状态车身整体被抬起
     {
-        if(TRIGGER_CNT > 6) TRIGGER_CNT = 5;
+        if (TRIGGER_CNT > 6)
+            TRIGGER_CNT = 5;
 
         for (int i = 0; i < 4; i++)
         {
@@ -1001,6 +1010,105 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
         Chassis->Set_Target_Uplift_Radian(1, ledder_2_over[1]);
         Chassis->Set_Target_Uplift_Radian(2, ledder_2_over[2]);
         Chassis->Set_Target_Uplift_Radian(3, ledder_2_over[3]);
+
+        bool is_ready = true;
+        for (int i = 0; i < 4; i++)
+        {
+            is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Omega_Radian()) <= 0.05f);
+        }
+
+        TRIGGER_CNT = 0;
+
+        break;
+    }
+    }
+}
+
+void Class_FSM_Off_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
+{
+    Status[Now_Status_Serial].Time++;
+
+    /*获取Yaw拨盘状态，用于控制状态机*/
+    Switch_Status = Judge_DR16_Switch_Status(DR16_Right, DR16_Pre_Right);
+    if (Yaw >= 0.95f)
+    {
+        Yaw_cnt++;
+        if (DR16_Right == DR16_Switch_Status_UP && Yaw_cnt == 1)
+        {
+            TRIGGER_CNT++;
+        }
+    }
+    else if (Yaw == 0.0f)
+    {
+        Yaw_cnt = 0;
+    }
+
+    // 获取当前抬升机构高度用于做增量赋值
+    float target_rad[4] = {0.0f};
+    for (int i = 0; i < 4; i++)
+    {
+        target_rad[i] = Chassis->Get_Target_Uplift_Radian(i);
+    }
+
+    // 获取当前ToF高度
+    Height_Meter = Chassis->TOFSense.Get_Now_Distance();
+
+    switch (Now_Status_Serial)
+    {
+    case (0): // 下台阶准备状态，此状态下四个抬升全部触地，从第二个台阶下到第一个台阶时开启
+    {
+        Chassis->Set_Target_Uplift_Radian(0, ledder_prepare[0]);
+        Chassis->Set_Target_Uplift_Radian(1, ledder_prepare[1]);
+        Chassis->Set_Target_Uplift_Radian(2, ledder_prepare[2]);
+        Chassis->Set_Target_Uplift_Radian(3, ledder_prepare[3]);
+
+        bool is_ready = true;
+        for (int i = 0; i < 4; i++)
+        {
+            is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Omega_Radian()) <= 0.1f);
+        }
+
+        // 根据ToF测距模块回传的数据判断是否可以下放一侧抬升
+        if (is_ready && fabs(Height_Meter - Trigger_Height) <= Trigger_Offset)
+        {
+            Set_Status(1);
+        }
+
+        break;
+    }
+
+    case (1):
+    {
+        Chassis->Set_Target_Uplift_Radian(0, ledder_touch[0]);
+        Chassis->Set_Target_Uplift_Radian(1, ledder_touch[1]);
+        Chassis->Set_Target_Uplift_Radian(2, ledder_touch[2]);
+        Chassis->Set_Target_Uplift_Radian(3, ledder_touch[3]);
+
+        if (TRIGGER_CNT > 1)
+            TRIGGER_CNT = 0;
+
+        bool is_ready = true;
+        for (int i = 0; i < 4; i++)
+        {
+            is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Omega_Radian()) <= 0.1f);
+        }
+
+        if (is_ready && TRIGGER_CNT == 1)
+        {
+            Set_Status(2);
+        }
+
+        break;
+    }
+
+    case (2):
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            target_rad[i] -= PI * 0.01f;
+            Math_Constrain(target_rad + i, ledder_finish[i], ledder_touch[i]);
+            Chassis->Set_Target_Uplift_Radian(i, target_rad[i]);
+        }
 
         bool is_ready = true;
         for (int i = 0; i < 4; i++)

@@ -29,8 +29,6 @@ enum Jodell_Motor_Control_Status
 {
     Jodell_Motor_Control_ENABLE = 0,
     Jodell_Motor_Control_DISABLE,
-    Jodell_Motor_Control_GRIPPER,
-    Jodell_Motor_Control_ANGLE
 };
 
 enum Jodell_Tx_Frame_Type
@@ -68,6 +66,9 @@ public:
 
     void TIM_UART_Tx_PeriodElapsedCallback();
 
+    inline void Set_Motor_Control_Status(Jodell_Motor_Control_Status __Motor_Control_Status);
+    inline Jodell_Motor_Working_Status Get_Motor_Working_Status();
+
     inline void Set_Target_Roll(float __Target_Roll);
     inline void Set_Target_Omega(float __Target_Omega);
     inline void Set_Target_Torque(float __Target_Torque);
@@ -75,6 +76,10 @@ public:
     inline float Get_Target_Roll();
     inline float Get_Target_Omega();
     inline float Get_Target_Torque();
+
+    inline float Get_Now_Omega();
+    inline float Get_Now_Roll();
+    inline uint8_t Get_Now_Gripper_Position();
 
     inline void Set_Gripper_Position(uint8_t __Target_Gripper_Position);
     inline uint8_t Get_Gripper_Position();
@@ -137,6 +142,26 @@ inline float Class_Jodell_Motor::Get_Target_Roll()
     return Target_Roll;
 }
 
+inline float Class_Jodell_Motor::Get_Target_Torque()
+{
+    return Target_Torque;
+}
+
+inline float Class_Jodell_Motor::Get_Now_Omega()
+{
+    return Roll_Data.Now_Omega;
+}
+
+inline float Class_Jodell_Motor::Get_Now_Roll()
+{
+    return Roll_Data.Now_Angle;
+}
+
+inline uint8_t Class_Jodell_Motor::Get_Now_Gripper_Position()
+{
+    return Gripper_Data.Now_Position;
+}
+
 inline void Class_Jodell_Motor::Set_Gripper_Position(uint8_t __Target_Gripper_Position)
 {
     Target_Gripper_Position = __Target_Gripper_Position;
@@ -155,4 +180,14 @@ inline void Class_Jodell_Motor::Set_Target_Roll(float __Target_Roll)
 inline void Class_Jodell_Motor::Set_Target_Torque(float __Target_Torque)
 {
     Target_Torque = __Target_Torque;
+}
+
+inline void Class_Jodell_Motor::Set_Motor_Control_Status(Jodell_Motor_Control_Status __Motor_Control_Status)
+{
+    Motor_Control_Status = __Motor_Control_Status;
+}
+
+inline Jodell_Motor_Working_Status Class_Jodell_Motor::Get_Motor_Working_Status()
+{
+    return Motor_Working_Status;
 }

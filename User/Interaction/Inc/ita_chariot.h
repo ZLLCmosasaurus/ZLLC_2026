@@ -218,7 +218,7 @@ public:
     void Control_Chassis();
 
     // 角度目标值
-    float tmp_j0_pitch_radian, tmp_j1_yaw_radian, tmp_j2_yaw_radian, tmp_j3_yaw_radian, tmp_j4_pitch_radian, tmp_j5_yaw_radian;
+    float tmp_j0_pitch_radian, tmp_j1_yaw_radian, tmp_j2_yaw_radian, tmp_j3_roll_radian, tmp_j4_pitch_radian, tmp_j5_yaw_radian;
     float tmp_gripper_radian;
     // 遥控器摇杆值
     float dr16_right_x, dr16_right_y, dr16_left_x, dr16_left_y, dr16_yaw;

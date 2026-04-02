@@ -120,7 +120,6 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>DLGUARM</Key>
-          <Name>ろO</Name>
         </SetRegEntry>
         <SetRegEntry>
           <Number>0</Number>
@@ -509,6 +508,11 @@
           <count>71</count>
           <WinNumber>1</WinNumber>
           <ItemText>Rx_Data[0]</ItemText>
+        </Ww>
+        <Ww>
+          <count>72</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>roll_MIT_Mode</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>

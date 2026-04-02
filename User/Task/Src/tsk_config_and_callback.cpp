@@ -358,23 +358,14 @@ void Gimbal_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
     case (0xA4): // J3 - 4340P - Yaw
     {
         chariot.Gimbal.J3_Roll_2325.CAN_RxCpltCallback(CAN_RxMessage->Data);
-        chariot.Gimbal.J3_Yaw_4340P.CAN_RxCpltCallback(CAN_RxMessage->Data);
     }
     break;
 
     case (0xA5): // J4 - 4340P - Pitch
     {
-        chariot.Gimbal.J4_Pitch_4340P.CAN_RxCpltCallback(CAN_RxMessage->Data);
+        chariot.Gimbal.J4_Pitch_2325.CAN_RxCpltCallback(CAN_RxMessage->Data);
     }
     break;
-
-    case (0xA6): // J5 - 4340P - Yaw
-    {
-        chariot.Gimbal.J5_Yaw_4340P.CAN_RxCpltCallback(CAN_RxMessage->Data);
-    }
-    break;
-
-        break;
     }
 }
 #endif
@@ -683,14 +674,11 @@ void Task1ms_TIM5_Callback()
         /****************************** 驱动层回调函数 1ms *****************************************/
         // 统一打包发送
         TIM_CAN_PeriodElapsedCallback();
-#ifdef GIMBAL
-        // 钧舵电机Modbus发送
-        chariot.Gimbal.Jodell_ERG150T.TIM_UART_Tx_PeriodElapsedCallback();
-#endif
 
-        static int mod5 = 0, mod100 = 0, mod68 = 0;
+        static int mod5 = 0, mod100 = 0, mod20 = 0, mod68 = 0;
         mod5++;
         mod100++;
+        mod20++;
         mod68++;
 #ifdef CHASSIS
         if (mod5 == 4)
@@ -715,6 +703,14 @@ void Task1ms_TIM5_Callback()
             chariot.Referee.TIM_UART_Tx_PeriodElapsedCallback();
 #endif
             mod100 = 0;
+        }
+        if (mod20 == 20)
+        {
+#ifdef GIMBAL
+            // 钧舵电机Modbus发送
+            chariot.Gimbal.Jodell_ERG150T.TIM_UART_Tx_PeriodElapsedCallback();
+#endif
+            mod20 = 0;
         }
         if (mod68 == 68)
         {

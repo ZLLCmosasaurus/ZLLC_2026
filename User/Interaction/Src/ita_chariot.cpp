@@ -951,7 +951,7 @@ void Class_Chariot::Control_Gimbal()
     tmp_j0_pitch_radian = Gimbal.Get_Target_J0_Pitch_Radian();
     tmp_j1_yaw_radian = Gimbal.Get_Target_J1_Yaw_Radian();
     tmp_j2_yaw_radian = Gimbal.Get_Target_J2_Yaw_Radian();
-    tmp_j3_yaw_radian = Gimbal.Get_Target_J3_Yaw_Radian();
+    tmp_j3_roll_radian = Gimbal.Get_Target_J3_Roll_Radian();
     tmp_j4_pitch_radian = Gimbal.Get_Target_J4_Pitch_Radian();
     tmp_j5_yaw_radian = Gimbal.Get_Target_J5_Yaw_Radian();
 
@@ -962,18 +962,19 @@ void Class_Chariot::Control_Gimbal()
     // 其余位置都是遥控器控制
     else if (DR16.Get_Left_Switch() == DR16_Switch_Status_MIDDLE) // 左中，摇杆控制机械臂
     {
+        Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
 
         tmp_j0_pitch_radian = 0.0f;
         tmp_j1_yaw_radian = 0.0f;
         tmp_j2_yaw_radian = 0.0f;
-        tmp_j3_yaw_radian = 0.0f;
+        tmp_j3_roll_radian = 0.0f;
         tmp_j4_pitch_radian = 0.0f;
         tmp_j5_yaw_radian = 0.0f;
 
         Gimbal.Set_Target_J0_Pitch_Radian(tmp_j0_pitch_radian);
         Gimbal.Set_Target_J1_Yaw_Radian(tmp_j1_yaw_radian);
         Gimbal.Set_Target_J2_Yaw_Radian(tmp_j2_yaw_radian);
-        Gimbal.Set_Target_J3_Yaw_Radian(tmp_j3_yaw_radian);
+        Gimbal.Set_Target_J3_Roll_Radian(tmp_j3_roll_radian);
         Gimbal.Set_Target_J4_Pitch_Radian(tmp_j4_pitch_radian);
         Gimbal.Set_Target_J5_Yaw_Radian(tmp_j5_yaw_radian);
     }
@@ -981,49 +982,49 @@ void Class_Chariot::Control_Gimbal()
     {
         if (DR16.Get_Right_Switch() == DR16_Switch_Status_DOWN)
         {
-            if (dr16_right_y >= 0.8f)
-            // 右摇杆往上拨切换到蜷缩状态，这个状态两个大臂收起，防止冲下台阶时重心侧翻和撞地
-            {
-                // j1 - 0.637
-                // j2 - -2.094
-                // j3 - -1.0832
-                tmp_j0_pitch_radian = 0.0f;
-                tmp_j1_yaw_radian = 0.637f;
-                tmp_j2_yaw_radian = -2.094f;
-                tmp_j3_yaw_radian = -1.0832f;
-                tmp_j4_pitch_radian = 0.0f;
-                tmp_j5_yaw_radian = 0.0f;
-            }
-            else if (dr16_right_y <= -0.8f)
-            {
-                // 右摇杆往下拨切换到初始位姿，方便底盘通过台阶
-                tmp_j0_pitch_radian = 0.0f;
-                tmp_j1_yaw_radian = 0.0f;
-                tmp_j2_yaw_radian = 0.0f;
-                tmp_j3_yaw_radian = 0.0f;
-                tmp_j4_pitch_radian = 0.0f;
-                tmp_j5_yaw_radian = 0.0f;
-            }
+            // if (dr16_right_y >= 0.8f)
+            // // 右摇杆往上拨切换到蜷缩状态，这个状态两个大臂收起，防止冲下台阶时重心侧翻和撞地
+            // {
+            //     // j1 - 0.637
+            //     // j2 - -2.094
+            //     // j3 - -1.0832
+            //     tmp_j0_pitch_radian = 0.0f;
+            //     tmp_j1_yaw_radian = 0.637f;
+            //     tmp_j2_yaw_radian = -2.094f;
+            //     tmp_j3_yaw_radian = -1.0832f;
+            //     tmp_j4_pitch_radian = 0.0f;
+            //     tmp_j5_yaw_radian = 0.0f;
+            // }
+            // else if (dr16_right_y <= -0.8f)
+            // {
+            //     // 右摇杆往下拨切换到初始位姿，方便底盘通过台阶
+            //     tmp_j0_pitch_radian = 0.0f;
+            //     tmp_j1_yaw_radian = 0.0f;
+            //     tmp_j2_yaw_radian = 0.0f;
+            //     tmp_j3_yaw_radian = 0.0f;
+            //     tmp_j4_pitch_radian = 0.0f;
+            //     tmp_j5_yaw_radian = 0.0f;
+            // }
         }
         else if (DR16.Get_Right_Switch() == DR16_Switch_Status_MIDDLE)
         {
-            tmp_j0_pitch_radian = Offline_Controller_Data.Angle[0];
-            tmp_j1_yaw_radian = Offline_Controller_Data.Angle[1];
-            tmp_j2_yaw_radian = Offline_Controller_Data.Angle[2];
-            tmp_j3_yaw_radian = Offline_Controller_Data.Angle[3];
-            tmp_j4_pitch_radian = Offline_Controller_Data.Angle[4];
-            tmp_j5_yaw_radian = Offline_Controller_Data.Angle[5];
-            // 夹爪控制
-            tmp_gripper_radian += dr16_right_y * DR16_Gripper_Resolution;
+            // tmp_j0_pitch_radian = Offline_Controller_Data.Angle[0];
+            // tmp_j1_yaw_radian = Offline_Controller_Data.Angle[1];
+            // tmp_j2_yaw_radian = Offline_Controller_Data.Angle[2];
+            // tmp_j3_yaw_radian = Offline_Controller_Data.Angle[3];
+            // tmp_j4_pitch_radian = Offline_Controller_Data.Angle[4];
+            // tmp_j5_yaw_radian = Offline_Controller_Data.Angle[5];
+            // // 夹爪控制
+            // tmp_gripper_radian += dr16_right_y * DR16_Gripper_Resolution;
         }
         Gimbal.Set_Target_J0_Pitch_Radian(tmp_j0_pitch_radian);
         Gimbal.Set_Target_J1_Yaw_Radian(tmp_j1_yaw_radian);
         Gimbal.Set_Target_J2_Yaw_Radian(tmp_j2_yaw_radian);
-        Gimbal.Set_Target_J3_Yaw_Radian(tmp_j3_yaw_radian);
+        Gimbal.Set_Target_J3_Roll_Radian(tmp_j3_roll_radian);
         Gimbal.Set_Target_J4_Pitch_Radian(tmp_j4_pitch_radian);
         Gimbal.Set_Target_J5_Yaw_Radian(tmp_j5_yaw_radian);
     }
-    else // 左下，摇杆控制底盘，机械臂保持原来的姿态
+    else
     {
         Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
     }
@@ -1320,17 +1321,18 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
         Gimbal.J1_Yaw_8009P.TIM_Alive_PeriodElapsedCallback();
         Gimbal.J2_Yaw_4340P.TIM_Alive_PeriodElapsedCallback();
         Gimbal.J3_Roll_2325.TIM_Alive_PeriodElapsedCallback();
-        Gimbal.J3_Yaw_4340P.TIM_Alive_PeriodElapsedCallback();
-        Gimbal.J4_Pitch_4340P.TIM_Alive_PeriodElapsedCallback();
-        Gimbal.J5_Yaw_4340P.TIM_Alive_PeriodElapsedCallback();
-        Gimbal.Jodell_ERG150T.TIM1msMod50_Alive_PeriodElapsedCallback();
+        Gimbal.J4_Pitch_2325.TIM_Alive_PeriodElapsedCallback();
+        if (mod50_mod3 == 1)
+        {
+            Gimbal.Jodell_ERG150T.TIM1msMod50_Alive_PeriodElapsedCallback();
+        }
 
         is_arm_online = (Gimbal.J0_Pitch_4340.Get_DM_Motor_Status() == DJI_Motor_Status_ENABLE ||
                          Gimbal.J1_Yaw_8009P.Get_DM_Motor_Status() == DJI_Motor_Status_ENABLE ||
                          Gimbal.J2_Yaw_4340P.Get_DM_Motor_Status() == DJI_Motor_Status_ENABLE ||
-                         Gimbal.J3_Yaw_4340P.Get_DM_Motor_Status() == DJI_Motor_Status_ENABLE ||
-                         Gimbal.J4_Pitch_4340P.Get_DM_Motor_Status() == DJI_Motor_Status_ENABLE ||
-                         Gimbal.J5_Yaw_4340P.Get_DM_Motor_Status() == DJI_Motor_Status_ENABLE);
+                         Gimbal.J3_Roll_2325.Get_DM_Motor_Status() == DJI_Motor_Status_ENABLE ||
+                         Gimbal.J4_Pitch_2325.Get_DM_Motor_Status() == DJI_Motor_Status_ENABLE ||
+                         Gimbal.Jodell_ERG150T.Get_Motor_Working_Status() == Jodell_Motor_Working_ENABLE);
 
         if (!is_arm_online)
             Gimbal.arm_init = false; // 如果机械臂掉线，arm_init设为false
