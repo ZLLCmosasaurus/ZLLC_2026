@@ -324,15 +324,16 @@ void TIM_CAN_PeriodElapsedCallback()
     static uint8_t mod5 = 0,mod100 = 0,mod20 = 0;
     mod5++, mod100++,mod20++;
 
-    CAN_Send_Data(&hfdcan1, 0x200, CAN1_0x200_Tx_Data, 8);              //行进电机
-    CAN_Send_Data(&hfdcan1, 0x1ff, CAN1_0x1ff_Tx_Data, 8);              //转向电机
-
-    if (mod5 == 5)  //200Hz
+    if (mod5 == 2)  //500Hz
     {
+        CAN_Send_Data(&hfdcan1, 0x200, CAN1_0x200_Tx_Data, 8);              //行进电机
+        CAN_Send_Data(&hfdcan2, 0x1ff, CAN2_0x1ff_Tx_Data, 8);              //转向电机
+        // CAN_Send_Data(&hfdcan1, 0x1ff, CAN1_0x1ff_Tx_Data, 8);              //转向电机
+        // CAN_Send_Data(&hfdcan3, 0x200, CAN3_0x200_Tx_Data, 8);
         mod5 = 0;  
     }
     
-    if (mod100 == 10) //10Hz
+    if (mod100 == 10) //100Hz
     {
         // CAN_Send_Data(&hfdcan3, 0x191, CAN3_Chassis_Tx_Data_G, 8);
         mod100 = 0;
@@ -348,7 +349,7 @@ void TIM_CAN_PeriodElapsedCallback()
         // CAN_Send_Data(&hfdcan3, 0x196, CAN3_Chassis_Tx_Data_F, 8);
         CAN_Send_Data(&hfdcan2, 0x78, CAN_Chassis_Tx_Data, 8);
         //超电
-        CAN_Send_Data(&hfdcan2, 0x66, CAN_Supercap_Tx_Data, 8);
+        // CAN_Send_Data(&hfdcan2, 0x66, CAN_Supercap_Tx_Data, 8);
         mod20 = 0;
     }
     #elif defined (GIMBAL)

@@ -131,22 +131,22 @@ uint8_t *allocate_tx_data(FDCAN_HandleTypeDef *hcan, Enum_DJI_Motor_ID __CAN_ID)
         break;
         case (DJI_Motor_ID_0x205):
         {
-            tmp_tx_data_ptr = &(CAN2_0x1fe_Tx_Data[0]);
+            tmp_tx_data_ptr = &(CAN2_0x1ff_Tx_Data[0]);
         }
         break;
         case (DJI_Motor_ID_0x206):
         {
-            tmp_tx_data_ptr = &(CAN2_0x1fe_Tx_Data[2]);
+            tmp_tx_data_ptr = &(CAN2_0x1ff_Tx_Data[2]);
         }
         break;
         case (DJI_Motor_ID_0x207):
         {
-            tmp_tx_data_ptr = &(CAN2_0x1fe_Tx_Data[4]);
+            tmp_tx_data_ptr = &(CAN2_0x1ff_Tx_Data[4]);
         }
         break;
         case (DJI_Motor_ID_0x208):
         {
-            tmp_tx_data_ptr = &(CAN2_0x1fe_Tx_Data[6]);
+            tmp_tx_data_ptr = &(CAN2_0x1ff_Tx_Data[6]);
         }
         break;
         case (DJI_Motor_ID_0x209):

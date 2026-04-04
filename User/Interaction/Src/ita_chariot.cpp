@@ -635,10 +635,14 @@ void Class_Chariot::Control_Booster()
                   (MiniPC.Get_Rx_Yaw_Angle() != 0.f || MiniPC.Get_Rx_Pitch_Angle() != 0.f)){                 //后边两个判断似乎不需要
                     Booster.Set_Booster_Control_Type(Booster_Control_Type_REPEATED);
                 }           //打完后会自动切到停火
-                    
                 else if (MiniPC.Get_Auto_aim_Status() == Auto_aim_Status_DISABLE){    
                     Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
                 }
+
+                if(MiniPC.Get_Rx_Yaw_Angle() == 0.f && MiniPC.Get_Rx_Pitch_Angle() == 0.f){
+                    Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+                }
+
                 break;
             }
             case (DR16_Switch_Status_UP):

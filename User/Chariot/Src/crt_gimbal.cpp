@@ -98,8 +98,9 @@ float tmp_Target_Angle = 0.0f, tmp_Target_Pitch_Angle = 0.0f, test_c = -1800;
 extern float Sin_Single;
 void Class_Gimbal::Output()
 {
+    static uint32_t camera_switch_clpt_time = 0;
     static uint32_t camera_switch_time = 0;
-    static uint8_t camera_switch_flag = 0;
+    static uint8_t camera_switch_flag = 0, camera_switch_clpt_flag = 0;
     static uint8_t Curise_Flag = 0;                   //当前模式是否是巡航，是否处于全向感知标志位
     static float pre_yaw_angle = 0.0f, pre_pitch_angle = 0.0f, pre_main_yaw_angle = 0.0f;
 
@@ -126,6 +127,8 @@ void Class_Gimbal::Output()
         Curise_Flag = 0;
         camera_switch_flag = 0;
         camera_switch_time = 0;
+        camera_switch_clpt_flag = 0;
+        camera_switch_clpt_time = 0;
     }
     else // 非失能模式
     {
@@ -153,6 +156,8 @@ void Class_Gimbal::Output()
             Curise_Flag        = 0;
             camera_switch_flag = 0;
             camera_switch_time = 0;
+            camera_switch_clpt_flag = 0;
+            camera_switch_clpt_time = 0;
             pre_yaw_angle      = 0.0f;
             pre_pitch_angle    = Motor_Pitch.Get_Transform_Angle();
             pre_main_yaw_angle = Boardc_BMI.Get_Angle_Yaw();
@@ -163,6 +168,8 @@ void Class_Gimbal::Output()
                 Curise_Flag        = 0;                     //保证从巡航切进来后能正确进入开启巡航
                 camera_switch_time = 0;
                 camera_switch_flag = 1;
+                camera_switch_clpt_time = 0;
+                camera_switch_clpt_flag = 0;
 
                 Target_Yaw_Angle      = 0.0f;
                 Target_Pitch_Angle    = 0.0f;
@@ -183,6 +190,8 @@ void Class_Gimbal::Output()
 
                 if(fabs(Motor_Main_Yaw.Get_Transform_Angle() - Target_Main_Yaw_Angle) < 1.0f){
                     camera_switch_flag = 0;             //清空状态
+                    camera_switch_clpt_time = 0;                    //初始进入置零
+                    camera_switch_clpt_flag = 1;                    //标志刚完成全向感知
                 }
 
                 pre_yaw_angle      = 0.0f;
@@ -211,10 +220,10 @@ void Class_Gimbal::Output()
                     Motor_Yaw.Set_Target_Omega_Angle(-CRUISE_YAW_SPEED);
                 }
 
-                if(Motor_Pitch.Get_Transform_Angle() < -15.0f){
+                if(Motor_Pitch.Get_Transform_Angle() < -5.0f){
                     Motor_Pitch.Set_Target_Omega_Angle(CRUISE_PITCH_SPEED);
                 }
-                else if(Motor_Pitch.Get_Transform_Angle() > 15.0f){
+                else if(Motor_Pitch.Get_Transform_Angle() > 20.0f){
                     Motor_Pitch.Set_Target_Omega_Angle(-CRUISE_PITCH_SPEED);
                 }
 
@@ -277,6 +286,23 @@ void Class_Gimbal::Output()
                 }
             }
 
+            if(camera_switch_clpt_flag){
+                camera_switch_clpt_time ++;
+                if(camera_switch_clpt_time > 1500){
+                    camera_switch_clpt_flag = 0;
+                }
+                
+                Motor_Main_Yaw.Set_LK_Motor_Control_Method(LK_Motor_Control_Method_ANGLE);
+                Target_Main_Yaw_Angle = pre_main_yaw_angle;
+                Angle_Continuity_Process(&Target_Main_Yaw_Angle, Boardc_BMI.Get_Angle_Yaw());
+
+                Motor_Main_Yaw.Set_Target_Angle(Target_Main_Yaw_Angle);
+                return;
+            }
+            else{
+                camera_switch_clpt_time = 0;
+            }
+
             // 大yaw控制逻辑   由上位机控制是否转动
             if(fabs(MiniPC->Get_Rx_Target_Omega_Yaw_Main()) < 0.01f){
                 Motor_Main_Yaw.Set_LK_Motor_Control_Method(LK_Motor_Control_Method_ANGLE);
@@ -301,6 +327,8 @@ void Class_Gimbal::Output()
             Curise_Flag = 0;
             camera_switch_flag = 0;
             camera_switch_time = 0;
+            camera_switch_clpt_flag = 0;
+            camera_switch_clpt_time = 0;
 
             Motor_Yaw.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
             Motor_Pitch.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);

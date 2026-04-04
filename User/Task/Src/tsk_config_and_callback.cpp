@@ -92,26 +92,26 @@ void Chassis_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
             break;
         }
         #ifdef AGV
-        case (0x205):
-        {
-            chariot.Chassis.Motor_Steer[0].CAN_RxCpltCallback(CAN_RxMessage->Data);
-            break;
-        }
-        case (0x206):
-        {
-            chariot.Chassis.Motor_Steer[1].CAN_RxCpltCallback(CAN_RxMessage->Data);
-            break;
-        }
-        case (0x207):
-        {
-            chariot.Chassis.Motor_Steer[2].CAN_RxCpltCallback(CAN_RxMessage->Data);
-            break;
-        }
-        case (0x208):
-        {
-            chariot.Chassis.Motor_Steer[3].CAN_RxCpltCallback(CAN_RxMessage->Data);
-            break;
-        }
+        // case (0x205):
+        // {
+        //     chariot.Chassis.Motor_Steer[0].CAN_RxCpltCallback(CAN_RxMessage->Data);
+        //     break;
+        // }
+        // case (0x206):
+        // {
+        //     chariot.Chassis.Motor_Steer[1].CAN_RxCpltCallback(CAN_RxMessage->Data);
+        //     break;
+        // }
+        // case (0x207):
+        // {
+        //     chariot.Chassis.Motor_Steer[2].CAN_RxCpltCallback(CAN_RxMessage->Data);
+        //     break;
+        // }
+        // case (0x208):
+        // {
+        //     chariot.Chassis.Motor_Steer[3].CAN_RxCpltCallback(CAN_RxMessage->Data);
+        //     break;
+        // }
         #endif
     }
 }
@@ -147,7 +147,26 @@ void Chassis_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
             chariot.Motor_Main_Yaw.CAN_RxCpltCallback(CAN_RxMessage->Data);
             break;
         }
-
+        case (0x205):
+        {
+            chariot.Chassis.Motor_Steer[0].CAN_RxCpltCallback(CAN_RxMessage->Data);
+            break;
+        }
+        case (0x206):
+        {
+            chariot.Chassis.Motor_Steer[1].CAN_RxCpltCallback(CAN_RxMessage->Data);
+            break;
+        }
+        case (0x207):
+        {
+            chariot.Chassis.Motor_Steer[2].CAN_RxCpltCallback(CAN_RxMessage->Data);
+            break;
+        }
+        case (0x208):
+        {
+            chariot.Chassis.Motor_Steer[3].CAN_RxCpltCallback(CAN_RxMessage->Data);
+            break;
+        }
     }
 }
 #endif
@@ -175,7 +194,7 @@ void Chassis_Device_CAN3_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage){
         {
             chariot.Chassis.Motor_Steer[3].MA600_Data_Process(CAN_RxMessage);
             break;
-        }   
+        }
     }
 }
 #endif
@@ -432,7 +451,7 @@ void Task100us_TIM4_Callback()
         chariot.Gimbal.Boardc_BMI.TIM_Calculate_PeriodElapsedCallback();     
 
         //开始比赛但是遥控器断连了
-        if(chariot.Referee.Get_Game_Stage() == Referee_Game_Status_Stage_BATTLE && chariot.DR16.Get_DR16_Status() == DR16_Status_DISABLE){                               //比赛开始状态
+        if(chariot.Referee.Get_Game_Stage() == Referee_Game_Status_Stage_BATTLE && chariot.DR16.Get_DR16_Status() == DR16_Status_DISABLE && chariot.Referee.Get_Referee_Status() == Referee_Status_ENABLE){                               //比赛开始状态
             chariot.DR16.Set_Left_Switch(DR16_Switch_Status_DOWN);                  //保险 强制上位机
             chariot.DR16.Set_Right_Switch(DR16_Switch_Status_DOWN);                 //强制上位机自动打弹
             chariot.TIM_Control_Callback();                                         //里面上位机离线的相关处理了

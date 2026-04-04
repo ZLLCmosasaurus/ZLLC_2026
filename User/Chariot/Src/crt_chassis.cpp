@@ -55,7 +55,7 @@ void Class_Tricycle_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max
     //电机PID批量初始化
     for (int i = 0; i < 4; i++)
     {
-        Motor_Wheel[i].PID_Omega.Init(1000.0f, 0.0f, 0.0f, 0.0f, Motor_Wheel[i].Get_Output_Max(), Motor_Wheel[i].Get_Output_Max());
+        Motor_Wheel[i].PID_Omega.Init(500.0f, 0.0f, 0.0f, 0.0f, Motor_Wheel[i].Get_Output_Max(), Motor_Wheel[i].Get_Output_Max());
     }
 
     Motor_Wheel[0].Init(&hfdcan1, DJI_Motor_ID_0x201);
@@ -66,30 +66,30 @@ void Class_Tricycle_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max
     #ifdef AGV
     //舵向电机PID初始化
 
-    Motor_Steer[0].PID_Angle.Init(12.f, 0.0f, 0.0f, 0.0f, Motor_Steer[0].Get_Output_Max(), Motor_Steer[0].Get_Output_Max());
+    Motor_Steer[0].PID_Angle.Init(10.f, 0.0f, 0.0f, 0.0f, Motor_Steer[0].Get_Output_Max(), Motor_Steer[0].Get_Output_Max());
     Motor_Steer[0].PID_Omega.Init(1000.0f, 0.0f, 0.0f, 0.0f, 8000, Motor_Steer[0].Get_Output_Max());
     
-    Motor_Steer[1].PID_Angle.Init(12.f, 0.0f, 0.0f, 0.0f, Motor_Steer[1].Get_Output_Max(), Motor_Steer[1].Get_Output_Max());
+    Motor_Steer[1].PID_Angle.Init(10.f, 0.0f, 0.0f, 0.0f, Motor_Steer[1].Get_Output_Max(), Motor_Steer[1].Get_Output_Max());
     Motor_Steer[1].PID_Omega.Init(1000.0f, 0.0f, 0.0f, 0.0f, 8000, Motor_Steer[1].Get_Output_Max());
 
-    Motor_Steer[2].PID_Angle.Init(12.f, 0.0f, 0.0f, 0.0f, Motor_Steer[2].Get_Output_Max(), Motor_Steer[2].Get_Output_Max());
+    Motor_Steer[2].PID_Angle.Init(10.f, 0.0f, 0.0f, 0.0f, Motor_Steer[2].Get_Output_Max(), Motor_Steer[2].Get_Output_Max());
     Motor_Steer[2].PID_Omega.Init(1000.0f, 0.0f, 0.0f, 0.0f, 8000, Motor_Steer[2].Get_Output_Max());
 
-    Motor_Steer[3].PID_Angle.Init(12.f, 0.0f, 0.0f, 0.0f, Motor_Steer[3].Get_Output_Max(), Motor_Steer[3].Get_Output_Max());
+    Motor_Steer[3].PID_Angle.Init(10.f, 0.0f, 0.0f, 0.0f, Motor_Steer[3].Get_Output_Max(), Motor_Steer[3].Get_Output_Max());
     Motor_Steer[3].PID_Omega.Init(1000.0f, 0.0f, 0.0f, 0.0f, 8000, Motor_Steer[3].Get_Output_Max());
 
 
     //舵向电机ID初始化
-    Motor_Steer[0].Init(&hfdcan1, DJI_Motor_ID_0x205);
-    Motor_Steer[1].Init(&hfdcan1, DJI_Motor_ID_0x206);
-    Motor_Steer[2].Init(&hfdcan1, DJI_Motor_ID_0x207);
-    Motor_Steer[3].Init(&hfdcan1, DJI_Motor_ID_0x208);
+    Motor_Steer[0].Init(&hfdcan2, DJI_Motor_ID_0x205);
+    Motor_Steer[1].Init(&hfdcan2, DJI_Motor_ID_0x206);
+    Motor_Steer[2].Init(&hfdcan2, DJI_Motor_ID_0x207);
+    Motor_Steer[3].Init(&hfdcan2, DJI_Motor_ID_0x208);
 
     //舵向电机零点位置初始化
     Motor_Steer[0].Set_Zero_Position(0.36000001f);               //应该是轮子朝向的正方向，行进轮超前，并且顺时针转动为正方向的角度
-    Motor_Steer[1].Set_Zero_Position(0.47999999f);
+    Motor_Steer[1].Set_Zero_Position(0.48f);
     Motor_Steer[2].Set_Zero_Position(1.63);
-    Motor_Steer[3].Set_Zero_Position(-2.51999998f);
+    Motor_Steer[3].Set_Zero_Position(-2.518f);
     #endif
 
     //底盘控制方式初始化
@@ -400,7 +400,7 @@ void Class_Tricycle_Chassis::TIM_Calculate_PeriodElapsedCallback()
     {
         // 缓冲环限制功率
         Power_Management.Buffer_Power = 0.0f;    //Referee->Get_Chassis_Energy_Buffer() - 30.0f; 
-        // Power_Management.Buffer_Power = (Referee->Get_Chassis_Energy_Buffer() - 30.0f) * 1.5f;
+        //Power_Management.Buffer_Power = (Referee->Get_Chassis_Energy_Buffer() - 30.0f) * 1.5f;
         Math_Constrain(&Power_Management.Buffer_Power, -50.0f, 30.0f);
 
         if (Supercap.Get_Supercap_Status() != Supercap_Status_DISABLE)              //&& Sprint_Status == Sprint_Status_ENABLE
@@ -427,7 +427,7 @@ void Class_Tricycle_Chassis::TIM_Calculate_PeriodElapsedCallback()
         {
             // Power_Management.Max_Power = Power_Management.Buffer_Power + Referee->Get_Chassis_Power_Max();
             supercap_flag = 0;
-            Power_Management.Max_Power = Referee->Get_Chassis_Power_Max();              //不吃缓冲能量
+            Power_Management.Max_Power = Referee->Get_Chassis_Power_Max() - 8.0f;              //不吃缓冲能量
         }
     }
     else
@@ -445,11 +445,22 @@ void Class_Tricycle_Chassis::TIM_Calculate_PeriodElapsedCallback()
 
     for (int i = 0; i < 4; i++) // 数据传递处理
     {
-        // 都是计算转子的
-        Power_Management.Motor_Data[i].feedback_omega = Motor_Wheel[i].Get_Now_Omega_Radian() * RAD_TO_RPM * Motor_Wheel[i].Get_Gearbox_Rate();
-        Power_Management.Motor_Data[i].feedback_torque = Motor_Wheel[i].Get_Now_Torque() * M3508_CMD_CURRENT_TO_TORQUE; // 与减速比有关
-        Power_Management.Motor_Data[i].torque = Motor_Wheel[i].Get_Out() * M3508_CMD_CURRENT_TO_TORQUE;                 // 与减速比有关
-        Power_Management.Motor_Data[i].pid_output = Motor_Wheel[i].Get_Out();
+
+        if(i == 3){
+            Power_Management.Motor_Data[i].feedback_omega = 0;
+            Power_Management.Motor_Data[i].feedback_torque = 0; // 与减速比有关
+            Power_Management.Motor_Data[i].torque = 0;                 // 与减速比有关
+            Power_Management.Motor_Data[i].pid_output = 0;
+        }
+        else{
+            // 都是计算转子的
+            Power_Management.Motor_Data[i].feedback_omega = Motor_Wheel[i].Get_Now_Omega_Radian() * RAD_TO_RPM * Motor_Wheel[i].Get_Gearbox_Rate();
+            Power_Management.Motor_Data[i].feedback_torque = Motor_Wheel[i].Get_Now_Torque() * M3508_CMD_CURRENT_TO_TORQUE; // 与减速比有关
+            Power_Management.Motor_Data[i].torque = Motor_Wheel[i].Get_Out() * M3508_CMD_CURRENT_TO_TORQUE;                 // 与减速比有关
+            Power_Management.Motor_Data[i].pid_output = Motor_Wheel[i].Get_Out();
+        }
+
+        
 
         Power_Management.Motor_Data[i + 4].feedback_omega = Motor_Steer[i].Get_Now_Omega_Radian() * RAD_TO_RPM * Motor_Steer[i].Get_Gearbox_Rate();
         Power_Management.Motor_Data[i + 4].feedback_torque = Motor_Steer[i].Get_Now_Torque() * M3508_CMD_CURRENT_TO_TORQUE;
@@ -489,7 +500,12 @@ void Class_Tricycle_Chassis::TIM_Calculate_PeriodElapsedCallback()
     #endif
 
     Supercap.Set_Supercap_Mode(Supercap_ENABLE);
-    Supercap.Set_Limit_Power(Power_Management.Max_Power);               //这样子是优先使用的缓冲功率
+    if(Referee->Get_Referee_Status() != Referee_Status_DISABLE){
+        Supercap.Set_Limit_Power(Referee->Get_Chassis_Power_Max());               //这样子是优先使用的缓冲功率
+    }
+    else{
+        Supercap.Set_Limit_Power(60.0f);
+    }
     Supercap.Set_Referee_Limit_Power((uint8_t)Referee->Get_Chassis_Power_Max());
     Supercap.Set_Referee_Buffer_Power(Referee->Get_Chassis_Energy_Buffer());
     Supercap.TIM_Supercap_PeriodElapsedCallback();

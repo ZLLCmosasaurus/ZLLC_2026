@@ -220,11 +220,29 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart){
     //意外错误处理
     if (huart->Instance == UART7)
     {
-        huart->ErrorCode = 0;
+        huart->ErrorCode = 0;     
+        __HAL_UART_CLEAR_FLAG(huart, UART_FLAG_ORE);
+        __HAL_UART_CLEAR_FLAG(huart, UART_FLAG_PE);
+        __HAL_UART_CLEAR_FLAG(huart, UART_FLAG_FE);
+        __HAL_UART_CLEAR_FLAG(huart, UART_FLAG_NE);
+
         UART7_Manage_Object.Rx_Length = 0;
         memset(UART7_Manage_Object.Rx_Buffer, 0, UART_BUFFER_SIZE);
         HAL_UARTEx_ReceiveToIdle_DMA(huart, UART7_Manage_Object.Rx_Buffer, UART7_Manage_Object.Rx_Buffer_Length);
 		__HAL_DMA_DISABLE_IT(&hdma_uart7_rx, DMA_IT_HT);
+    }
+    if(huart->Instance == USART10){
+        huart->ErrorCode = 0;     
+        __HAL_UART_CLEAR_FLAG(huart, UART_FLAG_ORE);
+        __HAL_UART_CLEAR_FLAG(huart, UART_FLAG_PE);
+        __HAL_UART_CLEAR_FLAG(huart, UART_FLAG_FE);
+        __HAL_UART_CLEAR_FLAG(huart, UART_FLAG_NE);
+
+        UART10_Manage_Object.Rx_Length = 0;
+        memset(UART10_Manage_Object.Rx_Buffer, 0, UART_BUFFER_SIZE);
+        HAL_UARTEx_ReceiveToIdle_DMA(huart, UART10_Manage_Object.Rx_Buffer, UART10_Manage_Object.Rx_Buffer_Length);
+
+        // else
     }
 }
 
