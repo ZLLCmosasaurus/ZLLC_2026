@@ -58,6 +58,7 @@ void Class_MiniPC::Data_Process()
   tmp_yaw = Pack_Rx.yaw /1000.0f;
   tmp_pitch = Pack_Rx.pitch /1000.0f;
   Fire = Pack_Rx.Fire;
+  alive = Pack_Rx.alive;
   
   // Self_aim(target_x, target_y, target_z + camera_distance, &tmp_yaw, &tmp_pitch, &Distance);
   // Self_aim(target_x, target_y, target_z, &tmp_yaw, &tmp_pitch, &Distance);

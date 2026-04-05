@@ -49,8 +49,10 @@ uint8_t CAN2_0xxf5_Tx_Data[8];
 uint8_t CAN2_0xxf6_Tx_Data[8];
 uint8_t CAN2_0xxf7_Tx_Data[8];
 uint8_t CAN2_0xxf8_Tx_Data[8];
-uint8_t CAN2_Gimbal_Tx_Chassis_Data[8];  //云台给底盘发送缓冲区
-uint8_t CAN2_Chassis_Tx_Gimbal_Data[8];
+uint8_t CAN2_Gimbal_Tx_Chassis_Data[8];   // 云台给底盘发送缓冲区
+uint8_t CAN2_Chassis_Tx_Gimbal_Data[8];   // 底盘给云台发送缓冲区
+uint8_t CAN2_Gimbal_Tx_Chassis_Data_1[8]; // 云台给底盘发送缓冲区
+uint8_t CAN2_Chassis_Tx_Gimbal_Data_1[8]; // 底盘给云台发送缓冲区
 
 uint8_t CAN3_0x1ff_Tx_Data[8];
 uint8_t CAN3_0x1fe_Tx_Data[8];
@@ -234,6 +236,8 @@ void CAN_Init(FDCAN_HandleTypeDef *hcan, CAN_Call_Back Callback_Function)
         // HAL_FDCAN_ConfigGlobalFilter(&hfdcan1,FDCAN_REJECT,FDCAN_REJECT,FDCAN_REJECT_REMOTE,FDCAN_REJECT_REMOTE);
         // HAL_FDCAN_ConfigFifoWatermark(&hfdcan1, FDCAN_CFG_RX_FIFO0, 1);			
         HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
+        // 在CAN1初始化中明确禁用FIFO1中断
+        //HAL_FDCAN_DeactivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO1_NEW_MESSAGE);
     }
     else if (hcan->Instance == FDCAN2)
     {
@@ -334,14 +338,16 @@ void TIM_CAN_PeriodElapsedCallback()
     {
         mod5 = 0;
         //轮向 3508    
-        CAN_Send_Data(&hfdcan1, 0x200, CAN1_0x200_Tx_Data, 8);		
+        CAN_Send_Data(&hfdcan1, 0x200, CAN1_0x200_Tx_Data, 8);	
+        CAN_Send_Data(&hfdcan2, 0x68, CAN2_Chassis_Tx_Gimbal_Data, 8);
+        CAN_Send_Data(&hfdcan2, 0x89, CAN2_Chassis_Tx_Gimbal_Data_1, 8);	
 //        //舵向 3508
-        CAN_Send_Data(&hfdcan1, 0x1ff, CAN1_0x1ff_Tx_Data, 8);		
+        CAN_Send_Data(&hfdcan1, 0x1ff, CAN1_0x1ff_Tx_Data, 8);			
     }
 		
-    if (mod100 == 10) //10Hz
+    if (mod100 == 10) //100Hz
     {
-        CAN_Send_Data(&hfdcan2, 0x88, CAN2_Chassis_Tx_Gimbal_Data, 8);			
+        		
 //        CAN_Send_Data(&hfdcan3, 0x191, CAN3_Chassis_Tx_Data_G, 8);
         mod100 = 0;
     }
@@ -359,36 +365,41 @@ void TIM_CAN_PeriodElapsedCallback()
         mod20 = 0;
     }
     #elif defined (GIMBAL)
-        CAN_Send_Data(&hfdcan2, 0x141, CAN2_0x141_Tx_Data, 8);
+        // CAN_Send_Data(&hfdcan2, 0x141, CAN2_0x141_Tx_Data, 8);
         //CAN_Send_Data(&hfdcan2, 0xf1, CAN2_0xxf1_Tx_Data, 8);
 
-    static uint8_t mod5 = 0,mod2 = 0,mod20 = 0;
+    static uint8_t mod5 = 0,mod2 = 0,mod10 = 0;
     mod5++;
     mod2++;
-    mod20++;
+    mod10++;
     
     if(mod5 == 5)
     {
         mod5 = 0;
-        
         CAN_Send_Data(&hfdcan2, 0x77, CAN2_Gimbal_Tx_Chassis_Data, 8); //给底盘发送控制命令 按照0x77 ID 发送
-
-        CAN_Send_Data(&hfdcan2, 0xf1, CAN2_0xxf1_Tx_Data, 8);
-
-       CAN_Send_Data(&hfdcan1, 0x200, CAN1_0x200_Tx_Data, 8);
-       CAN_Send_Data(&hfdcan2, 0x200, CAN2_0x200_Tx_Data, 8);
+        CAN_Send_Data(&hfdcan2, 0x78, CAN2_Gimbal_Tx_Chassis_Data_1, 8);
+        
+        // CAN_Send_Data(&hfdcan1, 0xf1, CAN1_0xxf1_Tx_Data, 8);
+        CAN_Send_Data(&hfdcan1, 0x200, CAN1_0x200_Tx_Data, 8);
+        CAN_Send_Data(&hfdcan2, 0x200, CAN2_0x200_Tx_Data, 8);
         
     }
+
     if(mod2 == 2)
     {
+        CAN_Send_Data(&hfdcan2, 0xf1, CAN2_0xxf1_Tx_Data, 8);
         CAN_Send_Data(&hfdcan1, 0xa0, CAN1_MiniPc_Tx_Data, 8);
 			  //CAN_Send_Data(&hfdcan2, 0xf1, CAN2_0xxf1_Tx_Data, 8);
-        // CAN_Send_Data(&hfdcan2, 0x141, CAN2_0x141_Tx_Data, 8);
         mod2 = 0;
-    }   
-    if (mod20 == 20) //50Hz
+    }
+    else
     {
-        mod20 = 0;
+        CAN_Send_Data(&hfdcan2, 0x141, CAN2_0x141_Tx_Data, 8);
+    }   
+    
+    if (mod10 == 10) //100Hz
+    {
+        mod10 = 0;
     }
     #endif
 

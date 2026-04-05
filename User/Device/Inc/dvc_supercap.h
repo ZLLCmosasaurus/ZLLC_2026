@@ -16,8 +16,9 @@
 
 #include "drv_math.h"
 #include "drv_can.h"
+#include "dvc_referee.h"
 #include "drv_uart.h"
-#include "dvc_minipc.h"
+#include "alg_filter.h"
 /* Exported macros -----------------------------------------------------------*/
 
 /* Exported types ------------------------------------------------------------*/
@@ -30,6 +31,16 @@ enum Enum_Supercap_Status
 {
     Supercap_Status_DISABLE = 0,
     Supercap_Status_ENABLE,
+};
+
+/**
+ * @brief 超电开关
+ *
+ */
+enum Enum_Supercap_Mode : uint8_t
+{
+    Supercap_DISABLE = 0,
+    Supercap_ENABLE,
 };
 
 /**
@@ -80,15 +91,17 @@ struct Struct_Supercap_Tx_Data
 {
     float Limit_Power;
     Enum_Working_Status Working_Status;
+    uint16_t Buffer_Power;
+    uint8_t Refeer_Limit_Power;
 }__attribute__((packed));
 
 struct Supercap_Rx_Data_A
 {
-    int16_t Chassis_Power;
-    uint16_t Buffer_Power;
-    uint8_t Cap_Proportion;
+    int16_t Chassis_Power;                  //底盘实际功率
+    uint16_t Buffer_Power;                  //超电可用焦耳
+    uint8_t Cap_Proportion;                 //超电电量百分比
     Enum_Control_Status Control_Status;
-    uint16_t Consuming_Power_Now;
+    uint16_t Consuming_Power_Now;           //超电两帧之间相差的能量（焦耳）
 }__attribute__((packed));
 
 struct Supercap_Rx_Data_B
@@ -104,6 +117,8 @@ struct Supercap_Rx_Data_B
 class Class_Supercap
 {
 public:
+    friend class Class_Chariot;
+
     void Init(FDCAN_HandleTypeDef *__hcan, float __Limit_Power_Max = 45);
     void Init_UART(UART_HandleTypeDef *__huart, uint8_t __fame_header = '*', uint8_t __fame_tail = ';', float __Limit_Power_Max = 45.0f);
 
@@ -113,6 +128,7 @@ public:
     inline float Get_Chassis_Power();
     inline Enum_Control_Status Get_Control_Status();
     inline Enum_Warning_Status Get_Warning_Status();
+    inline Enum_Supercap_Mode Get_Supercap_Mode();
     inline uint16_t Get_Buffer_Power();
     inline uint8_t Get_Supercap_Proportion();
     inline uint16_t Get_Consuming_Power_Now();
@@ -120,8 +136,11 @@ public:
     
 
     inline void Set_Limit_Power(float __Limit_Power);
+    inline void Set_Referee_Limit_Power(uint8_t __Referee_Limit_Power);
+    inline void Set_Referee_Buffer_Power(uint16_t __Referee_Buffer_Power);
     inline void Set_Now_Power(float __Now_Power);
     inline void Set_Working_Status(Enum_Working_Status __Working_Status);
+    inline void Set_Supercap_Mode(Enum_Supercap_Mode __Supercap_Mode);
 
     void CAN_RxCpltCallback(uint8_t *Rx_Data);
     void UART_RxCpltCallback(uint8_t *Rx_Data);
@@ -150,9 +169,13 @@ protected:
     uint8_t Fame_Tail;
     //常量
 
+    Class_Filter_Kalman Buffer_Power_Kalman;
+
     //内部变量
     float Consuming_Power = 20000.f;
     float Chassis_Power;
+    float Buffer_Power;
+
     //当前时刻的超级电容接收flag
     uint32_t Flag = 0;
     //前一时刻的超级电容接收flag
@@ -163,8 +186,10 @@ protected:
     Supercap_Rx_Data_B CAN_Supercap_Rx_Data_Error;
     //超级电容状态
     Enum_Supercap_Status Supercap_Status = Supercap_Status_DISABLE;
+    Enum_Supercap_Mode Supercap_Mode = Supercap_DISABLE;
     //超级电容对外接口信息
     Struct_Supercap_CAN_Data Supercap_Data;
+
     //写变量
     Struct_Supercap_Tx_Data Supercap_Tx_Data;
 
@@ -250,22 +275,32 @@ float Class_Supercap::Get_Now_Voltage()
 {
     return (Supercap_Data.Supercap_Voltage);
 }
+
 float Class_Supercap::Get_Consuming_Power()
 {
     return (Consuming_Power);
 }
+
+Enum_Supercap_Mode Class_Supercap::Get_Supercap_Mode()
+{
+    return(Supercap_Mode);
+}
+
 uint16_t Class_Supercap::Get_Buffer_Power()
 {
-    return(CAN_Supercap_Rx_Data_Normal.Buffer_Power/100);
+    return(Buffer_Power);
 }
+
 uint8_t Class_Supercap::Get_Supercap_Proportion()
 {
     return(CAN_Supercap_Rx_Data_Normal.Cap_Proportion);
 }
+
 uint16_t Class_Supercap::Get_Consuming_Power_Now()
 {
     return(CAN_Supercap_Rx_Data_Normal.Consuming_Power_Now);
 }
+
 /**
  * @brief 设定绝对最大限制功率
  *
@@ -275,9 +310,25 @@ void Class_Supercap::Set_Limit_Power(float __Limit_Power)
 {
     Supercap_Tx_Data.Limit_Power = __Limit_Power;
 }
+
+inline void Class_Supercap::Set_Referee_Limit_Power(uint8_t __Referee_Limit_Power)
+{
+    Supercap_Tx_Data.Refeer_Limit_Power = __Referee_Limit_Power;
+}
+
+inline void Class_Supercap::Set_Referee_Buffer_Power(uint16_t __Referee_Buffer_Power)
+{
+    Supercap_Tx_Data.Buffer_Power = __Referee_Buffer_Power;
+}
+
 void Class_Supercap::Set_Working_Status(Enum_Working_Status __Working_Status)
 {
     Supercap_Tx_Data.Working_Status = __Working_Status;
+}
+
+void Class_Supercap::Set_Supercap_Mode(Enum_Supercap_Mode __Supercap_Mode)
+{
+    Supercap_Mode = __Supercap_Mode;
 }
 
 #endif

@@ -25,6 +25,7 @@
 #include "config.h"
 #include "alg_filter.h"
 #include "dvc_dmimu.h"
+#include "buzzer.h"
 
 /* Exported macros -----------------------------------------------------------*/
 class Class_Chariot;
@@ -251,6 +252,8 @@ public:
 
         void CAN_Chassis_Rx_Gimbal_Callback(uint8_t *Rx_Data);
         void CAN_Chassis_Tx_Gimbal_Callback();
+        void CAN_Chassis_Rx_Gimbal_Callback_1();
+        void CAN_Chassis_Tx_Gimbal_Callback_1();
         void TIM1msMod50_Gimbal_Communicate_Alive_PeriodElapsedCallback();
         inline void Set_Gimbal_Status(Enum_Gimbal_Status __Gimbal_Status);
         inline Enum_Gimbal_Status Get_Gimbal_Status();
@@ -263,6 +266,7 @@ public:
             uint16_t Booster_fric_omega_right = 0;
             uint16_t Booster_bullet_num_before=0;
             uint16_t Booster_bullet_num=0;
+            uint16_t Booster_Heat;
 
     #elif defined(GIMBAL)
 
@@ -285,6 +289,8 @@ public:
 
         void CAN_Gimbal_Rx_Chassis_Callback();
         void CAN_Gimbal_Tx_Chassis_Callback();
+        void CAN_Gimbal_Rx_Chassis_Callback_1();
+        void CAN_Gimbal_Tx_Chassis_Callback_1();
         
         void TIM_Control_Callback();
         void Contorl_Fold_Pitch();
@@ -316,6 +322,9 @@ public:
     //底盘云台通讯数据
     float Gimbal_Tx_Pitch_Angle = 0;
 
+    //临时加的上位机存活变量
+    uint8_t minipc_alive = 0;
+
 protected:
 
     //遥控器拨动的死区, 0~1
@@ -327,12 +336,12 @@ protected:
     //初始化相关常量
 
     //绑定的CAN
-    Struct_CAN_Manage_Object *CAN_Manage_Object = &CAN3_Manage_Object;
+    Struct_CAN_Manage_Object *CAN_Manage_Object = &CAN2_Manage_Object;
 
     //底盘转换后的角度（数据来源yaw电机）
     float Chassis_Angle;
     //底盘标定参考正方向角度(数据来源yaw电机)
-    float Reference_Angle = -7.15783691f;
+    float Reference_Angle = -34.387207;
 	float Reference_Radian = Reference_Angle * PI / 180.f;
 
     #ifdef CHASSIS
@@ -374,9 +383,9 @@ protected:
         float DR16_Pitch_Resolution = 0.003f * PI;
 
         //DR16鼠标云台yaw灵敏度系数, 不同鼠标不同参数
-        float DR16_Mouse_Yaw_Angle_Resolution = 57.8*4.0f;
+        float DR16_Mouse_Yaw_Angle_Resolution = 57.8f * 10.0f;
         //DR16鼠标云台pitch灵敏度系数, 不同鼠标不同参数
-        float DR16_Mouse_Pitch_Angle_Resolution = 57.8f;
+        float DR16_Mouse_Pitch_Angle_Resolution = 57.8f * 10.0f;
         
         //迷你主机云台pitch自瞄控制系数
         float MiniPC_Autoaiming_Yaw_Angle_Resolution = 0.003f;

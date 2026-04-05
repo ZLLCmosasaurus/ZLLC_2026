@@ -12,6 +12,7 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "dvc_dr16.h"
+#include "buzzer.h"
 //#include "tsk_config_and_callback.h"
 /* Private macros ------------------------------------------------------------*/
 
