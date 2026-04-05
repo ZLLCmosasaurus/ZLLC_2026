@@ -143,7 +143,9 @@ void Chassis_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
         break;						
         case (0x67)://超电接收
         {
+            Dt = 1.0f/DWT_GetDeltaT(&last_cnt);
             chariot.Chassis.Supercap.CAN_RxCpltCallback(CAN_RxMessage->Data);
+            
         }
         break;
         case(0x141)://给yaw进行通信

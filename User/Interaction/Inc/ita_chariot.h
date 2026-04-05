@@ -212,14 +212,20 @@ public:
         //底盘随动PID环
         Class_LK_Motor Motor_Yaw;
         Class_PID PID_Chassis_Follow;
-
+        
     #endif 
 
         //裁判系统
         Class_Referee Referee;
         //底盘
-        Class_Steering_Wheel_Chassis Chassis;
-
+        Class_Tricycle_Chassis Chassis;
+        
+    #ifdef TEST
+    Class_DR16 DR16;
+    Class_FSM_Alive_Control FSM_Alive_Control;
+    friend class Class_FSM_Alive_Control;
+    #endif
+        
     #ifdef GIMBAL
         //遥控器
         Class_DR16 DR16;

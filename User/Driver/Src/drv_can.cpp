@@ -334,7 +334,7 @@ void TIM_CAN_PeriodElapsedCallback()
     #ifdef CHASSIS
     static uint8_t mod5 = 0,mod100 = 0,mod20 = 0;
     mod5++, mod100++,mod20++;
-    if (mod5 == 5)  //200Hz
+    if (mod5 % 5 == 0)  //200Hz
     {
         mod5 = 0;
         //轮向 3508    
@@ -359,7 +359,7 @@ void TIM_CAN_PeriodElapsedCallback()
 //        CAN_Send_Data(&hfdcan3, 0x178, CAN3_Chassis_Tx_Data_C, 8);      
 //        CAN_Send_Data(&hfdcan3, 0x197, CAN3_Chassis_Tx_Data_E, 8);
 //        CAN_Send_Data(&hfdcan3, 0x198, CAN3_Chassis_Tx_Data_D, 8);
-//        CAN_Send_Data(&hfdcan3, 0x196, CAN3_Chassis_Tx_Data_F, 8);
+        CAN_Send_Data(&hfdcan3, 0x196, CAN3_Chassis_Tx_Data_F, 8);
         //超电
         CAN_Send_Data(&hfdcan2, 0x66, CAN_Supercap_Tx_Data, 8);
         mod20 = 0;
