@@ -146,19 +146,19 @@ void Class_Jodell_Motor::TIM_UART_Tx_PeriodElapsedCallback()
 
             write_nb = 8;
 
-            // 夹持端使能
+            // 夹持端使能 0x03E8
             write_data[0] = 0x0001;
-            // 旋转端使能
+            // 旋转端使能 0x03E9
             write_data[1] = 0x0001;
-            // 夹持端位置以及运动模式
-            write_data[2] = (0x80 << 8) | Target_Gripper_Position;
+            // 夹持端位置以及运动模式 0x03EA 0x03EB
+            write_data[2] = (0xF0 << 8) | Target_Gripper_Position;
             write_data[3] = (0x80 << 8) | 0x01;
-            // 旋转端位置，速度以及运动模式
-            write_data[4] = (int16_t)(Target_Roll * 180.0f / PI);
+            // 旋转端位置，速度以及运动模式 0x03EC 0x03ED
+            write_data[4] = 0x0000;
             write_data[5] = ((uint8_t)((Target_Torque / MAX_TORQUE) * 255.0f) << 8) |
                             (uint8_t)((Target_Omega / MAX_OMEGA) * 255.0f);
-            write_data[6] = 0x0000;
-            write_data[7] = (0x01 << 8) | 0x01;
+            write_data[6] = (int16_t)(Target_Relative_Roll * 180.0f / PI); // 0x03EE
+            write_data[7] = (0x01 << 8) | 0x02; //0x03EF
 
             break;
         }

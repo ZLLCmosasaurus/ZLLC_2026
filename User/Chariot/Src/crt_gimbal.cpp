@@ -102,10 +102,11 @@ void Class_Gimbal::Output()
         J2_Yaw_4340P.Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
         J3_Roll_2325.Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
         J4_Pitch_2325.Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
-        // Jodell_ERG150T.Set_Motor_Control_Status(Jodell_Motor_Control_DISABLE);
+        Jodell_ERG150T.Set_Motor_Control_Status(Jodell_Motor_Control_DISABLE);
 
         // 测试完成后去掉注释
-        // arm_init = false;
+        arm_init = false;
+        Calibration_FSM.Set_Status(0);
     }
     else // 非失能模式
     {
@@ -134,8 +135,10 @@ void Class_Gimbal::Output()
                     J4_Pitch_2325.Set_Target_Angle(Target_J4_Pitch_Radian);
                 }
 
-                // Jodell_ERG150T.Set_Target_Omega(Target_J5_Yaw_Omega);
-                // Jodell_ERG150T.Set_Target_Roll(Target_J5_Yaw_Radian);
+                Jodell_ERG150T.Set_Target_Omega(Target_J5_Roll_Omega);
+                Jodell_ERG150T.Set_Target_Roll(Target_J5_Roll_Radian);
+
+                Jodell_ERG150T.Set_Gripper_Position(Target_Gripper_Position);
             }
             else if ((Get_Gimbal_Control_Type() == Gimbal_Control_Type_MINIPC) && (MiniPC->Get_MiniPC_Status() != MiniPC_Status_DISABLE))
             {
@@ -147,36 +150,7 @@ void Class_Gimbal::Output()
         else
         /*将机械臂调整到初始姿态，只有在整车上电和整臂断电重连（机器人复活）时才会触发，2325的放在校准状态机*/
         {
-            J0_Pitch_4340.Set_DM_Motor_Control_Method(DM_Motor_Control_Method_POSITION_OMEGA);
-            J1_Yaw_8009P.Set_DM_Motor_Control_Method(DM_Motor_Control_Method_POSITION_OMEGA);
-            J2_Yaw_4340P.Set_DM_Motor_Control_Method(DM_Motor_Control_Method_POSITION_OMEGA);
-            J3_Roll_2325.Set_DM_Motor_Control_Method(DM_Motor_Control_Method_POSITION_OMEGA);
-            J4_Pitch_2325.Set_DM_Motor_Control_Method(DM_Motor_Control_Method_POSITION_OMEGA);
-
-            // J0_Pitch_4340.Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
-            // J1_Yaw_8009P.Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
-            // J2_Yaw_4340P.Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
-            // Jodell_ERG150T.Set_Motor_Control_Status(Jodell_Motor_Control_ENABLE);
-
-            J0_Pitch_4340.Set_Target_Omega(1.0f);
-            J0_Pitch_4340.Set_Target_Angle(0.0f); // Radian 0
-
-            J1_Yaw_8009P.Set_Target_Omega(0.5f);
-            J1_Yaw_8009P.Set_Target_Angle(0.0f);
-
-            J2_Yaw_4340P.Set_Target_Omega(0.5f);
-            J2_Yaw_4340P.Set_Target_Angle(0.0f);
-
-            // Jodell_ERG150T.Set_Target_Omega(0.5f);
-            // Jodell_ERG150T.Set_Target_Roll(0.0f);
-
-            bool init_flag =
-                (fabs(J0_Pitch_4340.Get_Target_Angle() + PI - J0_Pitch_4340.Get_Now_Angle()) < 0.05f) &&
-                (fabs(J1_Yaw_8009P.Get_Target_Angle() + PI - J1_Yaw_8009P.Get_Now_Angle()) < 0.05f) &&
-                (fabs(J2_Yaw_4340P.Get_Target_Angle() + PI - J2_Yaw_4340P.Get_Now_Angle()) < 0.05f) &&
-                (true);
-
-            //arm_init = init_flag;
+            Calibration_FSM.Reload_TIM_Status_PeriodElapsedCallback();
         }
     }
 }
@@ -193,11 +167,11 @@ void Class_Gimbal::TIM_Calculate_PeriodElapsedCallback()
     // 电机优先级计数器
     can_priority_cnt++;
 
-    // 单编码器电机校准状态机回调函数
-    if (arm_init)
-    {
-        Calibration_FSM.Reload_TIM_Status_PeriodElapsedCallback();
-    }
+    // // 单编码器电机校准状态机回调函数
+    // if (arm_init)
+    // {
+    //     Calibration_FSM.Reload_TIM_Status_PeriodElapsedCallback();
+    // }
 
     switch (can_priority_cnt % 5)
     {
@@ -237,23 +211,128 @@ void Class_Gimbal::TIM_Calculate_PeriodElapsedCallback()
  * @brief 单编码器电机校准状态机
  *
  */
+// void Class_FSM_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
+// {
+//     Status[Now_Status_Serial].Time++;
+//     switch (Now_Status_Serial)
+//     {
+//     case (0):
+//         /*校准状态*/
+//         {
+//             if (Gimbal->J3_Roll_2325.Get_DM_Motor_Status() == DM_Motor_Status_ENABLE && !roll_cali_status)
+//             {
+//                 roll_cali_status = Motor_Calibration(&Gimbal->J3_Roll_2325, roll_offset, -310.0f, 2.5f, roll_locked_torque, roll_locked_cnt);
+//             }
+
+//             // if (Gimbal->J4_Pitch_2325.Get_DM_Motor_Status() == DM_Motor_Status_ENABLE && !pitch_cali_status)
+//             // {
+//             //     pitch_cali_status = Motor_Calibration(&Gimbal->J4_Pitch_2325, pitch_offset, -160.0f, 2.5f, pitch_locked_torque, pitch_locked_cnt);
+//             // }
+
+//             if (roll_cali_status)
+//             {
+//                 Gimbal->J3_Roll_Cali_Offset = roll_offset;
+//                 Gimbal->J3_Roll_Min_Radian = Gimbal->J3_Roll_Cali_Offset * DM2325_GEAR_RATIO;
+//                 Gimbal->J3_Roll_Max_Radian = Gimbal->J3_Roll_Min_Radian + roll_range;
+//                 Gimbal->J3_Roll_Zero_Position_Radian = (Gimbal->J3_Roll_Min_Radian + Gimbal->J3_Roll_Max_Radian) / 2.0f;
+//             }
+
+//             // if (pitch_cali_status)
+//             // {
+//             //     Gimbal->J4_Pitch_Cali_Offset = pitch_offset;
+//             //     Gimbal->J4_Pitch_Min_Radian = Gimbal->J4_Pitch_Cali_Offset * DM2325_GEAR_RATIO;
+//             //     Gimbal->J4_Pitch_Max_Radian = Gimbal->J4_Pitch_Cali_Offset + pitch_range;
+//             //     Gimbal->J4_Pitch_Zero_Position_Radian = (Gimbal->J4_Pitch_Min_Radian + Gimbal->J4_Pitch_Max_Radian) / 2.0f;
+//             // }
+
+//             bool cali_flag = (roll_cali_status) &&
+//                             //  (pitch_cali_status) &&
+//                              (true);
+//             if (cali_flag)
+//             {
+//                 Set_Status(1);
+//             }
+
+//             break;
+//         }
+//     case (1):
+//         /*校准完成状态*/
+//         {
+//             if (Gimbal->J3_Roll_2325.Get_DM_Motor_Status() == DM_Motor_Status_DISABLE)
+//             {
+//                 roll_cali_status = false;
+//                 Set_Status(0);
+//             }
+//             // if (Gimbal->J4_Pitch_2325.Get_DM_Motor_Status() == DM_Motor_Status_DISABLE)
+//             // {
+//             //     pitch_cali_status = false;
+//             //     Set_Status(0);
+//             // }
+
+//             break;
+//         }
+//     }
+// }
+
 void Class_FSM_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
 {
     Status[Now_Status_Serial].Time++;
     switch (Now_Status_Serial)
     {
     case (0):
-        /*校准状态*/
+        /*前三轴转到初始位置*/
+        {
+            Gimbal->J0_Pitch_4340.Set_DM_Motor_Control_Method(DM_Motor_Control_Method_POSITION_OMEGA);
+            Gimbal->J1_Yaw_8009P.Set_DM_Motor_Control_Method(DM_Motor_Control_Method_POSITION_OMEGA);
+            Gimbal->J2_Yaw_4340P.Set_DM_Motor_Control_Method(DM_Motor_Control_Method_POSITION_OMEGA);
+            Gimbal->J3_Roll_2325.Set_DM_Motor_Control_Method(DM_Motor_Control_Method_POSITION_OMEGA);
+            Gimbal->J4_Pitch_2325.Set_DM_Motor_Control_Method(DM_Motor_Control_Method_POSITION_OMEGA);
+
+            Gimbal->J0_Pitch_4340.Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
+            Gimbal->J1_Yaw_8009P.Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
+            Gimbal->J2_Yaw_4340P.Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
+            Gimbal->Jodell_ERG150T.Set_Motor_Control_Status(Jodell_Motor_Control_ENABLE);
+
+            Gimbal->J0_Pitch_4340.Set_Target_Omega(1.0f);
+            Gimbal->J0_Pitch_4340.Set_Target_Angle(0.0f); // Radian 0
+
+            Gimbal->J1_Yaw_8009P.Set_Target_Omega(0.5f);
+            Gimbal->J1_Yaw_8009P.Set_Target_Angle(0.0f);
+
+            Gimbal->J2_Yaw_4340P.Set_Target_Omega(0.5f);
+            Gimbal->J2_Yaw_4340P.Set_Target_Angle(0.0f);
+
+            Gimbal->Jodell_ERG150T.Set_Target_Omega(2.0f * PI);
+            Gimbal->Jodell_ERG150T.Set_Target_Roll(0.0f);
+
+            bool init_flag =
+                (fabs(Gimbal->J0_Pitch_4340.Get_Target_Angle() + PI - Gimbal->J0_Pitch_4340.Get_Now_Angle()) < 0.05f) &&
+                (fabs(Gimbal->J1_Yaw_8009P.Get_Target_Angle() + PI - Gimbal->J1_Yaw_8009P.Get_Now_Angle()) < 0.05f) &&
+                (fabs(Gimbal->J2_Yaw_4340P.Get_Target_Angle() + PI - Gimbal->J2_Yaw_4340P.Get_Now_Angle()) < 0.05f) &&
+                (Gimbal->Jodell_ERG150T.Get_Motor_Working_Status() == Jodell_Motor_Working_ENABLE) &&
+                (Gimbal->Jodell_ERG150T.Get_Now_Omega() <= 0.1f) &&
+                (true);
+
+            if (init_flag)
+            {
+                Set_Status(1);
+            }
+
+            break;
+        }
+
+    case (1):
+        /*Roll和Pitch校准状态*/
         {
             if (Gimbal->J3_Roll_2325.Get_DM_Motor_Status() == DM_Motor_Status_ENABLE && !roll_cali_status)
             {
-                roll_cali_status = Motor_Calibration(&Gimbal->J3_Roll_2325, roll_offset, -310.0f, 2.5f, roll_locked_torque, roll_locked_cnt);
+                roll_cali_status = Motor_Calibration(&Gimbal->J3_Roll_2325, roll_offset, -310.0f, 5.0f * PI, roll_locked_torque, roll_locked_cnt);
             }
 
-            if (Gimbal->J4_Pitch_2325.Get_DM_Motor_Status() == DM_Motor_Status_ENABLE && !pitch_cali_status)
-            {
-                // pitch_cali_status = Motor_Calibration(&Gimbal->J4_Pitch_2325, pitch_offset, -160.0f, 2.5f, pitch_locked_torque, pitch_locked_cnt);
-            }
+            // if (Gimbal->J4_Pitch_2325.Get_DM_Motor_Status() == DM_Motor_Status_ENABLE && !pitch_cali_status)
+            // {
+            //     pitch_cali_status = Motor_Calibration(&Gimbal->J4_Pitch_2325, pitch_offset, -160.0f, 2.5f, pitch_locked_torque, pitch_locked_cnt);
+            // }
 
             if (roll_cali_status)
             {
@@ -263,37 +342,59 @@ void Class_FSM_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
                 Gimbal->J3_Roll_Zero_Position_Radian = (Gimbal->J3_Roll_Min_Radian + Gimbal->J3_Roll_Max_Radian) / 2.0f;
             }
 
-            if (pitch_cali_status)
-            {
-                Gimbal->J4_Pitch_Cali_Offset = pitch_offset;
-                Gimbal->J4_Pitch_Min_Radian = Gimbal->J4_Pitch_Cali_Offset * DM2325_GEAR_RATIO;
-                Gimbal->J4_Pitch_Max_Radian = Gimbal->J4_Pitch_Cali_Offset + pitch_range;
-                Gimbal->J4_Pitch_Zero_Position_Radian = (Gimbal->J4_Pitch_Min_Radian + Gimbal->J4_Pitch_Max_Radian) / 2.0f;
-            }
+            // if (pitch_cali_status)
+            // {
+            //     Gimbal->J4_Pitch_Cali_Offset = pitch_offset;
+            //     Gimbal->J4_Pitch_Min_Radian = Gimbal->J4_Pitch_Cali_Offset * DM2325_GEAR_RATIO;
+            //     Gimbal->J4_Pitch_Max_Radian = Gimbal->J4_Pitch_Cali_Offset + pitch_range;
+            //     Gimbal->J4_Pitch_Zero_Position_Radian = (Gimbal->J4_Pitch_Min_Radian + Gimbal->J4_Pitch_Max_Radian) / 2.0f;
+            // }
 
-            if (roll_cali_status && pitch_cali_status)
+            bool cali_flag = (roll_cali_status) &&
+                             //  (pitch_cali_status) &&
+                             (true);
+            if (cali_flag)
             {
-                Set_Status(1);
+                Set_Status(2);
             }
 
             break;
         }
-    case (1):
-        /*校准完成状态*/
+
+    case (2):
+        /*Roll和Pitch校准完后转到0点位置*/
         {
-            if (Gimbal->J3_Roll_2325.Get_DM_Motor_Status() == DM_Motor_Status_DISABLE)
+            if (Gimbal->J3_Roll_2325.Get_DM_Motor_Control_Status() == DM_Motor_Control_Status_DISABLE)
             {
-                roll_cali_status = false;
-                Set_Status(0);
+                Gimbal->J3_Roll_2325.Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
             }
-            if (Gimbal->J4_Pitch_2325.Get_DM_Motor_Status() == DM_Motor_Status_DISABLE)
+            // Gimbal->J4_Pitch_2325.Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
+
+            Gimbal->J3_Roll_2325.Set_Target_Omega(PI * DM2325_GEAR_RATIO);
+            Gimbal->J3_Roll_2325.Set_Target_Angle(Gimbal->J3_Roll_Zero_Position_Radian);
+
+            // Gimbal->J4_Pitch_2325.Set_Target_Omega(0.5f * DM2325_GEAR_RATIO);
+            // Gimbal->J4_Pitch_2325.Set_Target_Angle(Gimbal->J4_Pitch_Zero_Position_Radian);
+
+            bool finish_flag =
+                (fabs((Gimbal->J3_Roll_2325.Get_Target_Angle()) / DM2325_GEAR_RATIO + PI - Gimbal->J3_Roll_2325.Get_Now_Angle()) < 0.1f) &&
+                // (fabs((Gimbal->J4_Pitch_2325.Get_Target_Angle()) / DM2325_GEAR_RATIO + PI - Gimbal->J1_Yaw_8009P.Get_Now_Angle()) < 0.1f) &&
+                (true);
+
+            if (finish_flag)
             {
-                pitch_cali_status = false;
-                Set_Status(0);
+                Gimbal->arm_init = true;
+                Set_Status(3);
             }
 
             break;
         }
+
+    case (3):
+    {
+
+        break;
+    }
     }
 }
 
@@ -342,7 +443,14 @@ bool Class_FSM_Calibration::Motor_Calibration(Class_DM_Motor_J4310 *Motor, float
     }
     else
     {
-        locked_cnt = 0;
+        if (locked_cnt > 0)
+        {
+            locked_cnt -= 1;
+        }
+        else
+        {
+            locked_cnt = 0;
+        }
     }
     return false;
 }

@@ -4,12 +4,6 @@
 #include "agile_modbus.h"
 #include "agile_modbus_rtu.h"
 
-enum Enum_Gripper_Status
-{
-    Gripper_Clamp = 0, // 夹紧
-    Gripper_Release    // 松开
-};
-
 // 电机通信状态
 enum Jodell_Motor_Comm_Status
 {
@@ -114,8 +108,9 @@ private:
     Jodell_Tx_Frame_Type Motor_Tx_Frame_Type = Jodell_Tx_Frame_WRITE;
 
     float Target_Roll = 0.0f;
+    float Target_Relative_Roll = 0.0f;
     float Target_Omega = 5.0f;
-    float Target_Torque = 0.0f;
+    float Target_Torque = 1.5f;
     uint8_t Target_Gripper_Position = 0;
 
     // 查询帧电机返回的数据
@@ -174,6 +169,18 @@ inline void Class_Jodell_Motor::Set_Target_Omega(float __Target_Omega)
 
 inline void Class_Jodell_Motor::Set_Target_Roll(float __Target_Roll)
 {
+    Target_Relative_Roll = __Target_Roll - Target_Roll;
+
+    // 过零点检测，发送相对转动位置
+    if(Target_Relative_Roll < -PI)
+    {
+        Target_Relative_Roll += 2.0f*PI;
+    }
+    else if(Target_Relative_Roll > PI)
+    {
+        Target_Relative_Roll -= 2.0f*PI;
+    }
+
     Target_Roll = __Target_Roll;
 }
 

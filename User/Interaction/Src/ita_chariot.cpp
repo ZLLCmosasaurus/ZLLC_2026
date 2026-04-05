@@ -445,7 +445,7 @@ void Class_Chariot::Control_Chassis()
     }
     case (DR16_Switch_Status_MIDDLE): // 左中 正常模式控制底盘，只有当机械臂移动到初始位姿后才将底盘设置为正常模式
     {
-        if (Gimbal.arm_init == true)
+        if (Gimbal.arm_init)
         {
             Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL);
         }
@@ -457,7 +457,7 @@ void Class_Chariot::Control_Chassis()
     }
     case (DR16_Switch_Status_DOWN):
     {
-        if (Gimbal.arm_init == true)
+        if (Gimbal.arm_init)
         {
             Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SLOPE);
         }
@@ -953,7 +953,7 @@ void Class_Chariot::Control_Gimbal()
     tmp_j2_yaw_radian = Gimbal.Get_Target_J2_Yaw_Radian();
     tmp_j3_roll_radian = Gimbal.Get_Target_J3_Roll_Radian();
     tmp_j4_pitch_radian = Gimbal.Get_Target_J4_Pitch_Radian();
-    tmp_j5_yaw_radian = Gimbal.Get_Target_J5_Yaw_Radian();
+    tmp_j5_roll_radian = Gimbal.Get_Target_J5_Roll_Radian();
 
     if (DR16.Get_Left_Switch() == DR16_Switch_Status_UP) // 左上 失能
     {
@@ -964,19 +964,29 @@ void Class_Chariot::Control_Gimbal()
     {
         Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
 
-        tmp_j0_pitch_radian = 0.0f;
-        tmp_j1_yaw_radian = 0.0f;
-        tmp_j2_yaw_radian = 0.0f;
-        tmp_j3_roll_radian = 0.0f;
-        tmp_j4_pitch_radian = 0.0f;
-        tmp_j5_yaw_radian = 0.0f;
+        if (DR16.Get_Right_Switch() == DR16_Switch_Status_MIDDLE)
+        // 左摇杆控制J0， J1，右摇杆控制J2，J3
+        {
+            tmp_j0_pitch_radian += dr16_left_y * DR16_J0_Pitch_Resolution;
+            tmp_j1_yaw_radian += dr16_left_x * DR16_J1_Yaw_Resolution;
+            tmp_j2_yaw_radian += dr16_right_x * DR16_J2_Yaw_Resolution;
+            tmp_j3_roll_radian += dr16_right_y * DR16_J3_Roll_Resolution;
+        }
+        else if (DR16.Get_Right_Switch() == DR16_Switch_Status_DOWN)
+        {
+            tmp_j4_pitch_radian += dr16_right_y * DR16_J4_Pitch_Resolution;
+            tmp_j5_roll_radian += dr16_right_x * DR16_J5_Roll_Resolution;
+        }
 
         Gimbal.Set_Target_J0_Pitch_Radian(tmp_j0_pitch_radian);
         Gimbal.Set_Target_J1_Yaw_Radian(tmp_j1_yaw_radian);
         Gimbal.Set_Target_J2_Yaw_Radian(tmp_j2_yaw_radian);
+        // 传入的参数不要乘减速比，函数内部会自己乘
         Gimbal.Set_Target_J3_Roll_Radian(tmp_j3_roll_radian);
+        // 同上
         Gimbal.Set_Target_J4_Pitch_Radian(tmp_j4_pitch_radian);
-        Gimbal.Set_Target_J5_Yaw_Radian(tmp_j5_yaw_radian);
+        
+        Gimbal.Set_Target_J5_Roll_Radian(tmp_j5_roll_radian);
     }
     else if (DR16.Get_Left_Switch() == DR16_Switch_Status_DOWN)
     {
@@ -1022,17 +1032,26 @@ void Class_Chariot::Control_Gimbal()
         Gimbal.Set_Target_J2_Yaw_Radian(tmp_j2_yaw_radian);
         Gimbal.Set_Target_J3_Roll_Radian(tmp_j3_roll_radian);
         Gimbal.Set_Target_J4_Pitch_Radian(tmp_j4_pitch_radian);
-        Gimbal.Set_Target_J5_Yaw_Radian(tmp_j5_yaw_radian);
+        Gimbal.Set_Target_J5_Roll_Radian(tmp_j5_roll_radian);
     }
     else
     {
         Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
     }
 
-    Math_Constrain(&tmp_gripper_radian, 0.0f, 0.90f);
-    last_gripper_value = tmp_gripper_radian;
-    // 云台对象中夹爪赋值
-    Gimbal.Set_Target_Gripper_Radian(tmp_gripper_radian);
+    if(dr16_yaw >= 0.80f)
+    {
+        Gimbal.Set_Target_Gripper_Position(0);
+    }
+    else if(dr16_yaw <= -0.80f)
+    {
+        Gimbal.Set_Target_Gripper_Position(255);
+    }
+
+    // Math_Constrain(&tmp_gripper_radian, 0.0f, 0.90f);
+    // last_gripper_value = tmp_gripper_radian;
+    // // 云台对象中夹爪赋值
+    // Gimbal.Set_Target_Gripper_Radian(tmp_gripper_radian);
 }
 #endif
 /**

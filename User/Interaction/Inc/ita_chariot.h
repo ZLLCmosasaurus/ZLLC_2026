@@ -218,7 +218,7 @@ public:
     void Control_Chassis();
 
     // 角度目标值
-    float tmp_j0_pitch_radian, tmp_j1_yaw_radian, tmp_j2_yaw_radian, tmp_j3_roll_radian, tmp_j4_pitch_radian, tmp_j5_yaw_radian;
+    float tmp_j0_pitch_radian, tmp_j1_yaw_radian, tmp_j2_yaw_radian, tmp_j3_roll_radian, tmp_j4_pitch_radian, tmp_j5_roll_radian;
     float tmp_gripper_radian;
     // 遥控器摇杆值
     float dr16_right_x, dr16_right_y, dr16_left_x, dr16_left_y, dr16_yaw;
@@ -249,9 +249,9 @@ protected:
     float DR16_J0_Pitch_Resolution = 0.001f * PI;
     float DR16_J1_Yaw_Resolution = 0.00075f * PI;
     float DR16_J2_Yaw_Resolution = 0.00075f * PI;
-    float DR16_J3_Yaw_Resolution = 0.0015f * PI;
+    float DR16_J3_Roll_Resolution = 0.0015f * PI;
     float DR16_J4_Pitch_Resolution = 0.0015f * PI;
-    float DR16_J5_Yaw_Resolution = 0.0015f * PI;
+    float DR16_J5_Roll_Resolution = 0.0015f * PI;
 
     // DR16控制夹爪的速度，因为夹爪可移动范围是0.0 rad - 0.95 rad，所以现在给到0.05rad/s，
     float DR16_Gripper_Resolution = 0.005f * PI;

@@ -246,7 +246,7 @@ protected:
 
     /*Pitch轴校准相关变量*/
     bool pitch_cali_status = false;
-    float pitch_locked_torque = 0.4f;
+    float pitch_locked_torque = 0.20f;
     float pitch_offset = 0.0f;
     float pitch_range = 157.0f;
 
@@ -329,7 +329,9 @@ public:
     inline float Get_Target_J2_Yaw_Radian();
     inline float Get_Target_J3_Roll_Radian();
     inline float Get_Target_J4_Pitch_Radian();
-    inline float Get_Target_J5_Yaw_Radian();
+    inline float Get_Target_J5_Roll_Radian();
+
+    inline uint8_t Get_Target_Gripper_Position();
 
     inline float Get_Target_Gripper_Angle();
     inline float Get_Target_Gripper_Radian();
@@ -364,15 +366,13 @@ public:
     inline void Set_Target_J1_Yaw_Radian(float __Target_J1_Yaw_Radian);
     inline void Set_Target_J2_Yaw_Radian(float __Target_J2_Yaw_Radian);
     inline void Set_Target_J3_Roll_Radian(float __Target_J3_Roll_Radian);
-    inline void Set_Target_J3_Yaw_Radian(float __Target_J3_Yaw_Radian);
     inline void Set_Target_J4_Pitch_Radian(float __Target_J4_Pitch_Radian);
-    inline void Set_Target_J5_Yaw_Radian(float __Target_J5_Yaw_Radian);
+    inline void Set_Target_J5_Roll_Radian(float __Target_J5_Yaw_Radian);
+
+    inline void Set_Target_Gripper_Position(uint8_t __Target_Gripper_Position);
 
     inline void Set_Target_Gripper_Angle(float __Target_Gripper_Angle);
     inline void Set_Target_Gripper_Radian(float __Target_Gripper_Radian);
-
-    // 由于减速比和多圈的问题存在，所以要写一个专门用于输出轴的角度设定函数 //不用了，这个函数纯属没用
-    inline void Set_Target_Roll_Output_Angle(float Target_Angle);
 
     void TIM_Calculate_PeriodElapsedCallback();
 
@@ -485,14 +485,14 @@ protected:
     float Max_gripper_Radian = gripper_cali_offset + 0.95f; // 最大角度，完全闭合时为0.95f
 
     /*SCARA臂*/
-    float J0_Pitch_Min_Radian = -2.1185f;
-    float J0_Pitch_Max_Radian = 1.1838f;
+    float J0_Pitch_Min_Radian = -1.431f;
+    float J0_Pitch_Max_Radian = 0.698f;
 
-    float J1_Yaw_Min_Radian = -0.882f;
-    float J1_Yaw_Max_Radian = 0.852f;
+    float J1_Yaw_Min_Radian = -0.872f;
+    float J1_Yaw_Max_Radian = 0.872f;
 
-    float J2_Yaw_Min_Radian = -2.094f;
-    float J2_Yaw_Max_Radian = 2.094f;
+    float J2_Yaw_Min_Radian = -2.443f;
+    float J2_Yaw_Max_Radian = 2.443f;
 
     float J3_Roll_Cali_Offset;
     float J3_Roll_Min_Radian = -(150.0f / 180.0f) * PI * DM2325_GEAR_RATIO;
@@ -505,9 +505,6 @@ protected:
     float J4_Pitch_Max_Radian = (90.0f / 180.0f) * PI * DM2325_GEAR_RATIO;
     // Pitch轴零点，定义为中间位置
     float J4_Pitch_Zero_Position_Radian = (J4_Pitch_Min_Radian+J4_Pitch_Max_Radian) / 2.0f;
-
-    float J5_Yaw_Min_Radian = -0.5f * PI;
-    float J5_Yaw_Max_Radian = 0.5f * PI;
 
     // 校准测试相关
     bool enable_roll = false;
@@ -572,8 +569,11 @@ protected:
     float Target_J4_Pitch_Radian = 0.0f;
     float Target_J4_Pitch_Omega = 1.25f * PI;
 
-    float Target_J5_Yaw_Radian = 0.0f;
-    float Target_J5_Yaw_Omega = 1.25f * PI;
+    float Target_J5_Roll_Radian = 0.0f;
+    float Target_J5_Roll_Omega = 1.25f * PI;
+
+    // 钧舵夹爪行程
+    uint8_t Target_Gripper_Position;
 
     // 夹爪角度，degree
     float Target_Gripper_Angle = 0.0f;
@@ -918,17 +918,22 @@ float Class_Gimbal::Get_Target_J2_Yaw_Radian()
 
 float Class_Gimbal::Get_Target_J3_Roll_Radian()
 {
-    return (Target_J3_Roll_Radian);
+    return (Target_J3_Roll_Radian - J3_Roll_Zero_Position_Radian);
 }
 
 float Class_Gimbal::Get_Target_J4_Pitch_Radian()
 {
-    return (Target_J4_Pitch_Radian);
+    return (Target_J4_Pitch_Radian - J4_Pitch_Zero_Position_Radian);
 }
 
-float Class_Gimbal::Get_Target_J5_Yaw_Radian()
+float Class_Gimbal::Get_Target_J5_Roll_Radian()
 {
-    return (Target_J5_Yaw_Radian);
+    return (Target_J5_Roll_Radian);
+}
+
+uint8_t Class_Gimbal::Get_Target_Gripper_Position()
+{
+    return (Target_Gripper_Position);
 }
 
 void Class_Gimbal::Set_Target_J0_Pitch_Radian(float __Target_J0_Pitch_Radian)
@@ -963,10 +968,15 @@ void Class_Gimbal::Set_Target_J4_Pitch_Radian(float __Target_J4_Pitch_Radian)
     Math_Constrain(&Target_J4_Pitch_Radian, J4_Pitch_Min_Radian, J4_Pitch_Max_Radian);
 }
 
-void Class_Gimbal::Set_Target_J5_Yaw_Radian(float __Target_J5_Yaw_Radian)
+void Class_Gimbal::Set_Target_J5_Roll_Radian(float __Target_J5_Roll_Radian)
 {
-    Target_J5_Yaw_Radian = __Target_J5_Yaw_Radian;
-    Math_Constrain(&Target_J5_Yaw_Radian, J5_Yaw_Min_Radian, J5_Yaw_Max_Radian);
+    // 最后的Roll轴无限转
+    Target_J5_Roll_Radian = __Target_J5_Roll_Radian;
+}
+
+void Class_Gimbal::Set_Target_Gripper_Position(uint8_t __Target_Gripper_Posiiton)
+{
+    Target_Gripper_Position = __Target_Gripper_Posiiton;
 }
 
 /**
