@@ -142,6 +142,7 @@ public:
     inline void Set_Target_Velocity_X(float __Target_Velocity_X);
     inline void Set_Target_Velocity_Y(float __Target_Velocity_Y);
     inline void Set_Target_Omega(float __Target_Omega);
+    inline void Set_Spin_Omega(float __Spin_Omega);
     inline void Set_Now_Velocity_X(float __Now_Velocity_X);
     inline void Set_Now_Velocity_Y(float __Now_Velocity_Y);
     inline void Set_Now_Omega(float __Now_Omega);
@@ -166,7 +167,7 @@ protected:
     //舵向电机功率上限比率
     float Steer_Power_Ratio = 0.5f;
     //底盘小陀螺模式角速度
-    float Spin_Omega = 4.0f;
+    // float Spin_Omega = 4.0f;
     //常量
 
 
@@ -330,16 +331,6 @@ float Class_Tricycle_Chassis::Get_Target_Omega()
     return (Target_Omega);
 }
 
-
-/**
- * @brief 获取小陀螺角速度
- *
- * @return float 小陀螺角速度
- */
-float Class_Tricycle_Chassis::Get_Spin_Omega()
-{
-    return (Spin_Omega);
-}
 
 /**
  * @brief 获取当前电机功率

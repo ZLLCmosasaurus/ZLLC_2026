@@ -290,9 +290,9 @@ void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback(uint8_t *Rx_Data)
             //设定底盘控制类型
             Chassis.Set_Chassis_Control_Type(chassis_control_type);
             //设定底盘目标速度
-            Chassis.Set_Target_Velocity_X(chassis_velocity_x);
+             Chassis.Set_Target_Velocity_X(chassis_velocity_x);
             Chassis.Set_Target_Velocity_Y(chassis_velocity_y);
-            Chassis.Set_Target_Omega(chassis_omega);                    //线速度    会根据模式选择是否控制
+            Spin_Omega = chassis_omega;
             // Chassis.Set_Sprint_Status(sprint_status);                //超电现在由下位机控制使用
             break;
         }
@@ -722,6 +722,7 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
 
         if(Chassis.Get_Chassis_Control_Type() == Chassis_Control_Type_SPIN){
             //正常小陀螺速度在上板信息回调里面设置了
+            Chassis.Set_Target_Omega(Spin_Omega);
         }
         else if(Chassis.Get_Chassis_Control_Type() == Chassis_Control_Type_FLLOW){
             //随动环
@@ -734,7 +735,13 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
             PID_Chassis_Fllow.Set_Now(Chassis_Radian);
             PID_Chassis_Fllow.TIM_Adjust_PeriodElapsedCallback();
 
-            Chassis.Set_Target_Omega(-PID_Chassis_Fllow.Get_Out());
+            if(fabs(PID_Chassis_Fllow.Get_Out())<0.1f){
+                Chassis.Set_Target_Omega(0.0f);
+            }else{
+                Chassis.Set_Target_Omega(-PID_Chassis_Fllow.Get_Out());
+            }
+            
+            // Chassis.Set_Target_Omega(0.0f);
         }
 
         Chassis.TIM_Calculate_PeriodElapsedCallback();

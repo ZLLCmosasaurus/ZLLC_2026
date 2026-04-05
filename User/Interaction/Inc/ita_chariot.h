@@ -258,6 +258,9 @@ protected:
         uint32_t Pre_Gimbal_Alive_Flag = 0;
 
         Enum_Gimbal_Status Gimbal_Status =  Gimbal_Status_DISABLE;
+
+        float Spin_Omega = 0.0f;
+
     #endif
 
     #ifdef GIMBAL

@@ -332,7 +332,7 @@ void Class_New_Power_Limit::Power_Task(Struct_Power_Management &power_management
 
         // 限幅处理
         power_management.Motor_Data[i].output =
-            (power_management.Motor_Data[i].output > 16384) ? 16384 : (power_management.Motor_Data[i].output < -16384) ? -16384
+            (power_management.Motor_Data[i].output > 16384) ? 16384: (power_management.Motor_Data[i].output < -16384) ? -16384
                                                                                                                        : power_management.Motor_Data[i].output;
     }
 

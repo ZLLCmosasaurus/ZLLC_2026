@@ -122,6 +122,8 @@ void Chassis_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
  * @param CAN_RxMessage CAN2收到的消息
  */
 #ifdef CHASSIS
+uint32_t steer1,steer2,steer3,steer4;
+float Dt4= 0.0f, DT5,DT6,DT7;
 void Chassis_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
     switch (CAN_RxMessage->Header.Identifier)
@@ -149,21 +151,25 @@ void Chassis_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
         }
         case (0x205):
         {
+            Dt4 = DWT_GetDeltaT(&steer1);
             chariot.Chassis.Motor_Steer[0].CAN_RxCpltCallback(CAN_RxMessage->Data);
             break;
         }
         case (0x206):
         {
+            DT5 = DWT_GetDeltaT(&steer2);
             chariot.Chassis.Motor_Steer[1].CAN_RxCpltCallback(CAN_RxMessage->Data);
             break;
         }
         case (0x207):
         {
+            DT6 = DWT_GetDeltaT(&steer3);
             chariot.Chassis.Motor_Steer[2].CAN_RxCpltCallback(CAN_RxMessage->Data);
             break;
         }
         case (0x208):
         {
+            DT7 = DWT_GetDeltaT(&steer4);
             chariot.Chassis.Motor_Steer[3].CAN_RxCpltCallback(CAN_RxMessage->Data);
             break;
         }
@@ -172,26 +178,32 @@ void Chassis_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 #endif
 
 #ifdef CHASSIS
+uint32_t MA600_0,MA600_2,MA600_1,MA600_3;
+float Dti= 0.0f, DT1,DT2,DT3;
 void Chassis_Device_CAN3_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage){
     switch (CAN_RxMessage->Header.Identifier)
     {
         case(0xD1):
         {
+            Dti = DWT_GetDeltaT(&MA600_0);
             chariot.Chassis.Motor_Steer[0].MA600_Data_Process(CAN_RxMessage);
             break;
         }
         case(0xD2):
         {
+            DT1 = DWT_GetDeltaT(&MA600_1);
             chariot.Chassis.Motor_Steer[1].MA600_Data_Process(CAN_RxMessage);
             break;
         }
         case(0xD3):
         {
+            DT2 = DWT_GetDeltaT(&MA600_2);
             chariot.Chassis.Motor_Steer[2].MA600_Data_Process(CAN_RxMessage);
             break;
         }
         case(0xD4):
         {
+            DT3 = DWT_GetDeltaT(&MA600_3);
             chariot.Chassis.Motor_Steer[3].MA600_Data_Process(CAN_RxMessage);
             break;
         }

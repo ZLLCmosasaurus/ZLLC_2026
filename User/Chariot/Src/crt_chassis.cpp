@@ -67,10 +67,10 @@ void Class_Tricycle_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max
     //舵向电机PID初始化
 
     Motor_Steer[0].PID_Angle.Init(10.f, 0.0f, 0.0f, 0.0f, Motor_Steer[0].Get_Output_Max(), Motor_Steer[0].Get_Output_Max());
-    Motor_Steer[0].PID_Omega.Init(1000.0f, 0.0f, 0.0f, 0.0f, 8000, Motor_Steer[0].Get_Output_Max());
+    Motor_Steer[0].PID_Omega.Init(850.0f, 0.0f, 0.0f, 0.0f, 8000, Motor_Steer[0].Get_Output_Max());
     
     Motor_Steer[1].PID_Angle.Init(10.f, 0.0f, 0.0f, 0.0f, Motor_Steer[1].Get_Output_Max(), Motor_Steer[1].Get_Output_Max());
-    Motor_Steer[1].PID_Omega.Init(1000.0f, 0.0f, 0.0f, 0.0f, 8000, Motor_Steer[1].Get_Output_Max());
+    Motor_Steer[1].PID_Omega.Init(680.0f, 0.0f, 0.0f, 0.0f, 8000, Motor_Steer[1].Get_Output_Max());
 
     Motor_Steer[2].PID_Angle.Init(10.f, 0.0f, 0.0f, 0.0f, Motor_Steer[2].Get_Output_Max(), Motor_Steer[2].Get_Output_Max());
     Motor_Steer[2].PID_Omega.Init(1000.0f, 0.0f, 0.0f, 0.0f, 8000, Motor_Steer[2].Get_Output_Max());
@@ -102,6 +102,8 @@ void Class_Tricycle_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max
  *
  */
 float car_V,car_yaw;//车体总体朝向与速度
+float see1,see2,see3;
+
 void Class_Tricycle_Chassis::Speed_Resolution(){ 
     #ifdef AGV 
    switch (Chassis_Control_Type)
@@ -167,7 +169,10 @@ void Class_Tricycle_Chassis::Speed_Resolution(){
                             // 不需要处理角度
                         }
 
-                        Motor_Steer[i].Set_Target_Radian(Transform_Radian + delta_Angle);
+                        float temp_Target_radian = Transform_Radian + delta_Angle;
+
+                        temp_Target_radian = Normalize_Angle_Radian_PI_to_PI(temp_Target_radian);
+                        Motor_Steer[i].Set_Target_Radian(temp_Target_radian);
                         Motor_Steer[i].Set_Transform_Radian(Transform_Radian);
                         // Motor_Steer[i].Set_Out(0.0f);
                         // Motor_Wheel[i].Set_Out(0.0f);
@@ -176,16 +181,18 @@ void Class_Tricycle_Chassis::Speed_Resolution(){
                     }
                     break;
                 }
+            }else{
+                Lock_Time = 0;
             }
 
             if(Lock_Flag){
                 Lock_Flag = 0;
-                Lock_Time = 0;
+               
             }
-
+            float True_Vx[4], True_Vy[4], True_Target_Angle_Radian[4];
             //轮子 0 1 2 3  转向 4 5 6 7 左前 右前 右后 左后 逆时针
             //0 1 2 3 左前 右前 右后 左后 逆时针    前X左Y坐标系   基于编码器0度朝前，逆时针为正角度   确保轮子正转的是朝前的速度，不然得单独加负号
-            float True_Vx[4], True_Vy[4], True_Target_Angle_Radian[4];
+            
             
             //斜坡处理
             // True_Vx[0] = True_Vx[3] = Slope_Velocity_X.Get_Out() - sqrt(2) * Slope_Omega.Get_Out() *  CHASSIS_RADIUS/ 2;
@@ -201,6 +208,8 @@ void Class_Tricycle_Chassis::Speed_Resolution(){
             True_Vy[0] = True_Vy[1] = Target_Velocity_Y + sqrt(2) * Target_Omega *  CHASSIS_RADIUS/ 2;
             True_Vy[2] = True_Vy[3] = Target_Velocity_Y - sqrt(2) * Target_Omega *  CHASSIS_RADIUS/ 2;
 
+             see1=True_Vy[0];
+             see2=True_Vy[2];
             //舵轮转动角度的优化处理
             for(int i = 0;i<4;i++){
                 Motor_Wheel[i].Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
@@ -234,7 +243,9 @@ void Class_Tricycle_Chassis::Speed_Resolution(){
                     True_Target_Angle_Radian[i] = Motor_Steer[i].Get_Now_Zero_Offset_Radian() + delta_Angle;
                     //不需要处理角度
                 }
-                
+
+
+                True_Target_Angle_Radian[i] = Normalize_Angle_Radian_PI_to_PI(True_Target_Angle_Radian[i]);   // 归一化到 -PI --- PI
                 Motor_Steer[i].Set_Target_Radian(True_Target_Angle_Radian[i]);
                 Motor_Wheel[i].Set_Target_Omega_Radian(temp_Target_Omega);
             }
@@ -363,7 +374,8 @@ void Class_Tricycle_Chassis::Speed_Resolution(){
     #endif
 }
 
-
+uint32_t nb=0;
+float nb666;
 /**
  * @brief TIM定时器中断计算回调函数
  *
@@ -380,6 +392,7 @@ void Class_Tricycle_Chassis::TIM_Calculate_PeriodElapsedCallback()
     Slope_Omega.Set_Target(Target_Omega);
     Slope_Omega.TIM_Calculate_PeriodElapsedCallback();
     
+    nb666=DWT_GetDeltaT(&nb);
     //速度解算
     Speed_Resolution();
 
