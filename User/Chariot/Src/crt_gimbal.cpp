@@ -71,6 +71,7 @@ void Class_Gimbal::Init()
     Calibration_FSM.Gimbal = this;
     /*初始化轨迹追踪器*/
     Trajectory_Tracer.Gimbal = this;
+
 }
 
 /**
@@ -329,10 +330,10 @@ void Class_FSM_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
                 roll_cali_status = Motor_Calibration(&Gimbal->J3_Roll_2325, roll_offset, -310.0f, 5.0f * PI, roll_locked_torque, roll_locked_cnt);
             }
 
-            // if (Gimbal->J4_Pitch_2325.Get_DM_Motor_Status() == DM_Motor_Status_ENABLE && !pitch_cali_status)
-            // {
-            //     pitch_cali_status = Motor_Calibration(&Gimbal->J4_Pitch_2325, pitch_offset, -160.0f, 2.5f, pitch_locked_torque, pitch_locked_cnt);
-            // }
+            if (Gimbal->J4_Pitch_2325.Get_DM_Motor_Status() == DM_Motor_Status_ENABLE && !pitch_cali_status)
+            {
+                pitch_cali_status = Motor_Calibration(&Gimbal->J4_Pitch_2325, pitch_offset, -160.0f, 5.0f, pitch_locked_torque, pitch_locked_cnt);
+            }
 
             if (roll_cali_status)
             {
@@ -342,16 +343,16 @@ void Class_FSM_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
                 Gimbal->J3_Roll_Zero_Position_Radian = (Gimbal->J3_Roll_Min_Radian + Gimbal->J3_Roll_Max_Radian) / 2.0f;
             }
 
-            // if (pitch_cali_status)
-            // {
-            //     Gimbal->J4_Pitch_Cali_Offset = pitch_offset;
-            //     Gimbal->J4_Pitch_Min_Radian = Gimbal->J4_Pitch_Cali_Offset * DM2325_GEAR_RATIO;
-            //     Gimbal->J4_Pitch_Max_Radian = Gimbal->J4_Pitch_Cali_Offset + pitch_range;
-            //     Gimbal->J4_Pitch_Zero_Position_Radian = (Gimbal->J4_Pitch_Min_Radian + Gimbal->J4_Pitch_Max_Radian) / 2.0f;
-            // }
+            if (pitch_cali_status)
+            {
+                Gimbal->J4_Pitch_Cali_Offset = pitch_offset;
+                Gimbal->J4_Pitch_Min_Radian = Gimbal->J4_Pitch_Cali_Offset * DM2325_GEAR_RATIO;
+                Gimbal->J4_Pitch_Max_Radian = Gimbal->J4_Pitch_Min_Radian + pitch_range;
+                Gimbal->J4_Pitch_Zero_Position_Radian = (Gimbal->J4_Pitch_Min_Radian + Gimbal->J4_Pitch_Max_Radian) / 2.0f;
+            }
 
             bool cali_flag = (roll_cali_status) &&
-                             //  (pitch_cali_status) &&
+                             (pitch_cali_status) &&
                              (true);
             if (cali_flag)
             {
@@ -368,17 +369,23 @@ void Class_FSM_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
             {
                 Gimbal->J3_Roll_2325.Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
             }
-            // Gimbal->J4_Pitch_2325.Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
 
-            Gimbal->J3_Roll_2325.Set_Target_Omega(PI * DM2325_GEAR_RATIO);
+            if (Gimbal->J4_Pitch_2325.Get_DM_Motor_Control_Status() == DM_Motor_Control_Status_DISABLE)
+            {
+                Gimbal->J4_Pitch_2325.Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
+            }
+
+            //Gimbal->J4_Pitch_2325.Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
+
+            Gimbal->J3_Roll_2325.Set_Target_Omega(0.5f * PI * DM2325_GEAR_RATIO);
             Gimbal->J3_Roll_2325.Set_Target_Angle(Gimbal->J3_Roll_Zero_Position_Radian);
 
-            // Gimbal->J4_Pitch_2325.Set_Target_Omega(0.5f * DM2325_GEAR_RATIO);
-            // Gimbal->J4_Pitch_2325.Set_Target_Angle(Gimbal->J4_Pitch_Zero_Position_Radian);
+            Gimbal->J4_Pitch_2325.Set_Target_Omega(0.5f * PI * DM2325_GEAR_RATIO);
+            Gimbal->J4_Pitch_2325.Set_Target_Angle(Gimbal->J4_Pitch_Zero_Position_Radian);
 
             bool finish_flag =
                 (fabs((Gimbal->J3_Roll_2325.Get_Target_Angle()) / DM2325_GEAR_RATIO + PI - Gimbal->J3_Roll_2325.Get_Now_Angle()) < 0.1f) &&
-                // (fabs((Gimbal->J4_Pitch_2325.Get_Target_Angle()) / DM2325_GEAR_RATIO + PI - Gimbal->J1_Yaw_8009P.Get_Now_Angle()) < 0.1f) &&
+                (fabs((Gimbal->J4_Pitch_2325.Get_Target_Angle()) / DM2325_GEAR_RATIO + PI - Gimbal->J4_Pitch_2325.Get_Now_Angle()) < 0.1f) &&
                 (true);
 
             if (finish_flag)
@@ -386,6 +393,8 @@ void Class_FSM_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
                 Gimbal->arm_init = true;
                 Set_Status(3);
             }
+
+            buzzer_setTask(&buzzer, BUZZER_MARIO_SIMPLE_PRIORITY);
 
             break;
         }

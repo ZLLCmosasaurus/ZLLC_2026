@@ -32,6 +32,7 @@
 #include "alg_fsm.h"
 #include "arm_model.h"
 #include "dvc_dwt.h"
+#include "buzzer.h"
 /* Exported macros -----------------------------------------------------------*/
 
 /* Exported types ------------------------------------------------------------*/
@@ -246,7 +247,7 @@ protected:
 
     /*Pitch轴校准相关变量*/
     bool pitch_cali_status = false;
-    float pitch_locked_torque = 0.20f;
+    float pitch_locked_torque = 3.5f;
     float pitch_offset = 0.0f;
     float pitch_range = 157.0f;
 
@@ -281,7 +282,6 @@ public:
     Class_DM_Motor_J4310 Motor_DM_J4_Pitch_3;    // J4 - DM4340
     Class_DJI_Motor_GM6020 Motor_6020_J5_Roll_2; // J5 - DJI-G6020
     #endif
-
 
     /*SCARA臂*/
     Class_DM_Motor_J4310 J0_Pitch_4340;
@@ -373,6 +373,10 @@ public:
 
     inline void Set_Target_Gripper_Angle(float __Target_Gripper_Angle);
     inline void Set_Target_Gripper_Radian(float __Target_Gripper_Radian);
+
+    // 2325特殊类型函数
+    inline float Get_Target_J3_Roll_Radian_In_PI();
+    inline float Get_Target_J4_Pitch_Radian_In_PI();
 
     void TIM_Calculate_PeriodElapsedCallback();
 
@@ -566,7 +570,7 @@ protected:
     float Target_J3_Roll_Radian;
     float Target_J3_Roll_Omega = 1.25f * PI;
 
-    float Target_J4_Pitch_Radian = 0.0f;
+    float Target_J4_Pitch_Radian;
     float Target_J4_Pitch_Omega = 1.25f * PI;
 
     float Target_J5_Roll_Radian = 0.0f;
@@ -993,6 +997,16 @@ void Class_Gimbal::Set_Target_Gripper_Radian(float __Target_Gripper_Radian)
 {
     Target_Gripper_Radian = gripper_cali_offset + __Target_Gripper_Radian;
     Math_Constrain(&Target_Gripper_Radian, Min_gripper_Radian, Max_gripper_Radian);
+}
+
+float Class_Gimbal::Get_Target_J3_Roll_Radian_In_PI()
+{
+    return (Target_J3_Roll_Radian - J3_Roll_Zero_Position_Radian)/DM2325_GEAR_RATIO;
+}
+
+float Class_Gimbal::Get_Target_J4_Pitch_Radian_In_PI()
+{
+    return (Target_J4_Pitch_Radian - J4_Pitch_Zero_Position_Radian)/DM2325_GEAR_RATIO;
 }
 
 #endif

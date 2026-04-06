@@ -639,6 +639,9 @@ void Task1ms_TIM5_Callback()
     if (init_finished > 2000)
         start_flag = 1;
 
+    
+    buzzer_taskScheduler(&buzzer);
+    
     /************ 判断设备在线状态判断 50ms (所有device:电机，遥控器，裁判系统等) ***************/
 
     chariot.TIM1msMod50_Alive_PeriodElapsedCallback();

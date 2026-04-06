@@ -91,6 +91,9 @@ void Class_Chariot::Init(float __DR16_Dead_Zone)
     DR16.Init(&huart5, &huart1);
     DR16_Dead_Zone = __DR16_Dead_Zone;
 #endif
+
+    // 蜂鸣器
+    buzzer_init_example();
 }
 
 #ifdef CHASSIS
@@ -951,8 +954,8 @@ void Class_Chariot::Control_Gimbal()
     tmp_j0_pitch_radian = Gimbal.Get_Target_J0_Pitch_Radian();
     tmp_j1_yaw_radian = Gimbal.Get_Target_J1_Yaw_Radian();
     tmp_j2_yaw_radian = Gimbal.Get_Target_J2_Yaw_Radian();
-    tmp_j3_roll_radian = Gimbal.Get_Target_J3_Roll_Radian();
-    tmp_j4_pitch_radian = Gimbal.Get_Target_J4_Pitch_Radian();
+    tmp_j3_roll_radian = Gimbal.Get_Target_J3_Roll_Radian_In_PI();
+    tmp_j4_pitch_radian = Gimbal.Get_Target_J4_Pitch_Radian_In_PI();
     tmp_j5_roll_radian = Gimbal.Get_Target_J5_Roll_Radian();
 
     if (DR16.Get_Left_Switch() == DR16_Switch_Status_UP) // 左上 失能
