@@ -24,15 +24,18 @@
 #include "dvc_referee.h"
 #include "dvc_djimotor.h"
 #include "dvc_dmmotor.h"
+#include "dvc_TOFSense.h"
 #include "alg_power_limit.h"
 #include "dvc_supercap.h"
 #include "config.h"
 #include "dvc_minipc.h"
 #include "alg_fsm.h"
+#include "dvc_dr16.h"
+#include "dvc_dwt.h"
 /* Exported macros -----------------------------------------------------------*/
-#define wheel_diameter 0.14100000f   // 轮子直径，m
-#define half_width 0.159f            // m
-#define half_length 0.152f           // m
+#define wheel_diameter 0.14100000f  // 轮子直径，m
+#define half_width 0.159f           // m
+#define half_length 0.152f          // m
 #define ROTATION_CENTER_OFFSET 0.0f // 旋转中心位置偏移量，现在只有y方向上的偏移，且向y负方向偏移，这个偏移量为绝对值
 
 #define THETA_A atan((half_length + ROTATION_CENTER_OFFSET) / half_width) // 转向轮在坐标系下与y轴的夹角（锐角）
@@ -58,6 +61,19 @@
 
 #define RAD2MM (280.0f / 26.5f)
 /* Exported types ------------------------------------------------------------*/
+
+/**
+ * @brief 底盘右拨杆和抬升状态枚举
+ *
+ */
+enum Enum_Chassis_DR16_Right_Uplift_Status{
+    DR16_Right_Switch_MIDDLE = 0,
+    DR16_Right_Switch_UP,
+    DR16_Right_Switch_DOWN,
+    Chassis_Uplift_FLAG_ADD,
+    Chassis_Uplift_WHEEL_ON,
+};
+
 
 /**
  * @brief 底盘冲刺状态枚举
@@ -211,8 +227,8 @@ protected:
 
 /* Exported variables --------------------------------------------------------*/
 #ifdef ENGINEER
-//工程底盘参数
-// 轮子直径 单位m
+// 工程底盘参数
+//  轮子直径 单位m
 const float WHELL_DIAMETER = 0.141f; // m
 // 线速度转角速度 rad/s
 const float VEL2RAD = 1.0f / (WHELL_DIAMETER / 2.0f); // v = omega * r, omega = v / r， v与r单位保持一致，使用m
@@ -500,16 +516,69 @@ public:
 
     /*电机校准执行函数*/
     bool Motor_Calibration(Class_DJI_Motor_C620 *Motor, uint8_t index, float locked_torque, uint16_t &locked_cnt);
-    
+
     inline bool Get_Uplift_cali_status(uint8_t index);
+
+    bool uplift_cali = false;
 
 protected:
     /*抬升校准状态机相关变量*/
     float uplift_offset[4] = {0.0f};
-    float uplift_cali_torque = 10000.0f;       //待测
+    float uplift_cali_torque = 10000.0f;
     bool uplift_cali_status[4] = {false};
 
-    uint16_t uplift_locked_cnt[4] = {0};// 抬升堵转时间计数
+    uint16_t uplift_locked_cnt[4] = {0}; // 抬升堵转时间计数
+};
+
+class Class_FSM_Ledder : public Class_FSM
+{
+public:
+    Class_Mecanum_Chassis *Chassis;
+    
+    Enum_DR16_Switch_Status DR16_Right;
+    Enum_DR16_Switch_Status DR16_Pre_Right;
+    Enum_DR16_Switch_Status Switch_Status;
+
+    float Yaw = 0.0f;
+    float Yaw_Delta_s = 0.0f;
+
+    uint8_t TRIGGER_CNT = 0;
+    uint16_t Yaw_cnt = 0;
+
+    void Reload_TIM_Status_PeriodElapsedCallback();
+
+protected:
+    /*上台阶相关角度*/
+    float ledder_prepare[4] = {22.0f, 22.0f, 20.0f, 20.0f};
+
+    float ledder_1_touch[4] = {18.0f, 18.0f, 17.5f, 17.5f};
+    float ledder_1_uplift[4] = {0.0f, 0.0f, 1.5f, 1.5f};
+    float ledder_1_over[4] = {22.0f, 22.0f, 20.0f, 20.0f};
+    float ledder_2_touch[4] = {11.0f, 11.0f, 17.0f, 17.0f};
+    float ledder_2_uplift[4] = {0.0f, 0.0f, 2.5f, 2.5f};
+    float ledder_2_over[4] = {22.0f, 22.0f, 20.0f, 20.0f};
+
+    Enum_DR16_Switch_Status Judge_DR16_Switch_Status(Enum_DR16_Switch_Status Now_Status, Enum_DR16_Switch_Status Pre_Status);
+};
+
+class Class_FSM_Off_Ledder : public Class_FSM_Ledder
+{
+public:
+    void Reload_TIM_Status_PeriodElapsedCallback();
+protected:
+    // ToF测距模块回传的底盘离地高度
+    float Height_Meter;
+    // 抬升触地时的底盘阈值高度
+    float Trigger_Height;
+    // 底盘高度判断误差量，数值越小判断越严格，不可超过台阶高度的1/2
+    float Trigger_Offset;
+
+    // 下到第一个台阶时，抬升机构全部接触台阶的高度
+    float ledder_prepare[4];
+    // 底盘前端/后端腾空时，对应测抬升机构触地的高度
+    float ledder_touch[4];
+    // 底盘完全腾空后抬升机构收起
+    float ledder_finish[4];
 };
 
 class Class_Mecanum_Chassis
@@ -537,9 +606,16 @@ public:
     // 抬升机构电机
     Class_DJI_Motor_C620 Uplift_Motor[4];
 
+    // 激光测距模块
+    Class_TOFSense TOFSense;
+
     // 抬升机构校准状态机
     Class_FSM_Calibration_Chassis Calibration_FSM;
     friend class Class_FSM_Calibration_Chassis;
+
+    // 上台阶状态机
+    Class_FSM_Ledder Ledder_FSM;
+    friend class Class_FSM_Ledder;
 
     void Init(float __Velocity_X_Max = 4.0f, float __Velocity_Y_Max = 4.0f, float __Omega_Max = 8.0f);
 
@@ -553,20 +629,24 @@ public:
     inline float Get_Target_Velocity_X();
     inline float Get_Target_Velocity_Y();
     inline float Get_Target_Omega();
+    inline float Get_Delta_Radian();
     inline float Get_Target_Track_Omega();
     inline float Get_Target_Uplift_Radian(uint8_t index);
     inline Enum_Supercap_Mode Get_Supercap_Mode();
+    inline Enum_Chassis_DR16_Right_Uplift_Status Get_DR16_Right_Uplift_Status();
 
     inline void Set_Chassis_Control_Type(Enum_Chassis_Control_Type __Chassis_Control_Type);
     inline void Set_Target_Velocity_X(float __Target_Velocity_X);
     inline void Set_Target_Velocity_Y(float __Target_Velocity_Y);
     inline void Set_Target_Omega(float __Target_Omega);
+    inline void Set_Delta_Radian(float __Delta_Radian);
     inline void Set_Now_Velocity_X(float __Now_Velocity_X);
     inline void Set_Now_Velocity_Y(float __Now_Velocity_Y);
     inline void Set_Now_Omega(float __Now_Omega);
     inline void Set_Target_Track_Omega(float __Target_Track_Omega);
     inline void Set_Target_Uplift_Radian(uint8_t index, float __Target_Uplift_Radian);
     inline void Set_Supercap_Mode(Enum_Supercap_Mode __Supercap_Mode);
+    inline void Set_DR16_Right_Uplift_Status(Enum_Chassis_DR16_Right_Uplift_Status __DR16_Right_Uplift_Status);
 
     inline void Set_Velocity_Y_Max(float __Velocity_Y_Max);
     inline void Set_Velocity_X_Max(float __Velocity_X_Max);
@@ -574,8 +654,8 @@ public:
     void TIM_Calculate_PeriodElapsedCallback(Enum_Sprint_Status __Sprint_Status);
 
     // 着地时的角度，相对于Min_Radian
-    float Uplift_Touch_Radian[4] = {20.5f, 20.5f, 17.0f, 17.0f};
-    
+    float Uplift_Touch_Radian[4] = {9.0f, 9.0f, 19.5f, 19.5f};
+
 protected:
     // 初始化相关常量
 
@@ -585,19 +665,20 @@ protected:
     float Velocity_Y_Max;
     // 角速度限制
     float Omega_Max;
+    // 底盘目标角度增量(从DR16接收)
+    float Delta_Radian;
     // 底盘电机最大转速
     float Wheels_Omega_Max = 31.416f; // 300rpm
     // 抬升机构最大高度 mm
-    float Uplift_Height_Max = 280; 
+    float Uplift_Height_Max = 280;
     // 抬升电机校准后的最大角度，以电机返回的角度作为抬升高度的上限
     float Uplift_Max_Radian[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     // 抬升电机基于校准后最大角度而言的最低角度，差值为26.5rad
     float Uplift_Min_Radian[4] = {
-                                  Uplift_Max_Radian[0] - 28.5f,
-                                  Uplift_Max_Radian[1] - 28.5f,
-                                  Uplift_Max_Radian[2] - 22.5f,
-                                  Uplift_Max_Radian[3] - 22.5f
-                                 };
+        Uplift_Max_Radian[0] - 28.5f,
+        Uplift_Max_Radian[1] - 28.5f,
+        Uplift_Max_Radian[2] - 21.15f,
+        Uplift_Max_Radian[3] - 21.15f,};
 
     // 常量
 
@@ -612,7 +693,7 @@ protected:
     // 传给抬升电机的实际目标角度
     float Target_Uplift_Motor_Radian[4];
     // 用于和Uplift_Min_Radian相加得到电机目标角度的值，也就是加offset之前的目标角度，主要用于遥控器逻辑，初始在最高点，设为最小值和最大值之间的差值，此时赋给电机的角度应为0.0f
-    float Target_Uplift_Radian[4] = {28.5f, 28.5f, 22.5f, 22.5f};
+    float Target_Uplift_Radian[4] = {28.5f, 28.5f, 21.15f, 21.15f};
 
     // 读变量
 
@@ -630,6 +711,7 @@ protected:
     // 底盘控制方法
     Enum_Chassis_Control_Type Chassis_Control_Type = Chassis_Control_Type_DISABLE;
     Enum_Supercap_Mode Supercap_Mode = Supercap_DISABLE;
+    Enum_Chassis_DR16_Right_Uplift_Status DR16_Right_Uplift_Status = DR16_Right_Switch_MIDDLE;
     // 目标速度X，m/s
     float Target_Velocity_X = 0.0f;
     // 目标速度Y
@@ -725,6 +807,11 @@ float Class_Mecanum_Chassis::Get_Target_Omega()
     return (Target_Omega);
 }
 
+float Class_Mecanum_Chassis::Get_Delta_Radian()
+{
+    return (Delta_Radian);
+}
+
 /**
  * @brief 获取目标履带角速度
  *
@@ -772,8 +859,9 @@ float Class_Mecanum_Chassis::Get_Target_Wheel_Power()
  */
 float Class_Mecanum_Chassis::Get_Target_Uplift_Radian(uint8_t index)
 {
-    if(index >= 4) return 13.0f;
-    
+    if (index >= 4)
+        return 22.5f;
+
     return (Target_Uplift_Radian[index]);
 }
 
@@ -781,6 +869,12 @@ Enum_Supercap_Mode Class_Mecanum_Chassis::Get_Supercap_Mode()
 {
     return (Supercap_Mode);
 }
+
+Enum_Chassis_DR16_Right_Uplift_Status Class_Mecanum_Chassis::Get_DR16_Right_Uplift_Status()
+{
+    return (DR16_Right_Uplift_Status);
+}
+
 /**
  * @brief 设定底盘控制方法
  *
@@ -819,6 +913,11 @@ void Class_Mecanum_Chassis::Set_Target_Velocity_Y(float __Target_Velocity_Y)
 void Class_Mecanum_Chassis::Set_Target_Omega(float __Target_Omega)
 {
     Target_Omega = __Target_Omega;
+}
+
+void Class_Mecanum_Chassis::Set_Delta_Radian(float __Delta_Radian)
+{
+    Delta_Radian = __Delta_Radian;
 }
 
 /**
@@ -889,7 +988,8 @@ void Class_Mecanum_Chassis::Set_Velocity_X_Max(float __Velocity_X_Max)
  */
 void Class_Mecanum_Chassis::Set_Target_Uplift_Radian(uint8_t index, float __Target_Radian)
 {
-    if(index >= 4) return;
+    if (index >= 4)
+        return;
 
     Target_Uplift_Radian[index] = __Target_Radian;
     Target_Uplift_Motor_Radian[index] = Uplift_Min_Radian[index] + Target_Uplift_Radian[index];
@@ -901,6 +1001,11 @@ void Class_Mecanum_Chassis::Set_Target_Uplift_Radian(uint8_t index, float __Targ
 void Class_Mecanum_Chassis::Set_Supercap_Mode(Enum_Supercap_Mode __Supercap_Mode)
 {
     Supercap_Mode = __Supercap_Mode;
+}
+
+void Class_Mecanum_Chassis::Set_DR16_Right_Uplift_Status(Enum_Chassis_DR16_Right_Uplift_Status __DR16_Right_Uplift_Status)
+{
+    DR16_Right_Uplift_Status = __DR16_Right_Uplift_Status;
 }
 #endif
 

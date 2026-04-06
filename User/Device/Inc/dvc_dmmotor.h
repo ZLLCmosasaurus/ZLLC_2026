@@ -204,6 +204,10 @@ protected:
 /* Exported variables --------------------------------------------------------*/
 
 /* Exported function declarations --------------------------------------------*/
+Enum_DM_Motor_Control_Status Class_DM_Motor_J4310::Get_DM_Motor_Control_Status()
+{
+    return (DM_Motor_Control_Status);   
+}
 
 /**
  * @brief 获取电机状态

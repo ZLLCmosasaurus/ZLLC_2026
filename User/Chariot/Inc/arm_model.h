@@ -19,7 +19,6 @@ class Class_DH_model
 {
 public:
     Serial_Link<6> arm_model;
-
     float qmin[6];
     float qmax[6];
 
@@ -42,6 +41,7 @@ public:
 
     bool Fkine(float joint_angles[6], float pos[3], float rpy[3]);
     bool Fkine(float joint_angles[6], float T[4][4]);
+
     uint8_t Ikine_Pieper(float pos_target[3], float rpy_target[3], float q_solution[8][6], bool valid[8]);
     float Ikine_Pieper_Best(float pos_target[3], float rpy_target[3], float q_start[6], float q_solution[6]);
 
@@ -75,13 +75,16 @@ class Class_Trajectory_Tracer
     Class_DH_model dh_model;
     Class_Gimbal* Gimbal;
     
+    /*构造函数*/
     Class_Trajectory_Tracer(Class_DH_model _dh_model, Class_Gimbal* _Gimbal, float _cali_offset);
     Class_Trajectory_Tracer();
     
+    /*轨迹规划算法*/
     float get_s_at(uint32_t t_ms);
     float test_get_s_at();
     void get_pos_at(float q_start[6], uint8_t axis, float s, float pos[3]);
 
+    /*轨迹规划器与逆解算*/
     uint32_t Trajectory_Generator(float q_start[6], uint8_t axis, float trajectory_xyz[600][3]);
     uint32_t Trajectory_Ikine(float q_start[6], float rpy_target[3], float trajectory_xyz[600][3], float q_solution[600][6], bool low_speed_flag[6]);
 
@@ -102,7 +105,5 @@ class Class_Trajectory_Tracer
 
     float trajectory_xyz_buffer[600][3];
     float q_solution_buffer[600][6];
-
-
 };
 #endif // ARM_MODEL_H

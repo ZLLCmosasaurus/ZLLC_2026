@@ -59,7 +59,7 @@ void Class_Referee::Init(UART_HandleTypeDef *huart, uint8_t __Frame_Header)
     {
         UART_Manage_Object = &UART7_Manage_Object;
     }
-    else if(huart->Instance == USART10)
+    else if (huart->Instance == USART10)
     {
         UART_Manage_Object = &UART10_Manage_Object;
     }
@@ -67,18 +67,17 @@ void Class_Referee::Init(UART_HandleTypeDef *huart, uint8_t __Frame_Header)
     Frame_Header = __Frame_Header;
 }
 
-
 /**
  * @brief 数据处理过程, 为节约性能不作校验但提供了接口
  * 如遇到大规模丢包或错乱现象, 可重新启用校验过程
  *
- */    
-//以前版本
-// uint16_t buffer_index = 0;
-// uint16_t cmd_id,data_length;
-//test
+ */
+// 以前版本
+//  uint16_t buffer_index = 0;
+//  uint16_t cmd_id,data_length;
+// test
 uint16_t buffer_index = 0;
-uint16_t cmd_id,data_length;
+uint16_t cmd_id, data_length;
 uint16_t temp_cmd_id;
 uint16_t buffer_index_max;
 int receive_flag = 0;
@@ -86,7 +85,7 @@ void Class_Referee::Data_Process()
 {
     buffer_index = 0;
     buffer_index_max = UART_Manage_Object->Rx_Buffer_Length;
-    
+
     // 遍历整个接收缓冲区寻找帧头
     while (buffer_index < buffer_index_max)
     {
@@ -98,7 +97,7 @@ void Class_Referee::Data_Process()
             cmd_id = (cmd_id << 8) | UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 5)];
             data_length = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 2)] & 0xff;
             data_length = (data_length << 8) | UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 1)];
-            Math_Constrain(&data_length,(uint16_t)0,(uint16_t)(128));  //限制数据段最大长度
+            Math_Constrain(&data_length, (uint16_t)0, (uint16_t)(128)); // 限制数据段最大长度
             Enum_Referee_Command_ID CMD_ID = (Enum_Referee_Command_ID)cmd_id;
 
             uint8_t *data_temp = new uint8_t[5];
@@ -107,13 +106,13 @@ void Class_Referee::Data_Process()
             {
                 data_temp[i] = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + i)];
             }
-            if (Verify_CRC8_Check_Sum(data_temp, 5) == 1) //校验帧头
+            if (Verify_CRC8_Check_Sum(data_temp, 5) == 1) // 校验帧头
             {
                 for (int i = 0; i < data_length + 9; i++)
                 {
                     sum_data[i] = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + i)];
                 }
-                if (Verify_CRC16_Check_Sum(sum_data, data_length + 9) == 1) //校验整个帧
+                if (Verify_CRC16_Check_Sum(sum_data, data_length + 9) == 1) // 校验整个帧
                 {
                     switch (CMD_ID)
                     {
@@ -124,7 +123,7 @@ void Class_Referee::Data_Process()
                             reinterpret_cast<uint8_t *>(&Game_Status)[i] = UART_Manage_Object->Rx_Buffer[Get_Circle_Index(buffer_index + 7 + i)];
                         }
                         buffer_index += sizeof(Struct_Referee_Rx_Data_Game_Status) + 7;
-                        //FPS = FPS_Counter_Update();
+                        // FPS = FPS_Counter_Update();
                     }
                     break;
                     case (Referee_Command_ID_GAME_RESULT):
@@ -308,6 +307,15 @@ void Class_Referee::Data_Process()
                         buffer_index += sizeof(Struct_Referee_Tx_Data_Interaction_Radar_Send) + 7;
                     }
                     break;
+                    case (Referee_Command_ID_INTERACTION_CUSTOM_CONTROLLER):
+                    {
+                        if (buffer_index_max - buffer_index >= (sizeof(Struct_Referee_Tx_Data_Interaction_Custom_Controller) + 7) &&
+                            Verify_CRC16_Check_Sum(&UART_Manage_Object->Rx_Buffer[buffer_index], sizeof(Struct_Referee_Tx_Data_Interaction_Custom_Controller) + 7) == 1)
+                        {
+                            memcpy(&Interaction_Custom_Controller, &UART_Manage_Object->Rx_Buffer[buffer_index + 7], sizeof(Struct_Referee_Tx_Data_Interaction_Custom_Controller));
+                            buffer_index += sizeof(Struct_Referee_Tx_Data_Interaction_Custom_Controller) + 7;
+                        }
+                    }
                     }
                 }
             }
@@ -323,9 +331,9 @@ void Class_Referee::Data_Process()
  *
  * @param Rx_Data 接收的数据
  */
-void Class_Referee::UART_RxCpltCallback(uint8_t *Rx_Data,uint16_t Length)
+void Class_Referee::UART_RxCpltCallback(uint8_t *Rx_Data, uint16_t Length)
 {
-    //滑动窗口, 判断裁判系统是否在线
+    // 滑动窗口, 判断裁判系统是否在线
     Flag += 1;
     Data_Process();
 }
@@ -336,15 +344,15 @@ void Class_Referee::UART_RxCpltCallback(uint8_t *Rx_Data,uint16_t Length)
  */
 void Class_Referee::TIM1msMod50_Alive_PeriodElapsedCallback()
 {
-    //判断该时间段内是否接收过裁判系统数据
+    // 判断该时间段内是否接收过裁判系统数据
     if (Flag == Pre_Flag)
     {
-        //裁判系统断开连接
+        // 裁判系统断开连接
         Referee_Status = Referee_Status_DISABLE;
     }
     else
     {
-        //裁判系统保持连接
+        // 裁判系统保持连接
         Referee_Status = Referee_Status_ENABLE;
     }
     Pre_Flag = Flag;
@@ -352,14 +360,14 @@ void Class_Referee::TIM1msMod50_Alive_PeriodElapsedCallback()
 /**
  * @brief UART定时发送函数
  *
- * @param 
+ * @param
  */
 extern Struct_CAN_Referee_Rx_Data_t CAN_Referee_Rx_Data;
 void Class_Referee::TIM_UART_Tx_PeriodElapsedCallback()
 {
-    //雷达发送
+    // 雷达发送
     Sentry_To_Radar.Sender = Get_ID();
-    if(Get_ID() == Referee_Data_Robots_ID_RED_SENTRY_7)
+    if (Get_ID() == Referee_Data_Robots_ID_RED_SENTRY_7)
     {
         Sentry_To_Radar.Receiver = Referee_Data_Robots_ID_RED_RADAR_9;
     }
@@ -370,26 +378,26 @@ void Class_Referee::TIM_UART_Tx_PeriodElapsedCallback()
     Sentry_To_Radar.Robot_Position_X = CAN_Referee_Rx_Data.Robot_Position_X;
     Sentry_To_Radar.Robot_Position_Y = CAN_Referee_Rx_Data.Robot_Position_Y;
     Referee_UI_Packed_Data(&Sentry_To_Radar);
-    HAL_UART_Transmit(UART_Manage_Object->UART_Handler, UART_Manage_Object->Tx_Buffer, UART_Manage_Object->Tx_Length,10);
+    HAL_UART_Transmit(UART_Manage_Object->UART_Handler, UART_Manage_Object->Tx_Buffer, UART_Manage_Object->Tx_Length, 10);
 }
 void Class_Referee::Sentry_Auto_cmd_Transmit()
 {
-    //哨兵自主决策
+    // 哨兵自主决策
     Sentry_cmd.Sender = Get_ID();
     Sentry_cmd.sentry_cmd = CAN_Referee_Rx_Data.Sentry_cmd;
     Referee_UI_Packed_Data(&Sentry_cmd);
-    HAL_UART_Transmit(UART_Manage_Object->UART_Handler, UART_Manage_Object->Tx_Buffer, UART_Manage_Object->Tx_Length,10);
+    HAL_UART_Transmit(UART_Manage_Object->UART_Handler, UART_Manage_Object->Tx_Buffer, UART_Manage_Object->Tx_Length, 10);
 }
 
-unsigned char Get_CRC8_Check_Sum(unsigned  char  *pchMessage,unsigned  int dwLength,unsigned char ucCRC8)
+unsigned char Get_CRC8_Check_Sum(unsigned char *pchMessage, unsigned int dwLength, unsigned char ucCRC8)
 {
-	unsigned char ucIndex;
-	while (dwLength--)
-	{
-	ucIndex = ucCRC8^(*pchMessage++);
-	ucCRC8 = CRC8_TAB[ucIndex];
-	}
-	return(ucCRC8);
+    unsigned char ucIndex;
+    while (dwLength--)
+    {
+        ucIndex = ucCRC8 ^ (*pchMessage++);
+        ucCRC8 = CRC8_TAB[ucIndex];
+    }
+    return (ucCRC8);
 }
 /*
 ** Descriptions: CRC8 Verify function
@@ -398,10 +406,11 @@ unsigned char Get_CRC8_Check_Sum(unsigned  char  *pchMessage,unsigned  int dwLen
 */
 unsigned int Verify_CRC8_Check_Sum(unsigned char *pchMessage, unsigned int dwLength)
 {
-	unsigned char ucExpected = 0;
-	if ((pchMessage == 0) || (dwLength <= 2)) return 0;
-	ucExpected = Get_CRC8_Check_Sum (pchMessage, dwLength-1, CRC8_INIT);
-	return ( ucExpected == pchMessage[dwLength-1] );
+    unsigned char ucExpected = 0;
+    if ((pchMessage == 0) || (dwLength <= 2))
+        return 0;
+    ucExpected = Get_CRC8_Check_Sum(pchMessage, dwLength - 1, CRC8_INIT);
+    return (ucExpected == pchMessage[dwLength - 1]);
 }
 /*
 ** Descriptions: append CRC8 to the end of data
@@ -410,10 +419,11 @@ unsigned int Verify_CRC8_Check_Sum(unsigned char *pchMessage, unsigned int dwLen
 */
 void Append_CRC8_Check_Sum(unsigned char *pchMessage, unsigned int dwLength)
 {
-	unsigned char ucCRC = 0;
-	if ((pchMessage == 0) || (dwLength <= 2)) return;
-	ucCRC = Get_CRC8_Check_Sum ( (unsigned char *)pchMessage, dwLength-1, CRC8_INIT);
-	pchMessage[dwLength-1] = ucCRC;
+    unsigned char ucCRC = 0;
+    if ((pchMessage == 0) || (dwLength <= 2))
+        return;
+    ucCRC = Get_CRC8_Check_Sum((unsigned char *)pchMessage, dwLength - 1, CRC8_INIT);
+    pchMessage[dwLength - 1] = ucCRC;
 }
 
 /*
@@ -421,19 +431,19 @@ void Append_CRC8_Check_Sum(unsigned char *pchMessage, unsigned int dwLength)
 ** Input: Data to check,Stream length, initialized checksum
 ** Output: CRC checksum
 */
-uint16_t Get_CRC16_Check_Sum(uint8_t *pchMessage,uint32_t dwLength,uint16_t wCRC)
+uint16_t Get_CRC16_Check_Sum(uint8_t *pchMessage, uint32_t dwLength, uint16_t wCRC)
 {
-uint8_t chData;
-	if (pchMessage == NULL)
-	{
-		return 0xFFFF;
-	}
-	while(dwLength--)
-	{
-		chData = *pchMessage++;
-		(wCRC) = ((uint16_t)(wCRC) >> 8) ^ CRC16_Table[((uint16_t)(wCRC)^(uint16_t)(chData)) & 0x00ff];
-	}
-	return wCRC;
+    uint8_t chData;
+    if (pchMessage == NULL)
+    {
+        return 0xFFFF;
+    }
+    while (dwLength--)
+    {
+        chData = *pchMessage++;
+        (wCRC) = ((uint16_t)(wCRC) >> 8) ^ CRC16_Table[((uint16_t)(wCRC) ^ (uint16_t)(chData)) & 0x00ff];
+    }
+    return wCRC;
 }
 
 /*
@@ -443,29 +453,28 @@ uint8_t chData;
 */
 uint32_t Verify_CRC16_Check_Sum(uint8_t *pchMessage, uint32_t dwLength)
 {
-	uint16_t wExpected = 0;
-	if ((pchMessage == NULL) || (dwLength <= 2))
-	{
-	return 0;
-	}
-	wExpected = Get_CRC16_Check_Sum ( pchMessage, dwLength - 2, CRC16_INIT);
-	return ((wExpected & 0xff) == pchMessage[dwLength - 2] && ((wExpected >> 8) & 0xff) ==
-	pchMessage[dwLength - 1]);
+    uint16_t wExpected = 0;
+    if ((pchMessage == NULL) || (dwLength <= 2))
+    {
+        return 0;
+    }
+    wExpected = Get_CRC16_Check_Sum(pchMessage, dwLength - 2, CRC16_INIT);
+    return ((wExpected & 0xff) == pchMessage[dwLength - 2] && ((wExpected >> 8) & 0xff) ==
+                                                                  pchMessage[dwLength - 1]);
 }
 /*
 ** Descriptions: append CRC16 to the end of data
 ** Input: Data to CRC and append,Stream length = Data + checksum
 ** Output: True or False (CRC Verify Result)
 */
-void Append_CRC16_Check_Sum(uint8_t * pchMessage,uint32_t dwLength)
+void Append_CRC16_Check_Sum(uint8_t *pchMessage, uint32_t dwLength)
 {
-	uint16_t wCRC = 0;
-	if ((pchMessage == NULL) || (dwLength <= 2))
-	{
-	return;
-	}
-	wCRC = Get_CRC16_Check_Sum ( (uint8_t *)pchMessage, dwLength-2, CRC16_INIT );
-	pchMessage[dwLength-2] = (uint8_t)(wCRC & 0x00ff);
-	pchMessage[dwLength-1] = (uint8_t)((wCRC >> 8)& 0x00ff);
+    uint16_t wCRC = 0;
+    if ((pchMessage == NULL) || (dwLength <= 2))
+    {
+        return;
+    }
+    wCRC = Get_CRC16_Check_Sum((uint8_t *)pchMessage, dwLength - 2, CRC16_INIT);
+    pchMessage[dwLength - 2] = (uint8_t)(wCRC & 0x00ff);
+    pchMessage[dwLength - 1] = (uint8_t)((wCRC >> 8) & 0x00ff);
 }
-

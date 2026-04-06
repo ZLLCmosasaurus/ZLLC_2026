@@ -439,13 +439,15 @@ void Class_Mecanum_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max,
     // Mecanum_Wheels[1].PID_Omega.Init(800.0f, 0.0f, 0.0f, 0.0f, Mecanum_Wheels[1].Get_Output_Max(), Mecanum_Wheels[1].Get_Output_Max());
     // Mecanum_Wheels[2].PID_Omega.Init(800.0f, 0.0f, 0.0f, 0.0f, Mecanum_Wheels[2].Get_Output_Max(), Mecanum_Wheels[2].Get_Output_Max());
     // Mecanum_Wheels[3].PID_Omega.Init(800.0f, 0.0f, 0.0f, 0.0f, Mecanum_Wheels[3].Get_Output_Max(), Mecanum_Wheels[3].Get_Output_Max());
-    
+
     // 抬升电机PID初始化
-    for(int i = 0; i < 4; i++)
+    for (int i = 1; i < 4; i++)
     {
         Uplift_Motor[i].PID_Omega.Init(1200.0f, 0.0f, 0.0f, 0.0f, Uplift_Motor[i].Get_Output_Max(), Uplift_Motor[i].Get_Output_Max());
-        Uplift_Motor[i].PID_Angle.Init(4.5f, 0.0f, 0.0f, 0.0f,0.0f, 7.0f * PI);
+        Uplift_Motor[i].PID_Angle.Init(4.5f, 0.0f, 0.0f, 0.0f, 0.0f, 5.0f * PI);
     }
+    Uplift_Motor[0].PID_Omega.Init(1350.0f, 0.0f, 0.0f, 0.0f, Uplift_Motor[0].Get_Output_Max(), Uplift_Motor[0].Get_Output_Max());
+    Uplift_Motor[0].PID_Angle.Init(5.0f, 0.0f, 0.0f, 0.0f, 0.0f, 5.0f * PI);
 
     // // 麦轮轮组电机ID初始化
     // Mecanum_Wheels[0].Init(&hfdcan1, DJI_Motor_ID_0x201, DJI_Motor_Control_Method_OMEGA, 3591.0f / 187.0f);
@@ -462,12 +464,16 @@ void Class_Mecanum_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max,
     // 主动轮电机ID初始化
     Track_Motor[0].Init(&hfdcan2, DM_Motor_ID_0xA1, DM_Motor_Control_Method_OMEGA);
     Track_Motor[1].Init(&hfdcan2, DM_Motor_ID_0xA2, DM_Motor_Control_Method_OMEGA);
-    
+
+    // 激光测距模块初始化
+    TOFSense.Init(&huart7, 0);
+
     // 底盘控制方式初始化
     Chassis_Control_Type = Chassis_Control_Type_DISABLE;
 
-    // 抬升状态机传指针
+    // 状态机传指针
     Calibration_FSM.Chassis = this;
+    Ledder_FSM.Chassis = this;
 }
 
 void Class_Mecanum_Chassis::Speed_Resolution()
@@ -565,10 +571,11 @@ void Class_Mecanum_Chassis::Speed_Resolution()
 
 void Class_Mecanum_Chassis::Output()
 {
-    if(Chassis_Control_Type == Chassis_Control_Type_DISABLE)
+    if (Chassis_Control_Type == Chassis_Control_Type_DISABLE)
     {
         // 抬升电机
-        for(int i = 0; i < 4; i++){
+        for (int i = 0; i < 4; i++)
+        {
             Uplift_Motor[i].Set_Out(0.0f);
         }
 
@@ -579,24 +586,30 @@ void Class_Mecanum_Chassis::Output()
     else
     {
         // 抬升电机
-        for(int i = 0; i < 4; i++)
+        if (Calibration_FSM.uplift_cali)
         {
-            Uplift_Motor[i].Set_Target_Radian(Target_Uplift_Motor_Radian[i]);
+            for (int i = 0; i < 4; i++)
+            {
+                Uplift_Motor[i].Set_Target_Radian(Target_Uplift_Motor_Radian[i]);
+            }
+        }
+        else
+        {
+            Calibration_FSM.Reload_TIM_Status_PeriodElapsedCallback();
         }
 
-        for(int i = 0; i < 4; i++)
+        for (int i = 0; i < 4; i++)
         {
             Uplift_Motor[i].TIM_PID_PeriodElapsedCallback();
         }
 
         // 主动轮电机
         Track_Motor[0].Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
-        Track_Motor[0].Set_Target_Omega(Target_Track_Omega);
+        Track_Motor[0].Set_Target_Omega(-Target_Track_Omega);
 
         Track_Motor[1].Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
-        Track_Motor[1].Set_Target_Omega(-Target_Track_Omega);
+        Track_Motor[1].Set_Target_Omega(Target_Track_Omega);
     }
-
 }
 
 /**
@@ -650,7 +663,7 @@ void Class_Mecanum_Chassis::TIM_Calculate_PeriodElapsedCallback(Enum_Sprint_Stat
 }
 
 /**
- * @brief 单编码器电机校准状态机
+ * @brief 单增量式编码器电机校准状态机
  *
  */
 void Class_FSM_Calibration_Chassis::Reload_TIM_Status_PeriodElapsedCallback()
@@ -661,26 +674,27 @@ void Class_FSM_Calibration_Chassis::Reload_TIM_Status_PeriodElapsedCallback()
     case (0):
         /*校准状态*/
         {
-            bool all_cali_status = true;
-            for(int i = 0; i < 4; i++)
+            bool uplift_all_cali_status = true;
+            for (int i = 0; i < 4; i++)
             {
-                if(Chassis->Uplift_Motor[i].Get_DJI_Motor_Status() == DJI_Motor_Status_ENABLE && !uplift_cali_status[i])
+                if (Chassis->Uplift_Motor[i].Get_DJI_Motor_Status() == DJI_Motor_Status_ENABLE && !uplift_cali_status[i])
                 {
                     uplift_cali_status[i] = Motor_Calibration(Chassis->Uplift_Motor + i, i, uplift_cali_torque, uplift_locked_cnt[i]);
                 }
 
-                if(uplift_cali_status[i])
+                if (uplift_cali_status[i])
                 {
-                    Chassis->Uplift_Max_Radian[i] = uplift_offset[i] - 2.0f;
-                    Chassis->Uplift_Min_Radian[i] = Chassis->Uplift_Max_Radian[i] - (i < 2 ? 26.5f : 20.0f);
+                    Chassis->Uplift_Max_Radian[i] = uplift_offset[i] - 0.2f;
+                    Chassis->Uplift_Min_Radian[i] = Chassis->Uplift_Max_Radian[i] - (i < 2 ? 28.5f : 21.15f);
                 }
 
-                all_cali_status = all_cali_status && uplift_cali_status[i];
+                uplift_all_cali_status = uplift_all_cali_status && uplift_cali_status[i];
             }
 
-            if(all_cali_status)
+            if (uplift_all_cali_status)
             {
                 Set_Status(1);
+                uplift_cali = true;
             }
 
             break;
@@ -689,14 +703,15 @@ void Class_FSM_Calibration_Chassis::Reload_TIM_Status_PeriodElapsedCallback()
         /*校准完成状态*/
         {
             bool online_status = true;
-            for(int i = 0; i < 4; i++)
+            for (int i = 0; i < 4; i++)
             {
                 online_status = online_status && (Chassis->Uplift_Motor[i].Get_DJI_Motor_Status() == DJI_Motor_Status_ENABLE);
             }
 
-            if(!online_status)
+            if (!online_status)
             {
                 Set_Status(0);
+                uplift_cali = false;
             }
 
             break;
@@ -705,7 +720,7 @@ void Class_FSM_Calibration_Chassis::Reload_TIM_Status_PeriodElapsedCallback()
 }
 
 /**
- * @brief 校准执行函数 C610 - 2006
+ * @brief 校准执行函数 C620 - 3508
  *
  */
 bool Class_FSM_Calibration_Chassis::Motor_Calibration(Class_DJI_Motor_C620 *Motor, uint8_t i, float locked_torque, uint16_t &locked_cnt)
@@ -722,7 +737,7 @@ bool Class_FSM_Calibration_Chassis::Motor_Calibration(Class_DJI_Motor_C620 *Moto
 
             uplift_offset[i] = Motor->Get_Now_Radian();
 
-            Motor->Set_Target_Radian(uplift_offset[i] - 2.0f); // 校准完成后稍微松开一点，避免一直堵转，校准是往张开的方向动的，所以这里往加紧的方向动一下
+            Motor->Set_Target_Radian(uplift_offset[i] - 0.3f);
 
             return true;
         }
@@ -732,5 +747,379 @@ bool Class_FSM_Calibration_Chassis::Motor_Calibration(Class_DJI_Motor_C620 *Moto
         locked_cnt = 0;
     }
     return false;
+}
+
+Enum_DR16_Switch_Status Class_FSM_Ledder::Judge_DR16_Switch_Status(Enum_DR16_Switch_Status Now_Status, Enum_DR16_Switch_Status Pre_Status)
+{
+    Enum_DR16_Switch_Status Switch_Status;
+    switch (Pre_Status)
+    {
+    case (DR16_Switch_Status_UP):
+    {
+        switch (Now_Status)
+        {
+        case (DR16_Switch_Status_UP):
+        {
+            Switch_Status = DR16_Switch_Status_UP;
+        }
+        break;
+        case (DR16_Switch_Status_DOWN):
+        {
+            Switch_Status = DR16_Switch_Status_TRIG_MIDDLE_DOWN;
+        }
+        break;
+        case (DR16_Switch_Status_MIDDLE):
+        {
+            Switch_Status = DR16_Switch_Status_TRIG_UP_MIDDLE;
+        }
+        break;
+        }
+    }
+    break;
+    case (DR16_Switch_Status_DOWN):
+    {
+        switch (Now_Status)
+        {
+        case (DR16_Switch_Status_UP):
+        {
+            Switch_Status = DR16_Switch_Status_TRIG_MIDDLE_UP;
+        }
+        break;
+        case (DR16_Switch_Status_DOWN):
+        {
+            Switch_Status = DR16_Switch_Status_DOWN;
+        }
+        break;
+        case (DR16_Switch_Status_MIDDLE):
+        {
+            Switch_Status = DR16_Switch_Status_TRIG_DOWN_MIDDLE;
+        }
+        break;
+        }
+    }
+    break;
+    case (DR16_Switch_Status_MIDDLE):
+    {
+        switch (Now_Status)
+        {
+        case (DR16_Switch_Status_UP):
+        {
+            Switch_Status = DR16_Switch_Status_TRIG_MIDDLE_UP;
+        }
+        break;
+        case (DR16_Switch_Status_DOWN):
+        {
+            Switch_Status = DR16_Switch_Status_TRIG_MIDDLE_DOWN;
+        }
+        break;
+        case (DR16_Switch_Status_MIDDLE):
+        {
+            Switch_Status = DR16_Switch_Status_MIDDLE;
+        }
+        break;
+        }
+    }
+    break;
+    }
+
+    return Switch_Status;
+}
+
+/* 上台阶状态机 */
+void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
+{
+    Status[Now_Status_Serial].Time++;
+
+    /*获取Yaw拨盘状态，用于控制状态机*/
+    Switch_Status = Judge_DR16_Switch_Status(DR16_Right, DR16_Pre_Right);
+    if (Yaw >= 0.95f)
+    {
+        Yaw_cnt++;
+        if (DR16_Right == DR16_Switch_Status_UP && Yaw_cnt == 1)
+        {
+            TRIGGER_CNT++;
+        }
+    }
+    else if (Yaw == 0.0f)
+    {
+        Yaw_cnt = 0;
+    }
+
+    // 获取当前抬升机构高度用于做增量赋值
+    float target_rad[4] = {0.0f};
+    for (int i = 0; i < 4; i++)
+    {
+        target_rad[i] = Chassis->Get_Target_Uplift_Radian(i);
+    }
+
+    // 状态机具体逻辑
+    switch (Now_Status_Serial)
+    {
+    case (0): // 准备阶段，抬升机构抬高，准备触地
+    {
+        Chassis->Set_Target_Uplift_Radian(0, ledder_prepare[0]);
+        Chassis->Set_Target_Uplift_Radian(1, ledder_prepare[1]);
+        Chassis->Set_Target_Uplift_Radian(2, ledder_prepare[2]);
+        Chassis->Set_Target_Uplift_Radian(3, ledder_prepare[3]);
+
+        if (TRIGGER_CNT > 1)
+            TRIGGER_CNT = 0;
+
+        bool is_ready = true;
+        for (int i = 0; i < 4; i++)
+        {
+            is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Omega_Radian()) <= 0.1f);
+        }
+
+        if (is_ready && TRIGGER_CNT == 1)
+        {
+            Set_Status(1);
+        }
+
+        break;
+    }
+
+    case (1): // 抬升机构下降至触地位置
+    {
+        Chassis->Set_Target_Uplift_Radian(0, ledder_1_touch[0]);
+        Chassis->Set_Target_Uplift_Radian(1, ledder_1_touch[1]);
+        Chassis->Set_Target_Uplift_Radian(2, ledder_1_touch[2]);
+        Chassis->Set_Target_Uplift_Radian(3, ledder_1_touch[3]);
+
+        if (TRIGGER_CNT > 2)
+            TRIGGER_CNT = 1;
+
+        bool is_ready = true;
+        for (int i = 0; i < 4; i++)
+        {
+            is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Omega_Radian()) <= 0.1f);
+        }
+
+        if (is_ready && TRIGGER_CNT == 2)
+        {
+            Set_Status(2);
+        }
+
+        break;
+    }
+
+    case (2): // 此状态抬升机构将整车抬起
+    {
+        if (TRIGGER_CNT > 3)
+            TRIGGER_CNT = 2;
+
+        for (int i = 0; i < 4; i++)
+        {
+            target_rad[i] -= PI * 0.01f;
+            Math_Constrain(target_rad + i, ledder_1_uplift[i], ledder_1_touch[i]);
+            Chassis->Set_Target_Uplift_Radian(i, target_rad[i]);
+        }
+
+        bool is_ready = true;
+        for (int i = 0; i < 4; i++)
+        {
+            is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Omega_Radian()) <= 0.1f);
+        }
+
+        // 将车身送上台阶后使用遥控器切换到下一个状态
+        if (is_ready && TRIGGER_CNT == 3)
+        {
+            Set_Status(3);
+        }
+
+        break;
+    }
+
+    case (3): // 此状态为登上第一个台阶后的抬升机构复位状态
+    {
+        if (TRIGGER_CNT > 4)
+            TRIGGER_CNT = 3;
+
+        Chassis->Set_Target_Uplift_Radian(0, ledder_1_over[0]);
+        Chassis->Set_Target_Uplift_Radian(1, ledder_1_over[1]);
+        Chassis->Set_Target_Uplift_Radian(2, ledder_1_over[2]);
+        Chassis->Set_Target_Uplift_Radian(3, ledder_1_over[3]);
+
+        bool is_ready = true;
+        for (int i = 0; i < 4; i++)
+        {
+            is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Omega_Radian()) <= 0.1f);
+        }
+
+        if (is_ready && TRIGGER_CNT == 4)
+        {
+            Set_Status(4);
+        }
+
+        break;
+    }
+
+    case (4): // 次状态为抬升机构下降至第二个台阶触地位置
+    {
+        if (TRIGGER_CNT > 5)
+            TRIGGER_CNT = 4;
+
+        Chassis->Set_Target_Uplift_Radian(0, ledder_2_touch[0]);
+        Chassis->Set_Target_Uplift_Radian(1, ledder_2_touch[1]);
+        Chassis->Set_Target_Uplift_Radian(2, ledder_2_touch[2]);
+        Chassis->Set_Target_Uplift_Radian(3, ledder_2_touch[3]);
+
+        bool is_ready = true;
+        for (int i = 0; i < 4; i++)
+        {
+            is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Omega_Radian()) <= 0.1f);
+        }
+
+        if (is_ready && TRIGGER_CNT == 5)
+        {
+            Set_Status(5);
+        }
+
+        break;
+    }
+
+    case (5): // 此状态车身整体被抬起
+    {
+        if (TRIGGER_CNT > 6)
+            TRIGGER_CNT = 5;
+
+        for (int i = 0; i < 4; i++)
+        {
+            target_rad[i] -= PI * 0.01f;
+            Math_Constrain(target_rad + i, ledder_2_uplift[i], ledder_2_touch[i]);
+            Chassis->Set_Target_Uplift_Radian(i, target_rad[i]);
+        }
+
+        bool is_ready = true;
+        for (int i = 0; i < 4; i++)
+        {
+            is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Omega_Radian()) <= 0.05f);
+        }
+
+        if (is_ready && TRIGGER_CNT == 6)
+        {
+            Set_Status(6);
+        }
+
+        break;
+    }
+
+    case (6): // 此状态抬升机构复位，完成第二个上台阶
+    {
+        Chassis->Set_Target_Uplift_Radian(0, ledder_2_over[0]);
+        Chassis->Set_Target_Uplift_Radian(1, ledder_2_over[1]);
+        Chassis->Set_Target_Uplift_Radian(2, ledder_2_over[2]);
+        Chassis->Set_Target_Uplift_Radian(3, ledder_2_over[3]);
+
+        bool is_ready = true;
+        for (int i = 0; i < 4; i++)
+        {
+            is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Omega_Radian()) <= 0.05f);
+        }
+
+        TRIGGER_CNT = 0;
+
+        break;
+    }
+    }
+}
+
+void Class_FSM_Off_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
+{
+    Status[Now_Status_Serial].Time++;
+
+    /*获取Yaw拨盘状态，用于控制状态机*/
+    Switch_Status = Judge_DR16_Switch_Status(DR16_Right, DR16_Pre_Right);
+    if (Yaw >= 0.95f)
+    {
+        Yaw_cnt++;
+        if (DR16_Right == DR16_Switch_Status_UP && Yaw_cnt == 1)
+        {
+            TRIGGER_CNT++;
+        }
+    }
+    else if (Yaw == 0.0f)
+    {
+        Yaw_cnt = 0;
+    }
+
+    // 获取当前抬升机构高度用于做增量赋值
+    float target_rad[4] = {0.0f};
+    for (int i = 0; i < 4; i++)
+    {
+        target_rad[i] = Chassis->Get_Target_Uplift_Radian(i);
+    }
+
+    // 获取当前ToF高度
+    Height_Meter = Chassis->TOFSense.Get_Now_Distance();
+
+    switch (Now_Status_Serial)
+    {
+    case (0): // 下台阶准备状态，此状态下四个抬升全部触地，从第二个台阶下到第一个台阶时开启
+    {
+        Chassis->Set_Target_Uplift_Radian(0, ledder_prepare[0]);
+        Chassis->Set_Target_Uplift_Radian(1, ledder_prepare[1]);
+        Chassis->Set_Target_Uplift_Radian(2, ledder_prepare[2]);
+        Chassis->Set_Target_Uplift_Radian(3, ledder_prepare[3]);
+
+        bool is_ready = true;
+        for (int i = 0; i < 4; i++)
+        {
+            is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Omega_Radian()) <= 0.1f);
+        }
+
+        // 根据ToF测距模块回传的数据判断是否可以下放一侧抬升
+        if (is_ready && fabs(Height_Meter - Trigger_Height) <= Trigger_Offset)
+        {
+            Set_Status(1);
+        }
+
+        break;
+    }
+
+    case (1):
+    {
+        Chassis->Set_Target_Uplift_Radian(0, ledder_touch[0]);
+        Chassis->Set_Target_Uplift_Radian(1, ledder_touch[1]);
+        Chassis->Set_Target_Uplift_Radian(2, ledder_touch[2]);
+        Chassis->Set_Target_Uplift_Radian(3, ledder_touch[3]);
+
+        if (TRIGGER_CNT > 1)
+            TRIGGER_CNT = 0;
+
+        bool is_ready = true;
+        for (int i = 0; i < 4; i++)
+        {
+            is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Omega_Radian()) <= 0.1f);
+        }
+
+        if (is_ready && TRIGGER_CNT == 1)
+        {
+            Set_Status(2);
+        }
+
+        break;
+    }
+
+    case (2):
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            target_rad[i] -= PI * 0.01f;
+            Math_Constrain(target_rad + i, ledder_finish[i], ledder_touch[i]);
+            Chassis->Set_Target_Uplift_Radian(i, target_rad[i]);
+        }
+
+        bool is_ready = true;
+        for (int i = 0; i < 4; i++)
+        {
+            is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Omega_Radian()) <= 0.05f);
+        }
+
+        TRIGGER_CNT = 0;
+
+        break;
+    }
+    }
 }
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

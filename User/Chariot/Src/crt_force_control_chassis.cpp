@@ -10,6 +10,9 @@ void Class_Chassis::Init()
     // 底盘速度yPID, 输出摩擦力
     PID_Velocity_Y.Init(70.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1000.0f, 0.002f);
 
+    // 底盘角度PID，输出目标角速度rad/s，最大速度 5rad/s
+    PID_Radian.Init(10.5f, 0.0f, 0.0f, 0.0f, 0.0f, 4.5f, 0.002f);
+
     // 底盘角速度PID, 输出扭矩
     PID_Omega.Init(12.0f, 0.0f, 0.0f, 0.0f, 0.0f, 100.0f, 0.002f);
 
@@ -70,6 +73,8 @@ void Class_Chassis::TIM_100ms_Alive_PeriodElapsedCallback()
 void Class_Chassis::TIM_2ms_Resolution_PeriodElapsedCallback()
 {
     Self_Resolution();
+
+    PID_Radian_Output();
 
     // PID_Velocity_Filter[0].Set_Now(Now_Velocity_X);
     // PID_Velocity_Filter[0].TIM_Adjust_PeriodElapsedCallback();
@@ -149,6 +154,7 @@ void Class_Chassis::Output_To_Dynamics()
         {
             PID_Velocity_X.Set_Integral_Error(0.0f);
             PID_Velocity_Y.Set_Integral_Error(0.0f);
+            PID_Radian.Set_Integral_Error(0.0f);
             PID_Omega.Set_Integral_Error(0.0f);
         }
 
@@ -164,7 +170,7 @@ void Class_Chassis::Output_To_Dynamics()
         PID_Velocity_Y.Set_Now(Now_Velocity_Y_Spike);
         PID_Velocity_Y.TIM_Adjust_PeriodElapsedCallback();
 
-        PID_Omega.Set_Target(Slope_Omega.Get_Out());
+        PID_Omega.Set_Target(Target_Omega);
         PID_Omega.Set_Now(Now_Omega_Spike);
         PID_Omega.TIM_Adjust_PeriodElapsedCallback();
 
@@ -343,4 +349,26 @@ void Class_Chassis::Self_Resolution()
         Power_Management.Motor_Data[i].torque = Motor_Wheel[i].Get_Target_Current() * 16384.0f / 20.0f * M3508_CMD_CURRENT_TO_TORQUE;       // 与减速比有关
         Power_Management.Motor_Data[i].pid_output = Motor_Wheel[i].Get_Target_Current() * 16384.0f / 20.0f;
     }
+}
+
+void Class_Chassis::PID_Radian_Output()
+{
+    PID_Radian.Set_Target(Target_Radian);
+
+    if(Target_Radian - Boardc_BMI.Get_Rad_Yaw() > PI)
+    {
+        PID_Radian.Set_Now(Boardc_BMI.Get_Rad_Yaw() + 2.0f * PI);
+    }
+    else if(Target_Radian - Boardc_BMI.Get_Rad_Yaw() < -PI)
+    {
+        PID_Radian.Set_Now(Boardc_BMI.Get_Rad_Yaw() - 2.0f * PI);
+    }
+    else
+    {
+        PID_Radian.Set_Now(Boardc_BMI.Get_Rad_Yaw());
+    }
+    
+    PID_Radian.TIM_Adjust_PeriodElapsedCallback();
+
+    Set_Target_Omega(PID_Radian.Get_Out());
 }

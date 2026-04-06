@@ -40,6 +40,9 @@ public:
     // 底盘速度方向PID
     Class_PID PID_Velocity_Y;
 
+    // 底盘角度PID, radian
+    Class_PID PID_Radian;
+
     // 底盘角速度PID
     Class_PID PID_Omega;
 
@@ -109,6 +112,8 @@ public:
 
     inline float Get_Target_Omega();
 
+    inline float Get_Target_Radian();
+
     inline void Set_Power_Limit_Max(float __Power_Limit_Max);
 
     inline void Set_Chassis_Control_Type(Enum_Chassis_Control_Type__ __Chassis_Control_Type);
@@ -118,6 +123,8 @@ public:
     inline void Set_Target_Velocity_Y(float __Target_Velocity_Y);
 
     inline void Set_Target_Omega(float __Target_Omega);
+
+    inline void Set_Target_Radian(float __Target_Radian);
 
     void Init();
     void TIM_100ms_Alive_PeriodElapsedCallback();
@@ -194,12 +201,15 @@ protected:
     float Target_Velocity_X = 0.0f;
     // 目标速度Y
     float Target_Velocity_Y = 0.0f;
-    // 目标角速度
+    // 角速度环目标角速度
     float Target_Omega = 0.0f;
+    // 目标角度
+    float Target_Radian = 0.0f;
 
     // 内部函数
-
     void Self_Resolution();
+    
+    void PID_Radian_Output();
 
     void Kinematics_Inverse_Resolution();
 
@@ -384,6 +394,11 @@ inline float Class_Chassis::Get_Target_Omega()
     return (Target_Omega);
 }
 
+inline float Class_Chassis::Get_Target_Radian()
+{
+    return (Target_Radian);
+}
+
 /**
  * @brief 设定功率控制上限
  *
@@ -432,6 +447,11 @@ inline void Class_Chassis::Set_Target_Velocity_Y(float __Target_Velocity_Y)
 inline void Class_Chassis::Set_Target_Omega(float __Target_Omega)
 {
     Target_Omega = __Target_Omega;
+}
+
+inline void Class_Chassis::Set_Target_Radian(float __Target_Radian)
+{
+    Target_Radian = __Target_Radian;
 }
 
 #endif

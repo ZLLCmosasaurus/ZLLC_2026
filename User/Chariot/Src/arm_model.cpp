@@ -42,7 +42,10 @@ Class_Trajectory_Tracer::Class_Trajectory_Tracer(Class_DH_model _dh_model, Class
 Class_Trajectory_Tracer::Class_Trajectory_Tracer()
 {
     dh_model = Class_DH_model();
+
+    #ifdef PUMA
     cali_offset = Gimbal->Get_Roll_Cali_Offset() + 1.514f;
+    #endif
 };
 
 bool Class_DH_model::Fkine(float joint_angles[6], float pos[3], float rpy[3])
@@ -600,6 +603,7 @@ uint32_t Class_Trajectory_Tracer::Trajectory_Ikine(float q_start[6], float rpy_t
 
 void Class_Trajectory_Tracer::motor_angles_update()
 {
+    #ifdef PUMA
     now_motor_angles[0] = Gimbal->Motor_DM_J0_Yaw.Get_Now_Angle();
     now_motor_angles[1] = Gimbal->Motor_DM_J1_Pitch.Get_Now_Angle();
     now_motor_angles[2] = Gimbal->Motor_DM_J2_Pitch_2.Get_Now_Angle();
@@ -611,6 +615,7 @@ void Class_Trajectory_Tracer::motor_angles_update()
     {
         motor_to_model(now_motor_angles, now_model_angles);
     }
+    #endif
 }
 
 void Class_Trajectory_Tracer::arm_pos_rpy_update()

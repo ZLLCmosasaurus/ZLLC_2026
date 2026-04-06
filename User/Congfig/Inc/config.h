@@ -17,12 +17,15 @@
 /* Exported macros -----------------------------------------------------------*/
 
 //底盘或云台状态
-#define CHASSIS
-//#define GIMBAL
+//#define CHASSIS
+#define GIMBAL
 
 //调试或比赛状态
 #define DEBUG
 
+// 机械臂类型选择
+//#define PUMA
+#define SCARA
 //之前写的机械臂电机测试入口
 //#define MOTOR_TEST
 
@@ -33,7 +36,7 @@
 //#define MOTOR_TEST_CHASSIS
 
 //底盘测试入口
-#define CHASSIS_TEST
+//#define CHASSIS_TEST
 
 //功率控制相关
 #define POWER_CONTROL 1 //启用功率控制
