@@ -80,15 +80,15 @@ void Class_Tricycle_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max
 
 
     //舵向电机ID初始化
-    Motor_Steer[0].Init(&hfdcan2, DJI_Motor_ID_0x205);
-    Motor_Steer[1].Init(&hfdcan2, DJI_Motor_ID_0x206);
-    Motor_Steer[2].Init(&hfdcan2, DJI_Motor_ID_0x207);
-    Motor_Steer[3].Init(&hfdcan2, DJI_Motor_ID_0x208);
+    Motor_Steer[0].Init(&hfdcan1, DJI_Motor_ID_0x205);
+    Motor_Steer[1].Init(&hfdcan1, DJI_Motor_ID_0x206);
+    Motor_Steer[2].Init(&hfdcan1, DJI_Motor_ID_0x207);
+    Motor_Steer[3].Init(&hfdcan1, DJI_Motor_ID_0x208);
 
     //舵向电机零点位置初始化
     Motor_Steer[0].Set_Zero_Position(0.36000001f);               //应该是轮子朝向的正方向，行进轮超前，并且顺时针转动为正方向的角度
     Motor_Steer[1].Set_Zero_Position(0.48f);
-    Motor_Steer[2].Set_Zero_Position(1.63);
+    Motor_Steer[2].Set_Zero_Position(-1.51);
     Motor_Steer[3].Set_Zero_Position(-2.518f);
     #endif
 
@@ -440,7 +440,7 @@ void Class_Tricycle_Chassis::TIM_Calculate_PeriodElapsedCallback()
         {
             // Power_Management.Max_Power = Power_Management.Buffer_Power + Referee->Get_Chassis_Power_Max();
             supercap_flag = 0;
-            Power_Management.Max_Power = Referee->Get_Chassis_Power_Max() - 8.0f;              //不吃缓冲能量
+            Power_Management.Max_Power = Referee->Get_Chassis_Power_Max();              //不吃缓冲能量
         }
     }
     else
@@ -458,22 +458,11 @@ void Class_Tricycle_Chassis::TIM_Calculate_PeriodElapsedCallback()
 
     for (int i = 0; i < 4; i++) // 数据传递处理
     {
-
-        if(i == 3){
-            Power_Management.Motor_Data[i].feedback_omega = 0;
-            Power_Management.Motor_Data[i].feedback_torque = 0; // 与减速比有关
-            Power_Management.Motor_Data[i].torque = 0;                 // 与减速比有关
-            Power_Management.Motor_Data[i].pid_output = 0;
-        }
-        else{
-            // 都是计算转子的
-            Power_Management.Motor_Data[i].feedback_omega = Motor_Wheel[i].Get_Now_Omega_Radian() * RAD_TO_RPM * Motor_Wheel[i].Get_Gearbox_Rate();
-            Power_Management.Motor_Data[i].feedback_torque = Motor_Wheel[i].Get_Now_Torque() * M3508_CMD_CURRENT_TO_TORQUE; // 与减速比有关
-            Power_Management.Motor_Data[i].torque = Motor_Wheel[i].Get_Out() * M3508_CMD_CURRENT_TO_TORQUE;                 // 与减速比有关
-            Power_Management.Motor_Data[i].pid_output = Motor_Wheel[i].Get_Out();
-        }
-
-        
+        // 都是计算转子的
+        Power_Management.Motor_Data[i].feedback_omega = Motor_Wheel[i].Get_Now_Omega_Radian() * RAD_TO_RPM * Motor_Wheel[i].Get_Gearbox_Rate();
+        Power_Management.Motor_Data[i].feedback_torque = Motor_Wheel[i].Get_Now_Torque() * M3508_CMD_CURRENT_TO_TORQUE; // 与减速比有关
+        Power_Management.Motor_Data[i].torque = Motor_Wheel[i].Get_Out() * M3508_CMD_CURRENT_TO_TORQUE;                 // 与减速比有关
+        Power_Management.Motor_Data[i].pid_output = Motor_Wheel[i].Get_Out();   
 
         Power_Management.Motor_Data[i + 4].feedback_omega = Motor_Steer[i].Get_Now_Omega_Radian() * RAD_TO_RPM * Motor_Steer[i].Get_Gearbox_Rate();
         Power_Management.Motor_Data[i + 4].feedback_torque = Motor_Steer[i].Get_Now_Torque() * M3508_CMD_CURRENT_TO_TORQUE;

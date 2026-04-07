@@ -18,7 +18,7 @@
 
 //底盘或云台状态
 #define CHASSIS
-//#define GIMBAL
+// #define GIMBAL
 
 //遥控器选择
 //#define USE_VT13
