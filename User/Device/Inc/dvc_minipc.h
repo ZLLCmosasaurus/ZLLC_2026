@@ -934,8 +934,7 @@ struct Pack_rx_t
 #ifdef MINIPC_COMM_CAN
     int16_t target_x;
     int16_t target_y;
-    int16_t target_z;
-    int8_t  Fire;
+    uint8_t  Fire;
     uint8_t alive;
 #endif
 } __attribute__((packed));

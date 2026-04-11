@@ -909,7 +909,7 @@ void GraphicSendtask(void)
 		FrictSpeed_Draw(JudgeReceiveData.booster_fric_omega_left, JudgeReceiveData.booster_fric_omega_right, Init_Cnt);
 		BulletNum_Draw(JudgeReceiveData.Booster_bullet_num, Init_Cnt);
 		Antispin_Draw(Init_Cnt);
-		// CapUI_Change(JudgeReceiveData.Supercap_Voltage, Init_Cnt);
+		CapUI_Change(JudgeReceiveData.Supercap_Voltage, Init_Cnt);
 		BoosterMode_Draw(Init_Cnt);
 		GimbalStatus_Draw(Init_Cnt);
 		RadarDoubleDamage_Draw(Init_Cnt);
@@ -1089,7 +1089,7 @@ void GraphicSendtask(void)
 			if (fabs(Last_JudgeReceiveData.Supercap_Voltage - JudgeReceiveData.Supercap_Voltage) >= 0.01f)
 			{
 				CapDraw(JudgeReceiveData.Supercap_Voltage, 0);
-				// CapUI_Change(JudgeReceiveData.Supercap_Voltage, 0);
+				CapUI_Change(JudgeReceiveData.Supercap_Voltage, 0);
 				Last_JudgeReceiveData.Supercap_Voltage = JudgeReceiveData.Supercap_Voltage;
 			}
 			break;

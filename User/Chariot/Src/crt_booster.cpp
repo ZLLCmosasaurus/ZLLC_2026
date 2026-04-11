@@ -209,7 +209,7 @@ void Class_FSM_Antijamming::Reload_TIM_Status_PeriodElapsedCallback()
             if((abs(Booster->Motor_Driver.Get_Now_Torque()) > Booster->Driver_Torque_Threshold))
 			{
 			    Torque_tim_cnt2++;
-			    if(Torque_tim_cnt2 > 150)
+			    if(Torque_tim_cnt2 > 200)
 			    {
 			    	Set_Status(5);
 			    	Torque_tim_cnt2 = 0;
@@ -243,12 +243,19 @@ void Class_FSM_Antijamming::Reload_TIM_Status_PeriodElapsedCallback()
             Booster->Motor_Driver.PID_Omega.Set_Integral_Error(0.0f);
             Booster->Motor_Driver.Set_Out(0.0f);
             Booster->Driver_Angle = Booster->Motor_Driver.Get_Now_Radian();
-            if(Status[Now_Status_Serial].Time >= 2000)
+            // 静态变量记录上次开火时间
+            static uint32_t booster_last_fire_time = 0;
+            // 获取当前系统时间（毫秒）
+            uint32_t booster_now = HAL_GetTick();
+
+            if(Status[Now_Status_Serial].Time == 1)
             {
-                if((abs(Booster->Motor_Driver.Get_Now_Torque()) < 0.3f*Booster->Driver_Torque_Threshold))
-                {
-                    Set_Status(0);
-                }
+                booster_last_fire_time = booster_now;
+            }
+
+            if(booster_now - booster_last_fire_time >= 2000)
+            {
+                Set_Status(0);
             }
         }
     }

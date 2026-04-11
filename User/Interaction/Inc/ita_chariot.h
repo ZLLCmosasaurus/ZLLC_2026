@@ -168,13 +168,6 @@ public:
         Class_DM_Motor_J4310 Motor_Yaw_DM4310;
         //底盘随动PID环
         Class_PID PID_Chassis_Fllow;
-        #ifdef Only_Chassis
-        //遥控器
-        Class_DR16 DR16;
-        //遥控器离线保护控制状态机
-        Class_FSM_Alive_Control FSM_Alive_Control;
-        friend class Class_FSM_Alive_Control;
-        #endif
 
     #endif 
 
@@ -231,11 +224,6 @@ public:
         inline void  Set_Gimbal_Pitch_Angle(float __Angle);
         inline void Set_Chassis_Reference_Angle(float __Reference_Angle);
         inline Enum_Gimbal_Status Get_Gimbal_Status();
-        #ifdef Only_Chassis
-        inline Enum_Chassis_Control_Type Get_Pre_Chassis_Control_Type();
-        inline void Set_Pre_Chassis_Control_Type(Enum_Chassis_Control_Type __Chassis_Control_Type);
-        void TIM_Control_Callback();
-        #endif
 
         #endif
 
@@ -339,11 +327,11 @@ protected:
 
         Enum_Gimbal_Status Gimbal_Status =  Gimbal_Status_DISABLE;
         
-        //遥控器拨动的死区, 0~1
+        // 遥控器拨动的死区, 0~1
         float DR16_Dead_Zone;
         //DR16控制数据来源
-        Enum_DR16_Control_Type DR16_Control_Type = DR16_Control_Type_REMOTE;
-        Enum_Chassis_Control_Type Pre_Chassis_Control_Type = Chassis_Control_Type_DISABLE;
+        // Enum_DR16_Control_Type DR16_Control_Type = DR16_Control_Type_REMOTE;
+        // Enum_Chassis_Control_Type Pre_Chassis_Control_Type = Chassis_Control_Type_DISABLE;
         
     #endif
 
@@ -402,7 +390,7 @@ protected:
         Enum_Chassis_Status Chassis_Status = Chassis_Status_DISABLE;
 
         //底盘 云台 发射机构 前一帧控制类型
-        Enum_Chassis_Control_Type Pre_Chassis_Control_Type = Chassis_Control_Type_DISABLE;
+        Enum_Chassis_Control_Type Pre_Chassis_Control_Type = Chassis_Control_Type_FLLOW;
         Enum_Gimbal_Control_Type Pre_Gimbal_Control_Type = Gimbal_Control_Type_NORMAL;
         Enum_Booster_Control_Type Pre_Booster_Control_Type = Booster_Control_Type_CEASEFIRE;
 
@@ -410,7 +398,7 @@ protected:
         uint8_t Shoot_Flag = 0;
         
         //DR16控制数据来源
-        Enum_DR16_Control_Type DR16_Control_Type = DR16_Control_Type_REMOTE;
+        Enum_DR16_Control_Type DR16_Control_Type = DR16_Control_Type_NONE;
         Enum_VT13_Control_Type VT13_Control_Type = VT13_Control_Type_NONE;
         // 当前活动的控制器
         Enum_Active_Controller Active_Controller = Controller_NONE;
@@ -593,27 +581,7 @@ protected:
         return Gimbal_Status;
     }   
     #endif
-    #ifdef Only_Chassis
-    /**
-     * @brief 获取前一帧底盘控制类型
-     * 
-     * @return Enum_Chassis_Control_Type 前一帧底盘控制类型
-     */
 
-    Enum_Chassis_Control_Type Class_Chariot::Get_Pre_Chassis_Control_Type()
-    {
-        return (Pre_Chassis_Control_Type);
-    }
-    /**
-     * @brief 设置前一帧底盘控制类型
-     * 
-     * @param __Chassis_Control_Type 前一帧底盘控制类型
-     */
-    void Class_Chariot::Set_Pre_Chassis_Control_Type(Enum_Chassis_Control_Type __Chassis_Control_Type)
-    {
-        Pre_Chassis_Control_Type = __Chassis_Control_Type;
-    }
-    #endif
     Enum_Gimbal_Status Class_Chariot::Get_Gimbal_Status(){
         return Gimbal_Status;
     }   

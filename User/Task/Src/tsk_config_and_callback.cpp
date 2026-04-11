@@ -79,13 +79,13 @@ void Chassis_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
             chariot.Force_Control_Chassis.Motor_Wheel[0].CAN_RxCpltCallback(CAN_RxMessage->Data);
         }
         break;
-        case (0x202):
+        case (0x203):
         {
             chariot.Chassis.Motor_Wheel[1].CAN_RxCpltCallback(CAN_RxMessage->Data);
             chariot.Force_Control_Chassis.Motor_Wheel[1].CAN_RxCpltCallback(CAN_RxMessage->Data);
         }
         break;
-        case (0x203):
+        case (0x202):
         {
             chariot.Chassis.Motor_Wheel[2].CAN_RxCpltCallback(CAN_RxMessage->Data);
             chariot.Force_Control_Chassis.Motor_Wheel[2].CAN_RxCpltCallback(CAN_RxMessage->Data);
@@ -347,16 +347,7 @@ void DR16_UART5_Callback(uint8_t *Buffer, uint16_t Length)
     chariot.TIM_Control_Callback();
 }
 #endif
-#ifdef CHASSIS
-#ifdef Only_Chassis
-void DR16_UART5_Callback(uint8_t *Buffer, uint16_t Length)
-{
-    chariot.DR16.DR16_UART_RxCpltCallback(Buffer);
-    //底盘 云台 发射机构 的控制策略
-    chariot.TIM_Control_Callback();
-}
-#endif
-#endif
+
 /**
  * @brief UART1遥控器回调函数--图传
  *
@@ -472,106 +463,25 @@ void Task100us_TIM4_Callback()
     dt = DWT_GetDeltaT(&cnt_last);
         // 单给IMU消息开的定时器 ims
         chariot.Gimbal.Boardc_BMI.TIM_Calculate_PeriodElapsedCallback();
-
-    //     // 静态变量记录上次开火的系统时间（毫秒）
-    // static uint32_t last_fire_time = 0;
-
-    // // 获取当前上位机开火信号（0或1）
-    // uint8_t current_fire = chariot.MiniPC.Get_Fire_Status();
-
-    // // 获取当前系统时间（毫秒，由HAL_GetTick()提供）
-    // uint32_t now = HAL_GetTick();
-
-    // // 开火条件：信号为真，且距离上次开火已超过1500ms
-    // if (current_fire == 1 && (now - last_fire_time) >= 1500)
-    // {
-    //     // 可选：检查遥控器开关状态（根据实际需求）
-    //     if (chariot.DR16.Get_Left_Switch() == DR16_Switch_Status_DOWN &&
-    //         chariot.DR16.Get_Right_Switch() == DR16_Switch_Status_UP)
-    //     {
-    //         // 执行开火动作（例如设置拨弹盘为单发模式）
-    //         chariot.Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
-
-    //         // 记录本次开火时间，开始冷却
-    //         last_fire_time = now;
-        // }
-    // }
         static uint8_t mod2 = 0;  
         mod2++;
         if(mod2%2 == 0)
         {
-            chariot.Gimbal.dmIMU.IMU_RequestData(&hfdcan2,0x01,2);
-            // chariot.Gimbal.dmIMU.IMU_RequestData(&hfdcan3,0x01,2);
+            // chariot.Gimbal.dmIMU.IMU_RequestData(&hfdcan2,0x01,2);
         }
         else
         {
-            chariot.Gimbal.dmIMU.IMU_RequestData(&hfdcan2,0x01,3);
-            // chariot.Gimbal.dmIMU.IMU_RequestData(&hfdcan3,0x01,3);
+            // chariot.Gimbal.dmIMU.IMU_RequestData(&hfdcan2,0x01,3);
         }
 
     static int mod100 = 0;
     mod100++;
     if(mod100 = 100)
     {
-        #ifdef defined(USE_DR16)
-                #ifdef DEBUG
-                    if (chariot.DR16.Get_DR16_Status() == DR16_Status_DISABLE)
-                    {
-                        chariot.Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_DISABLE);
-                        chariot.Booster.Set_Booster_Control_Type(Booster_Control_Type_DISABLE);
-                        chariot.Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
-                    }
-                #else
-                if(CAN3_Chassis_Rx_Data_A.game_process != 4)
-                {
-                    if (chariot.DR16.Get_DR16_Status() == DR16_Status_DISABLE)
-                    {
-                        chariot.Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_DISABLE);
-                        chariot.Booster.Set_Booster_Control_Type(Booster_Control_Type_DISABLE);
-                        chariot.Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
-                    }
-                }
-                #endif
-            #elif defined(USE_VT13)
-                #ifdef DEBUG
-                    if (chariot.VT13.Get_VT13_Status() == VT13_Status_DISABLE)
-                    {
-                        chariot.Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_DISABLE);
-                        chariot.Booster.Set_Booster_Control_Type(Booster_Control_Type_DISABLE);
-                        chariot.Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
-                    }
-                #else
-                #endif
-
-        #endif
         mod100 = 0;
     }
 
     #endif
-}
-
-uint32_t Pre_Uart1_Flag = 0, Uart1_Flag = 0;
-void Power_Cale_UART_Callback(uint8_t *Buffer, uint16_t Length)
-{
-    int16_t tmp_power;
-    memcpy(&tmp_power,&Buffer[6],sizeof(int16_t));
-    chariot.Chassis.Supercap.Set_Power_Cale_Count((float)tmp_power/75.0f);
-
-    Uart1_Flag++;
-}
-void Uart1_Alive_Check(uint8_t *flag)//1为正常通信
-{
-    static uint8_t mod20 = 0;//50hz检查一次
-	mod20++;
-    if(mod20 == 20)
-    {
-        mod20 = 0;
-        if(Uart1_Flag == Pre_Uart1_Flag)
-            *flag = 0;
-        else
-            *flag = 1;
-            
-    }
 }
 
 
@@ -580,7 +490,7 @@ void Uart1_Alive_Check(uint8_t *flag)//1为正常通信
  * @brief TIM5任务回调函数
  *
  */
-uint8_t Uart1_Alive_Flag = 0;
+
 void Task1ms_TIM5_Callback()
 {
     init_finished++;
@@ -591,7 +501,7 @@ void Task1ms_TIM5_Callback()
     /************ 判断设备在线状态判断 50ms (所有device:电机，遥控器，裁判系统等) ***************/
     
     chariot.TIM1msMod50_Alive_PeriodElapsedCallback();
-    chariot.TIM_Unline_Protect_PeriodElapsedCallback();
+   // chariot.TIM_Unline_Protect_PeriodElapsedCallback();
     // HAL_IWDG_Refresh(&hiwdg1);
 
     /****************************** 交互层回调函数 1ms *****************************************/
@@ -606,9 +516,7 @@ void Task1ms_TIM5_Callback()
         #endif
         #endif
         #ifdef CHASSIS
-        #ifdef Only_Chassis
-        chariot.FSM_Alive_Control.Reload_TIM_Status_PeriodElapsedCallback();
-        #endif
+
         #endif
         __disable_irq();
         chariot.TIM_Calculate_PeriodElapsedCallback();
@@ -624,17 +532,7 @@ void Task1ms_TIM5_Callback()
             chariot.Flag_Message ++;
         }   
         #endif     
-        #ifdef AGV
-        Uart1_Alive_Check(&Uart1_Alive_Flag);
-        memcpy(CAN1_0x01E_Tx_Data + 6,&Uart1_Alive_Flag,1);
-        #endif
-		// if(huart1.ErrorCode)
-		// {
-        //     HAL_UART_DMAStop(&huart1); // 停止以重启
-        //     //HAL_Delay(10); // 等待错误结束
-        //     HAL_UARTEx_ReceiveToIdle_DMA(&huart1, UART1_Manage_Object.Rx_Buffer, UART1_Manage_Object.Rx_Buffer_Length);
-		// }
-        // Uart1_Alive_Check(&Uart1_Alive_Flag);
+
         static int mod5 = 0,mod100 = 0,mod68 = 0;
         mod5++;
         mod100++;
@@ -642,10 +540,10 @@ void Task1ms_TIM5_Callback()
         if (mod5 == 5)
         {
             // 上位机
-            TIM_USB_PeriodElapsedCallback(&MiniPC_USB_Manage_Object);
+            // TIM_USB_PeriodElapsedCallback(&MiniPC_USB_Manage_Object);
 
             // 串口统一发送
-            TIM_UART_PeriodElapsedCallback();
+            // TIM_UART_PeriodElapsedCallback();
             mod5 = 0;
         }	 
         if(mod100 == 100)
@@ -687,10 +585,7 @@ extern "C" void Task_Init()
         SPI_Init(&hspi2,Device_SPI2_Callback);
         //裁判系统
         UART_Init(&huart10, Referee_UART10_Callback, 128);//并未使用环形队列 尽量给长范围增加检索时间 减少丢包
-        #ifdef Only_Chassis
-        //遥控器
-        UART_Init(&huart5, DR16_UART5_Callback, 18);
-        #endif
+
         //功率计
         // UART_Init(&huart1, Power_Cale_UART_Callback, 8+1);
         #ifdef POWER_LIMIT
@@ -740,7 +635,7 @@ extern "C" void Task_Init()
     /********************************* 交互层初始化 *********************************/
 
     chariot.Init();
-	buzzer_setTask(&buzzer, BUZZER_DJI_STARTUP_PRIORITY);
+	buzzer_setTask(&buzzer, BUZZER_MARIO_SIMPLE_PRIORITY);
 
     /********************************* 使能调度时钟 *********************************/
 
@@ -770,9 +665,7 @@ extern "C" void Task_Init()
         JudgeReceiveData.Bullet_Status = chariot.Bulletcap_Status;    // 弹舱
         JudgeReceiveData.Fric_Status = chariot.Fric_Status;           // 摩擦轮
         JudgeReceiveData.Minipc_Status = chariot.MiniPC_Status;       // 自瞄是否离线
-        // JudgeReceiveData.Booster_User_Control_Type = chariot.Booster_User_Control_Type; // 单发/多发
-        // JudgeReceiveData.Supercap_Energy = chariot.Chassis.Supercap.Get_Stored_Energy();    // 超级电容储能
-        JudgeReceiveData.Supercap_Voltage = chariot.Chassis.Supercap.Get_Supercap_Charge_Percentage() / 100.0f; // 超级电容容量
+        JudgeReceiveData.Supercap_Voltage =  chariot.Force_Control_Chassis.Supercap.Get_Supercap_Charge_Percentage() / 100.0f; // 超级电容容量
         JudgeReceiveData.Chassis_Control_Type = chariot.Chassis.Get_Chassis_Control_Type();      // 底盘控制模式
         JudgeReceiveData.Supercap_State = chariot.Sprint_Status;
         JudgeReceiveData.booster_fric_omega_left = chariot.Booster_fric_omega_left; // 左摩擦轮速度; 

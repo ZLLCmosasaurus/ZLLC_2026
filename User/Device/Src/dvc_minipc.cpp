@@ -588,14 +588,15 @@ void Class_MiniPC::Data_Process()
   // 将CAN接收到的数据转换为实际值 (除以1000转换回浮点数)
   float target_x = Pack_Rx.target_x / 1000.0f;
   float target_y = Pack_Rx.target_y / 1000.0f;
-  float target_z = Pack_Rx.target_z ;
 
-  Fire = target_z;//Pack_Rx.Fire;
+  Fire = Pack_Rx.Fire;
   
   //Self_aim(target_x, target_y, target_z + camera_distance, &tmp_yaw, &tmp_pitch, &Distance);
   Rx_Angle_Pitch = target_y;//tmp_pitch;
   Rx_Angle_Yaw = target_x;//tmp_yaw;
+  alive = Pack_Rx.alive;
   Math_Constrain(&Rx_Angle_Pitch, -20.0f, 35.0f);
+
 #endif
 }
 
