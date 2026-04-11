@@ -156,13 +156,69 @@ void Class_MiniPC::Output()
   if(index == 4)index = 0;
 }
 
+float Yaw_test, Pitch_test, Roll_test;
+void Class_MiniPC::Output_Test()
+{
+  Data_MCU_To_NUC_Test.mode = 1;
+
+  float Yaw_rad = Now_Angle_Yaw * PI / 180.0f;
+  float Pitch_rad = Now_Angle_Pitch * PI / 180.0f;
+  float Roll_rad = Now_Angle_Roll * PI / 180.0f;
+
+  Data_MCU_To_NUC_Test.q[0] = arm_cos_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f) - arm_sin_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f);
+  Data_MCU_To_NUC_Test.q[1] = arm_sin_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f) + arm_cos_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f);
+  Data_MCU_To_NUC_Test.q[2] = arm_cos_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f) - arm_sin_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f);
+  Data_MCU_To_NUC_Test.q[3] = arm_cos_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f) + arm_sin_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f);
+
+  Yaw_test = atan2f(2.0f*(Data_MCU_To_NUC_Test.q[0]*Data_MCU_To_NUC_Test.q[3]+Data_MCU_To_NUC_Test.q[1]*Data_MCU_To_NUC_Test.q[2]), 2.0f*(Data_MCU_To_NUC_Test.q[0]*Data_MCU_To_NUC_Test.q[0]+Data_MCU_To_NUC_Test.q[1]*Data_MCU_To_NUC_Test.q[1]) - 1.0f)*57.3f;
+  Pitch_test = asinf(-2.0f*(Data_MCU_To_NUC_Test.q[1]*Data_MCU_To_NUC_Test.q[3]-Data_MCU_To_NUC_Test.q[0]*Data_MCU_To_NUC_Test.q[2]))*57.3f;
+  Roll_test = atan2f(2.0f*(Data_MCU_To_NUC_Test.q[0]*Data_MCU_To_NUC_Test.q[1]+Data_MCU_To_NUC_Test.q[2]*Data_MCU_To_NUC_Test.q[3]), 2.0f*(Data_MCU_To_NUC_Test.q[0]*Data_MCU_To_NUC_Test.q[0]+Data_MCU_To_NUC_Test.q[3]*Data_MCU_To_NUC_Test.q[3]) - 1.0f)*57.3f;
+
+  Data_MCU_To_NUC_Test.yaw = Now_Angle_Yaw;
+  Data_MCU_To_NUC_Test.yaw_vel = External_IMU->Get_Gyro_Yaw() * 57.3f;
+  Data_MCU_To_NUC_Test.pitch = Now_Angle_Pitch;
+  Data_MCU_To_NUC_Test.pitch_vel = External_IMU->Get_Gyro_Pitch() * 57.3f;
+  Data_MCU_To_NUC_Test.bullet_speed = 23.0f;
+  Data_MCU_To_NUC_Test.bullet_count = 10;
+
+  memcpy(USB_Manage_Object->Tx_Buffer, &Data_MCU_To_NUC_Test, sizeof(Struct_MiniPC_Tx_Data_Test));
+  USB_Manage_Object->Tx_Buffer_Length = sizeof(Struct_MiniPC_Tx_Data_Test);
+  //crc16 校验
+  Append_CRC16_Check_Sum(USB_Manage_Object->Tx_Buffer, sizeof(Struct_MiniPC_Tx_Data_Test));
+
+}
+
+void Class_MiniPC::Data_Process_Test(Enum_MiniPC_Data_Source Data_Source)
+{
+  if(Data_Source == USB)
+  {
+    if(!Verify_CRC16_Check_Sum(USB_Manage_Object->Rx_Buffer,USB_Manage_Object->Rx_Buffer_Length)) return;
+    memcpy(&Data_NUC_To_MCU_Test, USB_Manage_Object->Rx_Buffer, sizeof(Struct_MiniPC_Rx_Data_Test));
+
+    mode = Data_NUC_To_MCU_Test.mode;
+    Rx_Angle_Yaw = Data_NUC_To_MCU_Test.yaw;
+    Rx_Angle_Pitch = Data_NUC_To_MCU_Test.pitch;
+    Math_Constrain(&Rx_Angle_Pitch, -25.0f, 22.0f);
+
+    if(mode == 2){
+      MiniPC_Fire_Updata_Flag = 1;
+    }
+  }
+}
+
 /**
  * @brief tim定时器中断增加数据到发送缓冲区
  *
  */
 void Class_MiniPC::TIM_Write_PeriodElapsedCallback()
 {
-  Output();
+  // Output();
+  Output_Test();
+}
+
+uint8_t Class_MiniPC::Get_mode()
+{
+  return mode;
 }
 
 /**
@@ -174,7 +230,8 @@ void Class_MiniPC::USB_RxCpltCallback(uint8_t *rx_data)
 {
   //滑动窗口, 判断迷你主机是否在线
   Flag += 1;
-  Data_Process(USB);
+  // Data_Process(USB);
+  Data_Process_Test(USB);
 }
 
 /**

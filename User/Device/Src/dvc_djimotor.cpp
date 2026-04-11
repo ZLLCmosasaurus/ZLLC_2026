@@ -407,12 +407,14 @@ void Class_DJI_Motor_GM6020::TIM_PID_PeriodElapsedCallback()
     {
         PID_Angle.Set_Target(Target_Angle);
         PID_Angle.Set_Now(Transform_Angle);                 //转换后的角度，右手螺旋定律，标准坐标系
+        PID_Angle.Set_D_Target(Transform_Target_Vel);
         PID_Angle.TIM_Adjust_PeriodElapsedCallback();
 
         Target_Omega_Angle = PID_Angle.Get_Out();
 
         PID_Omega.Set_Target(Target_Omega_Angle);
         PID_Omega.Set_Now(Transform_Omega);
+        PID_Omega.Set_D_Target(Transform_Target_Acc);
         PID_Omega.TIM_Adjust_PeriodElapsedCallback();
 
         Out = PID_Omega.Get_Out();
@@ -660,7 +662,7 @@ void Class_DJI_Motor_C610::TIM_PID_PeriodElapsedCallback()
  * @param __Gearbox_Rate 减速箱减速比, 默认为原装减速箱, 如拆去减速箱则该值设为1
  * @param __Torque_Max 最大扭矩, 需根据不同负载测量后赋值, 也就开环和扭矩环输出用得到, 不过我感觉应该没有奇葩喜欢开环输出这玩意
  */
-void Class_DJI_Motor_C620::Init(FDCAN_HandleTypeDef *hcan, Enum_DJI_Motor_ID __CAN_ID, Enum_DJI_Motor_Control_Method __DJI_Motor_Control_Method, float __Gearbox_Rate, float __Torque_Max)
+void Class_DJI_Motor_C620::Init(FDCAN_HandleTypeDef *hcan, Enum_DJI_Motor_ID __CAN_ID, Enum_DJI_Motor_Control_Method __DJI_Motor_Control_Method, float __Gearbox_Rate)
 {
     if (hcan->Instance == FDCAN1)
     {
@@ -677,7 +679,6 @@ void Class_DJI_Motor_C620::Init(FDCAN_HandleTypeDef *hcan, Enum_DJI_Motor_ID __C
     CAN_ID = __CAN_ID;
     DJI_Motor_Control_Method = __DJI_Motor_Control_Method;
     Gearbox_Rate = __Gearbox_Rate;
-    Torque_Max = __Torque_Max;
     this->CAN_Tx_Data = allocate_tx_data(hcan, __CAN_ID);
 }
 
@@ -796,13 +797,14 @@ void Class_DJI_Motor_C620::TIM_PID_PeriodElapsedCallback()
     case (DJI_Motor_Control_Method_OPENLOOP):
     {
         //默认开环扭矩控制
-        Out = Target_Torque / Torque_Max * Output_Max;
+        Out = 0.0f;
     }
     break;
     case (DJI_Motor_Control_Method_TORQUE):
     {
         //默认闭环扭矩控制
-        Out = Target_Torque / Torque_Max * Output_Max;
+        Out = Target_Torque * Output_Max / ((Gearbox_Rate * 0.3f * 20.0f)/ 19.2032f);
+        Math_Constrain(&Out, -16384.0f, 16384.0f);
     }
     break;
     case (DJI_Motor_Control_Method_OMEGA):
@@ -839,6 +841,34 @@ void Class_DJI_Motor_C620::TIM_PID_PeriodElapsedCallback()
     Output();
 }
 
+/**
+ * @brief 电机初始化
+ *
+ * @param hcan CAN编号
+ * @param __CAN_ID CAN ID
+ * @param __DJI_Motor_Control_Method 电机控制方式, 默认速度
+ * @param __Gearbox_Rate 减速箱减速比, 默认为原装减速箱, 如拆去减速箱则该值设为1
+ * @param __Torque_Max 最大扭矩, 需根据不同负载测量后赋值, 也就开环和扭矩环输出用得到, 不过我感觉应该没有奇葩喜欢开环输出这玩意
+ */
+void Class_DJI_Motor_C620_Steer::Init(FDCAN_HandleTypeDef *hcan, Enum_DJI_Motor_ID __CAN_ID, Enum_DJI_Motor_Control_Method __DJI_Motor_Control_Method, float __Gearbox_Rate)
+{
+    if (hcan->Instance == FDCAN1)
+    {
+        CAN_Manage_Object = &CAN1_Manage_Object;
+    }
+    else if (hcan->Instance == FDCAN2)
+    {
+        CAN_Manage_Object = &CAN2_Manage_Object;
+    }
+    else if (hcan->Instance == FDCAN3)
+    {
+        CAN_Manage_Object = &CAN3_Manage_Object;
+    }
+    CAN_ID = __CAN_ID;
+    DJI_Motor_Control_Method = __DJI_Motor_Control_Method;
+    Gearbox_Rate = __Gearbox_Rate;
+    this->CAN_Tx_Data = allocate_tx_data(hcan, __CAN_ID);
+}
 
 
 /**
@@ -893,9 +923,8 @@ void Class_DJI_Motor_C620_Steer::TIM_PID_PeriodElapsedCallback()
 
         Target_Omega_Radian = PID_Angle.Get_Out();
 
-        //大疆电机速度作为反馈，避免直接差分，速度算不准
         PID_Omega.Set_Target(Target_Omega_Radian);
-        PID_Omega.Set_Now(Data.Now_Omega_Radian);
+        PID_Omega.Set_Now(MA600_Omega);
         PID_Omega.TIM_Adjust_PeriodElapsedCallback();
 
         Out = PID_Omega.Get_Out();
@@ -928,9 +957,18 @@ void Class_DJI_Motor_C620_Steer::MA600_TIM_Alive_PeriodElapsedCallback()
     MA600_Pre_Flag = MA600_Flag;
 }
 
+void Class_DJI_Motor_C620_Steer::MA600_Omega_Updata()
+{
+    delta_angle = (Zero_Offset_Radian - Pre_Zero_Offset_Radian);
+    delta_angle = Normalize_Angle_Radian_PI_to_PI(delta_angle) * 150.0f;
+    MA600_KF.MeasuredVector[0] =  delta_angle;
+    Kalman_Filter_Update(&MA600_KF, NULL);
+    MA600_Omega = MA600_KF.FilteredValue[0];
+}
+
 void Class_DJI_Motor_C620_Steer::MA600_Data_Process(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
-     if(CAN_RxMessage->Data[0] != 0xA5 || CAN_RxMessage->Data[7] != 0xB5){
+    if(CAN_RxMessage->Data[0] != 0xA5 || CAN_RxMessage->Data[7] != 0xB5){
         return;
     }
     
@@ -944,8 +982,29 @@ void Class_DJI_Motor_C620_Steer::MA600_Data_Process(Struct_CAN_Rx_Buffer *CAN_Rx
     MA600_Data.Multi_Radian  = -temp_Multi_Radian  / 100.0f;
     MA600_Data.Omega         = -temp_Omega         / 100.0f;
 
+    Pre_Zero_Offset_Radian = Zero_Offset_Radian;
+
     float delta_rad = MA600_Data.Single_Radian - Zero_Position;
     Zero_Offset_Radian = Normalize_Angle_Radian_PI_to_PI(delta_rad); 
+
+    if(MA600_Flag == 1){
+        Kalman_Filter_Init(&MA600_KF, 1, 0, 1);
+        float F = 1.0f;
+        float H = 1.0f;
+        float P = 1.0f;
+        float Q = 0.15f;             //测量噪声
+        float R = 10.0f;
+
+        memcpy(MA600_KF.F_data, &F, 4);
+        memcpy(MA600_KF.H_data, &H, 4);
+        memcpy(MA600_KF.P_data, &P, 4);
+        memcpy(MA600_KF.Q_data, &Q, 4);
+        memcpy(MA600_KF.R_data, &R, 4);
+
+        Pre_Zero_Offset_Radian = Zero_Offset_Radian;
+    }
+
+    MA600_Omega_Updata();
 }
 
 

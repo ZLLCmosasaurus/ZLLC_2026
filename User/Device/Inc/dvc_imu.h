@@ -75,6 +75,13 @@ class Class_IMU
     float Get_Accel_Y(void);
     float Get_Accel_Z(void);
 
+    float Get_Accel_X_n();
+    float Get_Accel_Y_n();
+    float Get_Accel_Z_n();
+
+    float *Get_Quaternion(void);
+
+
     float Get_Gyro_Roll(void);
     float Get_Gyro_Pitch(void);
     float Get_Gyro_Yaw(void);
@@ -106,6 +113,10 @@ class Class_IMU
     float INS_Quat[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     float INS_Rad[3] = {0.0f, 0.0f, 0.0f};      //euler angle, unit rad.欧拉角 单位 rad
     float INS_Angle[3] = {0.0f, 0.0f, 0.0f};
+
+    float Yaw_rad, Pitch_rad, Roll_rad;
+    float Yaw_test, Pitch_test, Roll_test;
+    float Q[4];         //右手系的四元数
 
     //重力加速度
 	const float Gravity[3] = {0, 0, 9.81f};

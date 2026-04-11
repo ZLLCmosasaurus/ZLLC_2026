@@ -26,9 +26,9 @@ void Class_IMU::Init()
     IMU_MahonyAHRS.init(INS_Quat);
  
     //EKF初始化                         第三个加速度参数加大，减小运动过程中的影响    过于不相信加速度导致静止到目标收敛慢，看起来在飘
-    IMU_QuaternionEKF_Init(10, 0.001, 10000000, 0.9996, 0.273, -0.0015f, &QEKF_INS);
+    IMU_QuaternionEKF_Init(10, 0.001, 10000000, 0.9996, 0.05, -0.0015f, &QEKF_INS);
 
-    INS.AccelLPF = 0.273f;
+    INS.AccelLPF = 0.05f;
 
     //初始化温控pid参数 积分和输出限幅是一周期满占空比的计数240M/24/10000=1000
     PID_IMU_Tempture.Init(200, 300, 0, 0.0, 250, 500);
@@ -121,6 +121,7 @@ void Class_IMU::Get_Angle()
     INS_Rad[0] = atan2f(2.0f*(INS_Quat[0]*INS_Quat[3]+INS_Quat[1]*INS_Quat[2]), 2.0f*(INS_Quat[0]*INS_Quat[0]+INS_Quat[1]*INS_Quat[1])-1.0f);
     INS_Rad[1] = asinf(-2.0f*(INS_Quat[1]*INS_Quat[3]-INS_Quat[0]*INS_Quat[2]));
     INS_Rad[2] = atan2f(2.0f*(INS_Quat[0]*INS_Quat[1]+INS_Quat[2]*INS_Quat[3]),2.0f*(INS_Quat[0]*INS_Quat[0]+INS_Quat[3]*INS_Quat[3])-1.0f);
+
     for(int i=0;i<3;i++){
         INS_Angle[i] = INS_Rad[i] * 180.0f / 3.1415926f;
     }
@@ -177,6 +178,26 @@ float Class_IMU::Get_Accel_Y(void)
 float Class_IMU::Get_Accel_Z(void)
 {
     return (INS.Accel[2]);
+}
+
+float Class_IMU::Get_Accel_X_n()
+{
+  return (INS.MotionAccel_n[0]);
+}
+
+float Class_IMU::Get_Accel_Y_n()
+{
+  return (INS.MotionAccel_n[1]);
+}
+
+float Class_IMU::Get_Accel_Z_n()
+{
+  return (INS.MotionAccel_n[2]);
+}
+
+float* Class_IMU::Get_Quaternion(void)
+{
+  return Q;
 }
 
 float Class_IMU::Get_Gyro_Roll(void)

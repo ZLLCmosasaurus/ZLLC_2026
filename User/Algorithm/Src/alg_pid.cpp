@@ -164,7 +164,7 @@ void Class_PID::TIM_Adjust_PeriodElapsedCallback()
 
     //计算前馈
 
-    f_out = (Target - Pre_Target) * K_F;
+    f_out = d_Target * K_F;
 
     //计算总共的输出
 

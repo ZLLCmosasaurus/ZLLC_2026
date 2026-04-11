@@ -26,6 +26,7 @@
 #include "dvc_supercap.h"
 #include "config.h"
 #include "dvc_minipc.h"
+#include "kalman_filter.h"
 
 #ifdef POWER_LIMIT_1
 #include "alg_power_limit.h"
@@ -92,6 +93,8 @@ enum Enum_Chassis_Control_Type :uint8_t
 class Class_Tricycle_Chassis
 {
 public:
+
+    Class_IMU *IMU;
 
     //斜坡函数加减速速度X
     Class_Slope Slope_Velocity_X;
@@ -178,11 +181,6 @@ protected:
     //内部变量
     float Relative_Angle = 0.0f;
 
-    //舵向电机目标值
-    float Target_Steer_Angle[3];
-    //转动电机目标值
-    float Target_Wheel_Omega[4];
-
     //读变量
 
     //当前总功率
@@ -211,15 +209,42 @@ protected:
     float Target_Velocity_Y = 0.0f;
     //目标角速度
     float Target_Omega = 0.0f;
-    //当前速度X
-    float Now_Velocity_X = 0.0f;
-    //当前速度Y
-    float Now_Velocity_Y = 0.0f;
-    //当前角速度
-    float Now_Omega = 0.0f;
 
     //内部函数
     void Speed_Resolution();
+
+    void Set_Chassis_Kalman_Measure(float value1, float value2, float value3, float value4, float value5, float value6);
+    void Chassis_Speed_Estimate();
+    void Stree_Angle_Resolution();
+    void Force_Speed_Resolution();
+
+    Class_PID PID_Omega;
+    Class_PID PID_Velocity_X;
+    Class_PID PID_Velocity_Y;
+
+    float Now_Velocity_X;
+    float Now_Velocity_Y;
+    float Now_Omega;
+
+    // 轮向电机动摩擦阻力电流值(起转阻力)
+    float Dynamic_Resistance_Wheel_Current[4] = {0.0f,
+                                                 0.0f,
+                                                 0.0f,
+                                                 0.0f};
+    // 轮向电机摩擦阻力连续化的角速度阈值
+    float Wheel_Resistance_Omega_Threshold = 1.0f;
+    // 防单轮超速系数
+    float Wheel_Speed_Limit_Factor = 0.0f;
+
+    float Target_Wheel_Omega[4];
+    float Target_Wheel_Torque[4];
+
+    const float Wheel_Azimuth[4] = {PI / 4.0f,
+                                3.0f * PI / 4.0f,
+                                5.0f * PI / 4.0f,
+                                7.0f * PI / 4.0f};
+
+    KalmanFilter_t Chassis_Speed_Kalman;
 };
 
 /* Exported variables --------------------------------------------------------*/
@@ -227,7 +252,7 @@ protected:
 //三轮车底盘参数
 
 //轮组半径
-const float WHEEL_RADIUS = 0.0520f;
+const float WHEEL_RADIUS = 0.060f;
 
 //轮距中心长度
 const float WHEEL_TO_CORE_DISTANCE[3] = {0.23724f, 0.21224f, 0.21224f};
@@ -245,16 +270,16 @@ const float FRONT_TO_FRONT_CENTER_DISTANCE = 0.176f;
 const float WHEEL_AZIMUTH[3] = {0.0f, atan2f(-FRONT_TO_FRONT_CENTER_DISTANCE, -FRONT_CENTER_TO_CORE_DISTANCE), atan2f(FRONT_TO_FRONT_CENTER_DISTANCE, -FRONT_CENTER_TO_CORE_DISTANCE)};
 
 //轮子直径 单位m
-const float WHELL_DIAMETER = 0.13f;	
+const float WHELL_DIAMETER = 0.12f;	
 
-//底盘半宽 单位m
+//底盘宽 单位m
 const float HALF_WIDTH = 0.356f;		
 
-//底盘半长 单位m
+//底盘长 单位m
 const float HALF_LENGTH = 0.356f;	
 
 //底盘中心到每个轮子轴心投影距离
-const float CHASSIS_RADIUS = sqrt(HALF_LENGTH * HALF_LENGTH + HALF_WIDTH * HALF_WIDTH);
+const float CHASSIS_RADIUS = (sqrt(HALF_LENGTH * HALF_LENGTH + HALF_WIDTH * HALF_WIDTH) / 2.0f);
 
 //线速度转角速度 rad/s
 const float VEL2RAD = 1.0f/(WHELL_DIAMETER/2.0f);

@@ -30,15 +30,18 @@
 void Class_Chariot::Init(float __DR16_Dead_Zone)
 {
     #ifdef CHASSIS
-    
+
+        Boardc_BMI.Init();
+
         //裁判系统
         Referee.Init(&huart10);
 
         Motor_Main_Yaw.Init(&hfdcan2, LK_Motor_ID_0x141, LK_Motor_Control_Method_ANGLE, MAIN_YAW_ENCODER_OFFSET);
 
-        PID_Chassis_Fllow.Init(4.0f, 0.0f, 0.07f, 0.0f, 3.0f, 3.0f);
+        PID_Chassis_Fllow.Init(10.0f, 0.0f, 0.09f, 0.0f, 8.0f, 8.0f);
 
         //底盘
+        Chassis.IMU = &Boardc_BMI;
         Chassis.Referee = &Referee;
         Chassis.Init();
         
@@ -79,6 +82,7 @@ void Class_Chariot::Init(float __DR16_Dead_Zone)
         //上位机
         MiniPC.Init(&MiniPC_USB_Manage_Object,&UART8_Manage_Object,&CAN3_Manage_Object);
         MiniPC.IMU = &Gimbal.Boardc_BMI;
+        MiniPC.External_IMU = &Gimbal.External_IMU;
         MiniPC.Referee = &Referee;
         MiniPC.Supercap = &Chassis.Supercap;
 
@@ -416,6 +420,7 @@ void Class_Chariot::CAN_Gimbal_Tx_Chassis_Callback()
     chassis_velocity_x = Chassis.Get_Target_Velocity_X();
     chassis_velocity_y = Chassis.Get_Target_Velocity_Y();
     chassis_omega = Chassis.Get_Target_Omega();
+    // chassis_control_type = Chassis_Control_Type_DISABLE;//Chassis.Get_Chassis_Control_Type();
     chassis_control_type = Chassis.Get_Chassis_Control_Type();
     Supercap_Mode = MiniPC.Get_Supercap_Mode();
     //设定速度
@@ -631,15 +636,23 @@ void Class_Chariot::Control_Booster()
                 //     Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
                 // }           //打完后会自动切到停火
 
-                if((MiniPC.Get_Auto_aim_Status() == Auto_aim_Status_ENABLE) &&
-                  (MiniPC.Get_Rx_Yaw_Angle() != 0.f || MiniPC.Get_Rx_Pitch_Angle() != 0.f)){                 //后边两个判断似乎不需要
-                    Booster.Set_Booster_Control_Type(Booster_Control_Type_REPEATED);
-                }           //打完后会自动切到停火
-                else if (MiniPC.Get_Auto_aim_Status() == Auto_aim_Status_DISABLE){    
-                    Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
-                }
+                // if((MiniPC.Get_Auto_aim_Status() == Auto_aim_Status_ENABLE) &&
+                //   (MiniPC.Get_Rx_Yaw_Angle() != 0.f || MiniPC.Get_Rx_Pitch_Angle() != 0.f)){                 //后边两个判断似乎不需要
+                //     Booster.Set_Booster_Control_Type(Booster_Control_Type_REPEATED);
+                // }           //打完后会自动切到停火
+                // else if (MiniPC.Get_Auto_aim_Status() == Auto_aim_Status_DISABLE){    
+                //     Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+                // }
 
-                if(MiniPC.Get_Rx_Yaw_Angle() == 0.f && MiniPC.Get_Rx_Pitch_Angle() == 0.f){
+                // if(MiniPC.Get_Rx_Yaw_Angle() == 0.f && MiniPC.Get_Rx_Pitch_Angle() == 0.f){
+                //     Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+                // }
+
+                if(MiniPC.Get_mode() == 2 && MiniPC.MiniPC_Fire_Updata_Flag == 1){                 //后边两个判断似乎不需要
+                    Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                }           //打完后会自动切到停火
+                else{
+                    MiniPC.MiniPC_Fire_Updata_Flag = 0;
                     Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
                 }
 

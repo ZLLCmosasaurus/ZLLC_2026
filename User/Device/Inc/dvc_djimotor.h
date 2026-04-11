@@ -20,6 +20,8 @@
 #include "alg_filter.h"
 #include "config.h"
 
+#include "kalman_filter.h"
+
 #include "alg_SMC_Control.h"
 
 #ifdef POWER_LIMIT_1
@@ -187,6 +189,8 @@ public:
     inline void Set_Transform_Angle(float __Transform_Angle);
     inline void Set_Transform_Omega(float __Transform_Omega);
     inline void Set_Transform_Torque(float __Transform_Torque);
+    inline void Set_Transform_Target_Vel(float __Transform_Target_Vel);
+    inline void Set_Transform_Target_Acc(float __Transform_Target_Acc);
     inline void Set_Now_Omega_Angle(float __Now_Omega_Angle);
 
     void CAN_RxCpltCallback(uint8_t *Rx_Data);
@@ -227,6 +231,9 @@ protected:
     float Transform_Omega = 0.0f;
     float Transform_Torque = 0.0f;
     float Transform_Target_Omega = 0.0f;
+
+    float Transform_Target_Vel = 0.0f;                  //角度环的前馈
+    float Transform_Target_Acc = 0.0f;                  //速度环的前馈
     
     //当前时刻的电机接收flag
     uint32_t Flag = 0;
@@ -391,7 +398,7 @@ public:
     #endif
     friend class Class_Tricycle_Chassis;
 
-    void Init(FDCAN_HandleTypeDef *__hcan, Enum_DJI_Motor_ID __CAN_ID, Enum_DJI_Motor_Control_Method __Control_Method = DJI_Motor_Control_Method_OMEGA, float __Gearbox_Rate = 13.933f, float __Torque_Max = 16384.0f);
+    void Init(FDCAN_HandleTypeDef *__hcan, Enum_DJI_Motor_ID __CAN_ID, Enum_DJI_Motor_Control_Method __Control_Method = DJI_Motor_Control_Method_OMEGA, float __Gearbox_Rate = 13.933f);
 
     inline uint16_t Get_Output_Max();
     inline Enum_DJI_Motor_Status Get_DJI_Motor_Status();
@@ -494,6 +501,8 @@ protected:
 class Class_DJI_Motor_C620_Steer : public Class_DJI_Motor_C620{
 
 public:
+    void Init(FDCAN_HandleTypeDef *__hcan, Enum_DJI_Motor_ID __CAN_ID, Enum_DJI_Motor_Control_Method __Control_Method = DJI_Motor_Control_Method_OMEGA, float __Gearbox_Rate = 13.933f);
+
     inline Enum_MA600_Status Get_MA600_Status();
     inline float Get_Now_Zero_Offset_Radian();
     inline float Get_Zero_Position();
@@ -502,6 +511,7 @@ public:
     inline void Set_Transform_Radian(float __Transform_Radian);
     inline void Set_Transform_Radian_Omega(float __Transform_Radian_Omega);
 
+    void MA600_Omega_Updata();
     void MA600_Data_Process(Struct_CAN_Rx_Buffer *CAN_RxMessage);
 
     void TIM_PID_PeriodElapsedCallback();
@@ -526,6 +536,12 @@ protected :
     float Zero_Position = 0.0f;
     //相对软件0点的偏移 rad   0 --- 2PI
     float Zero_Offset_Radian = 0.0f;
+    float Pre_Zero_Offset_Radian = 0.0f;
+
+    KalmanFilter_t MA600_KF;
+    float MA600_Omega;
+    float delta_angle;
+
 };
 
 /* Exported variables --------------------------------------------------------*/
@@ -828,6 +844,16 @@ void Class_DJI_Motor_GM6020::Set_Transform_Omega(float __Transform_Omega)
 void Class_DJI_Motor_GM6020::Set_Transform_Torque(float __Transform_Torque)
 {
     Transform_Torque = __Transform_Torque;
+}
+
+inline void Class_DJI_Motor_GM6020::Set_Transform_Target_Acc(float __Transform_Target_Acc)
+{
+    Transform_Target_Acc = __Transform_Target_Acc;
+}
+
+inline void Class_DJI_Motor_GM6020::Set_Transform_Target_Vel(float __Transform_Target_Vel)
+{
+    Transform_Target_Vel = __Transform_Target_Vel;
 }
 
 void Class_DJI_Motor_GM6020::Set_Now_Omega_Angle(float __Now_Omega_Angle)

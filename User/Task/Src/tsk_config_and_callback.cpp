@@ -67,6 +67,8 @@ Class_Chariot chariot;
  * @param CAN_RxMessage CAN1收到的消息
  */
 #ifdef CHASSIS
+uint32_t steer1,steer2,steer3,steer4;
+float Dt4= 0.0f, DT5,DT6,DT7;
 void Chassis_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
     switch (CAN_RxMessage->Header.Identifier)
@@ -99,6 +101,7 @@ void Chassis_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
         }
         case (0x206):
         {
+            DT5 = DWT_GetDeltaT(&steer2);
             chariot.Chassis.Motor_Steer[1].CAN_RxCpltCallback(CAN_RxMessage->Data);
             break;
         }
@@ -122,8 +125,6 @@ void Chassis_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
  * @param CAN_RxMessage CAN2收到的消息
  */
 #ifdef CHASSIS
-uint32_t steer1,steer2,steer3,steer4;
-float Dt4= 0.0f, DT5,DT6,DT7;
 void Chassis_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
     switch (CAN_RxMessage->Header.Identifier)
@@ -457,6 +458,7 @@ void Task100us_TIM4_Callback()
 {
     #ifdef CHASSIS
 
+    chariot.Boardc_BMI.TIM_Calculate_PeriodElapsedCallback();
 
     #elif defined(GIMBAL)
         // 单给IMU消息开的定时器 ims
@@ -587,6 +589,8 @@ extern "C" void Task_Init()
         CAN_Init(&hfdcan1, Chassis_Device_CAN1_Callback);
         CAN_Init(&hfdcan2, Chassis_Device_CAN2_Callback);
         CAN_Init(&hfdcan3, Chassis_Device_CAN3_Callback);
+
+        SPI_Init(&hspi2,Device_SPI2_Callback);
 
         //裁判系统
         UART_Init(&huart10, Referee_UART10_Callback, 128);//并未使用环形队列 尽量给长范围增加检索时间 减少丢包

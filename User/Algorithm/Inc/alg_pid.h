@@ -58,6 +58,7 @@ public:
     inline void Set_I_Variable_Speed_B(float __Variable_Speed_I_B);
     inline void Set_I_Separate_Threshold(float __I_Separate_Threshold);
     inline void Set_Target(float __Target);
+    inline void Set_D_Target(float __D_Target);
     inline void Set_Now(float __Now);
     inline void Set_Integral_Error(float __Integral_Error);
     inline void Set_D_Extern_Value(float __D_Extern_Value);
@@ -124,6 +125,8 @@ protected:
     float Target = 0.0f;
     //当前值
     float Now = 0.0f;
+
+    float d_Target = 0.0f;        //目标值的微分
 
     //读写变量
 
@@ -258,6 +261,15 @@ void Class_PID::Set_I_Separate_Threshold(float __I_Separate_Threshold)
 void Class_PID::Set_Target(float __Target)
 {
     Target = __Target;
+}
+
+/**
+ * @brief 设定目标值的微分
+ *
+ * @param __D_Target 目标值的微分
+ */
+void Class_PID::Set_D_Target(float __D_Target){
+    d_Target = __D_Target;
 }
 
 /**

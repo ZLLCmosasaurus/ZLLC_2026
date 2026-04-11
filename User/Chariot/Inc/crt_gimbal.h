@@ -318,6 +318,7 @@ protected:
     //内部函数
 
     void Output();
+    void Output_Test();
 };
 
 /* Exported variables --------------------------------------------------------*/

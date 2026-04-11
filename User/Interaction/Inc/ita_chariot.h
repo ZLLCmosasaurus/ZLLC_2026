@@ -28,7 +28,7 @@
 /* Exported macros -----------------------------------------------------------*/
 class Class_Chariot;
 /* Exported types ------------------------------------------------------------*/
-#define CHASSIS_SPIN_OMEGA  3.0f
+#define CHASSIS_SPIN_OMEGA  7.0f
 
 /**
  * @brief 云台Pitch状态枚举
@@ -144,6 +144,8 @@ public:
         // LK电机 大Yaw
         Class_LK_Motor Motor_Main_Yaw;
         Class_PID PID_Chassis_Fllow;
+
+        Class_IMU Boardc_BMI;
 
     #endif 
 

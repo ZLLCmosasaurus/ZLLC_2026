@@ -231,6 +231,31 @@ struct Struct_MiniPC_Rx_Data
     uint16_t crc16;
 } __attribute__((packed));
 
+struct Struct_MiniPC_Rx_Data_Test{
+    uint8_t head[2] = {'S', 'P'};
+    uint8_t mode; // 0:不控制,1:控制云台但不开火,
+    float yaw;
+    float yaw_vel;
+    float yaw_acc;
+    float pitch;
+    float pitch_vel;
+    float pitch_acc;
+    uint16_t crc16;
+} __attribute__((packed));
+
+struct Struct_MiniPC_Tx_Data_Test{
+    uint8_t head[2] = {'S', 'P'};
+    uint8_t mode; // 0:空闲,1:自瞄,2:小符,3:
+    float q[4];
+    float yaw;
+    float yaw_vel;
+    float pitch;
+    float pitch_vel;
+    float bullet_speed;
+    uint16_t bullet_count;
+    uint16_t crc16;
+} __attribute__((packed));
+
 /**
  * @brief 下位机发送的反馈数据
  *
@@ -380,8 +405,15 @@ public:
     void TIM_Write_PeriodElapsedCallback();
 
     Class_IMU *IMU;
+    Class_IMU *External_IMU;
     Class_Referee *Referee;
     Class_Supercap *Supercap;
+
+    uint8_t Get_mode();
+
+    uint8_t MiniPC_Fire_Updata_Flag = 0;
+    Struct_MiniPC_Tx_Data_Test Data_MCU_To_NUC_Test;
+    Struct_MiniPC_Rx_Data_Test Data_NUC_To_MCU_Test;
 
 protected:
     //初始化相关常量
@@ -434,6 +466,7 @@ protected:
 	float Rx_Angle_Roll = 0.0f;
 	float Rx_Angle_Pitch = 0.0f;
 	float Rx_Angle_Yaw = 0.0f;
+    uint8_t mode = 0;
 
     const float g = 9.8; // 重力加速度
     float bullet_v = 24.0; // 子弹速度
@@ -449,12 +482,17 @@ protected:
     //迷你主机对外接口信息
     Struct_MiniPC_Tx_Data Data_MCU_To_NUC;
 
+
+
     //读写变量
 
     //内部函数
 
     void Data_Process(Enum_MiniPC_Data_Source Data_Source);
     void Output();
+
+    void Output_Test();
+    void Data_Process_Test(Enum_MiniPC_Data_Source Data_Source);
 };
 /* Exported variables --------------------------------------------------------*/
 
