@@ -474,7 +474,7 @@ void DMA2_Stream1_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles USB On The Go HS global interrupt.
+  * @brief This function handles USB OTG HS global interrupt.
   */
 void OTG_HS_IRQHandler(void)
 {

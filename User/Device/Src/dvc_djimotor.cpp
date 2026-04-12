@@ -924,7 +924,7 @@ void Class_DJI_Motor_C620_Steer::TIM_PID_PeriodElapsedCallback()
         Target_Omega_Radian = PID_Angle.Get_Out();
 
         PID_Omega.Set_Target(Target_Omega_Radian);
-        PID_Omega.Set_Now(MA600_Omega);
+        PID_Omega.Set_Now(Data.Now_Omega_Radian);
         PID_Omega.TIM_Adjust_PeriodElapsedCallback();
 
         Out = PID_Omega.Get_Out();
@@ -987,24 +987,24 @@ void Class_DJI_Motor_C620_Steer::MA600_Data_Process(Struct_CAN_Rx_Buffer *CAN_Rx
     float delta_rad = MA600_Data.Single_Radian - Zero_Position;
     Zero_Offset_Radian = Normalize_Angle_Radian_PI_to_PI(delta_rad); 
 
-    if(MA600_Flag == 1){
-        Kalman_Filter_Init(&MA600_KF, 1, 0, 1);
-        float F = 1.0f;
-        float H = 1.0f;
-        float P = 1.0f;
-        float Q = 0.15f;             //测量噪声
-        float R = 10.0f;
+    // if(MA600_Flag == 1){
+    //     Kalman_Filter_Init(&MA600_KF, 1, 0, 1);
+    //     float F = 1.0f;
+    //     float H = 1.0f;
+    //     float P = 1.0f;
+    //     float Q = 0.15f;             //测量噪声
+    //     float R = 10.0f;
 
-        memcpy(MA600_KF.F_data, &F, 4);
-        memcpy(MA600_KF.H_data, &H, 4);
-        memcpy(MA600_KF.P_data, &P, 4);
-        memcpy(MA600_KF.Q_data, &Q, 4);
-        memcpy(MA600_KF.R_data, &R, 4);
+    //     memcpy(MA600_KF.F_data, &F, 4);
+    //     memcpy(MA600_KF.H_data, &H, 4);
+    //     memcpy(MA600_KF.P_data, &P, 4);
+    //     memcpy(MA600_KF.Q_data, &Q, 4);
+    //     memcpy(MA600_KF.R_data, &R, 4);
 
-        Pre_Zero_Offset_Radian = Zero_Offset_Radian;
-    }
+    //     Pre_Zero_Offset_Radian = Zero_Offset_Radian;
+    // }
 
-    MA600_Omega_Updata();
+    // MA600_Omega_Updata();
 }
 
 

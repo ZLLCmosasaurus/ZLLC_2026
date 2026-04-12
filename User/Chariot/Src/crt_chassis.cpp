@@ -102,24 +102,24 @@ void Class_Tricycle_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max
     #ifdef AGV
     //舵向电机PID初始化
 
-    Motor_Steer[0].PID_Angle.Init(12.0f, 0.0f, 0.0f, 0.0f, 8.0f, 8.0f);
-    Motor_Steer[0].PID_Omega.Init(300.0f, 0.0f, 0.0f, 0.0f, 8000, Motor_Steer[0].Get_Output_Max());
+    Motor_Steer[0].PID_Angle.Init(17.0f, 0.0f, 0.0f, 0.0f, 8.0f, 8.0f);
+    Motor_Steer[0].PID_Omega.Init(700.0f, 0.0f, 0.0f, 0.0f, 8000, Motor_Steer[0].Get_Output_Max());
     
-    Motor_Steer[1].PID_Angle.Init(12.f, 0.0f, 0.0f, 0.0f, 8.0f, 8.0f);
-    Motor_Steer[1].PID_Omega.Init(300.0f, 0.0f, 0.0f, 0.0f, 8000, Motor_Steer[1].Get_Output_Max());
+    Motor_Steer[1].PID_Angle.Init(17.f, 0.0f, 0.0f, 0.0f, 8.0f, 8.0f);
+    Motor_Steer[1].PID_Omega.Init(700.0f, 0.0f, 0.0f, 0.0f, 8000, Motor_Steer[1].Get_Output_Max());
 
-    Motor_Steer[2].PID_Angle.Init(12.f, 0.0f, 0.0f, 0.0f, 8.0f, 8.0f);
-    Motor_Steer[2].PID_Omega.Init(300.0f, 0.0f, 0.0f, 0.0f, 8000, Motor_Steer[2].Get_Output_Max());
+    Motor_Steer[2].PID_Angle.Init(17.f, 0.0f, 0.0f, 0.0f, 8.0f, 8.0f);
+    Motor_Steer[2].PID_Omega.Init(700.0f, 0.0f, 0.0f, 0.0f, 8000, Motor_Steer[2].Get_Output_Max());
 
-    Motor_Steer[3].PID_Angle.Init(12.f, 0.0f, 0.0f, 0.0f, 8.0f, 8.0f);
-    Motor_Steer[3].PID_Omega.Init(300.0f, 0.0f, 0.0f, 0.0f, 8000, Motor_Steer[3].Get_Output_Max());
+    Motor_Steer[3].PID_Angle.Init(17.f, 0.0f, 0.0f, 0.0f, 8.0f, 8.0f);
+    Motor_Steer[3].PID_Omega.Init(700.0f, 0.0f, 0.0f, 0.0f, 8000, Motor_Steer[3].Get_Output_Max());
 
 
     //舵向电机ID初始化
-    Motor_Steer[0].Init(&hfdcan1, DJI_Motor_ID_0x205);
-    Motor_Steer[1].Init(&hfdcan1, DJI_Motor_ID_0x206);
-    Motor_Steer[2].Init(&hfdcan1, DJI_Motor_ID_0x207);
-    Motor_Steer[3].Init(&hfdcan1, DJI_Motor_ID_0x208);
+    Motor_Steer[0].Init(&hfdcan1, DJI_Motor_ID_0x205, DJI_Motor_Control_Method_AGV_MODE, 8.0f);
+    Motor_Steer[1].Init(&hfdcan1, DJI_Motor_ID_0x206, DJI_Motor_Control_Method_AGV_MODE, 8.0f);
+    Motor_Steer[2].Init(&hfdcan1, DJI_Motor_ID_0x207, DJI_Motor_Control_Method_AGV_MODE, 8.0f);
+    Motor_Steer[3].Init(&hfdcan1, DJI_Motor_ID_0x208, DJI_Motor_Control_Method_AGV_MODE, 8.0f);
 
     //舵向电机零点位置初始化
     Motor_Steer[0].Set_Zero_Position(0.36000001f);               //应该是轮子朝向的正方向，行进轮超前，并且顺时针转动为正方向的角度
@@ -466,8 +466,19 @@ void Class_Tricycle_Chassis::Chassis_Speed_Estimate()
         tmp_Omega += (Motor_Wheel[i].Get_Now_Omega_Radian() * arm_cos_f32(Motor_Steer[i].Get_Now_Zero_Offset_Radian() - Wheel_Azimuth[i]) * WHEEL_RADIUS / CHASSIS_RADIUS) / 4.0f;
     }
 
+    float Ins_Accel_X_b = IMU->Get_Accel_X_b();
+    float Ins_Accel_Y_b = IMU->Get_Accel_Y_b();
+
+    float H7_Offset_X = 0.0f, H7_Offset_Y = 0.0f, Distance_Offset = 0.0f;;
+
+    float offset_angle = atan2f(H7_Offset_X, H7_Offset_Y);
+    arm_sqrt_f32(H7_Offset_X * H7_Offset_X + H7_Offset_Y * H7_Offset_Y, &Distance_Offset);
+
+    Ins_Accel_X_b = Ins_Accel_X_b + Distance_Offset * IMU->Get_Gyro_Yaw() * IMU->Get_Gyro_Yaw() * arm_sin_f32(offset_angle);
+    Ins_Accel_Y_b = Ins_Accel_Y_b + Distance_Offset * IMU->Get_Gyro_Yaw() * IMU->Get_Gyro_Yaw() * arm_cos_f32(offset_angle);
+
     //注意数据单位
-    Set_Chassis_Kalman_Measure(tmp_Velocity_Vx, tmp_Velocity_Vy, IMU->Get_Accel_X_n(), IMU->Get_Accel_Y_n(), tmp_Omega, IMU->Get_Gyro_Yaw());
+    Set_Chassis_Kalman_Measure(tmp_Velocity_Vx, tmp_Velocity_Vy, Ins_Accel_X_b, Ins_Accel_Y_b, tmp_Omega, IMU->Get_Gyro_Yaw());
     
     Kalman_Filter_Update(&Chassis_Speed_Kalman, NULL);
 
@@ -713,14 +724,14 @@ void Class_Tricycle_Chassis::TIM_Calculate_PeriodElapsedCallback()
 
     Power_Limit.Power_Task(Power_Management);
 
-    // for (int i = 0; i < 4; i++)
-    // {
-    //     Motor_Wheel[i].Set_Out(Power_Management.Motor_Data[i].output);
-    //     Motor_Wheel[i].Output();
+    for (int i = 0; i < 4; i++)
+    {
+        Motor_Wheel[i].Set_Out(Power_Management.Motor_Data[i].output);
+        Motor_Wheel[i].Output();
 
-    //     Motor_Steer[i].Set_Out(Power_Management.Motor_Data[i + 4].output);
-    //     Motor_Steer[i].Output();
-    // }
+        Motor_Steer[i].Set_Out(Power_Management.Motor_Data[i + 4].output);
+        Motor_Steer[i].Output();
+    }
 
     #else
     for (int i = 0; i < 4; i++) // 数据传递处理

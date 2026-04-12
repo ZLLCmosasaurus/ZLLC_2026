@@ -195,6 +195,21 @@ float Class_IMU::Get_Accel_Z_n()
   return (INS.MotionAccel_n[2]);
 }
 
+float Class_IMU::Get_Accel_X_b()
+{
+  return (INS.MotionAccel_b[0]);
+}
+
+float Class_IMU::Get_Accel_Y_b()
+{
+  return (INS.MotionAccel_b[1]);
+}
+
+float Class_IMU::Get_Accel_Z_b()
+{
+  return (INS.MotionAccel_b[2]);
+}
+
 float* Class_IMU::Get_Quaternion(void)
 {
   return Q;

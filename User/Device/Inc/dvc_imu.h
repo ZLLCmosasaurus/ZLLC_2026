@@ -79,6 +79,10 @@ class Class_IMU
     float Get_Accel_Y_n();
     float Get_Accel_Z_n();
 
+    float Get_Accel_X_b();
+    float Get_Accel_Y_b();
+    float Get_Accel_Z_b();
+
     float *Get_Quaternion(void);
 
 

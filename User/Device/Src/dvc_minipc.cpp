@@ -212,8 +212,8 @@ void Class_MiniPC::Data_Process_Test(Enum_MiniPC_Data_Source Data_Source)
  */
 void Class_MiniPC::TIM_Write_PeriodElapsedCallback()
 {
-  // Output();
-  Output_Test();
+  Output();
+  // Output_Test();
 }
 
 uint8_t Class_MiniPC::Get_mode()
@@ -230,8 +230,8 @@ void Class_MiniPC::USB_RxCpltCallback(uint8_t *rx_data)
 {
   //滑动窗口, 判断迷你主机是否在线
   Flag += 1;
-  // Data_Process(USB);
-  Data_Process_Test(USB);
+  Data_Process(USB);
+  // Data_Process_Test(USB);
 }
 
 /**
