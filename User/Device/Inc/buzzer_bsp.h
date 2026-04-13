@@ -12,7 +12,7 @@ extern "C" {
 #define TONE_A4_FREQUENCY		440 // 标准音频率
 #define SEMITONE_COEFFICIENT	1.0594630943592953 // 半音频率比例
 #define LOWEST_TONE_POW			-11
-#define HIGHEST_TONE_POW		12
+#define HIGHEST_TONE_POW		15
 
 // 用于查表确定次方数，从而计算蜂鸣器频率
 typedef enum
@@ -42,6 +42,13 @@ typedef enum
 	TONE_G5			= 10,
 	TONE_G_SLASH_5	= 11,
 	TONE_A5			= 12,
+	TONE_A_SLASH_5  = 13,
+    TONE_B5         = 14, // B5
+    TONE_C6         = 15,
+    TONE_C_SLASH_6  = 16,
+    TONE_D6         = 17,
+    TONE_D_SLASH_6  = 18,
+    TONE_E6         = 19, // E6 (截图最高音)
 } BUZZER_BSP_TONE_TO_POW_LUT_H;
 
 /* Includes ------------------------------------------------------------------*/

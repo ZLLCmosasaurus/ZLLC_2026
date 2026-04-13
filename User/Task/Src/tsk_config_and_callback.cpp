@@ -484,10 +484,10 @@ void Referee_UART10_Callback(uint8_t *Buffer, uint16_t Length)
 
 void Offline_Controller_UART1_Callback(uint8_t *Buffer, uint16_t Length)
 {
-    memcpy(chariot.UART1_Buffer, Buffer, 14);
+    memcpy(chariot.UART1_Buffer, Buffer, 15);
 
-    uint8_t i;
-    for (i = 0; i++; i < 14)
+    int i;
+    for (i = 0; i < 15; i++)
     {
         if (chariot.UART1_Buffer[i] == 0xA5)
         {
@@ -495,13 +495,18 @@ void Offline_Controller_UART1_Callback(uint8_t *Buffer, uint16_t Length)
         }
     }
 
-    if (chariot.UART1_Buffer[i + 12 % 14] == 0x11)
+    bool flag = chariot.UART1_Buffer[(i+14) % 15] == 0x11;
+
+    if (flag)
     {
-        for (int i = 0; i < 6; i++)
+        for (int j = 0; j < 6; j++)
         {
-            int16_t temp = (Buffer[2 * i + 2] << 8) | Buffer[2 * i + 1];
-            chariot.Offline_Controller_Data.Angle[i] = temp / 100.f;
+            int index = 2 * j + i;
+            int16_t temp = (Buffer[index + 2] << 8) | Buffer[index + 1];
+            chariot.Offline_Controller_Data.Angle[j] = temp / 100.f;
         }
+
+        chariot.Offline_Controller_Data.gripper_status = Buffer[(i+13)%15] == 1 ? true : false;
     }
 }
 
@@ -639,9 +644,13 @@ void Task1ms_TIM5_Callback()
     if (init_finished > 2000)
         start_flag = 1;
 
-    
     buzzer_taskScheduler(&buzzer);
-    
+
+    if (init_finished == 2500)
+    {
+        buzzer_setTask(&buzzer, BUZZER_MARIO_SIMPLE_PRIORITY);
+    }
+
     /************ 判断设备在线状态判断 50ms (所有device:电机，遥控器，裁判系统等) ***************/
 
     chariot.TIM1msMod50_Alive_PeriodElapsedCallback();
@@ -820,7 +829,7 @@ extern "C" void Task_Init()
     // 上位机串口
     UART_Init(&huart8, MiniPC_UART_Callback, 56);
     // 离线状态自定义控制器
-    UART_Init(&huart1, Offline_Controller_UART1_Callback, 14);
+    UART_Init(&huart10, Offline_Controller_UART1_Callback, 15);
     // Jodell夹爪电机
     UART_Init(&huart2, Jodell_Motor_UART2_Callback, 64);
 

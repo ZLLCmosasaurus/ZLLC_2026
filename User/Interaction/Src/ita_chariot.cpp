@@ -957,6 +957,7 @@ void Class_Chariot::Control_Gimbal()
     tmp_j3_roll_radian = Gimbal.Get_Target_J3_Roll_Radian_In_PI();
     tmp_j4_pitch_radian = Gimbal.Get_Target_J4_Pitch_Radian_In_PI();
     tmp_j5_roll_radian = Gimbal.Get_Target_J5_Roll_Radian();
+    tmp_gripper_position = Gimbal.Get_Target_Gripper_Position();
 
     if (DR16.Get_Left_Switch() == DR16_Switch_Status_UP) // 左上 失能
     {
@@ -1021,12 +1022,20 @@ void Class_Chariot::Control_Gimbal()
         }
         else if (DR16.Get_Right_Switch() == DR16_Switch_Status_MIDDLE)
         {
-            // tmp_j0_pitch_radian = Offline_Controller_Data.Angle[0];
-            // tmp_j1_yaw_radian = Offline_Controller_Data.Angle[1];
-            // tmp_j2_yaw_radian = Offline_Controller_Data.Angle[2];
-            // tmp_j3_yaw_radian = Offline_Controller_Data.Angle[3];
-            // tmp_j4_pitch_radian = Offline_Controller_Data.Angle[4];
-            // tmp_j5_yaw_radian = Offline_Controller_Data.Angle[5];
+            tmp_j0_pitch_radian = Offline_Controller_Data.Angle[0];
+            tmp_j1_yaw_radian = Offline_Controller_Data.Angle[1];
+            tmp_j2_yaw_radian = Offline_Controller_Data.Angle[2];
+            tmp_j3_roll_radian = Offline_Controller_Data.Angle[3];
+            tmp_j4_pitch_radian = Offline_Controller_Data.Angle[4];
+            tmp_j5_roll_radian = Offline_Controller_Data.Angle[5];
+            if(Offline_Controller_Data.gripper_status)
+            {
+                tmp_gripper_position = 255;
+            }
+            else
+            {
+                tmp_gripper_position = 0;
+            }
             // // 夹爪控制
             // tmp_gripper_radian += dr16_right_y * DR16_Gripper_Resolution;
         }
@@ -1036,6 +1045,7 @@ void Class_Chariot::Control_Gimbal()
         Gimbal.Set_Target_J3_Roll_Radian(tmp_j3_roll_radian);
         Gimbal.Set_Target_J4_Pitch_Radian(tmp_j4_pitch_radian);
         Gimbal.Set_Target_J5_Roll_Radian(tmp_j5_roll_radian);
+        Gimbal.Set_Target_Gripper_Position(tmp_gripper_position);
     }
     else
     {

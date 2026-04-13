@@ -79,8 +79,7 @@ public:
     inline uint8_t Get_Gripper_Position();
 
 private:
-
-    //绑定的UART
+    // 绑定的UART
     Struct_UART_Manage_Object *UART_Manage_Object;
 
     // Modbus结构体
@@ -109,6 +108,7 @@ private:
 
     float Target_Roll = 0.0f;
     float Target_Relative_Roll = 0.0f;
+    int8_t Target_Roll_Turns = 0;
     float Target_Omega = 5.0f;
     float Target_Torque = 1.5f;
     uint8_t Target_Gripper_Position = 0;
@@ -169,19 +169,19 @@ inline void Class_Jodell_Motor::Set_Target_Omega(float __Target_Omega)
 
 inline void Class_Jodell_Motor::Set_Target_Roll(float __Target_Roll)
 {
-    Target_Relative_Roll = __Target_Roll - Target_Roll;
-
-    // 过零点检测，发送相对转动位置
-    if(Target_Relative_Roll < -PI)
-    {
-        Target_Relative_Roll += 2.0f*PI;
-    }
-    else if(Target_Relative_Roll > PI)
-    {
-        Target_Relative_Roll -= 2.0f*PI;
-    }
-
+    // 记录原始目标弧度
     Target_Roll = __Target_Roll;
+    float total_degrees = __Target_Roll * 180.0f / PI;
+
+    // 计算圈数
+    int32_t turns = (int32_t)floor(total_degrees / 360.0f);
+
+    // 计算剩余角度
+    float angle = total_degrees - (float)turns * 360.0f;
+
+    // 待发送的数据
+    Target_Relative_Roll = angle;      // 虽然变量名没改，但现在存的是 0-360 的角度
+    Target_Roll_Turns = (int8_t)turns; // 新增变量记录圈数
 }
 
 inline void Class_Jodell_Motor::Set_Target_Torque(float __Target_Torque)

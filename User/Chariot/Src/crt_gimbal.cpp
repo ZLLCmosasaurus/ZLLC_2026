@@ -71,7 +71,6 @@ void Class_Gimbal::Init()
     Calibration_FSM.Gimbal = this;
     /*初始化轨迹追踪器*/
     Trajectory_Tracer.Gimbal = this;
-
 }
 
 /**
@@ -338,17 +337,35 @@ void Class_FSM_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
             if (roll_cali_status)
             {
                 Gimbal->J3_Roll_Cali_Offset = roll_offset;
-                Gimbal->J3_Roll_Min_Radian = Gimbal->J3_Roll_Cali_Offset * DM2325_GEAR_RATIO;
+                Gimbal->J3_Roll_Min_Radian = (Gimbal->J3_Roll_Cali_Offset / PI) * 310.0f;
                 Gimbal->J3_Roll_Max_Radian = Gimbal->J3_Roll_Min_Radian + roll_range;
                 Gimbal->J3_Roll_Zero_Position_Radian = (Gimbal->J3_Roll_Min_Radian + Gimbal->J3_Roll_Max_Radian) / 2.0f;
+                Gimbal->Set_Target_J3_Roll_Radian(0.0f);
+
+                if (Gimbal->J3_Roll_2325.Get_DM_Motor_Control_Status() == DM_Motor_Control_Status_DISABLE)
+                {
+                    Gimbal->J3_Roll_2325.Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
+                }
+
+                Gimbal->J3_Roll_2325.Set_Target_Omega(0.5f * PI * DM2325_GEAR_RATIO);
+                Gimbal->J3_Roll_2325.Set_Target_Angle(Gimbal->Target_J3_Roll_Radian);
             }
 
             if (pitch_cali_status)
             {
                 Gimbal->J4_Pitch_Cali_Offset = pitch_offset;
-                Gimbal->J4_Pitch_Min_Radian = Gimbal->J4_Pitch_Cali_Offset * DM2325_GEAR_RATIO;
+                Gimbal->J4_Pitch_Min_Radian = (Gimbal->J4_Pitch_Cali_Offset / PI) * pitch_range;
                 Gimbal->J4_Pitch_Max_Radian = Gimbal->J4_Pitch_Min_Radian + pitch_range;
                 Gimbal->J4_Pitch_Zero_Position_Radian = (Gimbal->J4_Pitch_Min_Radian + Gimbal->J4_Pitch_Max_Radian) / 2.0f;
+                Gimbal->Set_Target_J4_Pitch_Radian(0.0f);
+
+                if (Gimbal->J4_Pitch_2325.Get_DM_Motor_Control_Status() == DM_Motor_Control_Status_DISABLE)
+                {
+                    Gimbal->J4_Pitch_2325.Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
+                }
+
+                Gimbal->J4_Pitch_2325.Set_Target_Omega(0.5f * PI * DM2325_GEAR_RATIO);
+                Gimbal->J4_Pitch_2325.Set_Target_Angle(Gimbal->Target_J4_Pitch_Radian);
             }
 
             bool cali_flag = (roll_cali_status) &&
@@ -365,23 +382,8 @@ void Class_FSM_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
     case (2):
         /*Roll和Pitch校准完后转到0点位置*/
         {
-            if (Gimbal->J3_Roll_2325.Get_DM_Motor_Control_Status() == DM_Motor_Control_Status_DISABLE)
-            {
-                Gimbal->J3_Roll_2325.Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
-            }
 
-            if (Gimbal->J4_Pitch_2325.Get_DM_Motor_Control_Status() == DM_Motor_Control_Status_DISABLE)
-            {
-                Gimbal->J4_Pitch_2325.Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
-            }
-
-            //Gimbal->J4_Pitch_2325.Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
-
-            Gimbal->J3_Roll_2325.Set_Target_Omega(0.5f * PI * DM2325_GEAR_RATIO);
-            Gimbal->J3_Roll_2325.Set_Target_Angle(Gimbal->J3_Roll_Zero_Position_Radian);
-
-            Gimbal->J4_Pitch_2325.Set_Target_Omega(0.5f * PI * DM2325_GEAR_RATIO);
-            Gimbal->J4_Pitch_2325.Set_Target_Angle(Gimbal->J4_Pitch_Zero_Position_Radian);
+            // Gimbal->J4_Pitch_2325.Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
 
             bool finish_flag =
                 (fabs((Gimbal->J3_Roll_2325.Get_Target_Angle()) / DM2325_GEAR_RATIO + PI - Gimbal->J3_Roll_2325.Get_Now_Angle()) < 0.1f) &&
@@ -393,8 +395,6 @@ void Class_FSM_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
                 Gimbal->arm_init = true;
                 Set_Status(3);
             }
-
-            buzzer_setTask(&buzzer, BUZZER_MARIO_SIMPLE_PRIORITY);
 
             break;
         }

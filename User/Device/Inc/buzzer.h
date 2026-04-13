@@ -41,6 +41,7 @@ typedef uint8_t BUZZER_BEEP_TASK_TO_PRIORITY_LUT_T; enum
 	BUZZER_DJI_STARTUP_PRIORITY		= 1,
 	BUZZER_MARIO_SIMPLE_PRIORITY	= 2,
 	BUZZER_DEVICE_OFFLINE_PRIORITY	= 3,
+	BUZZER_POKEMON_HEALED			= 4,
 	BUZZER_CALIBRATING_PRIORITY		= 5,
 	BUZZER_CALIBRATED_PRIORITY		= 6, 
   BUZZER_FREE_PRIORITY				= BUZZER_MAX_PRIORITY_NUM, // 空闲状态
@@ -58,6 +59,21 @@ typedef uint16_t BUZZER_MARIO_SIMPLE_TICK_TO_TONE_LUT_T; enum
     MARIO_SIMPLE_STEP7_G5     = 1200,  // 最后一个 G5 延长
     MARIO_SIMPLE_STEP8_OFF    = 1500,  // 关闭蜂鸣器
     MARIO_SIMPLE_STEP9_RELEASE= 1700,  // 释放任务
+};
+
+typedef uint16_t BUZZER_POKEMON_HEALED_TICK_TO_TONE_LUT_T; enum
+{
+PKM_RUBY_PRE_A5   = 0,      // 新增：短促低音前奏 (Offset 12)
+    PKM_RUBY_STEP1_B5 = 150,    // 第1个 B5
+    PKM_RUBY_GAP1     = 600,    // 静音间隔1
+    PKM_RUBY_STEP2_B5 = 650,    // 第2个 B5
+    PKM_RUBY_GAP2     = 1100,   // 静音间隔2
+    PKM_RUBY_STEP3_B5 = 1150,   // 第3个 B5 (进入快节奏部分)
+    PKM_RUBY_STEP4_A5 = 1400,   // A5
+    PKM_RUBY_STEP5_E6 = 1650,   // E6 (最高音)
+    
+    PKM_RUBY_OFF      = 2150,   
+    PKM_RUBY_RELEASE  = 2300,
 };
 
 // 规定 DJI 风格的开机启动声各音调的时间点

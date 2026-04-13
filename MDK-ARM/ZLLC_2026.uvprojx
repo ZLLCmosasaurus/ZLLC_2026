@@ -542,6 +542,16 @@
               <FileType>8</FileType>
               <FilePath>..\User\Device\Src\dvc_TOFSense.cpp</FilePath>
             </File>
+            <File>
+              <FileName>buzzer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Device\Src\buzzer.c</FilePath>
+            </File>
+            <File>
+              <FileName>buzzer_bsp.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\Device\Src\buzzer_bsp.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
