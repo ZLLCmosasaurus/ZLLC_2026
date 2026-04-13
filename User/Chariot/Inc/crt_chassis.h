@@ -542,6 +542,8 @@ public:
     float Yaw = 0.0f;
     float Yaw_Delta_s = 0.0f;
 
+    uint32_t Delta_s = 0.0f;
+
     uint8_t TRIGGER_CNT = 0;
     uint16_t Yaw_cnt = 0;
 

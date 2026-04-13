@@ -445,7 +445,6 @@ void DR16_UART5_Callback(uint8_t *Buffer, uint16_t Length)
 void VT13_UART_Callback(uint8_t *Buffer, uint16_t Length)
 {
     chariot.VT13.VT13_UART_RxCpltCallback(Buffer);
-
     // 底盘 云台 发射机构 的控制策略
     chariot.TIM_Control_Callback();
 }
@@ -500,7 +499,11 @@ void Offline_Controller_UART1_Callback(uint8_t *Buffer, uint16_t Length)
     if (flag)
     {
         for (int j = 0; j < 6; j++)
+        for (int j = 0; j < 6; j++)
         {
+            int index = 2 * j + i;
+            int16_t temp = (Buffer[index + 2] << 8) | Buffer[index + 1];
+            chariot.Offline_Controller_Data.Angle[j] = temp / 100.f;
             int index = 2 * j + i;
             int16_t temp = (Buffer[index + 2] << 8) | Buffer[index + 1];
             chariot.Offline_Controller_Data.Angle[j] = temp / 100.f;
@@ -654,7 +657,7 @@ void Task1ms_TIM5_Callback()
     /************ 判断设备在线状态判断 50ms (所有device:电机，遥控器，裁判系统等) ***************/
 
     chariot.TIM1msMod50_Alive_PeriodElapsedCallback();
-    HAL_IWDG_Refresh(&hiwdg1);
+    // HAL_IWDG_Refresh(&hiwdg1);
 
     /****************************** 交互层回调函数 1ms *****************************************/
     if (start_flag == 1)
@@ -853,8 +856,8 @@ extern "C" void Task_Init()
 
     /********************************* 交互层初始化 *********************************/
 
-    // 遥控器死区给0.3f
-    chariot.Init(0.3f);
+    // 遥控器死区给0.15f
+    chariot.Init(0.15f);
 
     /********************************* 使能调度时钟 *********************************/
 

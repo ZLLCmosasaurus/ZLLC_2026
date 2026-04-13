@@ -81,23 +81,23 @@ uint8_t Class_BoardC_BMI::init(SPI_HandleTypeDef *hspi ,IMU_Data_t *__BMI088)
 uint8_t Class_BoardC_BMI::BMI088_Init(IMU_Data_t *__BMI088)
 {
     // self test pass and init
-//    if (bmi088_accel_self_test() != BMI088_NO_ERROR)
-//    {
-//        error |= BMI088_SELF_TEST_ACCEL_ERROR;
-//    }
-//    else
-//    {
+   if (bmi088_accel_self_test() != BMI088_NO_ERROR)
+   {
+       error |= BMI088_SELF_TEST_ACCEL_ERROR;
+   }
+   else
+   {
         error |= BMI088_Accel_Init();
-//    }
+   }
 
-//    if (bmi088_gyro_self_test() != BMI088_NO_ERROR)
-//    {
-//        error |= BMI088_SELF_TEST_GYRO_ERROR;
-//    }
-//    else
-//    {
-//        error |= BMI088_Gyro_Init();
-//    }
+   if (bmi088_gyro_self_test() != BMI088_NO_ERROR)
+   {
+       error |= BMI088_SELF_TEST_GYRO_ERROR;
+   }
+   else
+   {
+       error |= BMI088_Gyro_Init();
+   }
 
     if (caliOffset)
         Calibrate_MPU_Offset(__BMI088);
