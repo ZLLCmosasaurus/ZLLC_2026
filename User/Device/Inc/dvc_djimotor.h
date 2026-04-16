@@ -192,6 +192,7 @@ public:
     inline void Set_Transform_Target_Vel(float __Transform_Target_Vel);
     inline void Set_Transform_Target_Acc(float __Transform_Target_Acc);
     inline void Set_Now_Omega_Angle(float __Now_Omega_Angle);
+    inline void Set_Motor_Parameters(float __J, float __B, float __Mgl, float __C);
 
     void CAN_RxCpltCallback(uint8_t *Rx_Data);
     void TIM_Alive_PeriodElapsedCallback();
@@ -232,6 +233,10 @@ protected:
     float Transform_Torque = 0.0f;
     float Transform_Target_Omega = 0.0f;
 
+    float J = 0.f;
+    float B = 0.0f;
+    float Mgl = 0.0f;
+    float C = 0.0f;
     float Transform_Target_Vel = 0.0f;                  //角度环的前馈
     float Transform_Target_Acc = 0.0f;                  //速度环的前馈
     
@@ -860,6 +865,15 @@ void Class_DJI_Motor_GM6020::Set_Now_Omega_Angle(float __Now_Omega_Angle)
 {
     Data.Now_Omega_Angle = __Now_Omega_Angle;
 }
+
+inline void Class_DJI_Motor_GM6020::Set_Motor_Parameters(float __J, float __B, float __Mgl, float __C)
+{
+    J = __J;
+    B = __B;
+    Mgl = __Mgl;
+    C = __C;
+}
+
 /**
  * @brief 获取最大输出电流
  *

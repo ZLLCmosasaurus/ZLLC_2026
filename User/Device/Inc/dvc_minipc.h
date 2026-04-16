@@ -234,6 +234,7 @@ struct Struct_MiniPC_Rx_Data
 struct Struct_MiniPC_Rx_Data_Test{
     uint8_t head[2] = {'S', 'P'};
     uint8_t mode; // 0:不控制,1:控制云台但不开火,
+    uint8_t Camera_ID;
     float yaw;
     float yaw_vel;
     float yaw_acc;

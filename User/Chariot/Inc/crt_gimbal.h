@@ -318,6 +318,7 @@ protected:
     //内部函数
 
     void Output();
+    void Gimbal_Disable();
     void Output_Test();
 };
 

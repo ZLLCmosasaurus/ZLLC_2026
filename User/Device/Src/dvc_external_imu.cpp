@@ -12,10 +12,13 @@ void Class_External_IMU::TIM1msMod50_Alive_PeriodElapsedCallback(void)
     Pre_Flag = Flag;
 }
 
+uint32_t imu_cnt = 0;
+float IMU_Dt;
 void Class_External_IMU::UART_BMI_Data_Process(uint8_t *Buffer){
 	
   if(Buffer[0] == 0xA5 && Buffer[13] == 0xB5){
     Flag ++;
+    IMU_Dt = DWT_GetDeltaT(&imu_cnt);
     BMI088_Raw_Data.Accel[0] = (float)((int16_t)(Buffer[1] << 8) | (Buffer[2])) / 100.0f;
     BMI088_Raw_Data.Accel[1] = (float)((int16_t)(Buffer[3] << 8) | (Buffer[4])) / 100.0f;
     BMI088_Raw_Data.Accel[2] = (float)((int16_t)(Buffer[5] << 8) | (Buffer[6])) / 100.0f;

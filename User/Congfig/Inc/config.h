@@ -45,6 +45,8 @@
 #define Wheel_Diameter 0.12000000f // 轮子直径，单位为m
 #define Chassis_Radius 0.46000000f // 底盘半径，单位为m
 
+#define JiMiao_Test
+
 //功率控制相关
 #define POWER_CONTROL 1 //启用功率控制
 //#define POWER_LIMIT_1              //老版本功率限制

@@ -636,6 +636,23 @@ void Class_Chariot::Control_Booster()
                 //     Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
                 // }           //打完后会自动切到停火
 
+                #ifdef JiMiao_Test
+                if (MiniPC.Get_Rx_Yaw_Angle() == 0.f && MiniPC.Get_Rx_Pitch_Angle() == 0.f)
+                {
+                    Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+                }
+
+                if (MiniPC.Get_mode() == 2 && MiniPC.MiniPC_Fire_Updata_Flag == 1)
+                { // 后边两个判断似乎不需要
+                    Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                } // 打完后会自动切到停火
+                else
+                {
+                    MiniPC.MiniPC_Fire_Updata_Flag = 0;
+                    Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+                }
+                #else
+
                 if((MiniPC.Get_Auto_aim_Status() == Auto_aim_Status_ENABLE) &&
                   (MiniPC.Get_Rx_Yaw_Angle() != 0.f || MiniPC.Get_Rx_Pitch_Angle() != 0.f)){                 //后边两个判断似乎不需要
                     Booster.Set_Booster_Control_Type(Booster_Control_Type_REPEATED);
@@ -644,17 +661,7 @@ void Class_Chariot::Control_Booster()
                     Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
                 }
 
-                if(MiniPC.Get_Rx_Yaw_Angle() == 0.f && MiniPC.Get_Rx_Pitch_Angle() == 0.f){
-                    Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
-                }
-
-                // if(MiniPC.Get_mode() == 2 && MiniPC.MiniPC_Fire_Updata_Flag == 1){                 //后边两个判断似乎不需要
-                //     Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
-                // }           //打完后会自动切到停火
-                // else{
-                //     MiniPC.MiniPC_Fire_Updata_Flag = 0;
-                //     Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
-                // }
+                #endif
 
                 break;
             }

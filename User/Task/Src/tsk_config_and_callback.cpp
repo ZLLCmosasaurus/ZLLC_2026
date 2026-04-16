@@ -46,7 +46,6 @@
 #include "usbd_cdc.h"
 #include "usbd_cdc_if.h"
 #include "config.h"
-#include "iwdg.h"
 /* Private macros ------------------------------------------------------------*/
 
 /* Private types -------------------------------------------------------------*/
@@ -410,14 +409,9 @@ void SuperCAP_UART1_Callback(uint8_t *Buffer, uint16_t Length)
  */
 
 #ifdef GIMBAL
-uint32_t imu_cnt = 0;
-uint16_t L;
-float IMU_Dt;
 void IMUB_USART7_Callback(uint8_t *Buffer, uint16_t Length)
 {
-    L = Length;
     chariot.Gimbal.External_IMU.UART_BMI_Data_Process(Buffer);
-    IMU_Dt = DWT_GetDeltaT(&imu_cnt);
 }
 #endif
 
@@ -501,7 +495,7 @@ void Task100us_TIM4_Callback()
 
         //生成正弦信号测试
         Single_Time ++;
-        Sin_Single = 15.0f * sinf(2.0f * PI * 7.0f * Single_Time / 1000.0f);
+        Sin_Single = 15.0f * sinf(2.0f * PI * 5.0f * Single_Time / 1000.0f);
 
 #endif
 }
