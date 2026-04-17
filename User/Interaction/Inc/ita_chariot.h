@@ -16,6 +16,7 @@
 
 #include "dvc_dr16.h"
 #include "dvc_VT13.h"
+#include "dvc_Fs_i6x.h"
 #include "crt_gimbal.h"
 #include "crt_booster.h"
 #include "dvc_imu.h"
@@ -129,7 +130,12 @@ class Class_FSM_Alive_Control_VT13 : public Class_FSM
 
     void Reload_TIM_Status_PeriodElapsedCallback();
 };
-
+class Class_FSM_Alive_Control_Fs_i6x : public Class_FSM
+{
+    public:
+    Class_Chariot *Chariot;
+    void Reload_TIM_Status_PeriodElapsedCallback();
+};
 /**
  * @brief 控制对象
  *
@@ -159,6 +165,7 @@ public:
         //遥控器
         Class_DR16 DR16;
         Class_VT13 VT13;
+        Class_Fs_i6x FS_i6X;
         //上位机
         Class_MiniPC MiniPC;
         //云台
@@ -172,6 +179,9 @@ public:
 
         Class_FSM_Alive_Control_VT13 FSM_Alive_Control_VT13;
         friend class Class_FSM_Alive_Control_VT13;
+
+        Class_FSM_Alive_Control_Fs_i6x FSM_Alive_Control_Fs_i6x;
+        friend class Class_FSM_Alive_Control_Fs_i6x;
 
     #endif
 
@@ -292,6 +302,11 @@ protected:
         float DR16_Mouse_Yaw_Angle_Resolution = 57.8*4.0f;
         //DR16鼠标云台pitch灵敏度系数, 不同鼠标不同参数
         float DR16_Mouse_Pitch_Angle_Resolution = 57.8f;
+        //富斯遥控器死区
+        float FS_i6X_Dead_Zone=0.0f;
+
+        float FS_i6X_Yaw_Angle_Resolution= 0.003f * PI * 57.29577951308232;
+        float FS_i6X_Pitch_Angle_Resolution= 0.013f * PI* 57.29577951308232;
         
         //迷你主机云台pitch自瞄控制系数
         float MiniPC_Autoaiming_Yaw_Angle_Resolution = 0.003f;

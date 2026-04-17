@@ -70,6 +70,10 @@ void Class_Chariot::Init(float __DR16_Dead_Zone)
         FSM_Alive_Control_VT13.Init(5,0);
         #endif
 
+        #ifdef USE_FS_i6X
+        FSM_Alive_Control_Fs_i6x.Chariot=this;
+        FS_i6X.Init(&huart5);
+		#endif
         //云台
         Gimbal.Init();
         Gimbal.MiniPC = &MiniPC;
@@ -445,6 +449,7 @@ void Class_Chariot::CAN_Gimbal_Tx_Chassis_Callback()
  */  		
 float Offset_K = 0.175f;
 #ifdef GIMBAL
+#ifdef USE_DR16
 void Class_Chariot::Control_Chassis()
 {
     //遥控器摇杆值
@@ -543,6 +548,109 @@ void Class_Chariot::Control_Chassis()
     Chassis.Set_Target_Velocity_X(gimbal_velocity_x);
     Chassis.Set_Target_Velocity_Y(gimbal_velocity_y);              //前x左y为正
 }
+#elif defined(USE_FS_i6X)
+void Class_Chariot::Control_Chassis()
+{
+    //遥控器摇杆值
+    float fs_l_x, fs_l_y;    
+    //云台坐标系速度目标值 float
+    float gimbal_velocity_x = 0, gimbal_velocity_y = 0;      
+    //遥控器坐标系速度
+    float remote_velocity_x = 0, remote_velocity_y = 0;
+    float chassis_omega = 0;  
+    //云台坐标系角度目标值 float
+    float gimbal_angle = 0,chassis_angle = 0,relative_angle = 0;
+	
+    //排除遥控器死区
+    //fs_l_x = (Math_Abs(DR16.Get_Left_X()) > DR16_Dead_Zone) ? DR16.Get_Left_X() : 0;
+    //fs_l_y = (Math_Abs(DR16.Get_Left_Y()) > DR16_Dead_Zone) ? DR16.Get_Left_Y() : 0;
+
+    fs_l_x = (Math_Abs(FS_i6X.Get_Left_X()) > FS_i6X_Dead_Zone) ? FS_i6X.Get_Left_X() : 0;
+    fs_l_y = (Math_Abs(FS_i6X.Get_Left_Y()) > FS_i6X_Dead_Zone) ? FS_i6X.Get_Left_Y() : 0;
+    
+    if(fabs(fs_l_x) > 1.0f)fs_l_x = 1.0f;
+    if(fabs(fs_l_y) > 1.0f)fs_l_y = 1.0f;
+    //设定矩形到圆形映射进行控制
+    remote_velocity_x = fs_l_x * sqrt(1.0f - fs_l_y * fs_l_y / 2.0f) * Chassis.Get_Velocity_X_Max();
+    remote_velocity_y = fs_l_y * sqrt(1.0f - fs_l_x * fs_l_x / 2.0f) * Chassis.Get_Velocity_Y_Max();
+
+    gimbal_velocity_y = -remote_velocity_y;             //遥控器前x 右y为正
+    gimbal_velocity_x =  remote_velocity_x;
+
+    //遥控器操作逻辑
+    volatile int FS_i6x_Switch0_Status =FS_i6X.Get_Switch_0();
+   
+    switch(FS_i6x_Switch0_Status){
+        case (FS_Switch_Status_UP):   // 左1上 下位机控制模式
+        {
+        if (FS_i6X.Get_Switch_1() == FS_Switch_Status_DOWN){
+            //左2下，小陀螺
+              Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SPIN);
+            chassis_omega = CHASSIS_SPIN_OMEGA;
+        }else{
+                //左2上，随动
+             Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_FLLOW);
+            }
+            break;
+        }
+       
+        case(FS_Switch_Status_DOWN):   //左1下 上位机控制模式
+        {
+            if(MiniPC.Get_MiniPC_Status() == MiniPC_Status_DISABLE){
+                Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SPIN);
+                gimbal_velocity_x = 0.0f;
+                gimbal_velocity_y = 0.0f;
+                chassis_omega     = 0.0f;//CHASSIS_SPIN_OMEGA;
+                break;
+            }
+
+            //设定底盘目标线速度
+            if (fabs(MiniPC.Get_Chassis_Target_Velocity_X()) < 0.01f && fabs(MiniPC.Get_Chassis_Target_Velocity_Y()) < 0.01f)
+            {
+                gimbal_velocity_x = 0.0f;
+                gimbal_velocity_y = 0.0f;
+            }
+            else
+            {
+                gimbal_velocity_x = MiniPC.Get_Chassis_Target_Velocity_X();
+                gimbal_velocity_y = MiniPC.Get_Chassis_Target_Velocity_Y();
+            }
+
+            switch (MiniPC.Get_Chassis_Control_Mode())                      //设置小陀螺速度/随动
+            {
+                case(MiniPC_Chassis_Control_Mode_NORMAL):
+                {
+                    chassis_omega = 0.0f;
+                    Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SPIN);
+                    break;
+                }
+                case(MiniPC_Chassis_Control_Mode_FOLLOW):
+                {
+                    Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_FLLOW);
+                    break;
+                }
+                case(MiniPC_Chassis_Control_Mode_SPIN):
+                {
+                    chassis_omega = -MiniPC.Get_Chassis_Target_Velocity_Omega();
+                    Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SPIN);
+                    break;
+                }
+            }
+            break;
+        }
+    }
+   
+    if(chassis_omega > 4.0f)chassis_omega = 4.0f;
+    if(chassis_omega < -4.0f)chassis_omega = -4.0f;
+
+    Math_Constrain(&gimbal_velocity_x, -4.0f, 4.0f);
+    Math_Constrain(&gimbal_velocity_y, -4.0f, 4.0f);
+
+    Chassis.Set_Target_Omega(chassis_omega);
+    Chassis.Set_Target_Velocity_X(gimbal_velocity_x);
+    Chassis.Set_Target_Velocity_Y(gimbal_velocity_y);              //前x左y为正
+}
+#endif
 #endif
 
 /**
@@ -561,6 +669,7 @@ void Class_Chariot::Transform_Mouse_Axis(){
  *
  */
 #ifdef GIMBAL
+#ifdef USE_DR16
 void Class_Chariot::Control_Gimbal()
 {
         // 角度目标值
@@ -599,6 +708,47 @@ void Class_Chariot::Control_Gimbal()
         Gimbal.Set_Target_Pitch_Angle(tmp_gimbal_pitch);
     }
 }
+#elif defined(USE_FS_i6X)
+
+void Class_Chariot::Control_Gimbal()
+{
+        // 角度目标值
+    float tmp_gimbal_yaw, tmp_gimbal_pitch;
+    // 遥控器摇杆值
+    float fs_r_x, fs_r_y;//遥控器横轴，纵轴
+
+    // 排除遥控器死区
+    fs_r_x = (Math_Abs(FS_i6X.Get_Right_X()) > FS_i6X_Dead_Zone) ? FS_i6X.Get_Right_X() : 0;//遥控器前y右x为正，所以这里要反过来
+    fs_r_y = (Math_Abs(FS_i6X.Get_Right_Y()) > FS_i6X_Dead_Zone) ? FS_i6X.Get_Right_Y() : 0;
+
+    tmp_gimbal_yaw = Gimbal.Get_Target_Main_Yaw_Angle();
+    tmp_gimbal_pitch = Gimbal.Motor_Pitch.Get_Target_Angle();
+
+    // 遥控器操作逻辑
+    tmp_gimbal_yaw -= fs_r_x * FS_i6X_Yaw_Angle_Resolution;
+    tmp_gimbal_pitch -= fs_r_y * FS_i6X_Pitch_Angle_Resolution;
+
+    if(tmp_gimbal_pitch > 22.0f)tmp_gimbal_pitch = 22.0f;
+    if(tmp_gimbal_pitch < -25.0f)tmp_gimbal_pitch = -25.0f;
+
+    if(tmp_gimbal_yaw > 180.0f) tmp_gimbal_yaw -= 360.0f;
+    else if(tmp_gimbal_yaw < -180.0f) tmp_gimbal_yaw += 360.0f;
+
+    if (FS_i6X.Get_Switch_0() == FS_Switch_Status_DOWN) // 左1下 上位机
+    {
+        Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_MINIPC);             //目标在云台Output更新
+    }
+    else // 左1下是遥控器控制
+    {
+        // 中间遥控模式
+        Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
+
+        // 设定角度
+        Gimbal.Set_Target_Main_Yaw_Angle(tmp_gimbal_yaw);
+        Gimbal.Set_Target_Pitch_Angle(tmp_gimbal_pitch);
+    }
+}
+#endif
 #endif
 /**
  * @brief 发射机构控制逻辑
@@ -606,6 +756,7 @@ void Class_Chariot::Control_Gimbal()
  */
 #ifdef GIMBAL
 float single_shoot_pre_time = 0;
+#ifdef USE_DR16
 void Class_Chariot::Control_Booster()
 {
     static uint8_t booster_sign = 0;
@@ -719,6 +870,106 @@ void Class_Chariot::Control_Booster()
     }
 
 }
+#elif defined(USE_FS_i6X)
+void Class_Chariot::Control_Booster()
+{
+    static uint8_t booster_sign = 0;
+    volatile int FS_Left1_Switch_Status = FS_i6X.Get_Switch_0();
+
+    if(FS_Left1_Switch_Status == FS_Switch_Status_DOWN){         //上位机模式
+        switch (FS_i6X.Get_Switch_2())
+        {
+            case (FS_Switch_Status_UP):                       //右1上停火
+            {
+                Booster.Set_Booster_Control_Type(Booster_Control_Type_DISABLE);
+                Booster.Set_Friction_Control_Type(Friction_Control_Type_DISABLE);
+                break;
+            }
+            case (FS_Switch_Status_DOWN):                         //上位机控制开火,右1下
+            {
+                if(MiniPC.Get_MiniPC_Status() == MiniPC_Status_DISABLE){                    //上位机离线的时候不能打弹
+                    Booster.Set_Booster_Control_Type(Booster_Control_Type_DISABLE);
+                    Booster.Set_Friction_Control_Type(Friction_Control_Type_DISABLE);
+                    break;
+                }
+
+                //当目标突然丢失0.5s以内，上位机会依然发送自瞄状态，下位机保持上一个瞄准的地方继续打弹
+                //MiniPC.Get_Rx_Yaw_Angle_A() == 0.f && MiniPC.Get_Rx_Pitch_Angle_A() == 0.f（相当于给了0.5s的误差）
+                // if((MiniPC.Get_Auto_aim_Status() == Auto_aim_Status_ENABLE) && MiniPC.Get_Fire_Flag()==1 && (DWT_GetTimeline_s() - single_shoot_pre_time) > 0.066f  &&
+                //   (MiniPC.Get_Rx_Yaw_Angle() != 0.f || MiniPC.Get_Rx_Pitch_Angle() != 0.f)){                 //后边两个判断似乎不需要
+                //     single_shoot_pre_time = DWT_GetTimeline_s();
+                //     Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                // }           //打完后会自动切到停火
+
+                if((MiniPC.Get_Auto_aim_Status() == Auto_aim_Status_ENABLE) &&
+                  (MiniPC.Get_Rx_Yaw_Angle() != 0.f || MiniPC.Get_Rx_Pitch_Angle() != 0.f)){                 //后边两个判断似乎不需要
+                    Booster.Set_Booster_Control_Type(Booster_Control_Type_REPEATED);
+                }           //打完后会自动切到停火
+                else if (MiniPC.Get_Auto_aim_Status() == Auto_aim_Status_DISABLE){    
+                    Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+                }
+
+                if(MiniPC.Get_Rx_Yaw_Angle() == 0.f && MiniPC.Get_Rx_Pitch_Angle() == 0.f){
+                    Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+                }
+
+                break;
+            }
+            case (FS_Switch_Status_MIDDLE)://右1中开火
+            {
+                // 每次进来切回一次停火，防止一次可能是别的状态进来的
+                // Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+                // Booster.Set_Friction_Control_Type(Friction_Control_Type_ENABLE);
+
+                auto switch_state= FS_i6X.Get_Switch_3();  // 返回当前开关状态
+                if (switch_state == FS_Switch_Status_DOWN || switch_state == FS_Switch_Status_UP) 
+                {       
+                    Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+                    Shoot_Flag = 0;
+                }
+                else if (switch_state==FS_Switch_Status_TRIG_UP_DOWN&& Shoot_Flag == 0) // 单发
+                {
+                    Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                    Shoot_Flag = 1;
+                }
+                // else if (FS_i6X.Get_Yaw_left()>0) // 连发
+                // {
+                //     Booster.Set_Booster_Control_Type(Booster_Control_Type_REPEATED);
+               // }
+                else {
+                    Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+                }
+                break;
+            }
+        }
+    }else{//右2
+                if (FS_i6X.Get_Switch_2() != FS_Switch_Status_MIDDLE) {
+                Booster.Set_Booster_Control_Type(Booster_Control_Type_DISABLE);
+                Booster.Set_Friction_Control_Type(Friction_Control_Type_DISABLE);
+                return;
+            }else{
+         auto switch_state= FS_i6X.Get_Switch_3();  // 返回当前开关状态
+                if  (switch_state == FS_Switch_Status_DOWN || switch_state == FS_Switch_Status_UP)
+                {       
+                    Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+                    Shoot_Flag = 0;
+                }
+                else if (switch_state==FS_Switch_Status_TRIG_UP_DOWN&& Shoot_Flag == 0) // 单发
+                {
+                    Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                    Shoot_Flag = 1;
+                }
+                // else if (FS_i6X.Get_Yaw_left()<0) // 连发 yaw_left逆时针转减小
+                // {
+                //     Booster.Set_Booster_Control_Type(Booster_Control_Type_REPEATED);
+                //}
+
+    }
+    }
+    
+
+}
+#endif
 #endif
 
 /**
@@ -857,8 +1108,12 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
             if(mod50_mod3%3==0)
             {
                 //判断底盘通讯在线状态
-                TIM1msMod50_Chassis_Communicate_Alive_PeriodElapsedCallback();    
+                TIM1msMod50_Chassis_Communicate_Alive_PeriodElapsedCallback();   
+                #ifdef USE_DR16 
                 DR16.TIM1msMod50_Alive_PeriodElapsedCallback();
+                #elif defined(USE_FS_i6X)
+                FS_i6X.TIM1msMod50_Alive_PeriodElapsedCallback();
+                #endif
                 Gimbal.External_IMU.TIM1msMod50_Alive_PeriodElapsedCallback();
                 MiniPC.TIM1msMod50_Alive_PeriodElapsedCallback();
                 
@@ -984,6 +1239,7 @@ void Class_Chariot::TIM1msMod50_Gimbal_Communicate_Alive_PeriodElapsedCallback()
  *
  */
 #ifdef GIMBAL
+#ifdef USE_DR16
 void Class_FSM_Alive_Control::Reload_TIM_Status_PeriodElapsedCallback()
 {
     Status[Now_Status_Serial].Time++;
@@ -1081,6 +1337,108 @@ void Class_FSM_Alive_Control::Reload_TIM_Status_PeriodElapsedCallback()
         break;
     } 
 }
+#elif defined(USE_FS_i6X)
+
+void Class_FSM_Alive_Control_Fs_i6x::Reload_TIM_Status_PeriodElapsedCallback()
+{
+    Status[Now_Status_Serial].Time++;
+
+    switch (Now_Status_Serial)
+    {
+        // 离线检测状态
+        case (0):
+        {
+            // 遥控器中途断联导致错误离线 跳转到 遥控器串口错误状态
+            if (huart5.ErrorCode)
+            {
+                Status[Now_Status_Serial].Time = 0;
+                Set_Status(4);
+            }
+
+            //转移为 在线状态
+            if(Chariot->FS_i6X.Get_FS_Status() == FS_Status_ENABLE)
+            {             
+                Status[Now_Status_Serial].Time = 0;
+                Set_Status(2);
+            }
+
+            //超过一秒的离线 跳转到 关闭状态
+            if(Status[Now_Status_Serial].Time > 1000)
+            {
+                Status[Now_Status_Serial].Time = 0;
+                Set_Status(1);
+            }
+        }
+        break;
+        // 遥控器关闭状态
+        case (1):
+        {
+            //离线保护
+            Chariot->Booster.Set_Booster_Control_Type(Booster_Control_Type_DISABLE);
+            Chariot->Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_DISABLE);
+            Chariot->Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
+
+            if(Chariot->FS_i6X.Get_FS_Status() == FS_Status_ENABLE)
+            {
+                Chariot->Chassis.Set_Chassis_Control_Type(Chariot->Get_Pre_Chassis_Control_Type());
+                Chariot->Gimbal.Set_Gimbal_Control_Type(Chariot->Get_Pre_Gimbal_Control_Type());
+                Status[Now_Status_Serial].Time = 0;
+                Set_Status(2);
+            }
+
+            // 遥控器中途断联导致错误离线 跳转到 遥控器串口错误状态
+            if (huart5.ErrorCode)
+            {
+                Status[Now_Status_Serial].Time = 0;
+                Set_Status(4);
+            }
+            
+        }
+        break;
+        // 遥控器在线状态
+        case (2):
+        {
+            //转移为 刚离线状态
+            if(Chariot->FS_i6X.Get_FS_Status() == FS_Status_DISABLE)
+            {
+                Status[Now_Status_Serial].Time = 0;
+                Set_Status(3);
+            }
+        }
+        break;
+        //刚离线状态
+        case (3):
+        {
+            //记录离线检测前控制模式
+            Chariot->Set_Pre_Chassis_Control_Type(Chariot->Chassis.Get_Chassis_Control_Type());
+            Chariot->Set_Pre_Gimbal_Control_Type(Chariot->Gimbal.Get_Gimbal_Control_Type());
+
+            //无条件转移到 离线检测状态
+            Status[Now_Status_Serial].Time = 0;
+            Set_Status(0);
+        }
+        break;
+        //遥控器串口错误状态
+        case (4):
+        {
+            huart5.ErrorCode = 0;
+            UART5_Manage_Object.Rx_Length = 0;
+            memset(UART5_Manage_Object.Rx_Buffer, 0, UART_BUFFER_SIZE);
+            HAL_UART_DMAStop(&huart5); // 停止以重启
+            //HAL_Delay(10); // 等待错误结束
+            HAL_UARTEx_ReceiveToIdle_DMA(&huart5, UART5_Manage_Object.Rx_Buffer, UART5_Manage_Object.Rx_Buffer_Length * 2);
+            __HAL_DMA_DISABLE_IT(&hdma_uart5_rx, DMA_IT_HT);
+
+            //处理完直接跳转到 离线检测状态
+            Status[Now_Status_Serial].Time = 0;
+            Set_Status(0);
+        }
+        break;
+    } 
+}
+
+
+#endif
 #endif
 /**
  * @brief 机器人遥控器离线控制状态转移函数

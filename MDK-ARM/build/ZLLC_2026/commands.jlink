@@ -1,0 +1,6 @@
+r
+halt
+loadfile "c:\Users\Lenovo\Desktop\M67_2026\MDK-ARM\build\ZLLC_2026\ZLLC_2026.hex"
+r
+go
+exit

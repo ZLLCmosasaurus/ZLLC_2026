@@ -365,7 +365,23 @@ void VT13_UART_Callback(uint8_t *Buffer, uint16_t Length)
     chariot.TIM_Control_Callback();
 }
 #endif
-
+/**
+ * @brief UART9遥控器回调函数
+ *
+ * @param Buffer UART9收到的消息
+ * @param Length 长度
+ */
+uint32_t adc;
+float Dt_adc;
+#ifdef GIMBAL
+void FS_i6X_UART5_Callback(uint8_t *Buffer, uint16_t Length)
+{
+        if(Length == 25){               //长度小于25的应该是错误的数据
+            Dt_adc = DWT_GetDeltaT(&adc);
+            chariot.FS_i6X.FS_UART_RxCpltCallback(Buffer);
+    }
+}
+#endif
 /**
  * @brief IIC磁力计回调函数
  *
@@ -459,27 +475,46 @@ void Task100us_TIM4_Callback()
         chariot.Gimbal.Boardc_BMI.TIM_Calculate_PeriodElapsedCallback();     
 
         //开始比赛但是遥控器断连了
+         #ifdef USE_DR16  
         if(chariot.Referee.Get_Game_Stage() == Referee_Game_Status_Stage_BATTLE && chariot.DR16.Get_DR16_Status() == DR16_Status_DISABLE && chariot.Referee.Get_Referee_Status() == Referee_Status_ENABLE){                               //比赛开始状态
             chariot.DR16.Set_Left_Switch(DR16_Switch_Status_DOWN);                  //保险 强制上位机
             chariot.DR16.Set_Right_Switch(DR16_Switch_Status_DOWN);                 //强制上位机自动打弹
             chariot.TIM_Control_Callback();                                         //里面上位机离线的相关处理了
         }
-        else{                                                                       //非比赛状态/遥控器在线
+        else{      
+                                                                          //非比赛状态/遥控器在线
             chariot.FSM_Alive_Control.Reload_TIM_Status_PeriodElapsedCallback();    //遥控器离线失能保护
-
+           
+            
             if(chariot.DR16.Get_DR16_Status() == DR16_Status_ENABLE && 
                 chariot.Gimbal.External_IMU.Get_IMU_Status() == IMU_Status_ENABLE){               //如果遥控器不在线也跑，就会和FSM抢状态，车子不能正确失能了
                 chariot.TIM_Control_Callback();
             }
         }
-
+        
         // chariot.FSM_Alive_Control.Reload_TIM_Status_PeriodElapsedCallback();    //遥控器离线失能保护
 
         // if(chariot.DR16.Get_DR16_Status() == DR16_Status_ENABLE && 
         //     chariot.Gimbal.External_IMU.Get_IMU_Status() == IMU_Status_ENABLE){               //如果遥控器不在线也跑，就会和FSM抢状态，车子不能正确失能了
         //     chariot.TIM_Control_Callback();
         // }
-
+        #elif defined(USE_FS_i6X)
+         if(chariot.Referee.Get_Game_Stage() == Referee_Game_Status_Stage_BATTLE && chariot.FS_i6X.Get_FS_Status() == FS_Status_DISABLE && chariot.Referee.Get_Referee_Status() == Referee_Status_ENABLE){                               //比赛开始状态
+            chariot.FS_i6X.Set_Switch_0(FS_Switch_Status_DOWN);                  //保险 强制上位机
+            chariot.FS_i6X.Set_Switch_2(FS_Switch_Status_DOWN);                 //强制上位机自动打弹
+            chariot.TIM_Control_Callback();                                         //里面上位机离线的相关处理了
+        }
+        else{      
+                                                                          //非比赛状态/遥控器在线
+            chariot.FSM_Alive_Control_Fs_i6x.Reload_TIM_Status_PeriodElapsedCallback();    //遥控器离线失能保护
+           
+            
+            if(chariot.FS_i6X.Get_FS_Status() == FS_Status_ENABLE && 
+                chariot.Gimbal.External_IMU.Get_IMU_Status() == IMU_Status_ENABLE){               //如果遥控器不在线也跑，就会和FSM抢状态，车子不能正确失能了
+                chariot.TIM_Control_Callback();
+            }
+        }
+            #endif
         if (chariot.Gimbal.External_IMU.Get_IMU_Status() == IMU_Status_DISABLE)
         { // IMU失能保护
             chariot.Booster.Set_Booster_Control_Type(Booster_Control_Type_DISABLE);
@@ -611,6 +646,8 @@ extern "C" void Task_Init()
         UART_Init(&huart5, DR16_UART5_Callback, 18);
         #elif defined(USE_VT13)
         UART_Init(&huart9, VT13_UART_Callback, 30);
+        #elif defined(USE_FS_i6X)
+        UART_Init(&huart5, FS_i6X_UART5_Callback, 25);      
         #endif
         //上位机USB
         USB_Init(&MiniPC_USB_Manage_Object,MiniPC_USB_Callback);
