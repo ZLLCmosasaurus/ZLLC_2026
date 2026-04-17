@@ -499,11 +499,7 @@ void Offline_Controller_UART1_Callback(uint8_t *Buffer, uint16_t Length)
     if (flag)
     {
         for (int j = 0; j < 6; j++)
-        for (int j = 0; j < 6; j++)
         {
-            int index = 2 * j + i;
-            int16_t temp = (Buffer[index + 2] << 8) | Buffer[index + 1];
-            chariot.Offline_Controller_Data.Angle[j] = temp / 100.f;
             int index = 2 * j + i;
             int16_t temp = (Buffer[index + 2] << 8) | Buffer[index + 1];
             chariot.Offline_Controller_Data.Angle[j] = temp / 100.f;
@@ -517,6 +513,7 @@ void Referee_UART10_Callback(uint8_t *Buffer, uint16_t Length)
 {
     chariot.Referee.UART_RxCpltCallback(Buffer, Length);
 }
+
 #endif
 /**
  * @brief UART1超电回调函数
@@ -585,7 +582,7 @@ void Task100us_TIM4_Callback()
 
 #elif defined(GIMBAL)
     // 单给IMU消息开的定时器 ims
-    chariot.Gimbal.Boardc_BMI.TIM_Calculate_PeriodElapsedCallback();
+    // chariot.Gimbal.Boardc_BMI.TIM_Calculate_PeriodElapsedCallback();
     static int mod100 = 0;
     mod100++;
     if (mod100 = 100)

@@ -378,6 +378,12 @@ public:
     inline float Get_Target_J3_Roll_Radian_In_PI();
     inline float Get_Target_J4_Pitch_Radian_In_PI();
 
+    /*VT03相关函数*/
+    inline float Get_Target_VT03_Pitch_Angle();
+    inline float Get_Target_VT03_Yaw_Angle();
+    inline void Set_Target_VT03_Pitch_Angle(float __Target_VT03_Pitch_Angle);
+    inline void Set_Target_VT03_Yaw_Angle(float __Target_VT03_Yaw_Angle);
+
     void TIM_Calculate_PeriodElapsedCallback();
 
 #ifdef MY_DEBUG
@@ -513,6 +519,10 @@ protected:
     // 校准测试相关
     bool enable_roll = false;
     bool enable_pitch = false;
+
+    // 图传舵机控制变量
+    uint16_t VT03_Pitch_Servo_PWM = 0;
+    uint16_t VT03_Yaw_Servo_PWM = 0;
     // 内部变量
 
     // 读变量
@@ -583,6 +593,10 @@ protected:
     float Target_Gripper_Angle = 0.0f;
     float Target_Gripper_Radian = 0.0f;
     float Target_Gripper_Omega = 0.75f;
+
+    /*图传相关角度*/
+    float Target_VT03_Pitch_Angle = 0;
+    float Target_VT03_Yaw_Angle = 0;
 
     // 建模解算测试用
     float model_angle[6] = {0.0f, 0.0f, 2.0f, 0.0f, 0.5f, 0.0f};
@@ -1007,6 +1021,26 @@ float Class_Gimbal::Get_Target_J3_Roll_Radian_In_PI()
 float Class_Gimbal::Get_Target_J4_Pitch_Radian_In_PI()
 {
     return (Target_J4_Pitch_Radian - J4_Pitch_Zero_Position_Radian)/DM2325_GEAR_RATIO;
+}
+
+float Class_Gimbal::Get_Target_VT03_Pitch_Angle()
+{
+    return Target_VT03_Pitch_Angle;
+}
+
+float Class_Gimbal::Get_Target_VT03_Yaw_Angle()
+{
+    return Target_VT03_Yaw_Angle;
+}
+
+void Class_Gimbal::Set_Target_VT03_Pitch_Angle(float __Target_VT03_Pitch_Angle)
+{
+    Target_VT03_Pitch_Angle = __Target_VT03_Pitch_Angle;
+}
+
+void Class_Gimbal::Set_Target_VT03_Yaw_Angle(float __Target_VT03_Yaw_Angle)
+{
+    Target_VT03_Yaw_Angle = __Target_VT03_Yaw_Angle;
 }
 
 #endif
