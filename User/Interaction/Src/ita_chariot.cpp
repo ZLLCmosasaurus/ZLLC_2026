@@ -251,6 +251,7 @@ uint8_t control_type;
 void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback(uint8_t *Rx_Data)
 {
     Gimbal_Alive_Flag++;
+
     // 底盘坐标系的目标速度
     float chassis_velocity_x, chassis_velocity_y;
     // 目标角速度
@@ -690,18 +691,19 @@ void Class_Chariot::Control_Chassis()
                     right_x *= 0.5f;
                 }
                 // Q，E控制机械臂抬升
-                lift_select[1] = true;
                 if (DR16.Get_Keyboard_Key_Q() == DR16_Key_Status_PRESSED)
                 {
+                    lift_select[1] = true;
                     lift_drc[1] = Lift_Direction_UP;
                 }
                 else if (DR16.Get_Keyboard_Key_E() == DR16_Key_Status_PRESSED)
                 {
+                    lift_select[1] = true;
                     lift_drc[1] = Lift_Direction_DOWN;
                 }
                 else
                 {
-                    lift_drc[1] = Lift_Direction_HOLD;
+                    lift_select[1] = false;
                 }
                 break;
             }
