@@ -123,7 +123,7 @@ enum Enum_Chassis_Control_Type : uint8_t
 {
     Chassis_Control_Type_DISABLE = 0x00,
     Chassis_Control_Type_NORMAL = 0x01,
-    Chassis_Control_Type_SLOPE = 0x10,
+    Chassis_Control_Type_SLOPE = 0x02,
 };
 
 /**
@@ -565,9 +565,7 @@ class Class_FSM_Ledder : public Class_FSM
 public:
     Class_Mecanum_Chassis *Chassis;
     
-    Enum_DR16_Switch_Status DR16_Right;
-    Enum_DR16_Switch_Status DR16_Pre_Right;
-    Enum_DR16_Switch_Status Switch_Status;
+    Enum_Uplift_FSM_Direction FSM_Direction = Uplift_FSM_HOLD;
 
     float Yaw = 0.0f;
     float Yaw_Delta_s = 0.0f;
@@ -575,7 +573,7 @@ public:
     uint32_t Delta_s = 0.0f;
 
     uint8_t TRIGGER_CNT = 0;
-    uint16_t Yaw_cnt = 0;
+    uint16_t FORWARD_CNT = 0;
 
     void Reload_TIM_Status_PeriodElapsedCallback();
 
@@ -700,7 +698,7 @@ public:
     void TIM_Calculate_PeriodElapsedCallback(Enum_Sprint_Status __Sprint_Status);
 
     // 着地时的角度，相对于Min_Radian
-    float Uplift_Touch_Radian[4] = {9.0f, 9.0f, 19.5f, 19.5f};
+    float Downlift_Touch_Radian[4] = {9.0f, 9.0f, 19.5f, 19.5f};
 
 protected:
     // 初始化相关常量

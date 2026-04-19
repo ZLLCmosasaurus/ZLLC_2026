@@ -133,7 +133,7 @@ struct LiftControl {
 
 // Data[7] 的位域定义
 struct OtherStatus {
-    uint8_t chassis_contorl_mode     : 2; // 0-1位：底盘控制模式，00:失能，01：使能，11：上台阶状态机
+    uint8_t chassis_contorl_mode     : 2; // 0-1位：底盘控制模式，00:失能，01：使能，10：上台阶状态机
     uint8_t uplift_fsm_direction     : 1; // 2位：上台阶状态机前进/保持
     uint8_t backdoor_jump            : 1; // 3位：150mm台阶后门跳转开关
     uint8_t downlift_init            : 1; // 4位：下台阶初始抬升高度跳转
@@ -261,7 +261,9 @@ public:
     Enum_MiniPC_Status MiniPC_Status = MiniPC_Status_DISABLE;
     // 裁判系统UI刷新状态
     Enum_Referee_UI_Refresh_Status Referee_UI_Refresh_Status = Referee_UI_Refresh_Status_DISABLE;
-
+    // 数据帧结构体
+    Gimbal_Tx_Chassis_Frame Rx_Frame;
+    
     void Judge_DR16_Control_Type();
     void Judge_VT13_Control_Type();
 

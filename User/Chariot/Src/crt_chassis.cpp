@@ -830,19 +830,20 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
 {
     Status[Now_Status_Serial].Time++;
 
-    /*获取Yaw拨盘状态，用于控制状态机*/
-    Switch_Status = Judge_DR16_Switch_Status(DR16_Right, DR16_Pre_Right);
-    if (Yaw >= 0.95f)
+    /*获取状态机运行方向枚举，用于控制状态机前进*/
+    FSM_Direction = Chassis->Get_Uplift_FSM_Direction();
+
+    if (FSM_Direction == Uplift_FSM_FORWARD)
     {
-        Yaw_cnt++;
-        if (DR16_Right == DR16_Switch_Status_UP && Yaw_cnt == 1)
+        FORWARD_CNT++;
+        if (FORWARD_CNT >= 50)
         {
             TRIGGER_CNT++;
         }
     }
-    else if (Yaw == 0.0f)
+    else if (FSM_Direction == Uplift_FSM_HOLD)
     {
-        Yaw_cnt = 0;
+        FORWARD_CNT = 0;
     }
 
     // 获取当前抬升机构高度用于做增量赋值
@@ -1024,23 +1025,25 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
     }
 }
 
+/*下台阶状态机 未使用*/
 void Class_FSM_Off_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
 {
     Status[Now_Status_Serial].Time++;
 
-    /*获取Yaw拨盘状态，用于控制状态机*/
-    Switch_Status = Judge_DR16_Switch_Status(DR16_Right, DR16_Pre_Right);
-    if (Yaw >= 0.95f)
+    /*获取状态机运行方向枚举，用于控制状态机前进*/
+    FSM_Direction = Chassis->Get_Uplift_FSM_Direction();
+
+    if (FSM_Direction == Uplift_FSM_FORWARD)
     {
-        Yaw_cnt++;
-        if (DR16_Right == DR16_Switch_Status_UP && Yaw_cnt == 1)
+        FORWARD_CNT++;
+        if (FORWARD_CNT >= 50)
         {
             TRIGGER_CNT++;
         }
     }
-    else if (Yaw == 0.0f)
+    else if (FSM_Direction == Uplift_FSM_HOLD)
     {
-        Yaw_cnt = 0;
+        FORWARD_CNT = 0;
     }
 
     // 获取当前抬升机构高度用于做增量赋值

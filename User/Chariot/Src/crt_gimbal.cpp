@@ -58,7 +58,7 @@ float debug_c610_angle_kd = 0.0f;
 void Class_Gimbal::Init()
 {
     // imu初始化
-    // Boardc_BMI.Init();
+    Boardc_BMI.Init();
 
     J0_Pitch_4340.Init(&hfdcan1, DM_Motor_ID_0xA1, DM_Motor_Control_Method_POSITION_OMEGA, 0, 20.0f, 20.0f);
     J1_Yaw_8009P.Init(&hfdcan1, DM_Motor_ID_0xA2, DM_Motor_Control_Method_POSITION_OMEGA, 0, 20.0f, 10.0f);

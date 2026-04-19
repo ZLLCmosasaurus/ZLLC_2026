@@ -251,8 +251,6 @@ uint8_t control_type;
 void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback(uint8_t *Rx_Data)
 {
     Gimbal_Alive_Flag++;
-    // 数据帧结构体
-    Gimbal_Tx_Chassis_Frame Rx_Frame;
     // 底盘坐标系的目标速度
     float chassis_velocity_x, chassis_velocity_y;
     // 目标角速度
@@ -270,16 +268,13 @@ void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback(uint8_t *Rx_Data)
     bool backdoor_status;
     // 下台阶初始化开关
     bool downlift_status;
-    // float映射到int16之后的速度
-    int16_t tmp_velocity_x, tmp_velocity_y, tmp_delta_radian;
-    uint8_t tmp_dr16_uplift_status;
 
     switch (CAN_Manage_Object->Rx_Buffer.Header.Identifier)
     {
     // 底盘控制数据回传
     case (0x77):
     {
-        memcpy(Rx_Data, &Rx_Frame, sizeof(Rx_Frame));
+        memcpy(&Rx_Frame, Rx_Data, sizeof(Rx_Frame));
 
 #ifdef AGV
         chassis_velocity_x = Math_Int_To_Float(tmp_velocity_x, -450, 450, -4, 4);
@@ -290,10 +285,20 @@ void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback(uint8_t *Rx_Data)
         chassis_velocity_y = -Math_Int_To_Float(Rx_Frame.y_velocity, -450, 450, -4.f, 4.f);
         chassis_delta_radian = -Math_Int_To_Float(Rx_Frame.yaw_data, -200, 200, -1.f, 1.f);
 #endif
-        for (uint8_t i = 0; i < 4; ++i) {
+
+        for (uint8_t i = 0; i < 4; ++i)
+        {
             lift_select[i] = (Rx_Frame.lift.lift_select >> i) & 0x01;
-            lift_drc[i] = ((Rx_Frame.lift.lift_direction >> i) & 0x01) 
-                                      ? Lift_Direction_UP : Lift_Direction_DOWN;
+            if (lift_select[i])
+            {
+                lift_drc[i] = ((Rx_Frame.lift.lift_direction >> i) & 0x01)
+                                  ? Lift_Direction_UP
+                                  : Lift_Direction_DOWN;
+            }
+            else
+            {
+                lift_drc[i] = Lift_Direction_HOLD;
+            }
         }
         chassis_control_type = (Enum_Chassis_Control_Type)Rx_Frame.status.chassis_contorl_mode;
         uplift_fsm_drc = (Enum_Uplift_FSM_Direction)Rx_Frame.status.uplift_fsm_direction;
@@ -312,7 +317,7 @@ void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback(uint8_t *Rx_Data)
         Chassis.Set_Delta_Radian(chassis_delta_radian); // 目标角度增量
         Chassis.Set_Uplift_FSM_Direction(uplift_fsm_drc);
         Chassis.Set_Lift_Select(lift_select[0], lift_select[1], lift_select[2], lift_select[3]);
-        for(uint8_t i = 0; i < 4; i++)
+        for (uint8_t i = 0; i < 4; i++)
         {
             Chassis.Set_Lift_Direction(i, lift_drc[i]);
         }
@@ -855,18 +860,19 @@ void Class_Chariot::Control_Chassis()
                     right_x *= 0.5f;
                 }
                 // Q，E控制机械臂抬升
-                lift_select[1] = true;
                 if (VT13.Get_Keyboard_Key_Q() == VT13_Key_Status_PRESSED)
                 {
+                    lift_select[1] = true;
                     lift_drc[1] = Lift_Direction_UP;
                 }
                 else if (VT13.Get_Keyboard_Key_E() == VT13_Key_Status_PRESSED)
                 {
+                    lift_select[1] = true;
                     lift_drc[1] = Lift_Direction_DOWN;
                 }
                 else
                 {
-                    lift_drc[1] = Lift_Direction_HOLD;
+                    lift_select[1] = false;
                 }
                 break;
             }
@@ -977,9 +983,9 @@ void Class_Chariot::Control_Chassis()
     case (Chassis_Control_Type_NORMAL):
     case (Chassis_Control_Type_SLOPE):
     {
-        // 设定矩形到圆形映射进行控制
-        chassis_velocity_y = -left_y * sqrt(1.0f - left_y * left_y / 2.0f) * Chassis.Get_Velocity_X_Max();
-        chassis_velocity_x = left_x * sqrt(1.0f - left_x * left_x / 2.0f) * Chassis.Get_Velocity_Y_Max();
+        // 设定矩形到圆形映射进行控制，底盘前X左Y，遥控器上下为Y，左右为X，在这里反一下
+        chassis_velocity_x = left_y * sqrt(1.0f - left_y * left_y / 2.0f) * Chassis.Get_Velocity_X_Max();
+        chassis_velocity_y = -left_x * sqrt(1.0f - left_x * left_x / 2.0f) * Chassis.Get_Velocity_Y_Max();
         chassis_delta_radian = -right_x * sqrt(1.0f - right_x * right_x / 2.0f) * 0.01f;
 
         break;
@@ -991,7 +997,7 @@ void Class_Chariot::Control_Chassis()
     Chassis.Set_Target_Velocity_Y(chassis_velocity_y); // 前x左y正
     Chassis.Set_Target_Omega(chassis_delta_radian);
     Chassis.Set_Lift_Select(lift_select[0], lift_select[1], lift_select[2], lift_select[3]);
-    for(uint8_t i = 0; i < 4; i++)
+    for (uint8_t i = 0; i < 4; i++)
     {
         Chassis.Set_Lift_Direction(i, lift_drc[i]);
     }
@@ -1205,9 +1211,10 @@ void Class_Chariot::Control_Chassis()
     {
         Force_Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL__);
 
-        if (DR16_Right_Uplift_Status == Chassis_Uplift_WHEEL_ON)
+        if (Chassis.Get_Wheel_Slave_Status() == Wheel_Slave_ON)
         {
-            track_omega = 25.0f;
+            // 机械安装方向相反，因此乘以一个负号
+            track_omega = -1.0f * Force_Chassis.Get_Target_Velocity_X();
         }
         else
         {
@@ -1226,25 +1233,46 @@ void Class_Chariot::Control_Chassis()
     { // 失能
         chassis_velocity_x = 0;
         chassis_velocity_y = 0;
+#ifdef RADIAN_CONTROL
         chassis_radian = chassis_radian;
+#elifdef OMEGA_CONTROL
+        chassis_radian = 0;
+#endif
+
         break;
     }
     case (Chassis_Control_Type_NORMAL__):
     {
         chassis_velocity_x = Chassis.Get_Target_Velocity_X();
         chassis_velocity_y = Chassis.Get_Target_Velocity_Y();
+#ifdef RADIAN_CONTROL
         chassis_radian += Chassis.Get_Delta_Radian();
+#elifdef OMEGA_CONTROL
+        chassis_radian = Chassis.Get_Delta_Radian() * 300.0f;
+#endif
+
         break;
     }
     }
+#ifdef RADIAN_CONTROL
     if (chassis_radian > PI)
         chassis_radian -= 2 * PI;
     if (chassis_radian < -PI)
         chassis_radian += 2 * PI;
+#elifdef OMEGA_CONTROL
+    if (chassis_radian > 4.0f)
+        chassis_radian = 4.0f;
+    if (chassis_radian < -4.0f)
+        chassis_radian = -4.0f;
+#endif
 
     Force_Chassis.Set_Target_Velocity_X(chassis_velocity_x);
     Force_Chassis.Set_Target_Velocity_Y(chassis_velocity_y); // 前x左y正
+#ifdef RADIAN_CONTROL
     Force_Chassis.Set_Target_Radian(chassis_radian);
+#elifdef OMEGA_CONTROL
+    Force_Chassis.Set_Target_Omega(chassis_radian);
+#endif
 
     Chassis.Set_Target_Track_Omega(track_omega);
 
@@ -1253,92 +1281,58 @@ void Class_Chariot::Control_Chassis()
     switch (Chassis_control_type)
     {
     case (Chassis_Control_Type_DISABLE):
-    { // 失能
-
+    {
+        // 失能
+        // 下台阶状态机状态归零
+        Chassis.Ledder_FSM.Set_Status(0);
         break;
     }
     case (Chassis_Control_Type_SLOPE):
     {
         // 上台阶状态机，右摇杆不控制抬升机构，将DR16_Right的状态传给状态机变量并运行状态机
-        Enum_DR16_Switch_Status DR16_Right_Switch_Status;
-        float Yaw;
-
-        if (DR16_Right_Uplift_Status == Chassis_Uplift_FLAG_ADD)
+        // 150mm台阶后门
+        if (Chassis.Get_Backdoor_Jump())
         {
-            Yaw = 1.0f;
-            DR16_Right_Switch_Status = DR16_Switch_Status_UP;
+            Chassis.Ledder_FSM.Set_Status(3);
+            Chassis.Ledder_FSM.TRIGGER_CNT = 3;
         }
-        else
-        {
-            Yaw = 0.0f;
-            DR16_Right_Switch_Status = DR16_Switch_Status_MIDDLE;
-        }
-
-        Chassis.Ledder_FSM.DR16_Right = DR16_Right_Switch_Status;
-        Chassis.Ledder_FSM.Yaw = Yaw;
+        // 台阶状态机执行函数
         Chassis.Ledder_FSM.Reload_TIM_Status_PeriodElapsedCallback();
-        Chassis.Ledder_FSM.DR16_Pre_Right = (Enum_DR16_Switch_Status)DR16_Right_Switch_Status;
         break;
     }
     case (Chassis_Control_Type_NORMAL):
     {
-        // // 上台阶状态机状态清零
-        // Chassis.Ledder_FSM.Set_Status(0);
-
-        // // 底盘在线状态下遥控器控制抬升机构
-
-        // // 抬升机构控制逻辑
-        // switch (DR16_Right_Uplift_Status)
-        // {
-        // case (DR16_Right_Switch_UP):
-        // {
-        //     for (int i = 0; i < 4; i++)
-        //     {
-        //         target_uplift_rad[i] += PI * 0.03f;
-        //     }
-        //     break;
-        // }
-
-        // case (DR16_Right_Switch_DOWN):
-        // {
-        //     for (int i = 0; i < 4; i++)
-        //     {
-        //         target_uplift_rad[i] -= PI * 0.03f;
-        //     }
-        //     break;
-        // }
-
-        // default:
-        // {
-        // }
-        // }
-
-        switch (DR16_Right_Uplift_Status)
-        {
-        case (DR16_Right_Switch_UP):
-        {
-            for (int i = 0; i < 4; i++)
-            {
-                target_uplift_rad[i] += PI * 0.03f;
-            }
-            break;
-        }
-
-        case (DR16_Right_Switch_DOWN):
-        {
-            for (int i = 0; i < 4; i++)
-            {
-                target_uplift_rad[i] -= PI * 0.03f;
-            }
-
-            Math_Constrain(target_uplift_rad + 0, Chassis.Uplift_Touch_Radian[0], 28.5f);
-            Math_Constrain(target_uplift_rad + 1, Chassis.Uplift_Touch_Radian[1], 28.5f);
-            break;
-        }
-        }
-
+        // 下台阶状态机状态归零
+        Chassis.Ledder_FSM.Set_Status(0);
         for (int i = 0; i < 4; i++)
         {
+            // 如果按下下台阶初始化状态，则把下台阶的角度赋值给目标角度
+            if (Chassis.Get_Downlift_Init())
+            {
+                target_uplift_rad[i] = Chassis.Downlift_Touch_Radian[i];
+            }
+
+            // 如果使用按键控制特定抬升的方向，则作为增量加给目标角度
+            if (Chassis.Get_Lift_Select(i))
+            {
+                switch (Chassis.Get_Lift_Direction(i))
+                {
+                case (Lift_Direction_HOLD):
+                {
+                    break;
+                }
+                case (Lift_Direction_UP):
+                {
+                    target_uplift_rad[i] += PI * 0.03f;
+                }
+                case (Lift_Direction_DOWN):
+                {
+                    target_uplift_rad[i] -= PI * 0.03f;
+                }
+                }
+            }
+
+            // 赋值给目标角度
             Chassis.Set_Target_Uplift_Radian(i, target_uplift_rad[i]);
         }
     }
@@ -1623,6 +1617,10 @@ void Class_Chariot::Control_Gimbal()
                 tmp_vt03_pitch += VT13.Get_Mouse_Y();
             }
         }
+    }
+    else if (Active_Controller == Controller_NONE)
+    {
+        Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_DISABLE);
     }
 
     // 机械臂，夹爪以及图传目标位置赋值
