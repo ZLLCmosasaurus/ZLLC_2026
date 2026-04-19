@@ -687,7 +687,8 @@ void Task1ms_TIM5_Callback()
         // 统一打包发送
         TIM_CAN_PeriodElapsedCallback();
 
-        static int mod5 = 0, mod100 = 0, mod20 = 0, mod68 = 0;
+        static int mod3 = 0, mod5 = 0, mod100 = 0, mod20 = 0, mod68 = 0;
+        mod3++;
         mod5++;
         mod100++;
         mod20++;
@@ -699,10 +700,18 @@ void Task1ms_TIM5_Callback()
             chariot.Chassis.Track_Motor[1].TIM_Process_PeriodElapsedCallback();
         }
 #endif
+        if(mod3 == 3)
+        {
+            mod3 = 0;
+        }
+
         if (mod5 == 5)
         {
             // 上位机
             TIM_USB_PeriodElapsedCallback(&MiniPC_USB_Manage_Object);
+
+            // 钧舵电机Modbus发送
+            chariot.Gimbal.Jodell_ERG150T.TIM_UART_Tx_PeriodElapsedCallback();
 
             // 串口统一发送
             TIM_UART_PeriodElapsedCallback();
@@ -719,8 +728,6 @@ void Task1ms_TIM5_Callback()
         if (mod20 == 20)
         {
 #ifdef GIMBAL
-            // 钧舵电机Modbus发送
-            chariot.Gimbal.Jodell_ERG150T.TIM_UART_Tx_PeriodElapsedCallback();
 #endif
             mod20 = 0;
         }

@@ -73,7 +73,7 @@ void Class_Jodell_Motor::Init(UART_HandleTypeDef *huart, int __Slave_Address)
 void Class_Jodell_Motor::Jodell_Motor_UART_RxCplt_Callback(uint8_t *Rx_Data, uint16_t Length)
 {
     // 搬运接收数据到ctx结构体
-    memcpy(ctx->read_buf, Rx_Data,Length);
+    memcpy(ctx->read_buf, Rx_Data, Length);
     // Modbus解析返回数据
     int rc = agile_modbus_receive_judge(ctx, Length, AGILE_MODBUS_MSG_CONFIRMATION);
     if (rc > 0)
@@ -157,8 +157,8 @@ void Class_Jodell_Motor::TIM_UART_Tx_PeriodElapsedCallback()
             write_data[4] = Target_Relative_Roll;
             write_data[5] = ((uint8_t)((Target_Torque / MAX_TORQUE) * 255.0f) << 8) |
                             (uint8_t)((Target_Omega / MAX_OMEGA) * 255.0f);
-            write_data[6] = 0x0000; // 0x03EE
-            write_data[7] = (Target_Roll_Turns << 8) | 0x01; //0x03EF
+            write_data[6] = 0x0000;                          // 0x03EE
+            write_data[7] = (Target_Roll_Turns << 8) | 0x01; // 0x03EF
 
             break;
         }
@@ -189,16 +189,12 @@ void Class_Jodell_Motor::TIM_UART_Tx_PeriodElapsedCallback()
         Data_Length = agile_modbus_serialize_read_registers(ctx, read_addr, read_nb);
     }
 
-    // 串口发送
+    // UART发送
     if (Data_Length > 0)
     {
-        static int cnt = 0;
-        cnt++;
-        if (cnt == 10)
-        {
-            cnt = 0;
-            HAL_Tx_Status = HAL_UART_Transmit_DMA(UART_Manage_Object->UART_Handler, ctx->send_buf, Data_Length);
-        }
+        // memcpy(UART_Manage_Object->Tx_Buffer, ctx->send_buf, Data_Length);
+        UART_Send_Data(UART_Manage_Object->UART_Handler, ctx->send_buf, Data_Length);
+        // HAL_UART_Transmit_DMA(UART_Manage_Object->UART_Handler, ctx->send_buf, Data_Length);
     }
 }
 
