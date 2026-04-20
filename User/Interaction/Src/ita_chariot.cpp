@@ -55,14 +55,15 @@ void Class_Chariot::Init(float __DR16_Dead_Zone)
         Chassis.Set_Velocity_X_Max(4.0f);
         Chassis.Set_Velocity_Y_Max(4.0f);
 
-        //遥控器离线控制 状态机
-        FSM_Alive_Control.Chariot = this;
-        FSM_Alive_Control.Init(5, 0);
-
+       
         //遥控器
         #ifdef USE_DR16
         DR16.Init(&huart5,&huart1);
-        DR16_Dead_Zone = __DR16_Dead_Zone;   
+        DR16_Dead_Zone = __DR16_Dead_Zone;  
+         //遥控器离线控制 状态机
+        FSM_Alive_Control.Chariot = this;
+        FSM_Alive_Control.Init(5, 0);
+
         #endif
 
         #ifdef USE_VT13
@@ -71,8 +72,10 @@ void Class_Chariot::Init(float __DR16_Dead_Zone)
         #endif
 
         #ifdef USE_FS_i6X
-        FSM_Alive_Control_Fs_i6x.Chariot=this;
         FS_i6X.Init(&huart5);
+        FSM_Alive_Control_Fs_i6x.Chariot=this;
+        
+        FSM_Alive_Control_Fs_i6x.Init(5,0);
 		#endif
         //云台
         Gimbal.Init();
@@ -300,6 +303,11 @@ void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback(uint8_t *Rx_Data)
             //设定底盘目标速度
              Chassis.Set_Target_Velocity_X(chassis_velocity_x);
             Chassis.Set_Target_Velocity_Y(chassis_velocity_y);
+             //设定云台坐标系下的目标速度
+            Chassis.Set_Target_Gimbal_Velocity_X(gimbal_velocity_x);
+            Chassis.Set_Target_Gimbal_Velocity_Y(gimbal_velocity_y);
+            Chassis.Set_delta_angle(delta_angle);                       //传入delta_angle以供底盘估计速度什么的使用
+
             Spin_Omega = chassis_omega;
             // Chassis.Set_Sprint_Status(sprint_status);                //超电现在由下位机控制使用
             break;
@@ -922,12 +930,12 @@ void Class_Chariot::Control_Booster()
                 // Booster.Set_Friction_Control_Type(Friction_Control_Type_ENABLE);
 
                 auto switch_state= FS_i6X.Get_Switch_3();  // 返回当前开关状态
-                if (switch_state == FS_Switch_Status_DOWN || switch_state == FS_Switch_Status_UP) 
+                if (switch_state == FS_Switch_Status_UP) 
                 {       
                     Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
                     Shoot_Flag = 0;
                 }
-                else if (switch_state==FS_Switch_Status_TRIG_UP_DOWN&& Shoot_Flag == 0) // 单发
+                else if (switch_state==FS_Switch_Status_DOWN&& Shoot_Flag == 0) // 单发
                 {
                     Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
                     Shoot_Flag = 1;
@@ -949,12 +957,12 @@ void Class_Chariot::Control_Booster()
                 return;
             }else{
          auto switch_state= FS_i6X.Get_Switch_3();  // 返回当前开关状态
-                if  (switch_state == FS_Switch_Status_DOWN || switch_state == FS_Switch_Status_UP)
+                if  (switch_state == FS_Switch_Status_UP)
                 {       
                     Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
                     Shoot_Flag = 0;
                 }
-                else if (switch_state==FS_Switch_Status_TRIG_UP_DOWN&& Shoot_Flag == 0) // 单发
+                else if (switch_state==FS_Switch_Status_DOWN&& Shoot_Flag == 0) // 单发
                 {
                     Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
                     Shoot_Flag = 1;
@@ -1104,16 +1112,17 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
             } 
 
         #elif defined(GIMBAL)
-
-            if(mod50_mod3%3==0)
-            {
-                //判断底盘通讯在线状态
-                TIM1msMod50_Chassis_Communicate_Alive_PeriodElapsedCallback();   
                 #ifdef USE_DR16 
                 DR16.TIM1msMod50_Alive_PeriodElapsedCallback();
                 #elif defined(USE_FS_i6X)
                 FS_i6X.TIM1msMod50_Alive_PeriodElapsedCallback();
                 #endif
+            if(mod50_mod3%3==0)
+            {
+                //判断底盘通讯在线状态
+                TIM1msMod50_Chassis_Communicate_Alive_PeriodElapsedCallback();   
+                
+                
                 Gimbal.External_IMU.TIM1msMod50_Alive_PeriodElapsedCallback();
                 MiniPC.TIM1msMod50_Alive_PeriodElapsedCallback();
                 

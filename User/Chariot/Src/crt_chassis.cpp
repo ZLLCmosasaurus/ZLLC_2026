@@ -457,25 +457,29 @@ void Class_Tricycle_Chassis::Set_Chassis_Kalman_Measure(float value1, float valu
 float tmp_Velocity_Vx, tmp_Velocity_Vy, tmp_Omega;
 void Class_Tricycle_Chassis::Chassis_Speed_Estimate()
 {
-    
+    //底盘坐标系的X，Y方向加速度
+    float Ins_Accel_X_b = IMU->Get_Accel_X_b();
+    float Ins_Accel_Y_b = IMU->Get_Accel_Y_b();
+
+    float Distance_Offset = 0.0f;
+    float offset_angle = atan2f(H7_Offset_X, H7_Offset_Y);
+
     tmp_Velocity_Vx = tmp_Velocity_Vy = tmp_Omega = 0.0f;
     for (int i = 0; i < 4; i++)
     {
+        //底盘坐标系下的速度解算
         tmp_Velocity_Vx += (Motor_Wheel[i].Get_Now_Omega_Radian() * arm_cos_f32(Motor_Steer[i].Get_Now_Zero_Offset_Radian()) * WHEEL_RADIUS) / 4.0f;
         tmp_Velocity_Vy += (Motor_Wheel[i].Get_Now_Omega_Radian() * arm_sin_f32(Motor_Steer[i].Get_Now_Zero_Offset_Radian()) * WHEEL_RADIUS) / 4.0f;
         tmp_Omega += (Motor_Wheel[i].Get_Now_Omega_Radian() * arm_cos_f32(Motor_Steer[i].Get_Now_Zero_Offset_Radian() - Wheel_Azimuth[i]) * WHEEL_RADIUS / CHASSIS_RADIUS) / 4.0f;
     }
 
-    float Ins_Accel_X_b = IMU->Get_Accel_X_b();
-    float Ins_Accel_Y_b = IMU->Get_Accel_Y_b();
-
-    float H7_Offset_X = 0.0f, H7_Offset_Y = 0.0f, Distance_Offset = 0.0f;;
-
-    float offset_angle = atan2f(H7_Offset_X, H7_Offset_Y);
+    //离心加速度补偿
     arm_sqrt_f32(H7_Offset_X * H7_Offset_X + H7_Offset_Y * H7_Offset_Y, &Distance_Offset);
+    Ins_Accel_X_b = Ins_Accel_X_b - Distance_Offset * IMU->Get_Gyro_Yaw() * IMU->Get_Gyro_Yaw() * arm_sin_f32(offset_angle);
+    Ins_Accel_Y_b = Ins_Accel_Y_b - Distance_Offset * IMU->Get_Gyro_Yaw() * IMU->Get_Gyro_Yaw() * arm_cos_f32(offset_angle);
 
-    Ins_Accel_X_b = Ins_Accel_X_b + Distance_Offset * IMU->Get_Gyro_Yaw() * IMU->Get_Gyro_Yaw() * arm_sin_f32(offset_angle);
-    Ins_Accel_Y_b = Ins_Accel_Y_b + Distance_Offset * IMU->Get_Gyro_Yaw() * IMU->Get_Gyro_Yaw() * arm_cos_f32(offset_angle);
+    Chassis_To_Gimbal_Coordinate_Transform(Ins_Accel_X_b, Ins_Accel_Y_b);
+    Chassis_To_Gimbal_Coordinate_Transform(tmp_Velocity_Vx, tmp_Velocity_Vy);
 
     //注意数据单位
     Set_Chassis_Kalman_Measure(tmp_Velocity_Vx, tmp_Velocity_Vy, Ins_Accel_X_b, Ins_Accel_Y_b, tmp_Omega, IMU->Get_Gyro_Yaw());
@@ -568,11 +572,12 @@ void Class_Tricycle_Chassis::Force_Speed_Resolution()
     case (Chassis_Control_Type_SPIN):
     {
 
-        PID_Velocity_X.Set_Target(Target_Velocity_X);
+       
+        PID_Velocity_X.Set_Target(Gimbal_Target_Velocity_X);
         PID_Velocity_X.Set_Now(Now_Velocity_X);
         PID_Velocity_X.TIM_Adjust_PeriodElapsedCallback();
 
-        PID_Velocity_Y.Set_Target(Target_Velocity_Y);
+        PID_Velocity_Y.Set_Target(Gimbal_Target_Velocity_Y);
         PID_Velocity_Y.Set_Now(Now_Velocity_Y);
         PID_Velocity_Y.TIM_Adjust_PeriodElapsedCallback();
 
@@ -580,11 +585,11 @@ void Class_Tricycle_Chassis::Force_Speed_Resolution()
         PID_Omega.Set_Now(Now_Omega);
         PID_Omega.TIM_Adjust_PeriodElapsedCallback();
 
-        float force_x, force_y, torque_omega;
-
         force_x = PID_Velocity_X.Get_Out();
         force_y = PID_Velocity_Y.Get_Out();
         torque_omega = PID_Omega.Get_Out();
+
+        Gimbal_To_Chassis_Coordinate_Transform(force_x, force_y);
 
         // 每个轮的扭力
         float tmp_force[4];
@@ -620,6 +625,21 @@ void Class_Tricycle_Chassis::Force_Speed_Resolution()
     }
     }
 }
+void Class_Tricycle_Chassis::Chassis_To_Gimbal_Coordinate_Transform(float &Var_X, float &Var_Y)
+{
+    float temp_X = Var_X * arm_cos_f32(-delta_angle) - Var_Y * arm_sin_f32(-delta_angle);
+    float temp_Y = Var_X * arm_sin_f32(-delta_angle) + Var_Y * arm_cos_f32(-delta_angle);
+    Var_X = temp_X;
+    Var_Y = temp_Y;
+}
+
+void Class_Tricycle_Chassis::Gimbal_To_Chassis_Coordinate_Transform(float &Var_X, float &Var_Y)
+{
+    float temp_X = Var_X * arm_cos_f32(delta_angle) - Var_Y * arm_sin_f32(delta_angle);
+    float temp_Y = Var_X * arm_sin_f32(delta_angle) + Var_Y * arm_cos_f32(delta_angle);
+    Var_X = temp_X;
+    Var_Y = temp_Y;
+}
 
 uint32_t nb=0;
 float nb666;
@@ -644,9 +664,9 @@ void Class_Tricycle_Chassis::TIM_Calculate_PeriodElapsedCallback()
     //速度解算
     Speed_Resolution();
 
-    // Chassis_Speed_Estimate();
-    // Stree_Angle_Resolution();
-    // Force_Speed_Resolution();
+     //Chassis_Speed_Estimate();
+     //Stree_Angle_Resolution();
+     //Force_Speed_Resolution();
 
     #if POWER_CONTROL == 1
     /*************************功率限制策略*******************************/

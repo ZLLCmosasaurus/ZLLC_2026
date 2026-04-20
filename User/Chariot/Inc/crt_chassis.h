@@ -154,6 +154,9 @@ public:
 
     inline void Set_Velocity_Y_Max(float __Velocity_Y_Max);
     inline void Set_Velocity_X_Max(float __Velocity_X_Max);
+    inline void Set_Target_Gimbal_Velocity_X(float __Target_Gimbal_Velocity_X);
+    inline void Set_Target_Gimbal_Velocity_Y(float __Target_Gimbal_Velocity_Y);
+    inline void Set_delta_angle(float __delta_angle);
 
     void TIM_Calculate_PeriodElapsedCallback();
     void Power_Limit_Update();
@@ -203,16 +206,21 @@ protected:
     Enum_Supercap_Mode Supercap_Mode = Supercap_DISABLE;
     Enum_Sprint_Status Sprint_Status = Sprint_Status_DISABLE;
 
-    //目标速度X
+     //底盘坐标系目标速度X
     float Target_Velocity_X = 0.0f;
-    //目标速度Y
+    //底盘坐标系目标速度Y
     float Target_Velocity_Y = 0.0f;
+    //云台坐标系下的目标速度
+    float Gimbal_Target_Velocity_X = 0.0f;
+    float Gimbal_Target_Velocity_Y = 0.0f;
     //目标角速度
     float Target_Omega = 0.0f;
 
     //内部函数
     void Speed_Resolution();
 
+     void Chassis_To_Gimbal_Coordinate_Transform(float &Var_X, float &Var_Y);
+    void Gimbal_To_Chassis_Coordinate_Transform(float &Var_X, float &Var_Y);
     void Set_Chassis_Kalman_Measure(float value1, float value2, float value3, float value4, float value5, float value6);
     void Chassis_Speed_Estimate();
     void Stree_Angle_Resolution();
@@ -226,6 +234,7 @@ protected:
     float Now_Velocity_Y;
     float Now_Omega;
 
+      float delta_angle = 0.0f;                      //云台坐标系转换底盘坐标系的偏差角度，以云台相对与底盘逆时针增大为正
     // 轮向电机动摩擦阻力电流值(起转阻力)
     float Dynamic_Resistance_Wheel_Current[4] = {0.0f,
                                                  0.0f,
@@ -243,7 +252,7 @@ protected:
                                 3.0f * PI / 4.0f,
                                 5.0f * PI / 4.0f,
                                 7.0f * PI / 4.0f};
-
+float force_x, force_y, torque_omega;
     KalmanFilter_t Chassis_Speed_Kalman;
 };
 
@@ -515,6 +524,20 @@ void Class_Tricycle_Chassis::Set_Velocity_X_Max(float __Velocity_X_Max)
     Velocity_X_Max = __Velocity_X_Max;
 }
 
+inline void Class_Tricycle_Chassis::Set_Target_Gimbal_Velocity_X(float __Target_Gimbal_Velocity_X)
+{
+    Gimbal_Target_Velocity_X = __Target_Gimbal_Velocity_X;
+}
+
+inline void Class_Tricycle_Chassis::Set_Target_Gimbal_Velocity_Y(float __Target_Gimbal_Velocity_Y)
+{
+    Gimbal_Target_Velocity_Y = __Target_Gimbal_Velocity_Y;
+}
+
+inline void Class_Tricycle_Chassis::Set_delta_angle(float __delta_angle)
+{
+    delta_angle = __delta_angle;
+}
 
 /**
  * @brief 设置云台底盘相对角度

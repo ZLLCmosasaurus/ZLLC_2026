@@ -414,6 +414,8 @@ void Class_DJI_Motor_GM6020::TIM_PID_PeriodElapsedCallback()
         PID_Omega.Set_Target(Target_Omega_Angle);
         PID_Omega.Set_Now(Transform_Omega);
         PID_Omega.TIM_Adjust_PeriodElapsedCallback();
+        
+        if(Transform_Angle<0.0f) Transform_Angle += 360.0f;  //确保角度为正值，右手螺旋定律，标准坐标系
 
         float tmp_Torque = J * Transform_Target_Acc + B * Transform_Target_Vel + Mgl * arm_cos_f32(Transform_Angle/57.3f) + C;  //简单的动力学补偿，参数需要根据实际负载测量后赋值
         Out = PID_Omega.Get_Out() + tmp_Torque * 16384.0f / (3.0f * 0.741f);

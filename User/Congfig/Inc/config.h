@@ -17,8 +17,8 @@
 /* Exported macros -----------------------------------------------------------*/
 
 //底盘或云台状态
-//#define CHASSIS
- #define GIMBAL
+#define CHASSIS
+//#define GIMBAL
 
 //遥控器选择
 //#define USE_VT13
@@ -45,6 +45,9 @@
 #ifdef SENTRY
 #define Wheel_Diameter 0.12000000f // 轮子直径，单位为m
 #define Chassis_Radius 0.46000000f // 底盘半径，单位为m
+
+#define H7_Offset_X 0.0f          // 旋转中心到H7的x方向偏移，单位为m，正值表示H7在旋转中心前方，底盘坐标系
+#define H7_Offset_Y 0.0f        // 旋转中心到H7的y方向偏移，单位为m，正值表示H7在旋转中心左侧，底盘坐标系
 
 //#define JiMiao_Test
 
