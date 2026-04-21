@@ -84,7 +84,8 @@ enum Enum_DM_Motor_Control_Method
     DM_Motor_Control_Method_OMEGA,
 	DM_Motor_Control_Method_MIT_IMU_Angle,
     DM_Motor_Control_Method_ONE_TO_FOUR,//达妙电机一拖四模式
-    DM_Motor_Control_Method_MIT_OPENLOOP
+    DM_Motor_Control_Method_MIT_OPENLOOP,
+    DM_Motor_Control_Method_MIT_Angle //关节电机角度控制模式
 };
 
 /**

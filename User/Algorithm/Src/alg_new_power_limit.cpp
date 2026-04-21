@@ -168,7 +168,7 @@ void Class_New_Power_Limit::Power_Task(Struct_Power_Management &power_management
     Control_Status = 1;
 #else//无回传实际功率的功率限制
     // 禁用时的替代方案
-    Control_Status = 0;
+    // Control_Status = 0;
 #endif
     if (Control_Status == 1)
     {

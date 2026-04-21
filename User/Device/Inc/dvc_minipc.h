@@ -934,8 +934,8 @@ struct Pack_rx_t
 #ifdef MINIPC_COMM_CAN
     int16_t target_x;
     int16_t target_y;
-    int16_t target_z;
-    int8_t  Fire;
+    uint8_t  Fire;
+    uint8_t alive;
 #endif
 } __attribute__((packed));
 
@@ -965,6 +965,7 @@ public:
     inline float Get_Rx_Pitch_Angle();
     inline float Get_Rx_Yaw_Angle();
     inline uint8_t Get_Fire_Status();
+    inline uint8_t Get_Alive_Status();
     inline float Get_Distance();
     inline Enum_MiniPC_Type Get_MiniPC_Type();
     inline Enum_MiniPC_Move_Control_Mode Get_Move_Control_Mode();
@@ -1053,6 +1054,7 @@ protected:
     float Rx_Angle_Yaw;
 
     uint8_t Fire;
+    uint8_t alive;
 
     const float g = 9.8;         // 重力加速度
     const float bullet_v = 21.7; // 子弹速度
@@ -1240,6 +1242,12 @@ inline uint8_t Class_MiniPC::Get_Fire_Status()
 {
   return Fire;
 }
+
+inline uint8_t Class_MiniPC::Get_Alive_Status()
+{
+    return alive;
+}
+
 
 /**
  * @brief

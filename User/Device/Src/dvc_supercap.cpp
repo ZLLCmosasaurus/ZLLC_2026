@@ -34,22 +34,22 @@
  */
 void Class_Supercap::Init(FDCAN_HandleTypeDef *hcan, float __Limit_Power_Max)
 {
-    if(hcan->Instance == FDCAN1)
+    if (hcan->Instance == FDCAN1)
     {
         CAN_Manage_Object = &CAN1_Manage_Object;
     }
-    else if(hcan->Instance == FDCAN2)
+    else if (hcan->Instance == FDCAN2)
     {
         CAN_Manage_Object = &CAN2_Manage_Object;
     }
-    else if(hcan->Instance == FDCAN3)
+    else if (hcan->Instance == FDCAN3)
     {
         CAN_Manage_Object = &CAN3_Manage_Object;
     }
     Supercap_Tx_Data.Limit_Power = __Limit_Power_Max;
     CAN_Tx_Data = CAN_Supercap_Tx_Data;
 
-    fsm.Init(2,0);
+    fsm.Init(2, 0);
 }
 /**
  * @brief 初始化超级电容通信
@@ -59,7 +59,7 @@ void Class_Supercap::Init(FDCAN_HandleTypeDef *hcan, float __Limit_Power_Max)
  * @param __fame_tail 收数据绑定的帧尾
  * @param __Limit_Power_Max 最大限制功率, 0表示不限制
  */
-void Class_Supercap::Init_UART(UART_HandleTypeDef *__huart, uint8_t __fame_header, uint8_t __fame_tail, float __Limit_Power_Max )
+void Class_Supercap::Init_UART(UART_HandleTypeDef *__huart, uint8_t __fame_header, uint8_t __fame_tail, float __Limit_Power_Max)
 {
     if (__huart->Instance == USART1)
     {
@@ -97,13 +97,13 @@ void Class_Supercap::Init_UART(UART_HandleTypeDef *__huart, uint8_t __fame_heade
 }
 
 /**
- * @brief 
- * 
+ * @brief
+ *
  */
 void Class_Supercap::Data_Process()
 {
-    //数据处理过程
-    memcpy(&Supercap_Data, CAN_Manage_Object->Rx_Buffer.Data, sizeof(Struct_Supercap_CAN_Data));    
+    // 数据处理过程
+    memcpy(&Supercap_Data, CAN_Manage_Object->Rx_Buffer.Data, sizeof(Struct_Supercap_CAN_Data));
 
     Data.Chassis_Actual_Power = (float)Supercap_Data.Chassis_Actual_Power / 10.0f;
     Data.Supercap_Buffer_Power = (float)Supercap_Data.Supercap_Buffer_Power / 100.0f;
@@ -111,14 +111,14 @@ void Class_Supercap::Data_Process()
     Data.Supercup_Control_Level_Status = Supercap_Data.Supercup_Control_Level_Status;
     Data.Supercap_Current_Energy_Consumption = (float)Supercap_Data.Supercap_Current_Energy_Consumption / 10000.0f;
 
-    if(Referee->Get_Game_Stage() == Referee_Game_Status_Stage_BATTLE)
+    if (Referee->Get_Game_Stage() == Referee_Game_Status_Stage_BATTLE)
     {
         Totol_Energy -= Data.Supercap_Current_Energy_Consumption;
 
-        if(Totol_Energy < 0)
+        if (Totol_Energy < 0)
             Totol_Energy = 0;
-        
-        if(Totol_Energy <= 1000.0f)//损失5%的正常20000J功率
+
+        if (Totol_Energy <= 1000.0f) // 损失5%的正常20000J功率
         {
             Robot_Power_Status = 1;
         }
@@ -126,7 +126,6 @@ void Class_Supercap::Data_Process()
         {
             Robot_Power_Status = 0;
         }
-
     }
     else
     {
@@ -137,28 +136,30 @@ void Class_Supercap::Data_Process()
 #ifdef OLD
 void Class_Supercap::Data_Process()
 {
-    //数据处理过程
-    switch(CAN_Manage_Object->Rx_Buffer.Header.Identifier){
-        case (0x67):{
-            memcpy(&CAN_Supercap_Rx_Data_Normal, CAN_Manage_Object->Rx_Buffer.Data, sizeof(Supercap_Rx_Data_A));
-            Chassis_Power = CAN_Supercap_Rx_Data_Normal.Chassis_Power/10.f;
-            if(Referee->Get_Game_Stage() == Referee_Game_Status_Stage_BATTLE)
-            {
-                Consuming_Power -= (float)(Get_Consuming_Power_Now() / 10000);
-            }
-            break;
+    // 数据处理过程
+    switch (CAN_Manage_Object->Rx_Buffer.Header.Identifier)
+    {
+    case (0x67):
+    {
+        memcpy(&CAN_Supercap_Rx_Data_Normal, CAN_Manage_Object->Rx_Buffer.Data, sizeof(Supercap_Rx_Data_A));
+        Chassis_Power = CAN_Supercap_Rx_Data_Normal.Chassis_Power / 10.f;
+        if (Referee->Get_Game_Stage() == Referee_Game_Status_Stage_BATTLE)
+        {
+            Consuming_Power -= (float)(Get_Consuming_Power_Now() / 10000);
         }
-        case (0x55):{
-            memcpy(&CAN_Supercap_Rx_Data_Error, CAN_Manage_Object->Rx_Buffer.Data, sizeof(Supercap_Rx_Data_B));
-            break;
-        }
-    }   
-    
+        break;
+    }
+    case (0x55):
+    {
+        memcpy(&CAN_Supercap_Rx_Data_Error, CAN_Manage_Object->Rx_Buffer.Data, sizeof(Supercap_Rx_Data_B));
+        break;
+    }
+    }
 }
 #endif
 /**
- * @brief 
- * 
+ * @brief
+ *
  */
 void Class_Supercap::Output()
 {
@@ -186,142 +187,15 @@ void Class_Supercap::Output()
     {
         Limit_Power = 0.0f;
     }
-    //给超电can发送打包
+    // 给超电can发送打包
     Set_Supercap_Control_Status((Enum_Supercap_Control_Status)SuperCap);
     Set_Limit_Power(Limit_Power);
     memcpy(CAN_Tx_Data, &Supercap_Tx_Data, sizeof(Struct_Supercap_Tx_Data));
-		uint8_t max = (uint8_t)Chassis_Device_LimitPower;
-    //给舵小板can发送打包
-    // memcpy(CAN1_0x01E_Tx_Data, &max, sizeof(uint8_t));
-	// memcpy(CAN1_0x01E_Tx_Data+1,&(Data.Chassis_Actual_Power),sizeof(float));
 }
 
 void Class_Supercap::Use_SuperCap_Strategy()
 {
-    
-    switch (Robot_Power_Status)
-    {
-    case 0:
-    {
-        //血量优先
-        switch (Referee->Get_Level())
-        {
-        case 1:
-        {
-            Set_Referee_MaxPower(55.0f);
-        }
-        break;
-        case 2:
-        {
-            Set_Referee_MaxPower(60.0f);
-        }
-        break;
-        case 3:
-        {
-            Set_Referee_MaxPower(65.0f);
-        }
-        break;
-        case 4:
-        {
-            Set_Referee_MaxPower(70.0f);
-        }
-        break;
-        case 5:
-        {
-            Set_Referee_MaxPower(75.0f);
-        }
-        break;
-        case 6:
-        {
-            Set_Referee_MaxPower(80.0f);
-        }
-        break;
-        case 7:
-        {
-            Set_Referee_MaxPower(85.0f);
-        }
-        break;
-        case 8:
-        {
-            Set_Referee_MaxPower(90.0f);
-        }
-        break;
-        case 9:
-        {
-            Set_Referee_MaxPower(100.0f);
-        }
-        break;
-        case 10:
-        {
-            Set_Referee_MaxPower(120.0f);
-        }
-        break;
-        }
-        Set_Referee_BufferPower(Referee->Get_Chassis_Energy_Buffer());
-    }
-    break;
-    case 1:
-    {
-        //血量优先
-        switch (Referee->Get_Level())
-        {
-        case 2:
-        {
-            Set_Referee_MaxPower(20.0f);
-        }
-        break;
-        case 3:
-        {
-            Set_Referee_MaxPower(22.0f);
-        }
-        break;
-        case 4:
-        {
-            Set_Referee_MaxPower(23.0f);
-        }
-        break;
-        case 5:
-        {
-            Set_Referee_MaxPower(25.0f);
-        }
-        break;
-        case 6:
-        {
-            Set_Referee_MaxPower(27.0f);
-        }
-        break;
-        case 7:
-        {
-            Set_Referee_MaxPower(28.0f);
-        }
-        break;
-        case 8:
-        {
-            Set_Referee_MaxPower(30.0f);
-        }
-        break;
-        case 9:
-        {
-            Set_Referee_MaxPower(33.0f);
-        }
-        break;
-        case 10:
-        {
-            Set_Referee_MaxPower(40.0f);
-        }
-        break;
-        }
-        Set_Referee_BufferPower(Referee->Get_Chassis_Energy_Buffer());
-    }
-    break;
-    }
-    Set_Referee_MaxPower(70.0f);
-     Set_Referee_BufferPower(60.0f);
-    // Set_Referee_MaxPower(Referee->Get_Chassis_Power_Max());
-    // Set_Referee_BufferPower(Referee->Get_Chassis_Energy_Buffer());
-		
-		//Supercap_Usage_Stratage = Supercap_Usage_Stratage_Supercap_BufferPower;
-		
+    float energyBuffer = 0.0f, normalized = 0.0f, bufferPower = 0.0f;
     // 超级电容策略 超电一直处于使能状态
     // 1.使用裁判系统缓冲环（斜率不易过大 功率控制讲究细水长流）（如果软件功率限制不住，莫慌，超电会帮你补一些）
     // 2.使用超级电容缓冲环并添加缓冲环充能策略（缓冲只加不减 ->充能）
@@ -330,87 +204,55 @@ void Class_Supercap::Use_SuperCap_Strategy()
         switch (Supercap_Usage_Stratage)
         {
         case Supercap_Usage_Stratage_Referee_BufferPower:
-        {   
-            //fsm.Status[fsm.Get_Now_Status_Serial()].Time++;
-            // switch (fsm.Get_Now_Status_Serial())
-            // {
-            // case 0://正常 ：Referee_BufferPower !< 25J
-            // {
-            //     if(Referee_BufferPower > 40.0f && Referee_BufferPower <= 60.0f)
-            //     {
-            //         Referee_BufferPower_Output = 1.0f * (Referee_BufferPower - 40.0f);
-            //     }
-            //     else if(Referee_BufferPower <  40.0f)
-            //     {
-            //         Referee_BufferPower_Output = 1.5f * (Referee_BufferPower - 40.0f);
-            //     }
-            //     Math_Constrain(&Referee_BufferPower_Output, -50.0f, 20.0f);
+        {
+            energyBuffer = Referee->Get_Chassis_Energy_Buffer();
+            // 归一化到[-1, 1]范围，中心点在30J
+            normalized = (energyBuffer - 30.0f) / 30.0f;
+            // 使用tanh实现平滑过渡，范围[-30, 30]
+            bufferPower = 30.0f * tanhf(normalized);
 
-            //     if(Referee_BufferPower < 30.0f && Data.Supercap_Charge_Percentage > 30.0f)
-            //     {
-            //         fsm.Set_Status(1);
-            //     }
-            // }
-            // break;
-            // case 1:
-            // {
-            //     Referee_BufferPower_Output = 1.5f * (Referee_BufferPower - 40.0f);
-            //     Math_Constrain(&Referee_BufferPower_Output,-50.0f,0.0f);
-            //     if(Referee_BufferPower > 50.0f)
-            //     {
-            //         fsm.Set_Status(0);
-            //     }
-            // }
-            // break;
-            // }
-            Referee_BufferPower_Output =  1.5f * (Referee_BufferPower - 60.0f);
-            Math_Constrain(&Referee_BufferPower_Output,-20.0f,0.0f);
-            Set_PowerLimit_Type(PowerLimit_Type_Referee_BufferPower);
+            Limit_Power = Referee->Get_Chassis_Power_Max() + bufferPower;
+            Chassis_Device_LimitPower = Referee->Get_Chassis_Power_Max() + bufferPower;
         }
         break;
         case Supercap_Usage_Stratage_Supercap_BufferPower:
         {
-            Supercap_BufferPower_Output = Data.Supercap_Buffer_Power;
-            // if (Referee_BufferPower > 40.0f && Referee_BufferPower <= 60.0f)
-            // {
-            //     Supercap_LimitBufferPower_Output = 1.0f * (Referee_BufferPower - 40.0f);
-            // }
-            // else if (Referee_BufferPower < 40.0f)
-            // {
-            //     Supercap_LimitBufferPower_Output = 1.5f * (Referee_BufferPower - 40.0f);
-            // }
-            // Math_Constrain(&Supercap_LimitBufferPower_Output,-50.0f,20.0f);
-            Supercap_LimitBufferPower_Output = 1.5f * (Referee_BufferPower - 60.0f);
-            Math_Constrain(&Supercap_LimitBufferPower_Output,-20.0f,0.0f);
-            Set_PowerLimit_Type(PowerLimit_Type_Supercap_BufferPower);
+            Limit_Power = Referee->Get_Chassis_Power_Max();
+            if (Data.Supercap_Buffer_Power > 100.0f)
+            {
+                Chassis_Device_LimitPower = Referee->Get_Chassis_Power_Max() + Get_Supercap_Buffer_Power() * 0.6f;
+            }
+            else if (Data.Supercap_Buffer_Power > 50.0f)
+            {
+                Chassis_Device_LimitPower = Referee->Get_Chassis_Power_Max() + Get_Supercap_Buffer_Power() * 0.3f;
+            }
+            else
+            {
+                Chassis_Device_LimitPower = Referee->Get_Chassis_Power_Max();
+            }
         }
         break;
         }
     }
     else
     {
-        // if (Referee_BufferPower > 40.0f && Referee_BufferPower <= 60.0f)
-        // {
-        //     Referee_BufferPower_Output = 1.0f * (Referee_BufferPower - 40.0f);
-        // }
-        // else if (Referee_BufferPower < 40.0f)
-        // {
-        //     Referee_BufferPower_Output = 1.5f * (Referee_BufferPower - 40.0f);
-        // }
-        // Math_Constrain(&Referee_BufferPower_Output, -50.0f, 20.0f);
-        Referee_BufferPower_Output =  1.5f * (Referee_BufferPower - 60.0f);
-        Math_Constrain(&Referee_BufferPower_Output,-20.0f,0.0f);
-        Set_PowerLimit_Type(PowerLimit_Type_Referee_BufferPower);
+        energyBuffer = Referee->Get_Chassis_Energy_Buffer();
+        // 归一化到[-1, 1]范围，中心点在40J
+        normalized = (energyBuffer - 40.0f) / 20.0f;
+        // 使用tanh实现平滑过渡，范围[-20, 20]
+        bufferPower = 20.0f * tanhf(normalized);
+
+        Limit_Power = Referee->Get_Chassis_Power_Max() + bufferPower;
+        Chassis_Device_LimitPower = Referee->Get_Chassis_Power_Max() + bufferPower;
     }
 }
 /**
- * @brief 
- * 
+ * @brief
+ *
  */
 void Class_Supercap::Output_UART()
 {
-    //float now_power = Supercap_Data.Now_Power;
-    
+    // float now_power = Supercap_Data.Now_Power;
 
     // UART_Manage_Object->Tx_Buffer[0] = Fame_Header;
     // UART_Manage_Object->Tx_Buffer[1] = 13;
@@ -428,19 +270,19 @@ void Class_Supercap::Output_UART()
 }
 
 /**
- * @brief 
- * 
+ * @brief
+ *
  */
 void Class_Supercap::Data_Process_UART()
 {
-    //数据处理过程
-    if(UART_Manage_Object->Rx_Buffer[0]!='*' && UART_Manage_Object->Rx_Buffer[1]!=12 && UART_Manage_Object->Rx_Buffer[10]!=';') return;
+    // 数据处理过程
+    if (UART_Manage_Object->Rx_Buffer[0] != '*' && UART_Manage_Object->Rx_Buffer[1] != 12 && UART_Manage_Object->Rx_Buffer[10] != ';')
+        return;
     else
     {
-        //Supercap_Data.Stored_Energy = (float)(UART_Manage_Object->Rx_Buffer[4]/10.0f);
+        // Supercap_Data.Stored_Energy = (float)(UART_Manage_Object->Rx_Buffer[4]/10.0f);
     }
 }
-
 
 /**
  * @brief CAN通信接收回调函数
@@ -449,7 +291,7 @@ void Class_Supercap::Data_Process_UART()
  */
 void Class_Supercap::CAN_RxCpltCallback(uint8_t *Rx_Data)
 {
-    Flag ++;
+    Flag++;
     Data_Process();
 }
 /**
@@ -461,24 +303,24 @@ void Class_Supercap::UART_RxCpltCallback(uint8_t *Rx_Data)
 {
     Flag++;
     Data_Process();
-    //Data_Process_UART();
+    // Data_Process_UART();
 }
 
 /**
  * @brief TIM定时器中断定期检测超级电容是否存活
- * 
+ *
  */
 void Class_Supercap::TIM_Alive_PeriodElapsedCallback()
 {
-    //判断该时间段内是否接收过超级电容数据
+    // 判断该时间段内是否接收过超级电容数据
     if (Flag == Pre_Flag)
     {
-        //超级电容断开连接
+        // 超级电容断开连接
         Supercap_Status = Supercap_Status_DISABLE;
     }
     else
     {
-        //超级电容保持连接
+        // 超级电容保持连接
         Supercap_Status = Supercap_Status_ENABLE;
     }
     Pre_Flag = Flag;
@@ -486,7 +328,7 @@ void Class_Supercap::TIM_Alive_PeriodElapsedCallback()
 
 /**
  * @brief TIM定时器修改发送缓冲区
- * 
+ *
  */
 void Class_Supercap::TIM_UART_Tx_PeriodElapsedCallback()
 {
@@ -495,12 +337,15 @@ void Class_Supercap::TIM_UART_Tx_PeriodElapsedCallback()
 
 /**
  * @brief TIM定时器修改发送缓冲区
- * 
+ *
  */
 void Class_Supercap::TIM_Supercap_PeriodElapsedCallback()
 {
     Use_SuperCap_Strategy();
-    Output();
+
+    Set_Limit_Power(Limit_Power);
+    Set_Supercap_Control_Status(Supercap_Control_Status_ENABLE);
+    memcpy(CAN_Tx_Data, &Supercap_Tx_Data, sizeof(Struct_Supercap_Tx_Data));
 }
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

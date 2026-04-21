@@ -59,6 +59,7 @@ void xvEstimateKF_Update(KalmanFilter_t *EstimateKF ,float acc,float vel)
 
 void Class_Chassis::Init()
 {
+
     // PID初始化
 
     // 底盘速度xPID, 输出摩擦力
@@ -76,10 +77,10 @@ void Class_Chassis::Init()
     Motor_Wheel[0].Init(&hfdcan1, Motor_DJI_ID_0x201, Motor_DJI_Control_Method_CURRENT, 3591.f / 187.f, Motor_DJI_Power_Limit_Status_ENABLE);
     Motor_Wheel[0].PID_Omega.Init(1.0f, 0.0f, 0.0f, 0.0f, 20.0f, 20.0f);
     // 电机初始化
-    Motor_Wheel[1].Init(&hfdcan1, Motor_DJI_ID_0x202, Motor_DJI_Control_Method_CURRENT, 3591.f / 187.f, Motor_DJI_Power_Limit_Status_ENABLE);
+    Motor_Wheel[1].Init(&hfdcan1, Motor_DJI_ID_0x203, Motor_DJI_Control_Method_CURRENT, 3591.f / 187.f, Motor_DJI_Power_Limit_Status_ENABLE);
     Motor_Wheel[1].PID_Omega.Init(1.0f, 0.0f, 0.0f, 0.0f, 20.0f, 20.0f);
     // 电机初始化
-    Motor_Wheel[2].Init(&hfdcan1, Motor_DJI_ID_0x203, Motor_DJI_Control_Method_CURRENT, 3591.f / 187.f, Motor_DJI_Power_Limit_Status_ENABLE);
+    Motor_Wheel[2].Init(&hfdcan1, Motor_DJI_ID_0x202, Motor_DJI_Control_Method_CURRENT, 3591.f / 187.f, Motor_DJI_Power_Limit_Status_ENABLE);
     Motor_Wheel[2].PID_Omega.Init(1.0f, 0.0f, 0.0f, 0.0f, 20.0f, 20.0f);
     // 电机初始化
     Motor_Wheel[3].Init(&hfdcan1, Motor_DJI_ID_0x204, Motor_DJI_Control_Method_CURRENT, 3591.f / 187.f, Motor_DJI_Power_Limit_Status_ENABLE);
@@ -97,7 +98,7 @@ void Class_Chassis::Init()
     Motor_Wheel[3].PID_Omega.Init(1.0f, 0.0f, 0.0f, 0.0f, 20.0f, 20.0f);
     #endif
     // 超级电容初始化
-    Supercap.Init(&hfdcan1, 45);
+    Supercap.Init(&hfdcan2, 100);
 
     //imu初始化
     // Boardc_BMI.Init();
@@ -119,6 +120,11 @@ void Class_Chassis::Init()
     Slope_Velocity_Y.Init(0.064f, 0.064f);
     // 斜坡函数加减速角速度
     Slope_Omega.Init(0.1f, 0.1f);
+
+    kalman_Init(&kalman_Now_VelocityX,0.9,0.005,0,1);
+    kalman_Init(&kalman_Now_VelocityY,0.9,0.005,0,1);
+    kalman_Init(&kalman_Now_VelocityZ,0.9,0.005,0,1);
+
 }
 
 
@@ -173,6 +179,15 @@ void Class_Chassis::TIM_2ms_Resolution_PeriodElapsedCallback()
 
 }
 
+void Class_Chassis::TIM_1ms_Kalmancale_PeriodElapsedCallback()
+{
+    kalman_set_now(&kalman_Now_VelocityX,Now_Velocity_X);
+    Recv_Adjust_PeriodElapsedCallback(&kalman_Now_VelocityX);
+    kalman_set_now(&kalman_Now_VelocityY,Now_Velocity_Y);
+    Recv_Adjust_PeriodElapsedCallback(&kalman_Now_VelocityY);
+    kalman_set_now(&kalman_Now_VelocityZ,Now_Omega);
+    Recv_Adjust_PeriodElapsedCallback(&kalman_Now_VelocityZ);
+}
 /**
  * @brief TIM定时器中断控制回调函数
  *
@@ -254,17 +269,15 @@ void Class_Chassis::Output_To_Dynamics()
     {
 
         PID_Velocity_X.Set_Target(Slope_Velocity_X.Get_Out());
-        PID_Velocity_X.Set_Now(Now_Velocity_X);
-        //PID_Velocity_X.Set_Now(PID_Velocity_Filter[0].Get_Out());
+        PID_Velocity_X.Set_Now(kalman_Now_VelocityX.Out);
         PID_Velocity_X.TIM_Adjust_PeriodElapsedCallback();
 
         PID_Velocity_Y.Set_Target(Slope_Velocity_Y.Get_Out());
-        PID_Velocity_Y.Set_Now(Now_Velocity_Y);
-        //PID_Velocity_Y.Set_Now(PID_Velocity_Filter[1].Get_Out());
+        PID_Velocity_Y.Set_Now(kalman_Now_VelocityY.Out);
         PID_Velocity_Y.TIM_Adjust_PeriodElapsedCallback();
 
         PID_Omega.Set_Target(Slope_Omega.Get_Out());
-        PID_Omega.Set_Now(Now_Omega);
+        PID_Omega.Set_Now(kalman_Now_VelocityZ.Now);
         PID_Omega.TIM_Adjust_PeriodElapsedCallback();
 
         break;
@@ -376,21 +389,37 @@ void Class_Chassis::Output_To_Motor()
         Motor_Wheel[i].TIM_Calculate_PeriodElapsedCallback();
     }
 
-    //进行功率限制
-    if(Referee->Get_Referee_Status() == Referee_Status_ENABLE)
-    {
-        float energyBuffer = Referee->Get_Chassis_Energy_Buffer();
-        // 归一化到[-1, 1]范围，中心点在30J
-        float normalized = (energyBuffer - 30.0f) / 30.0f;
-        // 使用tanh实现平滑过渡，范围[-30, 30]
-        float bufferPower = 25.0f * tanhf(normalized);
-        
-        Power_Management.Max_Power = Referee->Get_Chassis_Power_Max() + bufferPower;
-    }
-    else
-    {
-        Power_Management.Max_Power = 100.0f;
-    }
+
+    // //进行功率限制
+    // if(Supercap.Get_Supercap_Status() == Supercap_Status_ENABLE) // 如果有超电
+    // {
+    //     Power_Management.Max_Power = Supercap.Get_Chassis_Device_LimitPower();
+    //     Power_Management.Actual_Power = Supercap.Get_Chassis_Actual_Power();
+    //     Power_Limit.Set_Control_Status(1);
+    // }
+    // else if(Supercap.Get_Supercap_Status() == Supercap_Status_DISABLE) // 无超电
+    // {
+    //     Power_Limit.Set_Control_Status(0);
+    //     if(Referee->Get_Referee_Status() == Referee_Status_ENABLE) 
+    //     {
+    //         float energyBuffer = Referee->Get_Chassis_Energy_Buffer();
+    //         // 归一化到[-1, 1]范围，中心点在40J
+    //         float normalized = (energyBuffer - 40.0f) / 20.0f;
+    //         // 使用tanh实现平滑过渡，范围[-20, 20]
+    //         float bufferPower = 20.0f * tanhf(normalized);
+            
+    //         //bufferPower = 0;
+
+    //         Power_Management.Max_Power = Referee->Get_Chassis_Power_Max() + bufferPower;
+    //     }
+    //     else
+    //     {
+    //         Power_Management.Max_Power = 100.0f;
+    //     }
+    // }
+
+    Power_Management.Max_Power = Supercap.Get_Chassis_Device_LimitPower();
+    
     Power_Limit.Power_Task(Power_Management);
 
     for (int i = 1, j = 0; i < 8; i+=2, ++j)

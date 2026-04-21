@@ -103,8 +103,8 @@ enum Enum_Yaw_Encoder_Control_Status : uint8_t
  */
 enum Enum_Chassis_Logics_Direction : uint8_t
 {
-    Chassis_Logic_Direction_Positive = 0,
-    Chassis_Logic_Direction_Negative,
+    Chassis_Logic_Direction_Positive = 0, // 履带侧
+    Chassis_Logic_Direction_Negative, // 腿侧
 };
 
 /**
@@ -408,7 +408,7 @@ protected:
     //读写变量
 
     //底盘控制方法
-    Enum_Chassis_Control_Type Chassis_Control_Type = Chassis_Control_Type_DISABLE;
+    Enum_Chassis_Control_Type Chassis_Control_Type = Chassis_Control_Type_FLLOW;
     Enum_Pose_Control_Type Pose_Control_Type = Pose_DISABLE;
     Enum_Track_Control_Type Track_Control_Type = Track_Off;
     //目标速度X

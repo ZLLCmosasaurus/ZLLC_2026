@@ -12,6 +12,7 @@ buzzer_t buzzer;
 
 /* Private function prototypes -----------------------------------------------*/
 BUZZER_RETURN_T buzzer_playDjiStartUp(buzzer_t *buzzer);
+BUZZER_RETURN_T buzzer_playMarioSimple(buzzer_t *buzzer);
 BUZZER_RETURN_T buzzer_playCalibrating(buzzer_t *buzzer);
 BUZZER_RETURN_T buzzer_playCalibrated(buzzer_t *buzzer);
 BUZZER_RETURN_T buzzer_playDeviceOffline(buzzer_t *buzzer);
@@ -73,6 +74,9 @@ BUZZER_RETURN_T buzzer_taskScheduler(buzzer_t *buzzer)
 			break;
 		case BUZZER_DJI_STARTUP_PRIORITY:
 			ret = buzzer_playDjiStartUp(buzzer); // 开机启动音
+			break;
+		case BUZZER_MARIO_SIMPLE_PRIORITY:
+			ret = buzzer_playMarioSimple(buzzer);
 			break;
 		case BUZZER_CALIBRATING_PRIORITY:
 			ret = buzzer_playCalibrating(buzzer); // 校准音
@@ -192,6 +196,32 @@ BUZZER_RETURN_T buzzer_playDeviceOffline(buzzer_t *buzzer)
 	else if (!buzzerBsp_checkTickTolerance(BUZZER_DEVICE_OFFLINE_STEP4_BUZZER_RELEASE, wait, BUZZER_TASK_TICK_DIFFERENCE_TOLERANCE))
 		buzzer->status.currentTask = BUZZER_FREE_PRIORITY; // 任务完成，释放优先级
 
+}
+
+BUZZER_RETURN_T buzzer_playMarioSimple(buzzer_t *buzzer)
+{
+    uint32_t current_tick, wait;
+    buzzer_getTick(buzzer, &current_tick);// 获取当前 Tick
+    wait = current_tick - buzzer->status.tickStart;
+
+    if (!buzzerBsp_checkTickTolerance(MARIO_SIMPLE_STEP1_E5, wait, BUZZER_TASK_TICK_DIFFERENCE_TOLERANCE))
+        buzzer_playTone(buzzer, TONE_E5);
+    else if (!buzzerBsp_checkTickTolerance(MARIO_SIMPLE_STEP2_E5, wait, BUZZER_TASK_TICK_DIFFERENCE_TOLERANCE))
+        buzzer_playTone(buzzer, TONE_E5);
+    else if (!buzzerBsp_checkTickTolerance(MARIO_SIMPLE_STEP3_E5, wait, BUZZER_TASK_TICK_DIFFERENCE_TOLERANCE))
+        buzzer_playTone(buzzer, TONE_E5);
+    else if (!buzzerBsp_checkTickTolerance(MARIO_SIMPLE_STEP4_C5, wait, BUZZER_TASK_TICK_DIFFERENCE_TOLERANCE))
+        buzzer_playTone(buzzer, TONE_C5);
+    else if (!buzzerBsp_checkTickTolerance(MARIO_SIMPLE_STEP5_E5, wait, BUZZER_TASK_TICK_DIFFERENCE_TOLERANCE))
+        buzzer_playTone(buzzer, TONE_E5);
+    else if (!buzzerBsp_checkTickTolerance(MARIO_SIMPLE_STEP6_G5, wait, BUZZER_TASK_TICK_DIFFERENCE_TOLERANCE))
+        buzzer_playTone(buzzer, TONE_G5);
+    else if (!buzzerBsp_checkTickTolerance(MARIO_SIMPLE_STEP7_G5, wait, BUZZER_TASK_TICK_DIFFERENCE_TOLERANCE))
+        buzzer_playTone(buzzer, TONE_G5);
+    else if (!buzzerBsp_checkTickTolerance(MARIO_SIMPLE_STEP8_OFF, wait, BUZZER_TASK_TICK_DIFFERENCE_TOLERANCE))
+        buzzer_setState(buzzer, BUZZER_SWITCH_OFF);
+    else if (!buzzerBsp_checkTickTolerance(MARIO_SIMPLE_STEP9_RELEASE, wait, BUZZER_TASK_TICK_DIFFERENCE_TOLERANCE))
+        buzzer->status.currentTask = BUZZER_FREE_PRIORITY; // 任务完成，释放优先级
 }
 
 BUZZER_RETURN_T buzzer_handleInit(buzzer_t *buzzer, buzzer_parameter_t param)

@@ -360,20 +360,21 @@ void TIM_CAN_PeriodElapsedCallback()
         CAN_Send_Data(&hfdcan2, 0x200, CAN2_0x200_Tx_Data, 8); // 履带3508电机、导轮电机
         CAN_Send_Data(&hfdcan1, 0x200, CAN1_0x200_Tx_Data, 8); // 行进3508电机
         #endif
-
+        //CAN1 超电
+		CAN_Send_Data(&hfdcan2, 0x66, CAN_Supercap_Tx_Data, 8);
+        
         CAN_Send_Data(&hfdcan3, 0x20, CAN3_Chassis_Tx_Gimbal_Data_1, 8);
     }
     
     if (mod10 == 10) //100Hz
     {
-		// CAN_Send_Data(&hfdcan3, 0x51, CAN3_Chassis_Tx_Gimbal_Data, 8);
-        
+		CAN_Send_Data(&hfdcan3, 0x51, CAN3_Chassis_Tx_Gimbal_Data, 8);
         mod10 = 0;
     }
     #ifdef TRACK_LEG
     if (mod20 == 20) //50Hz
     {
-				
+        
         mod20 == 0;
     }
     #endif

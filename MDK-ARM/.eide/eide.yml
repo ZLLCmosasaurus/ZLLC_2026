@@ -46,6 +46,8 @@ virtualFolder:
         - path: ../User/Device/Src/dvc_servo.cpp
         - path: ../User/Device/Src/dvc_buzzer.cpp
         - path: ../User/Device/Src/dvc_motor_dji.cpp
+        - path: ../User/Device/Src/buzzer.c
+        - path: ../User/Device/Src/buzzer_bsp.c
       folders: []
     - name: Driver
       files:
@@ -74,6 +76,7 @@ virtualFolder:
         - path: ../User/Algorithm/Src/user_lib.cpp
         - path: ../User/Algorithm/Src/alg_SMC_Control.cpp
         - path: ../User/Algorithm/Src/alg_new_power_limit.cpp
+        - path: ../User/Algorithm/Src/my_kalman.cpp
       folders: []
     - name: Application
       files: []
@@ -199,6 +202,8 @@ targets:
         - .cmsis/libdsp
     excludeList:
       - <virtual_root>/::CMSIS/arm_cortexM7l_math.lib
+    settings:
+      debugger: cortex-debug
     toolchain: AC6
     toolchainConfigMap:
       AC6:
@@ -347,6 +352,8 @@ targets:
       libList:
         - ../Middlewares/ST/ARM/DSP/Inc
     excludeList: []
+    settings:
+      debugger: cortex-debug
     toolchain: AC6
     toolchainConfigMap:
       AC6:
