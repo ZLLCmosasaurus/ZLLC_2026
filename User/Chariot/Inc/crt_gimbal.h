@@ -319,7 +319,6 @@ protected:
 
     void Output();
     void Gimbal_Disable();
-    void Output_Test();
 };
 
 /* Exported variables --------------------------------------------------------*/

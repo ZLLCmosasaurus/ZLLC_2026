@@ -17,8 +17,8 @@
 /* Exported macros -----------------------------------------------------------*/
 
 //底盘或云台状态
-#define CHASSIS
-//#define GIMBAL
+//#define CHASSIS
+#define GIMBAL
 
 //遥控器选择
 //#define USE_VT13
@@ -48,8 +48,6 @@
 
 #define H7_Offset_X 0.0f          // 旋转中心到H7的x方向偏移，单位为m，正值表示H7在旋转中心前方，底盘坐标系
 #define H7_Offset_Y 0.0f        // 旋转中心到H7的y方向偏移，单位为m，正值表示H7在旋转中心左侧，底盘坐标系
-
-//#define JiMiao_Test
 
 //功率控制相关
 #define POWER_CONTROL 1 //启用功率控制

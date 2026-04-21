@@ -901,23 +901,13 @@ void Class_Chariot::Control_Booster()
                     break;
                 }
 
-                //当目标突然丢失0.5s以内，上位机会依然发送自瞄状态，下位机保持上一个瞄准的地方继续打弹
-                //MiniPC.Get_Rx_Yaw_Angle_A() == 0.f && MiniPC.Get_Rx_Pitch_Angle_A() == 0.f（相当于给了0.5s的误差）
-                // if((MiniPC.Get_Auto_aim_Status() == Auto_aim_Status_ENABLE) && MiniPC.Get_Fire_Flag()==1 && (DWT_GetTimeline_s() - single_shoot_pre_time) > 0.066f  &&
-                //   (MiniPC.Get_Rx_Yaw_Angle() != 0.f || MiniPC.Get_Rx_Pitch_Angle() != 0.f)){                 //后边两个判断似乎不需要
-                //     single_shoot_pre_time = DWT_GetTimeline_s();
-                //     Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
-                // }           //打完后会自动切到停火
-
-                if((MiniPC.Get_Auto_aim_Status() == Auto_aim_Status_ENABLE) &&
-                  (MiniPC.Get_Rx_Yaw_Angle() != 0.f || MiniPC.Get_Rx_Pitch_Angle() != 0.f)){                 //后边两个判断似乎不需要
-                    Booster.Set_Booster_Control_Type(Booster_Control_Type_REPEATED);
-                }           //打完后会自动切到停火
-                else if (MiniPC.Get_Auto_aim_Status() == Auto_aim_Status_DISABLE){    
-                    Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
-                }
-
-                if(MiniPC.Get_Rx_Yaw_Angle() == 0.f && MiniPC.Get_Rx_Pitch_Angle() == 0.f){
+                if(MiniPC.Get_mode() == 2 && MiniPC.MiniPC_Fire_Updata_Flag == 1)
+                { // 后边两个判断似乎不需要
+                    MiniPC.MiniPC_Fire_Updata_Flag = 0;
+                    Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                } // 打完后会自动切到停火
+                else
+                {
                     Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
                 }
 
@@ -944,35 +934,39 @@ void Class_Chariot::Control_Booster()
                 // {
                 //     Booster.Set_Booster_Control_Type(Booster_Control_Type_REPEATED);
                // }
-                else {
+                else{
                     Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
                 }
                 break;
             }
         }
-    }else{//右2
-                if (FS_i6X.Get_Switch_2() != FS_Switch_Status_MIDDLE) {
-                Booster.Set_Booster_Control_Type(Booster_Control_Type_DISABLE);
-                Booster.Set_Friction_Control_Type(Friction_Control_Type_DISABLE);
-                return;
-            }else{
-         auto switch_state= FS_i6X.Get_Switch_3();  // 返回当前开关状态
-                if  (switch_state == FS_Switch_Status_UP)
-                {       
-                    Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
-                    Shoot_Flag = 0;
-                }
-                else if (switch_state==FS_Switch_Status_DOWN&& Shoot_Flag == 0) // 单发
-                {
-                    Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
-                    Shoot_Flag = 1;
-                }
-                // else if (FS_i6X.Get_Yaw_left()<0) // 连发 yaw_left逆时针转减小
-                // {
-                //     Booster.Set_Booster_Control_Type(Booster_Control_Type_REPEATED);
-                //}
-
     }
+    else
+    {           //下位机模式
+        if (FS_i6X.Get_Switch_2() != FS_Switch_Status_MIDDLE)
+        {
+            Booster.Set_Booster_Control_Type(Booster_Control_Type_DISABLE);
+            Booster.Set_Friction_Control_Type(Friction_Control_Type_DISABLE);
+            return;
+        }
+        else
+        {
+            auto switch_state = FS_i6X.Get_Switch_3(); // 返回当前开关状态
+            if (switch_state == FS_Switch_Status_UP)
+            {
+                Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+                Shoot_Flag = 0;
+            }
+            else if (switch_state == FS_Switch_Status_DOWN && Shoot_Flag == 0) // 单发
+            {
+                Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                Shoot_Flag = 1;
+            }
+            // else if (FS_i6X.Get_Yaw_left()<0) // 连发 yaw_left逆时针转减小
+            // {
+            //     Booster.Set_Booster_Control_Type(Booster_Control_Type_REPEATED);
+            //}
+        }
     }
     
 
