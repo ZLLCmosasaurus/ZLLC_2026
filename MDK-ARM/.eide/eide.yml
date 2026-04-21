@@ -48,6 +48,10 @@ virtualFolder:
         - path: ../User/Device/Src/dvc_servo.cpp
         - path: ../User/Device/Src/dvc_buzzer.cpp
         - path: ../User/Device/Src/dvc_motor_dji.cpp
+        - path: ../User/Device/Src/dvc_jd_motor.cpp
+        - path: ../User/Device/Src/dvc_TOFSense.cpp
+        - path: ../User/Device/Src/buzzer.c
+        - path: ../User/Device/Src/buzzer_bsp.c
       folders: []
     - name: Driver
       files:
@@ -61,6 +65,8 @@ virtualFolder:
         - path: ../User/Driver/Src/drv_tim.cpp
         - path: ../User/Driver/Src/drv_uart.cpp
         - path: ../User/Driver/Src/drv_usb.cpp
+        - path: ../User/Driver/Src/agile_modbus.c
+        - path: ../User/Driver/Src/agile_modbus_rtu.c
       folders: []
     - name: Algorithm
       files:
@@ -204,6 +210,8 @@ targets:
         - .cmsis/libdsp
     excludeList:
       - <virtual_root>/::CMSIS/arm_cortexM7l_math.lib
+    settings:
+      debugger: cortex-debug
     toolchain: AC6
     toolchainConfigMap:
       AC6:
@@ -352,8 +360,8 @@ targets:
       libList: []
     excludeList:
       - ../DSP/libCMSISDSP.a
-      - <virtual_root>/Driver/agile_modbus_rtu.c
-      - <virtual_root>/Driver/agile_modbus.c
+    settings:
+      debugger: cortex-debug
     toolchain: AC6
     toolchainConfigMap:
       AC6:

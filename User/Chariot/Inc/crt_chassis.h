@@ -24,6 +24,7 @@
 #include "dvc_referee.h"
 #include "dvc_djimotor.h"
 #include "dvc_dmmotor.h"
+#include "dvc_TOFSense.h"
 #include "alg_power_limit.h"
 #include "dvc_supercap.h"
 #include "config.h"
@@ -73,6 +74,36 @@ enum Enum_Chassis_DR16_Right_Uplift_Status{
     Chassis_Uplift_WHEEL_ON,
 };
 
+/**
+ * @brief 抬升电机控制枚举
+ *
+ */
+enum Enum_Lift_Direction : uint8_t
+{
+    Lift_Direction_DOWN = 0,
+    Lift_Direction_UP,
+    Lift_Direction_HOLD
+};
+
+/**
+ * @brief 上台阶状态机运行方向枚举
+ *
+ */
+enum Enum_Uplift_FSM_Direction : uint8_t
+{
+    Uplift_FSM_HOLD = 0,
+    Uplift_FSM_FORWARD
+};
+
+/**
+ * @brief 小轮子从动状态枚举
+ *
+ */
+enum Enum_Wheel_Slave_Status : uint8_t
+{
+    Wheel_Slave_OFF = 0,
+    Wheel_Slave_ON
+};
 
 /**
  * @brief 底盘冲刺状态枚举
@@ -90,9 +121,9 @@ enum Enum_Sprint_Status : uint8_t
  */
 enum Enum_Chassis_Control_Type : uint8_t
 {
-    Chassis_Control_Type_DISABLE = 0,
-    Chassis_Control_Type_NORMAL,
-    Chassis_Control_Type_SLOPE,
+    Chassis_Control_Type_DISABLE = 0x00,
+    Chassis_Control_Type_NORMAL = 0x01,
+    Chassis_Control_Type_SLOPE = 0x02,
 };
 
 /**
@@ -534,9 +565,7 @@ class Class_FSM_Ledder : public Class_FSM
 public:
     Class_Mecanum_Chassis *Chassis;
     
-    Enum_DR16_Switch_Status DR16_Right;
-    Enum_DR16_Switch_Status DR16_Pre_Right;
-    Enum_DR16_Switch_Status Switch_Status;
+    Enum_Uplift_FSM_Direction FSM_Direction = Uplift_FSM_HOLD;
 
     float Yaw = 0.0f;
     float Yaw_Delta_s = 0.0f;
@@ -544,7 +573,7 @@ public:
     uint32_t Delta_s = 0.0f;
 
     uint8_t TRIGGER_CNT = 0;
-    uint16_t Yaw_cnt = 0;
+    uint16_t FORWARD_CNT = 0;
 
     void Reload_TIM_Status_PeriodElapsedCallback();
 
@@ -560,6 +589,26 @@ protected:
     float ledder_2_over[4] = {22.0f, 22.0f, 20.0f, 20.0f};
 
     Enum_DR16_Switch_Status Judge_DR16_Switch_Status(Enum_DR16_Switch_Status Now_Status, Enum_DR16_Switch_Status Pre_Status);
+};
+
+class Class_FSM_Off_Ledder : public Class_FSM_Ledder
+{
+public:
+    void Reload_TIM_Status_PeriodElapsedCallback();
+protected:
+    // ToF测距模块回传的底盘离地高度
+    float Height_Meter;
+    // 抬升触地时的底盘阈值高度
+    float Trigger_Height;
+    // 底盘高度判断误差量，数值越小判断越严格，不可超过台阶高度的1/2
+    float Trigger_Offset;
+
+    // 下到第一个台阶时，抬升机构全部接触台阶的高度
+    float ledder_prepare[4];
+    // 底盘前端/后端腾空时，对应测抬升机构触地的高度
+    float ledder_touch[4];
+    // 底盘完全腾空后抬升机构收起
+    float ledder_finish[4];
 };
 
 class Class_Mecanum_Chassis
@@ -587,6 +636,9 @@ public:
     // 抬升机构电机
     Class_DJI_Motor_C620 Uplift_Motor[4];
 
+    // 激光测距模块
+    Class_TOFSense TOFSense;
+
     // 抬升机构校准状态机
     Class_FSM_Calibration_Chassis Calibration_FSM;
     friend class Class_FSM_Calibration_Chassis;
@@ -610,8 +662,15 @@ public:
     inline float Get_Delta_Radian();
     inline float Get_Target_Track_Omega();
     inline float Get_Target_Uplift_Radian(uint8_t index);
+
     inline Enum_Supercap_Mode Get_Supercap_Mode();
     inline Enum_Chassis_DR16_Right_Uplift_Status Get_DR16_Right_Uplift_Status();
+    inline Enum_Lift_Direction Get_Lift_Direction(uint8_t index);
+    inline bool Get_Lift_Select(uint8_t index);
+    inline Enum_Uplift_FSM_Direction Get_Uplift_FSM_Direction();
+    inline bool Get_Backdoor_Jump();
+    inline bool Get_Downlift_Init();
+    inline Enum_Wheel_Slave_Status Get_Wheel_Slave_Status();
 
     inline void Set_Chassis_Control_Type(Enum_Chassis_Control_Type __Chassis_Control_Type);
     inline void Set_Target_Velocity_X(float __Target_Velocity_X);
@@ -625,6 +684,13 @@ public:
     inline void Set_Target_Uplift_Radian(uint8_t index, float __Target_Uplift_Radian);
     inline void Set_Supercap_Mode(Enum_Supercap_Mode __Supercap_Mode);
     inline void Set_DR16_Right_Uplift_Status(Enum_Chassis_DR16_Right_Uplift_Status __DR16_Right_Uplift_Status);
+    
+    inline void Set_Lift_Direction(uint8_t index, Enum_Lift_Direction direction);
+    inline void Set_Lift_Select(bool select_1, bool select_2, bool select_3, bool select_4);
+    inline void Set_Wheel_Slave_Status(Enum_Wheel_Slave_Status __Wheel_Slave_Status);
+    inline void Set_Uplift_FSM_Direction(Enum_Uplift_FSM_Direction __Uplift_FSM_Direction);
+    inline void Set_Backdoor_Jump(bool __Backdoor_Jump);
+    inline void Set_Downlift_Init(bool __Downlift_Init);
 
     inline void Set_Velocity_Y_Max(float __Velocity_Y_Max);
     inline void Set_Velocity_X_Max(float __Velocity_X_Max);
@@ -632,7 +698,7 @@ public:
     void TIM_Calculate_PeriodElapsedCallback(Enum_Sprint_Status __Sprint_Status);
 
     // 着地时的角度，相对于Min_Radian
-    float Uplift_Touch_Radian[4] = {9.0f, 9.0f, 19.5f, 19.5f};
+    float Downlift_Touch_Radian[4] = {9.0f, 9.0f, 19.5f, 19.5f};
 
 protected:
     // 初始化相关常量
@@ -686,10 +752,25 @@ protected:
 
     // 读写变量
 
-    // 底盘控制方法
+    // 底盘控制方式
     Enum_Chassis_Control_Type Chassis_Control_Type = Chassis_Control_Type_DISABLE;
     Enum_Supercap_Mode Supercap_Mode = Supercap_DISABLE;
     Enum_Chassis_DR16_Right_Uplift_Status DR16_Right_Uplift_Status = DR16_Right_Switch_MIDDLE;
+    
+    // 抬升状态机枚举
+    Enum_Uplift_FSM_Direction Uplift_FSM_Direction = Uplift_FSM_HOLD;
+    // 小轮子从动状态枚举
+    Enum_Wheel_Slave_Status Wheel_Slave_Status = Wheel_Slave_OFF;
+    // 抬升控制相关
+    // 抬升选择
+    bool Lift_Select[4] = {false};
+    // 抬升方向
+    Enum_Lift_Direction Lift_Direction[4] = {Lift_Direction_HOLD};
+    // 下台阶初始位置
+    bool Downlift_Init = false;
+    // 150mm后门跳转
+    bool Backdoor_Jump = false;
+
     // 目标速度X，m/s
     float Target_Velocity_X = 0.0f;
     // 目标速度Y
@@ -854,6 +935,56 @@ Enum_Chassis_DR16_Right_Uplift_Status Class_Mecanum_Chassis::Get_DR16_Right_Upli
 }
 
 /**
+ * @brief 获取指定抬升电机的控制方向
+ */
+inline Enum_Lift_Direction Class_Mecanum_Chassis::Get_Lift_Direction(uint8_t index)
+{
+    if (index >= 4) return Lift_Direction_HOLD;
+    return Lift_Direction[index];
+}
+
+/**
+ * @brief 获取指定抬升机构是否被选中
+ */
+inline bool Class_Mecanum_Chassis::Get_Lift_Select(uint8_t index)
+{
+    if (index >= 4) return false;
+    return Lift_Select[index];
+}
+
+/**
+ * @brief 获取抬升状态机运行方向
+ */
+inline Enum_Uplift_FSM_Direction Class_Mecanum_Chassis::Get_Uplift_FSM_Direction()
+{
+    return Uplift_FSM_Direction;
+}
+
+/**
+ * @brief 获取后门跳转标志位
+ */
+inline bool Class_Mecanum_Chassis::Get_Backdoor_Jump()
+{
+    return Backdoor_Jump;
+}
+
+/**
+ * @brief 获取下台阶初始化状态
+ */
+inline bool Class_Mecanum_Chassis::Get_Downlift_Init()
+{
+    return Downlift_Init;
+}
+
+/**
+ * @brief 获取小轮子从动状态
+ */
+inline Enum_Wheel_Slave_Status Class_Mecanum_Chassis::Get_Wheel_Slave_Status()
+{
+    return Wheel_Slave_Status;
+}
+
+/**
  * @brief 设定底盘控制方法
  *
  * @param __Chassis_Control_Type 底盘控制方法
@@ -984,6 +1115,59 @@ void Class_Mecanum_Chassis::Set_Supercap_Mode(Enum_Supercap_Mode __Supercap_Mode
 void Class_Mecanum_Chassis::Set_DR16_Right_Uplift_Status(Enum_Chassis_DR16_Right_Uplift_Status __DR16_Right_Uplift_Status)
 {
     DR16_Right_Uplift_Status = __DR16_Right_Uplift_Status;
+}
+
+
+/**
+ * @brief 设定指定抬升机构的运动方向
+ */
+inline void Class_Mecanum_Chassis::Set_Lift_Direction(uint8_t index, Enum_Lift_Direction direction)
+{
+    if (index >= 4) return;
+    Lift_Direction[index] = direction;
+}
+
+/**
+ * @brief 同时设定四个抬升机构的选中状态
+ */
+inline void Class_Mecanum_Chassis::Set_Lift_Select(bool select_1, bool select_2, bool select_3, bool select_4)
+{
+    Lift_Select[0] = select_1;
+    Lift_Select[1] = select_2;
+    Lift_Select[2] = select_3;
+    Lift_Select[3] = select_4;
+}
+
+/**
+ * @brief 设定小轮子（从动轮）状态
+ */
+inline void Class_Mecanum_Chassis::Set_Wheel_Slave_Status(Enum_Wheel_Slave_Status __Wheel_Slave_Status)
+{
+    Wheel_Slave_Status = __Wheel_Slave_Status;
+}
+
+/**
+ * @brief 设定抬升状态机方向
+ */
+inline void Class_Mecanum_Chassis::Set_Uplift_FSM_Direction(Enum_Uplift_FSM_Direction __Uplift_FSM_Direction)
+{
+    Uplift_FSM_Direction = __Uplift_FSM_Direction;
+}
+
+/**
+ * @brief 设定后门跳转标志
+ */
+inline void Class_Mecanum_Chassis::Set_Backdoor_Jump(bool __Backdoor_Jump)
+{
+    Backdoor_Jump = __Backdoor_Jump;
+}
+
+/**
+ * @brief 设定下台阶初始化标志
+ */
+inline void Class_Mecanum_Chassis::Set_Downlift_Init(bool __Downlift_Init)
+{
+    Downlift_Init = __Downlift_Init;
 }
 #endif
 

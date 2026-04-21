@@ -23,7 +23,8 @@
                 "priority": 4
             }
         ],
-        "git.ignoreLimitWarning": true
+        "git.ignoreLimitWarning": true,
+        "editor.inlineSuggest.enabled": false
     },
     "extensions": {}
 }

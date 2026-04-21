@@ -72,6 +72,30 @@ enum Enum_VT13_Control_Type
     VT13_Control_Type_KEYBOARD,
     VT13_Control_Type_NONE,
 };
+
+/**
+ * @brief 活动遥控器类型
+ *
+ */
+enum Enum_Active_Controller
+{
+    Controller_NONE = 0,
+    Controller_DR16,
+    Controller_VT13
+};
+
+/**
+ * @brief 键鼠模式下机器人工况模式
+ *
+ */
+enum Enum_Keyboard_Control_Type
+{
+    Keyboard_Control_Type_MOVING,   // 平地移动
+    Keyboard_Control_Type_WORKING,  // 取兑矿模式
+    Keyboard_Control_Type_UPLIFT,   // 上台阶模式
+    Keyboard_Control_Type_DOWNLIFT  // 下台阶模式
+};
+
 /**
  * @brief 机器人是否离线 控制模式有限自动机
  *
@@ -93,9 +117,37 @@ public:
     void Reload_TIM_Status_PeriodElapsedCallback();
 };
 
+// 自定义控制器数据格式
 struct Struct_Offline_Controller_Data
 {
-  float Angle[6];
+    float Angle[6];
+    bool gripper_status;
+} __attribute__((packed));
+
+// 云台发送底盘相关通信帧格式
+// Data[6] 的位域定义
+struct LiftControl {
+    uint8_t lift_select : 4; // 0-3位：控制四个抬升，0为不选中，1为选中
+    uint8_t lift_direction   : 4; // 4-7位：控制升高/降低，0为降低，1为抬高
+} __attribute__((packed));
+
+// Data[7] 的位域定义
+struct OtherStatus {
+    uint8_t chassis_contorl_mode     : 2; // 0-1位：底盘控制模式，00:失能，01：使能，10：上台阶状态机
+    uint8_t uplift_fsm_direction     : 1; // 2位：上台阶状态机前进/保持
+    uint8_t backdoor_jump            : 1; // 3位：150mm台阶后门跳转开关
+    uint8_t downlift_init            : 1; // 4位：下台阶初始抬升高度跳转
+    uint8_t wheel_slave_ctrl         : 1; // 5位：小轮子从动开关
+    uint8_t reserved                 : 2; // 6-7位：保留
+} __attribute__((packed));
+
+// 完整的协议数据结构
+struct Gimbal_Tx_Chassis_Frame {
+    int16_t x_velocity;      // Data[0,1] X轴速度
+    int16_t y_velocity;      // Data[2,3] Y轴速度
+    int16_t yaw_data;        // Data[4,5] Yaw速度/角度
+    LiftControl lift;        // Data[6]   抬升控制
+    OtherStatus status;     // Data[7]   其他状态
 }__attribute__((packed));
 
 /**
@@ -138,7 +190,7 @@ public:
 #elifdef CHASSIS_TEST
     Class_DR16 DR16;
     float DR16_Dead_Zone = 0.3f;
-    void Chassis_Test_Control(); 
+    void Chassis_Test_Control();
     // 遥控器离线保护控制状态机
     Class_FSM_Alive_Control FSM_Alive_Control;
     friend class Class_FSM_Alive_Control;
@@ -187,8 +239,8 @@ public:
     inline void Set_Pre_Booster_Control_Type(Enum_Booster_Control_Type __Booster_Control_Type);
 
     inline Enum_Chassis_Status Get_Chassis_Status();
-    inline Enum_DR16_Control_Type Get_DR16_Control_Type();
-    inline Enum_VT13_Control_Type Get_VT13_Control_Type();
+    // inline Enum_DR16_Control_Type Get_DR16_Control_Type();
+    // inline Enum_VT13_Control_Type Get_VT13_Control_Type();
 
     void CAN_Gimbal_Rx_Chassis_Callback();
     void CAN_Gimbal_Tx_Chassis_Callback();
@@ -209,19 +261,22 @@ public:
     Enum_MiniPC_Status MiniPC_Status = MiniPC_Status_DISABLE;
     // 裁判系统UI刷新状态
     Enum_Referee_UI_Refresh_Status Referee_UI_Refresh_Status = Referee_UI_Refresh_Status_DISABLE;
+    // 数据帧结构体
+    Gimbal_Tx_Chassis_Frame Rx_Frame;
     
-    // 底盘云台通讯数据
-    float Gimbal_Tx_Pitch_Angle = 0;
-
     void Judge_DR16_Control_Type();
+    void Judge_VT13_Control_Type();
 
     void Control_Chassis();
 
     // 角度目标值
-    float tmp_j0_pitch_radian, tmp_j1_yaw_radian, tmp_j2_yaw_radian, tmp_j3_yaw_radian, tmp_j4_pitch_radian, tmp_j5_yaw_radian;
+    float tmp_j0_pitch_radian, tmp_j1_yaw_radian, tmp_j2_yaw_radian, tmp_j3_roll_radian, tmp_j4_pitch_radian, tmp_j5_roll_radian;
+    uint8_t tmp_gripper_position;
     float tmp_gripper_radian;
+
     // 遥控器摇杆值
     float dr16_right_x, dr16_right_y, dr16_left_x, dr16_left_y, dr16_yaw;
+    float vt13_right_x, vt13_right_y, vt13_left_x, vt13_left_y, vt13_yaw;
 
 protected:
     // 初始化相关常量
@@ -240,21 +295,37 @@ protected:
 #ifdef GIMBAL
     // 机械臂在线状态，当所有电机全掉线时视为机械臂掉线，需要重新arm_init
     bool is_arm_online = true;
+
+    // 遥控器相关变量
     // 遥控器拨动的死区, 0~1
     float DR16_Dead_Zone = 0.3f;
     // 常量
     // 键鼠模式按住shift 最大速度缩放系数
     float DR16_Mouse_Chassis_Shift = 2.0f;
 
+    // DR16调试机械臂相关常量
     float DR16_J0_Pitch_Resolution = 0.001f * PI;
     float DR16_J1_Yaw_Resolution = 0.00075f * PI;
     float DR16_J2_Yaw_Resolution = 0.00075f * PI;
-    float DR16_J3_Yaw_Resolution = 0.0015f * PI;
+    float DR16_J3_Roll_Resolution = 0.0015f * PI;
     float DR16_J4_Pitch_Resolution = 0.0015f * PI;
-    float DR16_J5_Yaw_Resolution = 0.0015f * PI;
-
+    float DR16_J5_Roll_Resolution = 0.0015f * PI;
     // DR16控制夹爪的速度，因为夹爪可移动范围是0.0 rad - 0.95 rad，所以现在给到0.05rad/s，
     float DR16_Gripper_Resolution = 0.005f * PI;
+
+    // 键鼠控制相关常量
+
+    // DR16鼠标底盘yaw角度控制灵敏度系数, 不同鼠标不同参数
+    float DR16_Mouse_Chassis_Yaw_Angle_Resolution = 57.8f * 10.0f;
+    // DR16鼠标底盘yaw角速度控制灵敏度系数, 不同鼠标不同参数
+    float DR16_Mouse_Chassis_Yaw_Omega_Resolution = 57.8f * 10.0f;
+
+    // 鼠标控制VT03图传Yaw角度灵敏度系数
+    float DR16_Mouse_VT03_Yaw_Angle_Resolution = 57.8f * 10.0f;
+    // 鼠标控制VT03图传Pitch角度灵敏度系数
+    float DR16_Mouse_VT03_Pitch_Angle_Resolution = 57.8f * 10.0f;
+    // 键鼠控制模式下机器人工况模式
+    Enum_Keyboard_Control_Type Keyboard_Control_Type = Keyboard_Control_Type_MOVING;
 
     // 内部变量
     // 遥控器离线计数
@@ -281,7 +352,18 @@ protected:
     // DR16控制数据来源
     Enum_DR16_Control_Type DR16_Control_Type = DR16_Control_Type_REMOTE;
     Enum_VT13_Control_Type VT13_Control_Type = VT13_Control_Type_NONE;
+    // 当前使用的遥控器
+    Enum_Active_Controller Active_Controller = Controller_NONE;
     // 内部函数
+
+    // 判断当前使用的遥控器
+    void Judge_Active_Controller();
+    // 获取当前使用的遥控器
+    Enum_Active_Controller Get_Active_Controller();
+    // 获取DR16控制类型
+    Enum_DR16_Control_Type Get_DR16_Control_Type();
+    // 获取VT13控制类型
+    Enum_VT13_Control_Type Get_VT13_Control_Type();
 
     // void Judge_DR16_Control_Type();
 
@@ -306,26 +388,6 @@ protected:
 Enum_Chassis_Status Class_Chariot::Get_Chassis_Status()
 {
     return (Chassis_Status);
-}
-
-/**
- * @brief 获取DR16控制数据来源
- *
- * @return Enum_DR16_Control_Type DR16控制数据来源
- */
-
-Enum_DR16_Control_Type Class_Chariot::Get_DR16_Control_Type()
-{
-    return (DR16_Control_Type);
-}
-/**
- * @brief 获取VT13控制数据来源
- *
- * @return VT13_Control_Type
- */
-inline Enum_VT13_Control_Type Class_Chariot::Get_VT13_Control_Type()
-{
-    return (VT13_Control_Type);
 }
 
 /**
