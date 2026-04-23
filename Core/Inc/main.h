@@ -27,7 +27,7 @@ extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32h7xx_hal.h"
+#include "stm32f4xx_hal.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -57,18 +57,31 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define VCC_5V_Pin GPIO_PIN_15
-#define VCC_5V_GPIO_Port GPIOC
-#define CS1_ACCEL_Pin GPIO_PIN_0
-#define CS1_ACCEL_GPIO_Port GPIOC
-#define CS1_GYRO_Pin GPIO_PIN_3
-#define CS1_GYRO_GPIO_Port GPIOC
-#define INT1_ACCEL_Pin GPIO_PIN_10
-#define INT1_ACCEL_GPIO_Port GPIOE
-#define INT1_ACCEL_EXTI_IRQn EXTI15_10_IRQn
-#define INT1_GYRO_Pin GPIO_PIN_12
-#define INT1_GYRO_GPIO_Port GPIOE
-#define INT1_GYRO_EXTI_IRQn EXTI15_10_IRQn
+#define BoardC_CAN2_Rx_Pin GPIO_PIN_5
+#define BoardC_CAN2_Rx_GPIO_Port GPIOB
+#define BoardC_CAN2_Tx_Pin GPIO_PIN_6
+#define BoardC_CAN2_Tx_GPIO_Port GPIOB
+#define BoardC_CAN1_Rx_Pin GPIO_PIN_0
+#define BoardC_CAN1_Rx_GPIO_Port GPIOD
+#define BoardC_CAN1_Tx_Pin GPIO_PIN_1
+#define BoardC_CAN1_Tx_GPIO_Port GPIOD
+#define RSTN_IST8310_Pin GPIO_PIN_6
+#define RSTN_IST8310_GPIO_Port GPIOG
+#define IMU_PWM_Pin GPIO_PIN_6
+#define IMU_PWM_GPIO_Port GPIOF
+#define DRDY_IST8310_Pin GPIO_PIN_3
+#define DRDY_IST8310_GPIO_Port GPIOG
+#define DRDY_IST8310_EXTI_IRQn EXTI3_IRQn
+#define CS1_ACCEL_Pin GPIO_PIN_4
+#define CS1_ACCEL_GPIO_Port GPIOA
+#define INT1_ACCEL_Pin GPIO_PIN_4
+#define INT1_ACCEL_GPIO_Port GPIOC
+#define INT1_ACCEL_EXTI_IRQn EXTI4_IRQn
+#define INT1_GYRO_Pin GPIO_PIN_5
+#define INT1_GYRO_GPIO_Port GPIOC
+#define INT1_GYRO_EXTI_IRQn EXTI9_5_IRQn
+#define CS1_GYRO_Pin GPIO_PIN_0
+#define CS1_GYRO_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

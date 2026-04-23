@@ -1,0 +1,29 @@
+
+
+OpenDocument="startup_stm32f407xx.s", FilePath="e:/files/RMUC-2025/MDK-ARM/startup_stm32f407xx.s", Line=166
+OpenDocument="dvc_minipc.h", FilePath="e:/files/RMUC-2025/User/Device/dvc_minipc.h", Line=638
+OpenDocument="main.c", FilePath="e:/files/RMUC-2025/Core/Src/main.c", Line=63
+OpenDocument="alg_pid.cpp", FilePath="e:/files/RMUC-2025/User/Middleware/Algorithm/alg_pid.cpp", Line=69
+OpenDocument="alg_pid.h", FilePath="e:/files/RMUC-2025/User/Middleware/Algorithm/alg_pid.h", Line=252
+OpenDocument="dvc_imu.cpp", FilePath="e:/files/RMUC-2025/User/Device/dvc_imu.cpp", Line=201
+OpenDocument="crt_gimbal.cpp", FilePath="e:/files/RMUC-2025/User/Chariot/crt_gimbal.cpp", Line=451
+OpenDocument="stm32f4xx_hal_spi.c", FilePath="e:/files/RMUC-2025/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_spi.c", Line=1274
+OpenDocument="stm32f4xx_hal_can.c", FilePath="e:/files/RMUC-2025/Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_can.c", Line=1559
+OpenDocument="crt_gimbal.h", FilePath="e:/files/RMUC-2025/User/Chariot/crt_gimbal.h", Line=78
+OpenDocument="drv_math.h", FilePath="e:/files/RMUC-2025/User/Middleware/Driver/drv_math.h", Line=64
+OpenToolbar="Debug", Floating=0, x=0, y=0
+OpenWindow="Call Stack", DockArea=RIGHT, x=0, y=0, w=531, h=601, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Watched Data 1", DockArea=LEFT, x=0, y=1, w=498, h=325, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Code Profile", DockArea=LEFT, x=0, y=0, w=498, h=275, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, GroupByFiles=0, SortRespectsFilters=0, ParentRelativeLoad=0
+OpenWindow="Data Sampling", DockArea=BOTTOM, x=0, y=0, w=1920, h=323, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, VisibleTab=0, UniformSampleSpacing=0
+OpenWindow="Timeline", DockArea=FLOATING, x=634, y=107, w=1134, h=806, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=1, DataPaneShown=1, PowerPaneShown=0, CodePaneShown=0, PinCursor="Cursor Movable", TimePerDiv="500 ms", TimeStampFormat="Time", DataGraphDrawAsPoints=0, DataGraphLegendShown=1, DataGraphUniformSampleSpacing=0, DataGraphLegendPosition="59;546", DataGraphShowNamesAtCursor=1, PowerGraphDrawAsPoints=0, PowerGraphLegendShown=0, PowerGraphAvgFilterTime=Off, PowerGraphAvgFilterLen=Off, PowerGraphUniformSampleSpacing=0, PowerGraphLegendPosition="933;0", CodeGraphLegendShown=0, CodeGraphLegendPosition="947;0"
+SmartViewPlugin="", Page="", Toolbar="Hidden", Window="SmartView 1"
+TableHeader="Call Stack", SortCol="Function", SortOrder="ASCENDING", VisibleCols=["Function";"Stack Frame";"Source";"PC";"Return Address";"Stack Used"], ColWidths=[259;118;168;100;190;100]
+TableHeader="Code Profile", SortCol="File / Function", SortOrder="ASCENDING", VisibleCols=["File / Function";"Source Coverage";"Inst. Coverage";"Run Count";"Fetch Count";"Load"], ColWidths=[1237;135;142;100;107;100]
+TableHeader="Power Sampling", SortCol="None", SortOrder="ASCENDING", VisibleCols=["Index";"Time";"Ch 0"], ColWidths=[100;100;100]
+TableHeader="Watched Data 1", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Value";"Location";"Refresh";"Access"], ColWidths=[232;292;142;100;100]
+TableHeader="RegisterSelectionDialog", SortCol="None", SortOrder="ASCENDING", VisibleCols=[], ColWidths=[]
+TableHeader="Data Sampling Table", SortCol="None", SortOrder="ASCENDING", VisibleCols=["Index";"Time"], ColWidths=[100;100]
+TableHeader="Data Sampling Setup", SortCol="Expression", SortOrder="DESCENDING", VisibleCols=["Expression";"Type";"Value";"Min";"Max";"Average";"# Changes";"Min. Change";"Max. Change"], ColWidths=[478;100;100;102;100;110;100;107;723]
+TableHeader="TargetExceptionDialog", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Address";"Description"], ColWidths=[200;100;100;351]
+WatchedExpression="chariot", Window=Watched Data 1
