@@ -18,35 +18,6 @@
 
 /* Private variables ---------------------------------------------------------*/
 
-#ifdef MOTOR_TEST
-bool set_roll_output_enable = false;
-bool set_roll_cali_enable = false;
-bool gripper_output_flag = false; // 测试状态机，输出之前先看数值对不对
-float cali_radian = -300.0f;
-
-/*6020测试用*/
-uint8_t debug_6020_mode = 0;
-
-float debug_6020_omega_kp = 0.0f;
-float debug_6020_omega_ki = 0.0f;
-float debug_6020_omega_kd = 0.0f;
-
-float debug_6020_angle_kp = 0.0f;
-float debug_6020_angle_ki = 0.0f;
-float debug_6020_angle_kd = 0.0f;
-
-/*C610测试用*/
-uint8_t debug_c610_mode = 0;
-
-float debug_c610_omega_kp = 0.0f;
-float debug_c610_omega_ki = 0.0f;
-float debug_c610_omega_kd = 0.0f;
-
-float debug_c610_angle_kp = 0.0f;
-float debug_c610_angle_ki = 0.0f;
-float debug_c610_angle_kd = 0.0f;
-#endif
-
 /* Private function declarations ---------------------------------------------*/
 
 /* Function prototypes -------------------------------------------------------*/

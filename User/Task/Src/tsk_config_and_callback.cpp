@@ -57,34 +57,6 @@ bool start_flag = 0;
 // 机器人控制对象
 Class_Chariot chariot;
 
-#ifdef MY_DEBUG
-bool debug_test_enable = true;   // Debug模式下测试使能标志
-uint32_t debug_test_counter = 0; // 测试计数器
-
-/*轨迹计算测试用变量*/
-float q_start[6] = {0.0f, 0.0f, 2.0f, 0.0f, 0.5f, 0.0f};
-float trajectory_xyz[600][3]; // 轨迹点数组，测试用
-float trajectory_rpy[3] = {0.0000f, -1.5000f, 0.0000f};
-uint32_t delta_cnt = 0;     // DWT测用时的计数值
-float delta_s = 0.0f;       // DWT测得的用时
-float total_s = 0.0f;       // 完成一次完整计算总用时
-uint16_t calculate_cnt = 0; // 计算次数，用于控制计算只进行一次
-float x_calc;
-float y_calc;
-float z_calc;
-float q_to_show[6];
-float xyz_rpy_to_show[6];
-float s_test;
-/*测试用 测完删*/
-float start_xyz[3];
-float start_rpy[3];
-#endif
-
-#ifdef MOTOR_TEST_CHASSIS
-uint32_t delta_cnt = 0; // DWT测用时的计数值
-float delta_s = 0.0f;   // DWT测得的用时
-#endif
-
 /* Private function declarations ---------------------------------------------*/
 /* Function prototypes -------------------------------------------------------*/
 
@@ -494,7 +466,7 @@ void Offline_Controller_UART1_Callback(uint8_t *Buffer, uint16_t Length)
         }
     }
 
-    bool flag = chariot.UART1_Buffer[(i+14) % 15] == 0x11;
+    bool flag = chariot.UART1_Buffer[(i + 14) % 15] == 0x11;
 
     if (flag)
     {
@@ -505,7 +477,7 @@ void Offline_Controller_UART1_Callback(uint8_t *Buffer, uint16_t Length)
             chariot.Offline_Controller_Data.Angle[j] = temp / 100.f;
         }
 
-        chariot.Offline_Controller_Data.gripper_status = Buffer[(i+13)%15] == 1 ? true : false;
+        chariot.Offline_Controller_Data.gripper_status = Buffer[(i + 13) % 15] == 1 ? true : false;
     }
 }
 
@@ -644,8 +616,8 @@ void Task1ms_TIM5_Callback()
     if (init_finished > 2000)
         start_flag = 1;
 
+    // 上电蜂鸣器
     buzzer_taskScheduler(&buzzer);
-
     if (init_finished == 2500)
     {
         buzzer_setTask(&buzzer, BUZZER_MARIO_SIMPLE_PRIORITY);
@@ -700,7 +672,7 @@ void Task1ms_TIM5_Callback()
             chariot.Chassis.Track_Motor[1].TIM_Process_PeriodElapsedCallback();
         }
 #endif
-        if(mod3 == 3)
+        if (mod3 == 3)
         {
             mod3 = 0;
         }
@@ -710,9 +682,10 @@ void Task1ms_TIM5_Callback()
             // 上位机
             TIM_USB_PeriodElapsedCallback(&MiniPC_USB_Manage_Object);
 
+#ifdef GIMBAL
             // 钧舵电机Modbus发送
             chariot.Gimbal.Jodell_ERG150T.TIM_UART_Tx_PeriodElapsedCallback();
-
+#endif
             // 串口统一发送
             TIM_UART_PeriodElapsedCallback();
             mod5 = 0;
@@ -739,49 +712,6 @@ void Task1ms_TIM5_Callback()
             mod68 = 0;
         }
     }
-#ifdef MY_DEBUG
-    /*测试大王奉命接管此区*/
-    else // 充分利用启动前的2000ms进行轨迹计算
-    {
-        chariot.Gimbal.Trajectory_Tracer.dh_model.Fkine(q_start, start_xyz, start_rpy);
-        // 将计算出的真实姿态，赋值给 trajectory_rpy
-        trajectory_rpy[0] = start_rpy[2]; // Yaw
-        trajectory_rpy[1] = start_rpy[1]; // Pitch
-        trajectory_rpy[2] = start_rpy[0]; // Roll
-
-        if (calculate_cnt < 600)
-        // 前600次用于计算轨迹点，从0到599一共调用600次计算函数，可以把所有点都算完
-        {
-            chariot.Gimbal.Trajectory_Tracer.Trajectory_Generator(q_start, 1, trajectory_xyz); // 计算轨迹点
-            x_calc = trajectory_xyz[calculate_cnt][0];
-            y_calc = trajectory_xyz[calculate_cnt][1];
-            z_calc = trajectory_xyz[calculate_cnt][2];
-        }
-        else if (calculate_cnt < 1200)
-        {
-            chariot.Gimbal.valid_solution_cnt = chariot.Gimbal.Trajectory_Tracer.Trajectory_Ikine(q_start, start_rpy, trajectory_xyz, chariot.Gimbal.q_solution, chariot.Gimbal.is_low_speed); // 逆运动学求解，测试用
-
-            for (int i = 0; i < 6; i++)
-            {
-                q_to_show[i] = chariot.Gimbal.q_solution[calculate_cnt - 600][i];
-                // show_FK_result(q_to_show, xyz_rpy_to_show); // 计算正运动学，得到末端xyzrpy，用于显示验证
-                if (i < 3)
-                {
-                    start_xyz[i] = trajectory_xyz[calculate_cnt - 600][i];
-                    start_rpy[i] = trajectory_rpy[i];
-                }
-            }
-        }
-        else
-        {
-            // 1200次之后，取点和逆解都算完了，停止计算
-            calculate_cnt = 1200;
-        }
-
-        calculate_cnt++;
-    }
-/*测试大王奉命接管此区*/
-#endif
 }
 
 /**
@@ -827,9 +757,10 @@ extern "C" void Task_Init()
 // 遥控器接收
 #ifdef USE_DR16
     UART_Init(&huart5, DR16_UART5_Callback, 18);
-    // UART_Init(&huart6, Image_UART6_Callback, 40);
-#elif defined(USE_VT13)
-    UART_Init(&huart9, VT13_UART_Callback, 30);
+#endif
+
+#ifdef USE_VT13
+    UART_Init(&huart1, VT13_UART_Callback, 30);
 #endif
     // 上位机USB
     USB_Init(&MiniPC_USB_Manage_Object, MiniPC_USB_Callback);
@@ -876,21 +807,9 @@ extern "C" void Task_Init()
 extern "C" void Task_Loop()
 {
 #ifdef GIMBAL
-    // // 解析法求解逆运动学
-    // ikine_pieper_solutions(chariot.Gimbal.target_pos, chariot.Gimbal.target_rpy, &chariot.Gimbal.solutions[0]);
-    // chariot.Gimbal.valid_IK_cnt = solution_filter(&chariot.Gimbal.solutions[0], chariot.Gimbal.valid_solution);
-    // if (chariot.Gimbal.valid_IK_cnt > 0)
-    // {
-    //     float *current_angle = get_now_motor_angles(&chariot.Gimbal);
-    //     chariot.Gimbal.solution_index = get_best_solution_index(chariot.Gimbal.solutions, chariot.Gimbal.valid_solution, current_angle);
-    //     // 将选择的合法解转为电机控制角度
-    //     for (int i = 0; i < 6; i++)
-    //     {
-    //         chariot.Gimbal.model_result[i] = chariot.Gimbal.solutions[chariot.Gimbal.solution_index][i][0];
-    //     }
-    // }        // 计算 q_start 对应的真实 XYZ 和 RPY
 
 #endif
+
 #ifdef CHASSIS
 
 #endif

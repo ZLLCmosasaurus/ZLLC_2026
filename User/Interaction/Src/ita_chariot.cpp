@@ -544,6 +544,22 @@ void Class_Chariot::Control_Chassis()
             {
                 Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
             }
+
+            // 测试抬升
+            if (DR16_Right_Switch_Status == DR16_Switch_Status_UP)
+            {
+                lift_select[0] = true;
+                lift_select[1] = true;
+                lift_drc[0] = Lift_Direction_UP;
+                lift_drc[1] = Lift_Direction_UP;
+            }
+            else if (DR16_Right_Switch_Status == DR16_Switch_Status_DOWN)
+            {
+                lift_select[0] = true;
+                lift_select[1] = true;
+                lift_drc[0] = Lift_Direction_DOWN;
+                lift_drc[1] = Lift_Direction_DOWN;
+            }
             break;
         }
         case (DR16_Switch_Status_DOWN):
@@ -582,10 +598,13 @@ void Class_Chariot::Control_Chassis()
 
         // 遥控器操作逻辑
         Enum_VT13_Switch_Status VT13_Left_Switch_Status = VT13.Get_Switch();
-        switch (VT13_Switch_Status_Left)
+        switch (VT13_Left_Switch_Status)
+        {
+        case (VT13_Switch_Status_Left):
         {
             Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
             break;
+        }
         case (VT13_Switch_Status_Middle): // 左中 正常模式控制底盘，只有当机械臂移动到初始位姿后才将底盘设置为正常模式
         {
             if (Gimbal.arm_init)
@@ -626,6 +645,16 @@ void Class_Chariot::Control_Chassis()
     else if ((Active_Controller == Controller_DR16 && DR16_Control_Type == DR16_Control_Type_KEYBOARD) ||
              (Active_Controller == Controller_VT13 && VT13_Control_Type == VT13_Control_Type_KEYBOARD))
     {
+        // 底盘控制激活
+        if (Gimbal.arm_init && Gimbal.Get_Gimbal_Control_Type() == Gimbal_Control_Type_NORMAL)
+        {
+            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL);
+        }
+        else
+        {
+            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
+        }
+
         // DR16键鼠
         if (Active_Controller == Controller_DR16)
         {
@@ -654,20 +683,20 @@ void Class_Chariot::Control_Chassis()
             // WASD模拟杆量
             if (DR16.Get_Keyboard_Key_W() == DR16_Key_Status_PRESSED)
             {
-                left_x = 1.0f;
+                left_y = 1.0f;
             }
             else if (DR16.Get_Keyboard_Key_S() == DR16_Key_Status_PRESSED)
             {
-                left_x = -1.0f;
+                left_y = -1.0f;
             }
 
             if (DR16.Get_Keyboard_Key_A() == DR16_Key_Status_PRESSED)
             {
-                left_y = 1.0f;
+                left_x = -1.0f;
             }
             else if (DR16.Get_Keyboard_Key_D() == DR16_Key_Status_PRESSED)
             {
-                left_y = -1.0f;
+                left_x = 1.0f;
             }
 
             // 鼠标模拟杆量
@@ -693,17 +722,17 @@ void Class_Chariot::Control_Chassis()
                 // Q，E控制机械臂抬升
                 if (DR16.Get_Keyboard_Key_Q() == DR16_Key_Status_PRESSED)
                 {
-                    lift_select[1] = true;
-                    lift_drc[1] = Lift_Direction_UP;
+                    lift_select[0] = true;
+                    lift_drc[0] = Lift_Direction_UP;
                 }
                 else if (DR16.Get_Keyboard_Key_E() == DR16_Key_Status_PRESSED)
                 {
-                    lift_select[1] = true;
-                    lift_drc[1] = Lift_Direction_DOWN;
+                    lift_select[0] = true;
+                    lift_drc[0] = Lift_Direction_DOWN;
                 }
                 else
                 {
-                    lift_select[1] = false;
+                    lift_select[0] = false;
                 }
                 break;
             }
@@ -825,20 +854,20 @@ void Class_Chariot::Control_Chassis()
             // WASD模拟杆量
             if (VT13.Get_Keyboard_Key_W() == VT13_Key_Status_PRESSED)
             {
-                left_x = 1.0f;
+                left_y = 1.0f;
             }
             else if (VT13.Get_Keyboard_Key_S() == VT13_Key_Status_PRESSED)
             {
-                left_x = -1.0f;
+                left_y = -1.0f;
             }
 
             if (VT13.Get_Keyboard_Key_A() == VT13_Key_Status_PRESSED)
             {
-                left_y = 1.0f;
+                left_x = -1.0f;
             }
             else if (VT13.Get_Keyboard_Key_D() == VT13_Key_Status_PRESSED)
             {
-                left_y = -1.0f;
+                left_x = 1.0f;
             }
 
             // 鼠标模拟杆量
@@ -864,17 +893,17 @@ void Class_Chariot::Control_Chassis()
                 // Q，E控制机械臂抬升
                 if (VT13.Get_Keyboard_Key_Q() == VT13_Key_Status_PRESSED)
                 {
-                    lift_select[1] = true;
-                    lift_drc[1] = Lift_Direction_UP;
+                    lift_select[0] = true;
+                    lift_drc[0] = Lift_Direction_UP;
                 }
                 else if (VT13.Get_Keyboard_Key_E() == VT13_Key_Status_PRESSED)
                 {
-                    lift_select[1] = true;
-                    lift_drc[1] = Lift_Direction_DOWN;
+                    lift_select[0] = true;
+                    lift_drc[0] = Lift_Direction_DOWN;
                 }
                 else
                 {
-                    lift_select[1] = false;
+                    lift_select[0] = false;
                 }
                 break;
             }
@@ -1326,10 +1355,12 @@ void Class_Chariot::Control_Chassis()
                 case (Lift_Direction_UP):
                 {
                     target_uplift_rad[i] += PI * 0.03f;
+                    break;
                 }
                 case (Lift_Direction_DOWN):
                 {
                     target_uplift_rad[i] -= PI * 0.03f;
+                    break;
                 }
                 }
             }
@@ -1498,6 +1529,12 @@ void Class_Chariot::Control_Gimbal()
     else if ((Active_Controller == Controller_DR16 && DR16_Control_Type == DR16_Control_Type_KEYBOARD) ||
              (Active_Controller == Controller_VT13 && VT13_Control_Type == VT13_Control_Type_KEYBOARD))
     {
+        // 机械臂激活
+        if (Gimbal.Get_Gimbal_Control_Type() == Gimbal_Control_Type_DISABLE)
+        {
+            Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
+        }
+
         // DR16键鼠
         if (Active_Controller == Controller_DR16)
         {
@@ -2024,6 +2061,7 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
             // 判断底盘通讯在线状态
             TIM1msMod50_Chassis_Communicate_Alive_PeriodElapsedCallback();
             DR16.TIM1msMod50_Alive_PeriodElapsedCallback();
+            VT13.TIM1msMod50_Alive_PeriodElapsedCallback();
             mod50_mod3 = 0;
         }
 #ifdef defined(USE_DR16)
