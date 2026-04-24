@@ -262,6 +262,7 @@ public:
     inline float Get_Target_Main_Yaw_Angle();
     inline float Get_Target_Pitch_Angle();
     inline Enum_Gimbal_Control_Type Get_Gimbal_Control_Type();
+    inline int Get_last_Cruise_Mode();
 
     inline void Set_Gimbal_Control_Type(Enum_Gimbal_Control_Type __Gimbal_Control_Type);
     inline void Set_Target_Main_Yaw_Angle(float __Target_Yaw_Angle);
@@ -270,6 +271,7 @@ public:
 
     void TIM_Calculate_PeriodElapsedCallback();
 
+    uint32_t Single_time = 0;
 protected:
     //初始化相关常量
     float Gimbal_Head_Angle;
@@ -297,6 +299,20 @@ protected:
     //内部变量 
 
     //读变量
+// ---------- 巡航正弦参数（常量）----------
+    static constexpr float YAW_AMPLITUDE   = 60.0f;   // 振幅，范围 [-60, 60]
+    static constexpr float YAW_OFFSET      = 0.0f;    // 偏置
+    static constexpr float YAW_FREQ        = 1.0f;    // 频率 (Hz)
+
+    static constexpr float PITCH_AMPLITUDE = 23.5f;   // 振幅，范围 [-25, 22]
+    static constexpr float PITCH_OFFSET    = -1.5f;   // 偏置
+    static constexpr float PITCH_FREQ      = 4.6f;    // 频率 (Hz)
+
+    // ---------- 巡航状态变量 ----------
+    float phi0_yaw          = 0.0f;   // Yaw 初始相位（弧度）
+    float phi0_pitch        = 0.0f;   // Pitch 初始相位（弧度）
+    uint32_t cruise_start_time = 0;   // 进入巡航时刻的时间戳
+    int last_mode_for_cruise  = -1;   // 上一次上位机 mode 值
 
     //写变量
 
@@ -344,7 +360,15 @@ float Class_Gimbal::Get_Target_Pitch_Angle()
 {
     return (Target_Pitch_Angle);
 }
-
+/**
+ * @brief 获取上一次巡航模式
+ *
+ * @return int 上一次巡航模式
+ */
+int Class_Gimbal::Get_last_Cruise_Mode()
+{
+    return (last_mode_for_cruise);
+}
 /**
  * @brief 获取云台控制类型
  *

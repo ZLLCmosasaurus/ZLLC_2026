@@ -2,12 +2,12 @@
     "name": "ZLLC_2026",
     "target": "ZLLC_2026",
     "toolchain": "AC6",
-    "toolchainLocation": "c:\\Users\\HLlll\\AppData\\Local\\Keil_v5\\ARM\\ARMCLANG",
-    "toolchainCfgFile": "c:\\Users\\HLlll\\.vscode\\extensions\\cl.eide-3.26.7\\res\\data\\models/arm.v6.model.json",
+    "toolchainLocation": "D:\\Keil_v5\\ARM\\ARMCLANG",
+    "toolchainCfgFile": "c:\\Users\\Lenovo\\.vscode\\extensions\\cl.eide-3.26.7\\res\\data\\models/arm.v6.model.json",
     "buildMode": "fast|multhread",
     "showRepathOnLog": true,
-    "threadNum": 20,
-    "rootDir": "c:\\Users\\HLlll\\Downloads\\M67_2026\\MDK-ARM",
+    "threadNum": 32,
+    "rootDir": "c:\\Users\\Lenovo\\Desktop\\M67_2026\\MDK-ARM",
     "dumpPath": "build\\ZLLC_2026",
     "outDir": "build\\ZLLC_2026",
     "ram": 327680,
@@ -30,8 +30,7 @@
         "../User/Algorithm/Inc",
         "../Drivers/CMSIS/Include",
         ".cmsis/include",
-        "RTE/_ZLLC_2026",
-        "../DSP/Include"
+        "RTE/_ZLLC_2026"
     ],
     "libDirs": [],
     "defines": [
@@ -46,6 +45,7 @@
         "../Core/Src/dma.c",
         "../Core/Src/fdcan.c",
         "../Core/Src/gpio.c",
+        "../Core/Src/iwdg.c",
         "../Core/Src/main.c",
         "../Core/Src/spi.c",
         "../Core/Src/stm32h7xx_hal_msp.c",
@@ -84,7 +84,6 @@
         "../Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c",
         "../Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c",
         "../Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c",
-        "../Src/arm_cortexM7l_math.lib",
         "../USB_DEVICE/App/usb_device.c",
         "../USB_DEVICE/App/usbd_cdc_if.c",
         "../USB_DEVICE/App/usbd_desc.c",
@@ -176,21 +175,21 @@
             "rw-base": "",
             "xo-base": "",
             "link-scatter": [
-                "c:/Users/HLlll/Downloads/M67_2026/MDK-ARM/build/ZLLC_2026/ZLLC_2026.sct"
+                "c:/Users/Lenovo/Desktop/M67_2026/MDK-ARM/build/ZLLC_2026/ZLLC_2026.sct"
             ]
         }
     },
     "env": {
         "KEIL_OUTPUT_DIR": "output",
-        "workspaceFolder": "c:\\Users\\HLlll\\Downloads\\M67_2026\\MDK-ARM",
+        "workspaceFolder": "c:\\Users\\Lenovo\\Desktop\\M67_2026\\MDK-ARM",
         "workspaceFolderBasename": "MDK-ARM",
-        "OutDir": "c:\\Users\\HLlll\\Downloads\\M67_2026\\MDK-ARM\\build\\ZLLC_2026",
+        "OutDir": "c:\\Users\\Lenovo\\Desktop\\M67_2026\\MDK-ARM\\build\\ZLLC_2026",
         "OutDirRoot": "build",
         "OutDirBase": "build\\ZLLC_2026",
         "ProjectName": "ZLLC_2026",
         "ConfigName": "ZLLC_2026",
-        "ProjectRoot": "c:\\Users\\HLlll\\Downloads\\M67_2026\\MDK-ARM",
-        "ExecutableName": "c:\\Users\\HLlll\\Downloads\\M67_2026\\MDK-ARM\\build\\ZLLC_2026\\ZLLC_2026",
+        "ProjectRoot": "c:\\Users\\Lenovo\\Desktop\\M67_2026\\MDK-ARM",
+        "ExecutableName": "c:\\Users\\Lenovo\\Desktop\\M67_2026\\MDK-ARM\\build\\ZLLC_2026\\ZLLC_2026",
         "ChipPackDir": "",
         "ChipName": "",
         "SYS_Platform": "win32",
@@ -199,11 +198,11 @@
         "SYS_PathSep": ";",
         "SYS_PathSeparator": ";",
         "SYS_EOL": "\r\n",
-        "EIDE_BUILDER_DIR": "c:\\Users\\HLlll\\.vscode\\extensions\\cl.eide-3.26.7\\res\\tools\\win32\\unify_builder",
+        "EIDE_BUILDER_DIR": "c:\\Users\\Lenovo\\.vscode\\extensions\\cl.eide-3.26.7\\res\\tools\\win32\\unify_builder",
         "EIDE_BINARIES_VER": "12.1.1",
-        "EIDE_MSYS": "C:\\Users\\HLlll\\.eide\\bin\\builder\\msys\\bin",
-        "EIDE_PY3_CMD": "C:\\Users\\HLlll\\.eide\\bin\\python36\\python3.exe",
-        "ToolchainRoot": "c:\\Users\\HLlll\\AppData\\Local\\Keil_v5\\ARM\\ARMCLANG"
+        "EIDE_MSYS": "C:\\Users\\Lenovo\\.eide\\bin\\builder\\msys\\bin",
+        "EIDE_PY3_CMD": "C:\\Users\\Lenovo\\.eide\\bin\\python36\\python3.exe",
+        "ToolchainRoot": "D:\\Keil_v5\\ARM\\ARMCLANG"
     },
     "sysPaths": []
 }

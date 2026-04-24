@@ -1366,7 +1366,7 @@ void Class_FSM_Alive_Control_Fs_i6x::Reload_TIM_Status_PeriodElapsedCallback()
             }
 
             //超过一秒的离线 跳转到 关闭状态
-            if(Status[Now_Status_Serial].Time > 1000)
+            if(Status[Now_Status_Serial].Time > 100)
             {
                 Status[Now_Status_Serial].Time = 0;
                 Set_Status(1);

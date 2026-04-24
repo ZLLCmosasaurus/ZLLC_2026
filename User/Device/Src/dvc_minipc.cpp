@@ -81,7 +81,7 @@ void Class_MiniPC::Data_Process(Enum_MiniPC_Data_Source Data_Source)
     Rx_Chassis_Target_Velocity_X          = Data_NUC_To_MCU.Move_Linear_Velocity_X / 100.0f;
     Rx_Chassis_Target_Velocity_Y          = Data_NUC_To_MCU.Move_Linear_Velocity_Y / 100.0f;
     Rx_Gimbal_Angular_Velocity_Yaw_Main   = Data_NUC_To_MCU.Gimbal_Angular_Velocity_Yaw_Main / 100.0f;
-    mode = Data_NUC_To_MCU.mode;
+    //mode = Data_NUC_To_MCU.mode;
     Rx_Angle_Yaw = Data_NUC_To_MCU.yaw;
     Rx_Angle_Pitch = Data_NUC_To_MCU.pitch;
     Math_Constrain(&Rx_Angle_Pitch, -25.0f, 22.0f);
