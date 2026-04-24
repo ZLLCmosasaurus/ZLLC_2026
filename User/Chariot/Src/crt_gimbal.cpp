@@ -174,6 +174,11 @@ void Class_Gimbal::TIM_Calculate_PeriodElapsedCallback()
     }
     }
 
+    // Pitch轴VT03
+    __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, VT03_Pitch_Servo_PWM);
+    // Yaw轴VT03
+    __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, VT03_Yaw_Servo_PWM);
+
     // 用于更新当前机械臂位置
     // Trajectory_Tracer.arm_pos_rpy_update();
 }

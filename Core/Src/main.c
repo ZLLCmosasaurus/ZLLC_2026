@@ -112,6 +112,7 @@ int main(void)
   // MX_IWDG1_Init();
   MX_USART2_UART_Init();
   MX_TIM12_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
   Task_Init();
   /* USER CODE END 2 */

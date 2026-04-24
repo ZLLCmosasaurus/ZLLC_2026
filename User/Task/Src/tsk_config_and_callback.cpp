@@ -754,6 +754,10 @@ extern "C" void Task_Init()
     SPI_Init(&hspi2, Device_SPI2_Callback);
 // 磁力计iic外设
 // IIC_Init(&hi2c3, Ist8310_IIC3_Callback);    //达妙无磁力计
+
+    // 图传舵机PWM输出
+    HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+    HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
 // 遥控器接收
 #ifdef USE_DR16
     UART_Init(&huart5, DR16_UART5_Callback, 18);
