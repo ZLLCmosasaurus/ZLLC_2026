@@ -230,11 +230,18 @@ protected:
     Class_PID PID_Velocity_X;
     Class_PID PID_Velocity_Y;
 
+    //云台坐标系的当前速度
     float Now_Velocity_X;
     float Now_Velocity_Y;
     float Now_Omega;
 
-      float delta_angle = 0.0f;                      //云台坐标系转换底盘坐标系的偏差角度，以云台相对与底盘逆时针增大为正
+    float Now_Velocity_X_Chassis;
+    float Now_Velocity_Y_Chassis;
+    float Now_Omega_Chassis;
+
+    float Theory_WHeel_Omega[4], Slip_Rate[4];
+
+    float delta_angle = 0.0f;                      //云台坐标系转换底盘坐标系的偏差角度，以云台相对与底盘逆时针增大为正
     // 轮向电机动摩擦阻力电流值(起转阻力)
     float Dynamic_Resistance_Wheel_Current[4] = {0.0f,
                                                  0.0f,

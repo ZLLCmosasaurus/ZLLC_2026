@@ -571,7 +571,7 @@ void Task1ms_TIM5_Callback()
         mod5++;
         mod100++;
         mod68++;
-        if (mod5 == 5)
+        if (mod5 == 2)
         {
             #ifdef GIMBAL
             // 上位机

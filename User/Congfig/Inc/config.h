@@ -17,7 +17,7 @@
 /* Exported macros -----------------------------------------------------------*/
 
 //底盘或云台状态
-//#define CHASSIS
+// #define CHASSIS
 #define GIMBAL
 
 //遥控器选择

@@ -462,7 +462,7 @@ void Class_Tricycle_Chassis::Chassis_Speed_Estimate()
     float Ins_Accel_Y_b = IMU->Get_Accel_Y_b();
 
     float Distance_Offset = 0.0f;
-    float offset_angle = atan2f(H7_Offset_X, H7_Offset_Y);
+    float offset_angle = atan2f(H7_Offset_Y, H7_Offset_X);
 
     tmp_Velocity_Vx = tmp_Velocity_Vy = tmp_Omega = 0.0f;
     for (int i = 0; i < 4; i++)
@@ -475,8 +475,8 @@ void Class_Tricycle_Chassis::Chassis_Speed_Estimate()
 
     //离心加速度补偿
     arm_sqrt_f32(H7_Offset_X * H7_Offset_X + H7_Offset_Y * H7_Offset_Y, &Distance_Offset);
-    Ins_Accel_X_b = Ins_Accel_X_b - Distance_Offset * IMU->Get_Gyro_Yaw() * IMU->Get_Gyro_Yaw() * arm_sin_f32(offset_angle);
-    Ins_Accel_Y_b = Ins_Accel_Y_b - Distance_Offset * IMU->Get_Gyro_Yaw() * IMU->Get_Gyro_Yaw() * arm_cos_f32(offset_angle);
+    Ins_Accel_X_b = Ins_Accel_X_b - Distance_Offset * IMU->Get_Gyro_Yaw() * IMU->Get_Gyro_Yaw() * arm_cos_f32(offset_angle);
+    Ins_Accel_Y_b = Ins_Accel_Y_b - Distance_Offset * IMU->Get_Gyro_Yaw() * IMU->Get_Gyro_Yaw() * arm_sin_f32(offset_angle);
 
     Chassis_To_Gimbal_Coordinate_Transform(Ins_Accel_X_b, Ins_Accel_Y_b);
     Chassis_To_Gimbal_Coordinate_Transform(tmp_Velocity_Vx, tmp_Velocity_Vy);
@@ -489,6 +489,11 @@ void Class_Tricycle_Chassis::Chassis_Speed_Estimate()
     Now_Velocity_X = Chassis_Speed_Kalman.FilteredValue[0];
     Now_Velocity_Y = Chassis_Speed_Kalman.FilteredValue[1];
     Now_Omega      = Chassis_Speed_Kalman.FilteredValue[4];
+
+    Now_Velocity_X_Chassis = Now_Velocity_X;
+    Now_Velocity_Y_Chassis = Now_Velocity_Y;
+    Now_Omega_Chassis = Now_Omega;
+    Gimbal_To_Chassis_Coordinate_Transform(Now_Velocity_X_Chassis, Now_Velocity_Y_Chassis);
 
 }
 
@@ -616,6 +621,19 @@ void Class_Tricycle_Chassis::Force_Speed_Resolution()
             {
                 Target_Wheel_Torque[i] += Motor_Wheel[i].Get_Now_Omega_Radian() / Wheel_Resistance_Omega_Threshold * Dynamic_Resistance_Wheel_Current[i];
             }
+
+            float tmp_theta = Wheel_Azimuth[i] - atan2f(Now_Velocity_Y_Chassis, Now_Velocity_X_Chassis);
+            float a = Now_Velocity_X_Chassis * Now_Velocity_X_Chassis + Now_Velocity_Y_Chassis * Now_Velocity_Y_Chassis;
+            float b = (Chassis_Radius * Now_Omega_Chassis) * (Chassis_Radius * Now_Omega_Chassis);
+            float c = a * a + b * b - 2 * a * b * arm_cos_f32(Wheel_Azimuth[i] - tmp_theta);
+            Theory_WHeel_Omega[i] = sqrtf(c) / WHEEL_RADIUS;
+            Slip_Rate[i] = (Theory_WHeel_Omega[i] - Motor_Wheel[i].Get_Now_Omega_Radian()) / Theory_WHeel_Omega[i];
+            // Math_Constrain(&Slip_Rate[i], -1.0f, 1.0f);
+            // if(Slip_Rate[i] < -0.3f){
+            //     Target_Wheel_Torque[i] -= (Slip_Rate[i] + 0.3f) * 20000.0f; 
+            // }
+
+
             
             Motor_Wheel[i].Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_TORQUE);
             Motor_Wheel[i].Set_Target_Torque(Target_Wheel_Torque[i]);
@@ -664,9 +682,9 @@ void Class_Tricycle_Chassis::TIM_Calculate_PeriodElapsedCallback()
     //速度解算
     Speed_Resolution();
 
-     //Chassis_Speed_Estimate();
-     //Stree_Angle_Resolution();
-     //Force_Speed_Resolution();
+     Chassis_Speed_Estimate();
+    //  Stree_Angle_Resolution();
+     Force_Speed_Resolution();
 
     #if POWER_CONTROL == 1
     /*************************功率限制策略*******************************/

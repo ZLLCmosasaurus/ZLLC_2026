@@ -216,7 +216,7 @@ protected:
     float Omega_Max;
 
     //常量
-    float Zero_Position = 1.57156336f;             //rad
+    float Zero_Position = 2.81332064;             //rad
     float Zero_Offset_Radian = 0.0f;        //rad -PI -- PI
     float Zero_Offset_Angle = 0.0f;
 

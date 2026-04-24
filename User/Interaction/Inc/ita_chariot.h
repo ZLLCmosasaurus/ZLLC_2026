@@ -259,7 +259,7 @@ protected:
     Struct_CAN_Manage_Object *CAN_Manage_Object = &CAN2_Manage_Object;
 
     //底盘标定参考正方向角度(数据来源yaw电机)       注意如果更改了Encoder_offset，这里的数值也会变化
-    float Reference_Angle = -2.17847776;
+    float Reference_Angle = -1.4265281;
 
     #ifdef CHASSIS
         //小陀螺云台坐标系稳定偏转角度 用于矫正

@@ -259,6 +259,7 @@ struct Struct_MiniPC_Tx_Data
 
     // 导航
     int16_t Gimbal_Now_Yaw_Angle_Main; // 当前云台Yaw角度
+    int16_t Gimbal_Now_Yaw_Angle;      // 当前云台小Yaw角度
     int16_t Chassis_Now_yaw_Angle;     // 当前底盘yaw角度
 
     // 裁判系统
@@ -282,6 +283,20 @@ struct Struct_MiniPC_Tx_Data
 
     uint16_t crc16;
 } __attribute__((packed));
+
+struct Struct_MiniPC_Aimmer_Tx_Data
+{
+    uint8_t head[2] = {'S', 'P'}; // 帧头
+    uint8_t tmode;       // 0: 空闲, 1: 自瞄, 2: 小符, 3: 大符  哨兵不开符状态下全为1
+    float q[4];         // wxyz顺序
+    float yaw;
+    float yaw_vel;
+    float pitch;
+    float pitch_vel;
+    float bullet_speed;
+    uint16_t bullet_count; // 子弹累计发送次数
+    uint16_t crc16;
+}__attribute__((packed));
 
 typedef __packed struct //0x188
 {
@@ -445,6 +460,9 @@ protected:
     Enum_MiniPC_Status MiniPC_Status = MiniPC_Status_DISABLE;
     //迷你主机对外接口信息
     Struct_MiniPC_Rx_Data Data_NUC_To_MCU;
+    //迷你主机对外接口信息
+    Struct_MiniPC_Tx_Data Data_MCU_To_NUC;
+    Struct_MiniPC_Aimmer_Tx_Data Data_MCU_To_NUC_Aimmer;
 
     Enum_Supercap_Mode   Supercap_Mode   = Supercap_DISABLE;
     Enum_Outpost_Mode    Outpost_Mode    = Outpost_Mode_DISABLE;
@@ -478,9 +496,6 @@ protected:
 
 
     //写变量
-
-    //迷你主机对外接口信息
-    Struct_MiniPC_Tx_Data Data_MCU_To_NUC;
 
 
 
