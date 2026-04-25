@@ -120,7 +120,7 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>DLGUARM</Key>
-          <Name>旍?</Name>
+          <Name>岏?</Name>
         </SetRegEntry>
         <SetRegEntry>
           <Number>0</Number>
@@ -314,6 +314,11 @@
           <count>32</count>
           <WinNumber>1</WinNumber>
           <ItemText>hfdcan3</ItemText>
+        </Ww>
+        <Ww>
+          <count>33</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>\\ZLLC_2026\../User/Task/Src/tsk_config_and_callback.cpp\chariot.MiniPC.USB_Manage_Object-&gt;Tx_Buffer[31]</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>

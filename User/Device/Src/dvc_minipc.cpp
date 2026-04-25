@@ -151,9 +151,9 @@ void Class_MiniPC::Output()
   Data_MCU_To_NUC.bullet_speed = Referee->Get_Shoot_Speed();
   Data_MCU_To_NUC.bullet_count = 10;                                    //累计发弹数量
   //Data_MCU_To_NUC.Gimbal_Now_Pitch_Angle         = int16_t(Now_Angle_Pitch * 100.0f);
-  Data_MCU_To_NUC.Gimbal_Now_Yaw_Angle_Main      = int16_t(Now_Angle_Main_Yaw * 100.0f);
-  Data_MCU_To_NUC.Gimbal_Now_Yaw_Angle           = int16_t(Now_Angle_Yaw * 100.0f);
-  Data_MCU_To_NUC.Chassis_Now_yaw_Angle          = int16_t((IMU->Get_Angle_Yaw() - Now_Angle_Relative) * 100.0f);
+  Data_MCU_To_NUC.Gimbal_Now_Yaw_Angle_Main      = Now_Angle_Main_Yaw;
+  Data_MCU_To_NUC.Gimbal_Now_Yaw_Angle           = Now_Angle_Yaw;
+  Data_MCU_To_NUC.Chassis_Now_yaw_Angle          = (IMU->Get_Angle_Yaw() - Now_Angle_Relative);
   Data_MCU_To_NUC.Game_Progress                  = (uint8_t)Referee->Get_Game_Stage();
   Data_MCU_To_NUC.Self_HP                        = Referee->Get_HP();
   Data_MCU_To_NUC.Self_Outpost_HP                = Self_Outpost_HP;

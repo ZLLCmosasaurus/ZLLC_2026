@@ -258,9 +258,9 @@ struct Struct_MiniPC_Tx_Data
     uint16_t bullet_count; // 子弹累计发送次数
 
     // 导航
-    int16_t Gimbal_Now_Yaw_Angle_Main; // 当前云台Yaw角度
-    int16_t Gimbal_Now_Yaw_Angle;      // 当前云台小Yaw角度
-    int16_t Chassis_Now_yaw_Angle;     // 当前底盘yaw角度
+    float Gimbal_Now_Yaw_Angle_Main; // 当前云台Yaw角度
+    float Gimbal_Now_Yaw_Angle;      // 当前云台小Yaw角度
+    float Chassis_Now_yaw_Angle;     // 当前底盘yaw角度
 
     // 裁判系统
     uint8_t Game_Progress;         // 比赛阶段
