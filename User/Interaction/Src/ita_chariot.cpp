@@ -101,141 +101,12 @@ void Class_Chariot::Init(float __DR16_Dead_Zone)
 #ifdef CHASSIS
 void Class_Chariot::CAN_Chassis_Tx_Gimbal_Callback()
 {
-    uint16_t Shooter_Heat;
-    uint16_t Cooling_Value;
-    uint16_t Self_HP, Self_Outpost_HP, Oppo_Outpost_HP, Self_Base_HP, Ammo_number;
-    uint8_t color, remaining_energy, supercap_proportion, radar_info, dart_target;
-    uint16_t Pre_HP[6] = {0};
-    uint16_t HP[6] = {0};
-    uint8_t Flag[6] = {0};
-    float Pre_Count[6] = {0};
-    uint16_t Position[8] = {0};
-    int16_t Bullet_Speed = 0.f;
-    int16_t Self_Position_X, Self_Position_Y;
-    int16_t Target_Position_X, Target_Position_Y;
-    // 数据更新
-    if (Referee.Get_ID() == Referee_Data_Robots_ID_RED_SENTRY_7)
+    // 检查到裁判系统存活时通过CAN发送自定义控制器角度数据
+    if (Referee.Get_Referee_Status() == Referee_Status_ENABLE)
     {
-        color = 1;
-        Oppo_Outpost_HP = Referee.Get_HP(Referee_Data_Robots_ID_BLUE_OUTPOST_11);
-        Self_Outpost_HP = Referee.Get_HP(Referee_Data_Robots_ID_RED_OUTPOST_11);
-        Self_Base_HP = Referee.Get_HP(Referee_Data_Robots_ID_RED_BASE_10);
-
-        for (int i = 0; i < 6; i++)
-        {
-            Pre_HP[i] = HP[i];
-        }
-
-        HP[0] = Referee.Get_HP(Referee_Data_Robots_ID_BLUE_HERO_1);
-        HP[1] = Referee.Get_HP(Referee_Data_Robots_ID_BLUE_ENGINEER_2);
-        HP[2] = Referee.Get_HP(Referee_Data_Robots_ID_BLUE_INFANTRY_3);
-        HP[3] = Referee.Get_HP(Referee_Data_Robots_ID_BLUE_INFANTRY_4);
-        HP[4] = Referee.Get_HP(Referee_Data_Robots_ID_BLUE_INFANTRY_5);
-        HP[5] = Referee.Get_HP(Referee_Data_Robots_ID_BLUE_SENTRY_7);
+        memcpy(&CAN3_Controller_Tx_Data_A, &Referee.Interaction_Custom_Controller.Data[0], 8);
+        memcpy(&CAN3_Controller_Tx_Data_B, &Referee.Interaction_Custom_Controller.Data[8], 8);
     }
-    else if (Referee.Get_ID() == Referee_Data_Robots_ID_BLUE_SENTRY_7)
-    {
-        color = 0;
-        Oppo_Outpost_HP = Referee.Get_HP(Referee_Data_Robots_ID_RED_OUTPOST_11);
-        Self_Outpost_HP = Referee.Get_HP(Referee_Data_Robots_ID_BLUE_OUTPOST_11);
-        Self_Base_HP = Referee.Get_HP(Referee_Data_Robots_ID_BLUE_BASE_10);
-
-        for (int i = 0; i < 6; i++)
-        {
-            Pre_HP[i] = HP[i];
-        }
-
-        HP[0] = Referee.Get_HP(Referee_Data_Robots_ID_RED_HERO_1);
-        HP[1] = Referee.Get_HP(Referee_Data_Robots_ID_RED_ENGINEER_2);
-        HP[2] = Referee.Get_HP(Referee_Data_Robots_ID_RED_INFANTRY_3);
-        HP[3] = Referee.Get_HP(Referee_Data_Robots_ID_RED_INFANTRY_4);
-        HP[4] = Referee.Get_HP(Referee_Data_Robots_ID_RED_INFANTRY_5);
-        HP[5] = Referee.Get_HP(Referee_Data_Robots_ID_RED_SENTRY_7);
-    }
-    Shooter_Heat = Referee.Get_Booster_17mm_1_Heat();
-    if (Referee.Get_Shoot_Booster_Type() == Referee_Data_Robot_Booster_Type_BOOSTER_17MM_1)
-    {
-        Bullet_Speed = (int16_t)(Referee.Get_Shoot_Speed() * 100.f);
-    }
-    Self_HP = Referee.Get_HP();
-    Ammo_number = Referee.Get_17mm_Remaining();
-    Cooling_Value = Referee.Get_Booster_17mm_Heat_CD();
-    remaining_energy = Referee.Get_Remaining_Energy();
-    supercap_proportion = Chassis.Supercap.Get_Supercap_Proportion();
-    Self_Position_X = (int16_t)(Referee.Get_Location_X() * 100.f);
-    Self_Position_Y = (int16_t)(Referee.Get_Location_Y() * 100.f);
-    Target_Position_X = (int16_t)(Referee.Get_Radar_Send_Coordinate_X() * 100.f);
-    Target_Position_Y = (int16_t)(Referee.Get_Radar_Send_Coordinate_Y() * 100.f);
-    radar_info = Referee.Get_Radar_Info();
-    dart_target = Referee.Get_Dart_Command_Target() | (0x01 & Referee.Get_Sentry_Info_1() >> 19) << 2;
-
-    for (int i = 0; i < 6; i++) // 无敌状态辨认
-    {
-        if (HP[i] > 0 && Pre_HP[i] == 0)
-        {
-            Flag[i] = 1;
-            Pre_Count[i] = DWT_GetTimeline_s();
-        }
-        if ((DWT_GetTimeline_s() - Pre_Count[i]) > 7.f && Flag[i] == 1)
-        {
-            Flag[i] = 0;
-            Pre_Count[i] = 0;
-        }
-    }
-
-    Position[0] = Referee.Get_Hero_Position_X();
-    Position[1] = Referee.Get_Hero_Position_Y();
-    Position[2] = Referee.Get_Sentry_Position_X();
-    Position[3] = Referee.Get_Sentry_Position_Y();
-    Position[4] = Referee.Get_Infantry_3_Position_X();
-    Position[5] = Referee.Get_Infantry_3_Position_Y();
-    Position[6] = Referee.Get_Infantry_4_Position_X();
-    Position[7] = Referee.Get_Infantry_4_Position_Y();
-
-    // 发送数据给云台
-    // A包
-    CAN3_Chassis_Tx_Data_A[0] = Referee.Get_Game_Stage();
-    CAN3_Chassis_Tx_Data_A[1] = Referee.Get_Remaining_Time() >> 8;
-    CAN3_Chassis_Tx_Data_A[2] = Referee.Get_Remaining_Time();
-    CAN3_Chassis_Tx_Data_A[3] = Referee.Get_HP() >> 8;
-    CAN3_Chassis_Tx_Data_A[4] = Referee.Get_HP();
-    CAN3_Chassis_Tx_Data_A[5] = Self_Outpost_HP >> 8;
-    CAN3_Chassis_Tx_Data_A[6] = Self_Outpost_HP;
-    CAN3_Chassis_Tx_Data_A[7] = color << 7 | Flag[5] << 5 | Flag[4] << 4 | Flag[3] << 3 | Flag[2] << 2 | Flag[1] << 1 | Flag[0] << 0;
-
-    // B包
-    memcpy(CAN3_Chassis_Tx_Data_B + 0, &Self_Base_HP, sizeof(uint16_t));
-    memcpy(CAN3_Chassis_Tx_Data_B + 2, &Oppo_Outpost_HP, sizeof(uint16_t));
-    memcpy(CAN3_Chassis_Tx_Data_B + 4, &Ammo_number, sizeof(uint16_t));
-    memcpy(CAN3_Chassis_Tx_Data_B + 6, &Cooling_Value, sizeof(uint16_t));
-
-    // C包
-    memcpy(CAN3_Chassis_Tx_Data_C + 0, &Shooter_Heat, sizeof(uint16_t));
-    memcpy(CAN3_Chassis_Tx_Data_C + 4, &remaining_energy, sizeof(uint8_t));
-    memcpy(CAN3_Chassis_Tx_Data_C + 5, &supercap_proportion, sizeof(uint8_t));
-    memcpy(CAN3_Chassis_Tx_Data_C + 6, &radar_info, sizeof(uint8_t));
-    memcpy(CAN3_Chassis_Tx_Data_C + 7, &dart_target, sizeof(uint8_t));
-
-    // D包
-    memcpy(CAN3_Chassis_Tx_Data_D + 0, &Position[0], sizeof(uint16_t));
-    memcpy(CAN3_Chassis_Tx_Data_D + 2, &Position[1], sizeof(uint16_t));
-    memcpy(CAN3_Chassis_Tx_Data_D + 4, &Position[2], sizeof(uint16_t));
-    memcpy(CAN3_Chassis_Tx_Data_D + 6, &Position[3], sizeof(uint16_t));
-
-    // E包
-    memcpy(CAN3_Chassis_Tx_Data_E + 0, &Self_Position_X, sizeof(int16_t));
-    memcpy(CAN3_Chassis_Tx_Data_E + 2, &Self_Position_Y, sizeof(int16_t));
-    memcpy(CAN3_Chassis_Tx_Data_E + 4, &Bullet_Speed, sizeof(int16_t));
-
-    // F包
-    memcpy(CAN3_Chassis_Tx_Data_F + 0, &Position[4], sizeof(uint16_t));
-    memcpy(CAN3_Chassis_Tx_Data_F + 2, &Position[5], sizeof(uint16_t));
-    memcpy(CAN3_Chassis_Tx_Data_F + 4, &Position[6], sizeof(uint16_t));
-    memcpy(CAN3_Chassis_Tx_Data_F + 6, &Position[7], sizeof(uint16_t));
-
-    // G包
-    memcpy(CAN3_Chassis_Tx_Data_G + 0, &Target_Position_X, sizeof(int16_t));
-    memcpy(CAN3_Chassis_Tx_Data_G + 2, &Target_Position_Y, sizeof(int16_t));
 }
 #endif
 
@@ -243,8 +114,8 @@ void Class_Chariot::CAN_Chassis_Tx_Gimbal_Callback()
  * @brief can回调函数处理云台发来的数据
  *
  */
-Struct_CAN_Referee_Rx_Data_t CAN_Referee_Rx_Data;
 #ifdef CHASSIS
+// Struct_CAN_Referee_Rx_Data_t CAN_Referee_Rx_Data;
 // 控制类型字节
 uint8_t control_type;
 
@@ -333,7 +204,7 @@ void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback(uint8_t *Rx_Data)
     case (0x95):
         // 裁判系统数据回传
         {
-            memcpy(&CAN_Referee_Rx_Data, &CAN_Manage_Object->Rx_Buffer.Data, sizeof(Struct_CAN_Referee_Rx_Data_t));
+            // memcpy(&CAN_Referee_Rx_Data, &CAN_Manage_Object->Rx_Buffer.Data, sizeof(Struct_CAN_Referee_Rx_Data_t));
             break;
         }
     }
@@ -359,46 +230,16 @@ void Class_Chariot::CAN_Gimbal_Rx_Chassis_Callback()
     Chassis_Alive_Flag++;
     switch (CAN_Manage_Object->Rx_Buffer.Header.Identifier)
     {
-    case (0x188):
+    // 自定义控制器A包
+    case (0x81):
     {
-        memcpy(&PRE_CAN3_Chassis_Rx_Data_A, &CAN3_Chassis_Rx_Data_A, sizeof(Referee_Rx_A_t));
-        CAN3_Chassis_Rx_Data_A.game_process = CAN_Manage_Object->Rx_Buffer.Data[0];
-        CAN3_Chassis_Rx_Data_A.remaining_time = CAN_Manage_Object->Rx_Buffer.Data[1] << 8 | CAN_Manage_Object->Rx_Buffer.Data[2];
-        CAN3_Chassis_Rx_Data_A.self_blood = CAN_Manage_Object->Rx_Buffer.Data[3] << 8 | CAN_Manage_Object->Rx_Buffer.Data[4];
-        CAN3_Chassis_Rx_Data_A.self_outpost_HP = CAN_Manage_Object->Rx_Buffer.Data[5] << 8 | CAN_Manage_Object->Rx_Buffer.Data[6];
-        CAN3_Chassis_Rx_Data_A.color_invincible_state = CAN_Manage_Object->Rx_Buffer.Data[7];
+        memcpy(&Controller_Buffer, &CAN_Manage_Object->Rx_Buffer.Data, 8);
         break;
     }
-    case (0x199):
+    // 自定义控制器B包
+    case (0x82):
     {
-        memcpy(&CAN3_Chassis_Rx_Data_B, CAN_Manage_Object->Rx_Buffer.Data, sizeof(Referee_Rx_B_t));
-        break;
-    }
-    case (0x178):
-    {
-        memcpy(&CAN3_Chassis_Rx_Data_C, CAN_Manage_Object->Rx_Buffer.Data, sizeof(Referee_Rx_C_t));
-        Booster.Set_Heat(CAN3_Chassis_Rx_Data_C.Booster_Heat);
-        break;
-    }
-    case (0x198):
-    {
-        memcpy(&CAN3_Chassis_Rx_Data_D, CAN_Manage_Object->Rx_Buffer.Data, sizeof(Referee_Rx_D_t));
-        break;
-    }
-    case (0x197):
-    {
-        memcpy(&CAN3_Chassis_Rx_Data_E, CAN_Manage_Object->Rx_Buffer.Data, sizeof(Referee_Rx_E_t));
-        speed_a = (float)(CAN3_Chassis_Rx_Data_E.Bullet_Speed / 100.f);
-        break;
-    }
-    case (0x196):
-    {
-        memcpy(&CAN3_Chassis_Rx_Data_F, CAN_Manage_Object->Rx_Buffer.Data, sizeof(Referee_Rx_F_t));
-        break;
-    }
-    case (0x191):
-    {
-        memcpy(&CAN3_Chassis_Rx_Data_G, CAN_Manage_Object->Rx_Buffer.Data, sizeof(Referee_Rx_G_t));
+        memcpy(&Controller_Buffer, &CAN_Manage_Object->Rx_Buffer.Data, 7);
         break;
     }
     }
@@ -484,6 +325,7 @@ void Class_Chariot::CAN_Gimbal_Tx_Chassis_Callback()
     // 装入CAN发送缓冲区
     memcpy(CAN3_Gimbal_Tx_Chassis_Data, &Tx_Frame, sizeof(Tx_Frame));
 }
+
 #endif
 /**
  * @brief 底盘控制逻辑
@@ -1530,10 +1372,10 @@ void Class_Chariot::Control_Gimbal()
              (Active_Controller == Controller_VT13 && VT13_Control_Type == VT13_Control_Type_KEYBOARD))
     {
         // 机械臂激活
-        if (Gimbal.Get_Gimbal_Control_Type() == Gimbal_Control_Type_DISABLE)
-        {
-            Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
-        }
+        //if (Gimbal.Get_Gimbal_Control_Type() == Gimbal_Control_Type_DISABLE)
+        //{
+        //    Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
+        //}
 
         // DR16键鼠
         if (Active_Controller == Controller_DR16)

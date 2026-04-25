@@ -117,13 +117,6 @@ public:
     void Reload_TIM_Status_PeriodElapsedCallback();
 };
 
-// 自定义控制器数据格式
-struct Struct_Offline_Controller_Data
-{
-    float Angle[6];
-    bool gripper_status;
-} __attribute__((packed));
-
 // 云台发送底盘相关通信帧格式
 // Data[6] 的位域定义
 struct LiftControl {
@@ -175,10 +168,11 @@ public:
     // 发射机构
     Class_Booster Booster;
 
-    // 离线状态下自定义控制器数据
-    Struct_Offline_Controller_Data Offline_Controller_Data;
+    // 离线状态下自定义控制器
+    Class_Custom_Controller Offline_Custom_Controller;
+    Struct_Custom_Controller_Data Offline_Controller_Data = Offline_Custom_Controller.Custom_Controller_Data;
 
-    uint8_t UART1_Buffer[14];
+    uint8_t Controller_Buffer[15];
 
     // 遥控器离线保护控制状态机
     Class_FSM_Alive_Control FSM_Alive_Control;
@@ -261,7 +255,7 @@ public:
     Enum_MiniPC_Status MiniPC_Status = MiniPC_Status_DISABLE;
     // 裁判系统UI刷新状态
     Enum_Referee_UI_Refresh_Status Referee_UI_Refresh_Status = Referee_UI_Refresh_Status_DISABLE;
-    // 数据帧结构体
+    // 云台发送到底盘的数据帧结构体
     Gimbal_Tx_Chassis_Frame Rx_Frame;
     
     void Judge_DR16_Control_Type();

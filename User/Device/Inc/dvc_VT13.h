@@ -14,6 +14,7 @@
 
 #include "stdint.h"
 #include "string.h"
+#include "dvc_CustomController.h"
 
 #define KEY_W 0
 #define KEY_S 1
@@ -202,6 +203,9 @@ class Class_VT13
 
   void VT13_UART_RxCpltCallback(uint8_t *Rx_Data);
   void TIM1msMod50_Alive_PeriodElapsedCallback();
+
+  // 自定义控制器类
+  Class_Custom_Controller Custom_Controller;
 
   private:
 

@@ -347,6 +347,8 @@ void Gimbal_Device_CAN3_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
     switch (CAN_RxMessage->Header.Identifier)
     {
+    case (0x81):    // 自定义控制器A包
+    case (0x82):    // 自定义控制器B包
     case (0x188):
     case (0x199):
     case (0x178):
@@ -455,30 +457,7 @@ void Referee_UART10_Callback(uint8_t *Buffer, uint16_t Length)
 
 void Offline_Controller_UART1_Callback(uint8_t *Buffer, uint16_t Length)
 {
-    memcpy(chariot.UART1_Buffer, Buffer, 15);
-
-    int i;
-    for (i = 0; i < 15; i++)
-    {
-        if (chariot.UART1_Buffer[i] == 0xA5)
-        {
-            break;
-        }
-    }
-
-    bool flag = chariot.UART1_Buffer[(i + 14) % 15] == 0x11;
-
-    if (flag)
-    {
-        for (int j = 0; j < 6; j++)
-        {
-            int index = 2 * j + i;
-            int16_t temp = (Buffer[index + 2] << 8) | Buffer[index + 1];
-            chariot.Offline_Controller_Data.Angle[j] = temp / 100.f;
-        }
-
-        chariot.Offline_Controller_Data.gripper_status = Buffer[(i + 13) % 15] == 1 ? true : false;
-    }
+    chariot.Offline_Custom_Controller.Custom_Controller_Data_Process(Buffer);
 }
 
 void Referee_UART10_Callback(uint8_t *Buffer, uint16_t Length)
@@ -693,8 +672,8 @@ void Task1ms_TIM5_Callback()
         if (mod100 == 100)
         {
 #ifdef CHASSIS
-            // 裁判系统发送
-            chariot.Referee.TIM_UART_Tx_PeriodElapsedCallback();
+            // 裁判系统UI发送
+            chariot.Referee.UART_Tx_Referee_UI();
 #endif
             mod100 = 0;
         }

@@ -552,6 +552,11 @@
               <FileType>1</FileType>
               <FilePath>..\User\Device\Src\buzzer_bsp.c</FilePath>
             </File>
+            <File>
+              <FileName>dvc_CustomController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User\Device\Src\dvc_CustomController.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

@@ -521,7 +521,7 @@ protected:
     bool enable_pitch = false;
 
     // 图传舵机控制变量
-    uint16_t VT03_Pitch_Servo_PWM = 2500;
+    uint16_t VT03_Pitch_Servo_PWM = 1300;
     uint16_t VT03_Yaw_Servo_PWM = 2500;
     // 内部变量
 
