@@ -81,7 +81,7 @@ void Class_MiniPC::Data_Process(Enum_MiniPC_Data_Source Data_Source)
     Rx_Chassis_Target_Velocity_X          = Data_NUC_To_MCU.Move_Linear_Velocity_X / 100.0f;
     Rx_Chassis_Target_Velocity_Y          = Data_NUC_To_MCU.Move_Linear_Velocity_Y / 100.0f;
     Rx_Gimbal_Angular_Velocity_Yaw_Main   = Data_NUC_To_MCU.Gimbal_Angular_Velocity_Yaw_Main / 100.0f;
-    //mode = Data_NUC_To_MCU.mode;
+    mode = Data_NUC_To_MCU.mode;
     Rx_Angle_Yaw = Data_NUC_To_MCU.yaw;
     Rx_Angle_Pitch = Data_NUC_To_MCU.pitch;
     Math_Constrain(&Rx_Angle_Pitch, -25.0f, 22.0f);
@@ -109,7 +109,7 @@ extern Referee_Rx_G_t CAN3_Chassis_Rx_Data_G;
 volatile int index = 0;
 void Class_MiniPC::Output()
 {
-  static uint8_t mod2 = 0;
+ // static uint8_t mod2 = 0;
   static uint8_t  Color = 0, Invincible_Flag[6] = {0,0,0,0,0,0};
   uint16_t Self_Outpost_HP = 0, Oppo_Outpost_HP = 0, Self_Base_HP = 0;
 
@@ -129,19 +129,19 @@ void Class_MiniPC::Output()
   Data_MCU_To_NUC.q[2] = arm_cos_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f) + arm_sin_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f);
   Data_MCU_To_NUC.q[3] = arm_cos_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f) - arm_sin_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f);
 
-  //发送自瞄的数据
-  Data_MCU_To_NUC_Aimmer.tmode = 1;
-  Data_MCU_To_NUC_Aimmer.q[0] = Data_MCU_To_NUC.q[0];
-  Data_MCU_To_NUC_Aimmer.q[1] = Data_MCU_To_NUC.q[1];
-  Data_MCU_To_NUC_Aimmer.q[2] = Data_MCU_To_NUC.q[2];
-  Data_MCU_To_NUC_Aimmer.q[3] = Data_MCU_To_NUC.q[3];
-  Data_MCU_To_NUC_Aimmer.yaw = Now_Angle_Yaw;
-  Data_MCU_To_NUC_Aimmer.yaw_vel = External_IMU->Get_Gyro_Yaw() * 57.3f;
-  Data_MCU_To_NUC_Aimmer.pitch = Now_Angle_Pitch;
-  Data_MCU_To_NUC_Aimmer.pitch_vel = External_IMU->Get_Gyro_Pitch() * 57.3f;
-  Data_MCU_To_NUC_Aimmer.bullet_speed = Referee->Get_Shoot_Speed();
-  Data_MCU_To_NUC_Aimmer.bullet_count = 10;                                    //累计发弹数量
-  Append_CRC16_Check_Sum((uint8_t*)&Data_MCU_To_NUC_Aimmer, sizeof(Struct_MiniPC_Aimmer_Tx_Data));
+  // //发送自瞄的数据
+  // Data_MCU_To_NUC_Aimmer.tmode = 1;
+  // Data_MCU_To_NUC_Aimmer.q[0] = Data_MCU_To_NUC.q[0];
+  // Data_MCU_To_NUC_Aimmer.q[1] = Data_MCU_To_NUC.q[1];
+  // Data_MCU_To_NUC_Aimmer.q[2] = Data_MCU_To_NUC.q[2];
+  // Data_MCU_To_NUC_Aimmer.q[3] = Data_MCU_To_NUC.q[3];
+  // Data_MCU_To_NUC_Aimmer.yaw = Now_Angle_Yaw;
+  // Data_MCU_To_NUC_Aimmer.yaw_vel = External_IMU->Get_Gyro_Yaw() * 57.3f;
+  // Data_MCU_To_NUC_Aimmer.pitch = Now_Angle_Pitch;
+  // Data_MCU_To_NUC_Aimmer.pitch_vel = External_IMU->Get_Gyro_Pitch() * 57.3f;
+  // Data_MCU_To_NUC_Aimmer.bullet_speed = Referee->Get_Shoot_Speed();
+  // Data_MCU_To_NUC_Aimmer.bullet_count = 10;                                    //累计发弹数量
+  // Append_CRC16_Check_Sum((uint8_t*)&Data_MCU_To_NUC_Aimmer, sizeof(Struct_MiniPC_Aimmer_Tx_Data));
 
 
   Data_MCU_To_NUC.yaw = Now_Angle_Yaw;
@@ -199,18 +199,21 @@ void Class_MiniPC::Output()
   //crc16 校验
   Append_CRC16_Check_Sum((uint8_t *)&Data_MCU_To_NUC, sizeof(Struct_MiniPC_Tx_Data));
 
-  // USB通信
-  memset(USB_Manage_Object->Tx_Buffer, 0, sizeof(USB_Manage_Object->Tx_Buffer));
-  if(mod2 == 0){
-    mod2 = 1;
-    memcpy(USB_Manage_Object->Tx_Buffer, &Data_MCU_To_NUC, sizeof(Struct_MiniPC_Tx_Data));
-    USB_Manage_Object->Tx_Buffer_Length = sizeof(Struct_MiniPC_Tx_Data);
-  }
-  else {
-    mod2 = 0;
-    memcpy(USB_Manage_Object->Tx_Buffer, &Data_MCU_To_NUC_Aimmer, sizeof(Struct_MiniPC_Aimmer_Tx_Data));
-    USB_Manage_Object->Tx_Buffer_Length = sizeof(Struct_MiniPC_Aimmer_Tx_Data);
-  }
+  memcpy(USB_Manage_Object->Tx_Buffer, &Data_MCU_To_NUC, sizeof(Struct_MiniPC_Tx_Data));
+  USB_Manage_Object->Tx_Buffer_Length = sizeof(Struct_MiniPC_Tx_Data);
+  
+  // // USB通信
+  // memset(USB_Manage_Object->Tx_Buffer, 0, sizeof(USB_Manage_Object->Tx_Buffer));
+  // if(mod2 == 0){
+  //   mod2 = 1;
+  //   memcpy(USB_Manage_Object->Tx_Buffer, &Data_MCU_To_NUC, sizeof(Struct_MiniPC_Tx_Data));
+  //   USB_Manage_Object->Tx_Buffer_Length = sizeof(Struct_MiniPC_Tx_Data);
+  // }
+  // else {
+  //   mod2 = 0;
+  //   memcpy(USB_Manage_Object->Tx_Buffer, &Data_MCU_To_NUC_Aimmer, sizeof(Struct_MiniPC_Aimmer_Tx_Data));
+  //   USB_Manage_Object->Tx_Buffer_Length = sizeof(Struct_MiniPC_Aimmer_Tx_Data);
+  // }
 
 
   //重新排序

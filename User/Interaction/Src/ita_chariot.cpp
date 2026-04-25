@@ -952,20 +952,29 @@ void Class_Chariot::Control_Booster()
         else
         {
             auto switch_state = FS_i6X.Get_Switch_3(); // 返回当前开关状态
-            if (switch_state == FS_Switch_Status_UP)
-            {
+            if (switch_state == FS_Switch_Status_UP){
                 Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
                 Shoot_Flag = 0;
             }
-            else if (switch_state == FS_Switch_Status_DOWN && Shoot_Flag == 0) // 单发
+            else if (switch_state == FS_Switch_Status_DOWN && Shoot_Flag == 0) // lian发
             {
-                Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                Booster.Set_Booster_Control_Type(Booster_Control_Type_REPEATED);
                 Shoot_Flag = 1;
             }
-            // else if (FS_i6X.Get_Yaw_left()<0) // 连发 yaw_left逆时针转减小
+            // if (switch_state == FS_Switch_Status_UP)
+            // {
+            //     Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+            //     Shoot_Flag = 0;
+            // }
+            // else if (switch_state == FS_Switch_Status_DOWN && Shoot_Flag == 0) // 单发
+            // {
+            //     Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+            //     Shoot_Flag = 1;
+            // }
+            // else if (switch_state == FS_Switch_Status_UP && FS_i6X.Get_Yaw_left() < 0) // 连发 yaw_left逆时针转减小
             // {
             //     Booster.Set_Booster_Control_Type(Booster_Control_Type_REPEATED);
-            //}
+            // }
         }
     }
     
