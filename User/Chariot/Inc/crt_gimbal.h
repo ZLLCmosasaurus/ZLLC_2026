@@ -267,7 +267,7 @@ public:
     inline void Set_Gimbal_Control_Type(Enum_Gimbal_Control_Type __Gimbal_Control_Type);
     inline void Set_Target_Main_Yaw_Angle(float __Target_Yaw_Angle);
     inline void Set_Target_Pitch_Angle(float __Target_Pitch_Angle);
-
+    inline void Set_last_Cruise_Mode(int __last_mode_for_cruise);
 
     void TIM_Calculate_PeriodElapsedCallback();
 
@@ -403,6 +403,13 @@ void Class_Gimbal::Set_Target_Main_Yaw_Angle(float __Target_Main_Yaw_Angle)
 void Class_Gimbal::Set_Target_Pitch_Angle(float __Target_Pitch_Angle)
 {
     Target_Pitch_Angle = __Target_Pitch_Angle;
+}
+/**
+ * @brief 设定巡航标志位
+ *
+ */void Class_Gimbal::Set_last_Cruise_Mode(int __last_mode_for_cruise)
+{    
+    last_mode_for_cruise = __last_mode_for_cruise;
 }
 #endif
 

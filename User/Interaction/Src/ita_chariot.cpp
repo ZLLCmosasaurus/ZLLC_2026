@@ -1389,7 +1389,7 @@ void Class_FSM_Alive_Control_Fs_i6x::Reload_TIM_Status_PeriodElapsedCallback()
             Chariot->Booster.Set_Booster_Control_Type(Booster_Control_Type_DISABLE);
             Chariot->Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_DISABLE);
             Chariot->Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
-
+           
             if(Chariot->FS_i6X.Get_FS_Status() == FS_Status_ENABLE)
             {
                 Chariot->Chassis.Set_Chassis_Control_Type(Chariot->Get_Pre_Chassis_Control_Type());

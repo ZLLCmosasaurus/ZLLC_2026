@@ -149,6 +149,7 @@ void Class_Gimbal::Output()
 
             camera_switch_status = 0;
             camera_switch_time = 0;
+            last_mode_for_cruise = -1;       //重置巡航状态
         }
         else if ((Get_Gimbal_Control_Type() == Gimbal_Control_Type_MINIPC) && (MiniPC->Get_MiniPC_Status() != MiniPC_Status_DISABLE))
         {
@@ -323,7 +324,7 @@ void Class_Gimbal::Output()
 
             camera_switch_status = 0;
             camera_switch_time = 0;
-
+            last_mode_for_cruise = -1;       //重置巡航状态
         }
     }
 }
@@ -347,6 +348,7 @@ void Class_Gimbal::Gimbal_Disable()
     Motor_Yaw.Set_Target_Torque(0.0f);
     Motor_Pitch.Set_Target_Torque(0.0f);
     Motor_Main_Yaw.Set_Target_Torque(0.0f);
+    last_mode_for_cruise = -1;       //重置巡航状态
 }
 
 /**
