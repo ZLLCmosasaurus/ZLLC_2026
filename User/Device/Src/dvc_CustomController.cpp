@@ -2,7 +2,6 @@
 
 void Class_Custom_Controller::Custom_Controller_Data_Process(uint8_t *Rx_Data)
 {
-    rx_frequence = DWT_GetDeltaT(&frequence_cnt);
     memcpy(Data_Buffer, Rx_Data, 15);
 
     // 寻找帧头
@@ -28,5 +27,7 @@ void Class_Custom_Controller::Custom_Controller_Data_Process(uint8_t *Rx_Data)
         }
 
         Custom_Controller_Data.gripper_status = Data_Buffer[(i + 13) % 15] == 1 ? true : false;
+
+        rx_frequence = DWT_GetDeltaT(&frequence_cnt);
     }
 }

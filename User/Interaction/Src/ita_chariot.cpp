@@ -487,16 +487,6 @@ void Class_Chariot::Control_Chassis()
     else if ((Active_Controller == Controller_DR16 && DR16_Control_Type == DR16_Control_Type_KEYBOARD) ||
              (Active_Controller == Controller_VT13 && VT13_Control_Type == VT13_Control_Type_KEYBOARD))
     {
-        // 底盘控制激活
-        if (Gimbal.arm_init && Gimbal.Get_Gimbal_Control_Type() == Gimbal_Control_Type_NORMAL)
-        {
-            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL);
-        }
-        else
-        {
-            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
-        }
-
         // DR16键鼠
         if (Active_Controller == Controller_DR16)
         {
@@ -544,7 +534,7 @@ void Class_Chariot::Control_Chassis()
             // 鼠标模拟杆量
             if (DR16.Get_Mouse_Right_Key() == DR16_Key_Status_FREE)
             {
-                right_x = DR16.Get_Mouse_X();
+                right_x = DR16.Get_Mouse_X() * Mouse_Resolution;
             }
 
             // 各种模式下特定的键位设置
@@ -715,12 +705,16 @@ void Class_Chariot::Control_Chassis()
             // 鼠标模拟杆量
             if (VT13.Get_Mouse_Right_Key() == VT13_Key_Status_FREE)
             {
-                right_x = VT13.Get_Mouse_X();
+                right_x = VT13.Get_Mouse_X() * Mouse_Resolution;
             }
 
             // 各种模式下特定的键位设置
             switch (Keyboard_Control_Type)
             {
+            case (Keyboard_Control_Type_DISABLE):
+            {
+                Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
+            }
             case (Keyboard_Control_Type_WORKING):
             {
                 // 取兑矿模式
@@ -1277,6 +1271,7 @@ void Class_Chariot::Control_Gimbal()
         if (DR16.Get_Left_Switch() == DR16_Switch_Status_UP) // 左上 失能
         {
             Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_DISABLE);
+            Keyboard_Control_Type = Keyboard_Control_Type_DISABLE;
         }
         // 其余位置都是遥控器控制
         else if (DR16.Get_Left_Switch() == DR16_Switch_Status_MIDDLE) // 左中，摇杆控制机械臂
@@ -1371,11 +1366,6 @@ void Class_Chariot::Control_Gimbal()
     else if ((Active_Controller == Controller_DR16 && DR16_Control_Type == DR16_Control_Type_KEYBOARD) ||
              (Active_Controller == Controller_VT13 && VT13_Control_Type == VT13_Control_Type_KEYBOARD))
     {
-        // 机械臂激活
-        //if (Gimbal.Get_Gimbal_Control_Type() == Gimbal_Control_Type_DISABLE)
-        //{
-        //    Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
-        //}
 
         // DR16键鼠
         if (Active_Controller == Controller_DR16)
@@ -1502,6 +1492,7 @@ void Class_Chariot::Control_Gimbal()
     else if (Active_Controller == Controller_NONE)
     {
         Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_DISABLE);
+        Keyboard_Control_Type = Keyboard_Control_Type_DISABLE;
     }
 
     // 机械臂，夹爪以及图传目标位置赋值
@@ -2113,6 +2104,7 @@ void Class_FSM_Alive_Control::Reload_TIM_Status_PeriodElapsedCallback()
         // 转移为 在线状态
         if (Chariot->DR16.Get_DR16_Status() == DR16_Status_ENABLE)
         {
+            buzzer_setTask(&buzzer, BUZZER_DJI_STARTUP_PRIORITY);
             Status[Now_Status_Serial].Time = 0;
             Set_Status(2);
         }
@@ -2299,7 +2291,7 @@ void Class_FSM_Alive_Control_VT13::Reload_TIM_Status_PeriodElapsedCallback()
     case (0):
     {
         // 遥控器中途断联导致错误离线 跳转到 遥控器串口错误状态
-        if (huart9.ErrorCode)
+        if (huart1.ErrorCode)
         {
             Status[Now_Status_Serial].Time = 0;
             Set_Status(4);
@@ -2308,6 +2300,7 @@ void Class_FSM_Alive_Control_VT13::Reload_TIM_Status_PeriodElapsedCallback()
         // 转移为 在线状态
         if (Chariot->VT13.Get_VT13_Status() == VT13_Status_ENABLE)
         {
+            buzzer_setTask(&buzzer, BUZZER_DJI_STARTUP_PRIORITY);
             Status[Now_Status_Serial].Time = 0;
             Set_Status(2);
         }
@@ -2340,7 +2333,7 @@ void Class_FSM_Alive_Control_VT13::Reload_TIM_Status_PeriodElapsedCallback()
         }
 
         // 遥控器中途断联导致错误离线 跳转到 遥控器串口错误状态
-        if (huart9.ErrorCode)
+        if (huart1.ErrorCode)
         {
             Status[Now_Status_Serial].Time = 0;
             Set_Status(4);
@@ -2353,6 +2346,7 @@ void Class_FSM_Alive_Control_VT13::Reload_TIM_Status_PeriodElapsedCallback()
         // 转移为 刚离线状态
         if (Chariot->VT13.Get_VT13_Status() == VT13_Status_DISABLE)
         {
+            buzzer_setTask(&buzzer, BUZZER_FORCE_STOP_PRIORITY);
             Status[Now_Status_Serial].Time = 0;
             Set_Status(3);
         }
@@ -2373,9 +2367,9 @@ void Class_FSM_Alive_Control_VT13::Reload_TIM_Status_PeriodElapsedCallback()
     // 遥控器串口错误状态
     case (4):
     {
-        HAL_UART_DMAStop(&huart9); // 停止以重启
+        HAL_UART_DMAStop(&huart1); // 停止以重启
         // HAL_Delay(10); // 等待错误结束
-        HAL_UARTEx_ReceiveToIdle_DMA(&huart9, UART6_Manage_Object.Rx_Buffer, UART6_Manage_Object.Rx_Buffer_Length);
+        HAL_UARTEx_ReceiveToIdle_DMA(&huart1, UART1_Manage_Object.Rx_Buffer, UART1_Manage_Object.Rx_Buffer_Length);
 
         // 处理完直接跳转到 离线检测状态
         Status[Now_Status_Serial].Time = 0;

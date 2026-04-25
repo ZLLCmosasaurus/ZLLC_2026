@@ -595,8 +595,6 @@ void Task1ms_TIM5_Callback()
     if (init_finished > 2000)
         start_flag = 1;
 
-    // 上电蜂鸣器
-    buzzer_taskScheduler(&buzzer);
     if (init_finished == 2500)
     {
         buzzer_setTask(&buzzer, BUZZER_MARIO_SIMPLE_PRIORITY);
@@ -610,6 +608,9 @@ void Task1ms_TIM5_Callback()
     /****************************** 交互层回调函数 1ms *****************************************/
     if (start_flag == 1)
     {
+        
+    // 上电蜂鸣器
+    buzzer_taskScheduler(&buzzer);
 #ifdef GIMBAL
 
 // ============ 电机测试模式：绕过遥控器检测 ============
@@ -623,8 +624,8 @@ void Task1ms_TIM5_Callback()
         else
 #endif
         {
-            // 正常模式：需要遥控器
             chariot.FSM_Alive_Control.Reload_TIM_Status_PeriodElapsedCallback();
+            chariot.FSM_Alive_Control_VT13.Reload_TIM_Status_PeriodElapsedCallback();
         }
 #endif
 

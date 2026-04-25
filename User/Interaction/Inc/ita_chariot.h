@@ -90,6 +90,7 @@ enum Enum_Active_Controller
  */
 enum Enum_Keyboard_Control_Type
 {
+    Keyboard_Control_Type_DISABLE,
     Keyboard_Control_Type_MOVING,   // 平地移动
     Keyboard_Control_Type_WORKING,  // 取兑矿模式
     Keyboard_Control_Type_UPLIFT,   // 上台阶模式
@@ -272,6 +273,9 @@ public:
     float dr16_right_x, dr16_right_y, dr16_left_x, dr16_left_y, dr16_yaw;
     float vt13_right_x, vt13_right_y, vt13_left_x, vt13_left_y, vt13_yaw;
 
+    // 鼠标转向灵敏度值
+    float Mouse_Resolution = 100.0f;
+
 protected:
     // 初始化相关常量
 
@@ -319,7 +323,7 @@ protected:
     // 鼠标控制VT03图传Pitch角度灵敏度系数
     float DR16_Mouse_VT03_Pitch_Angle_Resolution = 57.8f * 10.0f;
     // 键鼠控制模式下机器人工况模式
-    Enum_Keyboard_Control_Type Keyboard_Control_Type = Keyboard_Control_Type_MOVING;
+    Enum_Keyboard_Control_Type Keyboard_Control_Type = Keyboard_Control_Type_DISABLE;
 
     // 内部变量
     // 遥控器离线计数
