@@ -47,6 +47,7 @@
 #include "config.h"
 #include "iwdg.h"
 #include "dvc_GraphicsSendTask.h"
+#include "drv_can.h"
 /* Private macros ------------------------------------------------------------*/
 
 /* Private types -------------------------------------------------------------*/
@@ -131,9 +132,10 @@ void Chassis_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
             chariot.Chassis.Motor_Joint[0].CAN_RxCpltCallback(CAN_RxMessage->Data);
             break;
         }
-        case(0xFC):
+        case(0x22):
         {
-            chariot.Chassis.Motor_Joint[1].CAN_RxCpltCallback(CAN_RxMessage->Data);
+            //chariot.Chassis.Motor_Joint[1].CAN_RxCpltCallback(CAN_RxMessage->Data);
+					  chariot.Chassis.Motor_Leg[1].CAN_RxCpltCallback(CAN_RxMessage->Data);
             break;
         }
         case(0x201):
@@ -518,9 +520,9 @@ void Task1ms_TIM5_Callback()
         #ifdef CHASSIS
 
         #endif
-        __disable_irq();
+       // __disable_irq();
         chariot.TIM_Calculate_PeriodElapsedCallback();
-        __enable_irq();
+      //  __enable_irq();
         
     /****************************** 驱动层回调函数 1ms *****************************************/ 
         //统一打包发送
@@ -651,7 +653,7 @@ extern "C" void Task_Init()
  extern "C" void Task_Loop()
 {
     #ifdef GIMBAL
-
+    
     #endif
     #ifdef CHASSIS
     if (start_flag == 1)
@@ -677,6 +679,17 @@ extern "C" void Task_Init()
             Init_Cnt = 10;
     }
     #endif
+
+     static uint32_t lastCheck = 0;
+    if ((HAL_GetTick() - lastCheck) > 100)   // 每 100ms 检查一次
+    {
+        lastCheck = HAL_GetTick();
+        extern FDCAN_HandleTypeDef hfdcan3;
+        if (hfdcan3.ErrorCode & HAL_FDCAN_ERROR_FIFO_FULL)
+        {
+          //FDCAN_RecoverFromFifoFull(&hfdcan3);
+        }
+    }
 }
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

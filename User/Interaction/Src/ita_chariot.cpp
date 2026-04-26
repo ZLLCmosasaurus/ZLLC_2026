@@ -460,31 +460,20 @@ void Class_Chariot::Control_Chassis()
         }
         if (DR16.Get_Left_Switch() == DR16_Switch_Status_UP) // 左上 小陀螺模式
         {
-            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_FLLOW);
-            // Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SPIN_Positive);
-            // chassis_omega = Chassis.Get_Spin_Omega();
-            // if (DR16.Get_Right_Switch() == DR16_Switch_Status_DOWN) // 右下 小陀螺反向
-            // {
-            //     Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SPIN_Negative);
-            //     chassis_omega = -Chassis.Get_Spin_Omega();
-            // }
+            // Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_FLLOW);
+            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SPIN_Positive);
+            chassis_omega = Chassis.Get_Spin_Omega();
+            if (DR16.Get_Right_Switch() == DR16_Switch_Status_DOWN) // 右下 小陀螺反向
+            {
+                Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SPIN_Negative);
+                chassis_omega = -Chassis.Get_Spin_Omega();
+            }
         }
         if (DR16.Get_Left_Switch() == DR16_Switch_Status_DOWN) //左下 位姿切换
         {
             // 底盘随动
             Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_FLLOW);
             #ifdef LOCKED_SWITCH
-            if (DR16.Get_Right_Switch() == DR16_Switch_Status_TRIG_MIDDLE_DOWN)
-            {
-                Chassis.Set_Pose_Control_Type(Pose_STANDBY);
-            }
-            else if (DR16.Get_Right_Switch() == DR16_Switch_Status_TRIG_DOWN_MIDDLE)
-            {
-                Chassis.Set_Pose_Control_Type(Pose_ENABLE);
-            }
-            #endif
-            #ifdef AUTO_SWITCH
-            
             //遥控器直接控制伸缩腿逻辑：从中到下状态-伸腿;从下到中状态-缩腿
             if (DR16.Get_Right_Switch() == DR16_Switch_Status_TRIG_MIDDLE_DOWN)
             {
@@ -494,7 +483,9 @@ void Class_Chariot::Control_Chassis()
             {
                 Chassis.Set_Pose_Control_Type(Pose_STANDBY);
             }
-
+            #endif
+            #ifdef AUTO_SWITCH
+            
             #endif
         }
 
@@ -1216,6 +1207,20 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
         }
         //kalman滤波处理
         Force_Control_Chassis.TIM_1ms_Kalmancale_PeriodElapsedCallback();
+
+            //底盘离线保护
+    #ifdef CHASSIS
+
+        if(Get_Gimbal_Status() == Gimbal_Status_DISABLE || Motor_Yaw_DM4310.Get_DM_Motor_Status() == DM_Motor_Status_DISABLE)
+        {
+        Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
+        Force_Control_Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE__);
+        Chassis.Set_Pose_Control_Type(Pose_DISABLE);
+        Chassis.Set_Track_Control_Type(Track_Off);
+        }
+
+    #endif
+    
     #endif	
     #elif defined(GIMBAL)
 
@@ -1357,6 +1362,8 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
             #ifdef TRACK_LEG
             Chassis.Motor_Joint[0].TIM_Alive_PeriodElapsedCallback();
             Chassis.Motor_Joint[1].TIM_Alive_PeriodElapsedCallback();
+            Chassis.Motor_Leg[0].TIM_Alive_PeriodElapsedCallback();
+            Chassis.Motor_Leg[1].TIM_Alive_PeriodElapsedCallback();
             Chassis.Motor_Track[0].TIM_Alive_PeriodElapsedCallback();
             Chassis.Motor_Track[1].TIM_Alive_PeriodElapsedCallback();
             Chassis.Motor_Guider[0].TIM_Alive_PeriodElapsedCallback();

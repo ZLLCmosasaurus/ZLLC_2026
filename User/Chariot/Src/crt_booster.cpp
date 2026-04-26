@@ -586,10 +586,10 @@ void Class_Booster::Output()
     #ifdef Double_Friction
     if (Friction_Control_Type != Friction_Control_Type_DISABLE)
     {
-        Fric[0].Set_Target_Omega_Rpm(Fric_High_Rpm + Fric_Transform_Rpm);
+        Fric[0].Set_Target_Omega_Rpm(-(Fric_Low_Rpm + Fric_Transform_Rpm));
         Fric[1].Set_Target_Omega_Rpm(Fric_Low_Rpm + Fric_Transform_Rpm);
-        Fric[2].Set_Target_Omega_Rpm(-(Fric_Low_Rpm + Fric_Transform_Rpm));
-        Fric[3].Set_Target_Omega_Rpm(-(Fric_High_Rpm + Fric_Transform_Rpm));
+        Fric[2].Set_Target_Omega_Rpm(-(Fric_High_Rpm + Fric_Transform_Rpm));
+        Fric[3].Set_Target_Omega_Rpm(Fric_High_Rpm + Fric_Transform_Rpm);
     }
     else
     {

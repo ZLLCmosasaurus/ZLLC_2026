@@ -6,8 +6,7 @@ packDir: .pack/Keil/STM32H7xx_DFP.4.0.0
 srcDirs: []
 virtualFolder:
   name: <virtual_root>
-  files:
-    - path: ../Src/arm_cortexM7l_math.lib
+  files: []
   folders:
     - name: Config
       files:
@@ -46,6 +45,7 @@ virtualFolder:
         - path: ../User/Device/Src/dvc_servo.cpp
         - path: ../User/Device/Src/dvc_buzzer.cpp
         - path: ../User/Device/Src/dvc_motor_dji.cpp
+        - path: ../User/Device/Src/dvc_dmimu.cpp
         - path: ../User/Device/Src/buzzer.c
         - path: ../User/Device/Src/buzzer_bsp.c
       folders: []
@@ -91,7 +91,6 @@ virtualFolder:
                 - path: ../Core/Src/dma.c
                 - path: ../Core/Src/fdcan.c
                 - path: ../Core/Src/iwdg.c
-                - path: ../Core/Src/memorymap.c
                 - path: ../Core/Src/spi.c
                 - path: ../Core/Src/tim.c
                 - path: ../Core/Src/usart.c
@@ -347,13 +346,9 @@ targets:
         - ../Drivers/CMSIS/Include
         - .cmsis/include
         - RTE/_ZLLC_2026
-        - ../DSP/Include
-        - ../Middlewares/ST/ARM/DSP/Inc
-      libList:
-        - ../Middlewares/ST/ARM/DSP/Inc
+      libList: []
     excludeList: []
-    settings:
-      debugger: cortex-debug
+    settings: {}
     toolchain: AC6
     toolchainConfigMap:
       AC6:
@@ -365,6 +360,7 @@ targets:
           afterBuildTasks: []
           asm-compiler:
             $use: asm-auto
+            defines: []
             misc-controls: ""
           beforeBuildTasks: []
           c/cpp-compiler:
@@ -377,7 +373,7 @@ targets:
             warnings: no-warnings
           global:
             output-debug-info: enable
-            use-microLIB: false
+            use-microLIB: true
           linker:
             $outputTaskExcludes:
               - .bin

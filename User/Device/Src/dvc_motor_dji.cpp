@@ -928,9 +928,9 @@ void Class_Motor_DJI_C620::TIM_Calculate_PeriodElapsedCallback()
 {
     PID_Calculate();
 
-    float tmp_value = Target_Current + Feedforward_Current;
-    Math_Constrain(&tmp_value, -Current_Max, Current_Max);
-    Out = tmp_value * Current_To_Out;
+    Tmp_value = Target_Current + Feedforward_Current;
+    Math_Constrain(&Tmp_value, -Current_Max, Current_Max);
+    Out = Tmp_value * Current_To_Out;
 
     // 计算功率估计值
     Power_Estimate = power_calculate(Power_K_0, Power_K_1, Power_K_2, Power_A, Target_Current, Rx_Data.Now_Omega / Gearbox_Rate);

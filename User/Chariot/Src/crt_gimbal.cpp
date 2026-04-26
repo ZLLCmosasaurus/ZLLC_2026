@@ -62,7 +62,7 @@ void Class_Gimbal_Yaw_Motor_DM4310::TIM_PID_PeriodElapsedCallback()
 
         //     //速度环
             PID_Omega.Set_Target(Target_Omega_DEG);
-            PID_Omega.Set_Now(Data.Now_Omega_Angle);
+            PID_Omega.Set_Now(Data.Now_Omega_Radian *(180.0 / PI)); // 电机反馈的角速度是弧度每秒，转为角度每秒
 
         }
         PID_Omega.TIM_Adjust_PeriodElapsedCallback();
@@ -146,7 +146,7 @@ void Class_Gimbal_Pitch_Motor_DM4310::TIM_PID_PeriodElapsedCallback()
 
             //速度环
             PID_Omega.Set_Target(Target_Omega_DEG);
-            PID_Omega.Set_Now(Data.Now_Omega_Angle);
+            PID_Omega.Set_Now(Data.Now_Omega_Radian *(180.0 / PI)); // 电机反馈的角速度是弧度每秒，转为角度每秒
 
         }
         PID_Omega.TIM_Adjust_PeriodElapsedCallback();

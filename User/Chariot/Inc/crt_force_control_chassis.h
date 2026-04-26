@@ -226,10 +226,10 @@ protected:
 /* Exported variables --------------------------------------------------------*/
 //底盘参数
 //底盘半宽 单位m
-const float HALF_WIDTH__ = 0.220f;
+const float HALF_WIDTH__ = 0.2455f;
 
 //底盘半长 单位m
-const float HALF_LENGTH__ = 0.2455f;
+const float HALF_LENGTH__ = 0.185f;
 
 /* Exported function declarations --------------------------------------------*/
 /**

@@ -538,6 +538,7 @@ protected:
     // 前一时刻的电机接收flag
     uint32_t Pre_Flag = 0;
     // 输出量
+    float Tmp_value = 0.0f;
     float Out = 0.0f;
 
     // 读变量

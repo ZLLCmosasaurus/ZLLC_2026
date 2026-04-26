@@ -113,6 +113,9 @@ struct Struct_DM_Motor_Rx_Data
     Enum_DM_Motor_ErrorCode ErrorCode;
     float Now_Angle;
     float Now_Radian;
+    float Now_Angle_Deg;
+    float Now_Angle_Rad;
+    float Now_Encoder_Position;
     float Now_Omega_Angle;
     float Now_Omega_Radian;
     float Now_Torque;
@@ -143,7 +146,7 @@ public:
     // PID扭矩环控制
     Class_PID PID_Torque;
 
-    void Init(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CAN_ID, Enum_DM_Motor_Control_Method __Control_Method = DM_Motor_Control_Method_MIT_POSITION, int32_t __Position_Offset = 0, float __Omega_Max = 20.94359f, float __Torque_Max = 10.0f);
+    void Init(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CAN_ID, Enum_DM_Motor_Control_Method __Control_Method = DM_Motor_Control_Method_MIT_POSITION, int32_t __Position_Offset = 0, float __Positon_Max = 3.141593f, float __Omega_Max = 20.94359f, float __Torque_Max = 10.0f);
 
     inline Enum_DM_Motor_Control_Status Get_DM_Motor_Control_Status();
     inline Enum_DM_Motor_Status Get_DM_Motor_Status();
@@ -189,6 +192,8 @@ protected:
     uint8_t *CAN_Tx_Data;
     //位置反馈偏移
     uint32_t Position_Offset;
+    //位置反馈最大值, 调参助手设置, 即为P_MAX，一般单圈设置为3.141593, 也就是360度
+    float Position_Max;
     //最大速度, 调参助手设置, 推荐20.94359, 也就是最大转速200rpm
     float Omega_Max;
     //最大扭矩, 调参助手设置, 推荐7, 也就是最大输出7NM
@@ -198,7 +203,7 @@ protected:
     //常量
     
     //一圈位置刻度
-    uint32_t Position_Max = 65536;
+    // uint32_t Position_Max = 65536;
 
     //内部变量
 

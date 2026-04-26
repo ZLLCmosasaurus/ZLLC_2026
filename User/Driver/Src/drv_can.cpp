@@ -360,13 +360,26 @@ void TIM_CAN_PeriodElapsedCallback()
         CAN_Send_Data(&hfdcan2, 0x200, CAN2_0x200_Tx_Data, 8); // 履带3508电机、导轮电机
         CAN_Send_Data(&hfdcan1, 0x200, CAN1_0x200_Tx_Data, 8); // 行进3508电机
         #endif
+        
+        
+        CAN_Send_Data(&hfdcan3, 0x20, CAN3_Chassis_Tx_Gimbal_Data_1, 8);
+
+    }
+    if(mod5 == 1) //200Hz
+    {
         //CAN1 超电
 		CAN_Send_Data(&hfdcan2, 0x66, CAN_Supercap_Tx_Data, 8);
         
-        CAN_Send_Data(&hfdcan3, 0x20, CAN3_Chassis_Tx_Gimbal_Data_1, 8);
     }
-    
-    if (mod10 == 10) //100Hz
+    if(mod5 == 2) //200Hz
+    {
+        // CAN_Send_Data(&hfdcan2, 0x12+0x100, CAN2_0xxf2_Tx_Data, 8); // 关节电机
+    }
+    if(mod5 == 3)
+    {
+        // CAN_Send_Data(&hfdcan2, 0x11+0x100, CAN2_0xxf1_Tx_Data, 8); // 关节电机
+    }
+    if (mod10 == 10 && (HAL_FDCAN_GetTxFifoFreeLevel(&hfdcan3) > 0)) //100Hz
     {
 		CAN_Send_Data(&hfdcan3, 0x51, CAN3_Chassis_Tx_Gimbal_Data, 8);
         mod10 = 0;
@@ -396,17 +409,14 @@ void TIM_CAN_PeriodElapsedCallback()
         // CAN2
         CAN_Send_Data(&hfdcan2,0x04,CAN2_0xxf4_Tx_Data,8);//PITCH
         // CAN3         
-        // CAN_Send_Data(&hfdcan3,0x03,CAN3_0xxf3_Tx_Data,8);// YAW
-        // CAN_Send_Data(&hfdcan3, 0x200, CAN3_0x200_Tx_Data, 8); //拨弹盘  按照0x200 ID 发送 可控制多个电机
         CAN_Send_Data(&hfdcan3, 0x52, CAN3_Gimbal_Tx_Chassis_Data, 8); //给底盘发送控制命令 按照0x77 ID 发送
-        
-        
     }
-     if(mod5 == 4)
+
+     if(mod5 == 4 )
     {
         CAN_Send_Data(&hfdcan3,0x03,CAN3_0xxf3_Tx_Data,8);// YAW
     }
-     if(mod5 == 3)
+     if(mod5 == 3 )
     {
         CAN_Send_Data(&hfdcan3, 0x200, CAN3_0x200_Tx_Data, 8); //拨弹盘  按照0x200 ID 发送 可控制多个电机
     }
@@ -420,7 +430,7 @@ void TIM_CAN_PeriodElapsedCallback()
     
         mod3 = 0;
     }   
-    if (mod10 == 10) //100Hz
+    if (mod10 == 10 ) //100Hz
     {
 		CAN_Send_Data(&hfdcan3, 0x78, CAN3_Gimbal_Tx_Chassis_Data_1, 8);
         mod10 = 0;
@@ -493,5 +503,70 @@ void HAL_FDCAN_TxBufferCompleteCallback(FDCAN_HandleTypeDef *hfdcan, uint32_t Bu
   /* NOTE: This function Should not be modified, when the callback is needed,
            the HAL_FDCAN_TxBufferCompleteCallback could be implemented in the user file
    */
+}
+/**
+ * @brief 从 FDCAN FIFO 满错误中恢复外设
+ * @param hfdcan FDCAN 句柄指针
+ * @retval HAL_OK: 恢复成功；其他: 恢复失败
+ */
+HAL_StatusTypeDef FDCAN_RecoverFromFifoFull(FDCAN_HandleTypeDef *hfdcan)
+{
+    HAL_StatusTypeDef status;
+    FDCAN_RxHeaderTypeDef RxHeader;
+    uint8_t rxData[8];
+    uint32_t fillLevel;
+
+    /* 1. 仅当错误为 FIFO_FULL 时执行恢复 */
+    if ((hfdcan->ErrorCode & HAL_FDCAN_ERROR_FIFO_FULL) == 0)
+    {
+        return HAL_OK;   // 无此错误，直接返回
+    }
+
+    /* 2. 临时关闭 FDCAN 全局中断，防止恢复过程中被中断干扰 */
+    HAL_NVIC_DisableIRQ(FDCAN3_IT0_IRQn);   // 根据实际中断号修改
+    // 若使用了多个 FIFO 中断，请一并关闭
+
+    /* 3. 彻底清空接收 FIFO0 */
+    do {
+        fillLevel = HAL_FDCAN_GetRxFifoFillLevel(hfdcan, FDCAN_RX_FIFO0);
+        if (fillLevel > 0) {
+            (void)HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &RxHeader, rxData);
+        }
+    } while (fillLevel > 0);
+
+    /* 4. 彻底清空接收 FIFO1 */
+    do {
+        fillLevel = HAL_FDCAN_GetRxFifoFillLevel(hfdcan, FDCAN_RX_FIFO1);
+        if (fillLevel > 0) {
+            (void)HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO1, &RxHeader, rxData);
+        }
+    } while (fillLevel > 0);
+
+    /* 5. 中止所有待发送的 Tx 请求（可选，但推荐） */
+    (void)HAL_FDCAN_AbortTxRequest(hfdcan, 0xFFFFFFFFU);
+
+    /* 6. 执行软复位：停止 → 去初始化 → 初始化 → 启动 */
+    (void)HAL_FDCAN_Stop(hfdcan);
+    (void)HAL_FDCAN_DeInit(hfdcan);
+    
+    status = HAL_FDCAN_Init(hfdcan);
+    if (status != HAL_OK) {
+        /* 初始化失败，可在此处加入硬复位（RCC 复位）作为最后手段 */
+        __HAL_RCC_FDCAN_FORCE_RESET();
+        __HAL_RCC_FDCAN_RELEASE_RESET();
+        status = HAL_FDCAN_Init(hfdcan);
+    }
+    
+    if (status == HAL_OK) {
+        status = HAL_FDCAN_Start(hfdcan);
+    }
+
+    /* 7. 重新使能中断 */
+    HAL_NVIC_EnableIRQ(FDCAN3_IT0_IRQn);   // 恢复中断使能
+
+    /* 8. 清除句柄中的错误码 */
+    hfdcan->ErrorCode &= ~HAL_FDCAN_ERROR_FIFO_FULL;
+
+    return status;
 }
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/
