@@ -682,9 +682,9 @@ void Class_Tricycle_Chassis::TIM_Calculate_PeriodElapsedCallback()
     //速度解算
     Speed_Resolution();
 
-     Chassis_Speed_Estimate();
+    //Chassis_Speed_Estimate();
     //  Stree_Angle_Resolution();
-     Force_Speed_Resolution();
+    //Force_Speed_Resolution();
 
     #if POWER_CONTROL == 1
     /*************************功率限制策略*******************************/
