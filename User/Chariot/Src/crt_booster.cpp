@@ -122,7 +122,7 @@ void Class_FSM_Antijamming::Reload_TIM_Status_PeriodElapsedCallback()
             //卡弹嫌疑状态
             Booster->Output();
 
-            if (Status[Now_Status_Serial].Time >= 100)
+            if (Status[Now_Status_Serial].Time >= 300)
             {
                 //长时间大扭矩->卡弹反应状态
                 Set_Status(2);
@@ -290,15 +290,17 @@ void Class_Booster::Output()
             Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
 
             // 根据冷却计算拨弹盘默认速度, 此速度下与冷却均衡
-            Default_Driver_Omega = 30.f / 10.0f / 9.0f * 2.0f * PI;
+            Default_Driver_Omega = 100.f / 10.0f / 9.0f * 2.0f * PI;
             Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega);
 
+            if (Heat< Heat_Max * 0.95f) {        //这里和最大热量有关
+            
             if (shoot_time == 0)                    //说明停火进来的
             {
                 ShootTime = ((Heat_Max - Heat) + 2 * Cooling_Value) * 10;
                 if (Heat_Max - Heat < 100)              //分级弹频
                 {
-                    shoot_speed = (10 * (Heat_Max - Heat) - Cooling_Value - 3 * Heat_Consumption) / (Heat_Consumption * (ShootTime / 100.f)) + Cooling_Value / Heat_Consumption;
+                    shoot_speed = (10 * (Heat_Max - Heat) - Cooling_Value - 2 * Heat_Consumption) / (Heat_Consumption * (ShootTime / 100.f)) + Cooling_Value / Heat_Consumption;
                 }
                 else
                 {
@@ -313,6 +315,7 @@ void Class_Booster::Output()
             }
             else
             {
+                
                 shoot_speed = (Cooling_Value / Heat_Consumption);
                 Driver_Omega = shoot_speed * 2 * PI / 9.f;
                 Math_Constrain(&Driver_Omega, 0.0f, 18.0f);
@@ -324,9 +327,9 @@ void Class_Booster::Output()
                 //10 * 控制周期(s)
                 shoot_time += 2;                           //注意这里应该和运算频率有关
             }
-
+}
             // Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega * 2.5f);//测试用 平常注释
-            if (Heat > Heat_Max * 0.95f)         //这里和最大热量有关
+           else        //这里和最大热量有关
             {
                 Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega * 0.4f);
             }

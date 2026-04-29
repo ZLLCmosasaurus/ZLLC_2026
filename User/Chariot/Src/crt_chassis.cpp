@@ -82,9 +82,9 @@ void Class_Tricycle_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max
     Steer_Power_Ratio = __Steer_Power_Ratio;
 
         //斜坡函数加减速速度X  控制周期1ms
-    Slope_Velocity_X.Init(0.005f,0.01f);
+    Slope_Velocity_X.Init(0.005f,0.0065f);
     //斜坡函数加减速速度Y  控制周期1ms
-    Slope_Velocity_Y.Init(0.005f,0.01f);
+    Slope_Velocity_Y.Init(0.005f,0.0065f);
     //斜坡函数加减速角速度
     Slope_Omega.Init(0.05f, 0.05f);
 
@@ -578,15 +578,15 @@ void Class_Tricycle_Chassis::Force_Speed_Resolution()
     {
 
        
-        PID_Velocity_X.Set_Target(Gimbal_Target_Velocity_X);
+        PID_Velocity_X.Set_Target(Slope_Velocity_X.Get_Out());
         PID_Velocity_X.Set_Now(Now_Velocity_X);
         PID_Velocity_X.TIM_Adjust_PeriodElapsedCallback();
 
-        PID_Velocity_Y.Set_Target(Gimbal_Target_Velocity_Y);
+        PID_Velocity_Y.Set_Target(Slope_Velocity_Y.Get_Out());
         PID_Velocity_Y.Set_Now(Now_Velocity_Y);
         PID_Velocity_Y.TIM_Adjust_PeriodElapsedCallback();
 
-        PID_Omega.Set_Target(Target_Omega);
+        PID_Omega.Set_Target(Slope_Omega.Get_Out());
         PID_Omega.Set_Now(Now_Omega);
         PID_Omega.TIM_Adjust_PeriodElapsedCallback();
 
@@ -668,10 +668,10 @@ float nb666;
 void Class_Tricycle_Chassis::TIM_Calculate_PeriodElapsedCallback()
 {
     //斜坡函数计算用于速度解算初始值获取
-    Slope_Velocity_X.Set_Target(Target_Velocity_X);
+    Slope_Velocity_X.Set_Target(Gimbal_Target_Velocity_X);
     Slope_Velocity_X.TIM_Calculate_PeriodElapsedCallback();
 
-    Slope_Velocity_Y.Set_Target(Target_Velocity_Y);
+    Slope_Velocity_Y.Set_Target(Gimbal_Target_Velocity_Y);
     Slope_Velocity_Y.TIM_Calculate_PeriodElapsedCallback();
 
     Slope_Omega.Set_Target(Target_Omega);
@@ -680,11 +680,11 @@ void Class_Tricycle_Chassis::TIM_Calculate_PeriodElapsedCallback()
     nb666=DWT_GetDeltaT(&nb);
 
     //速度解算
-    Speed_Resolution();
+    //Speed_Resolution();
 
-    //Chassis_Speed_Estimate();
-    //  Stree_Angle_Resolution();
-    //Force_Speed_Resolution();
+    Chassis_Speed_Estimate();
+      Stree_Angle_Resolution();
+    Force_Speed_Resolution();
 
     #if POWER_CONTROL == 1
     /*************************功率限制策略*******************************/
@@ -710,12 +710,12 @@ void Class_Tricycle_Chassis::TIM_Calculate_PeriodElapsedCallback()
         {
             if(supercap_flag == 1){                     //超电低电量了
                 Power_Management.Max_Power = Referee->Get_Chassis_Power_Max();
-                if(Supercap.Get_Supercap_Proportion() > (uint8_t)55){
+                if(Supercap.Get_Supercap_Proportion() > (uint8_t)75){
                     supercap_flag = 0;                  //充满电可以使用
                 }
             }
             else{
-                if (Supercap.Get_Supercap_Proportion() > (uint8_t)25)
+                if (Supercap.Get_Supercap_Proportion() > (uint8_t)40)
                 {
                     Power_Management.Max_Power = Supercap.Get_Buffer_Power() + Power_Management.Buffer_Power + Referee->Get_Chassis_Power_Max();
                 }

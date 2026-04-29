@@ -139,7 +139,7 @@ protected:
     uint16_t Cooling_Value = 30;
     float Heat_Consumption = 10.f;
     //拨弹盘堵转扭矩阈值, 超出被认为卡弹
-    uint16_t Driver_Torque_Threshold = 4000;
+    uint16_t Driver_Torque_Threshold = 6000;
     //摩擦轮单次判定发弹阈值, 超出被认为发射子弹
     uint16_t Friction_Torque_Threshold = 2000;
     //摩擦轮速度判定发弹阈值, 超出则说明已经开机

@@ -91,7 +91,10 @@ void Class_MiniPC::Data_Process(Enum_MiniPC_Data_Source Data_Source)
     }
 
     //要发给裁判系统的数据
-    Referee->Set_Sentry_Cmd(Data_NUC_To_MCU.Sentry_Cmd);
+    //Referee->Set_Sentry_Cmd(0x200000); // 进攻姿态
+    //Referee->Set_Sentry_Cmd(0x400000); // 防御姿态
+    //Referee->Set_Sentry_Cmd(0x600000); // 移动姿态 
+    //Referee->Set_Sentry_Cmd(Data_NUC_To_MCU.Sentry_Cmd);
   }
 }
 
