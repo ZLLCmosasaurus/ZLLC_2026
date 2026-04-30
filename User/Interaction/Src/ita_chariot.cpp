@@ -84,6 +84,9 @@ void Class_Chariot::Init(float __DR16_Dead_Zone)
     MiniPC.IMU = &Gimbal.Boardc_BMI;
     MiniPC.Referee = &Referee;
 
+    // 存取矿状态机
+    FSM_Save_Load.Gimbal = &this->Gimbal;
+
 #endif
 
 #ifdef CHASSIS_TEST
@@ -338,7 +341,6 @@ void Class_Chariot::Control_Chassis()
     // 判断当前使用的遥控器
     Judge_Active_Controller();
     // 用于计算底盘速度的杆量
-    float left_x, left_y, right_x, yaw;
 
     // 底盘坐标系速度目标值 float
     float chassis_velocity_x = 0, chassis_velocity_y = 0;
@@ -491,24 +493,33 @@ void Class_Chariot::Control_Chassis()
         if (Active_Controller == Controller_DR16)
         {
             // Z键进入取兑矿模式
-            if (DR16.Get_Keyboard_Key_Z() == DR16_Key_Status_TRIG_PRESSED_FREE)
+            if (DR16.Get_Keyboard_Key_Z() == DR16_Key_Status_TRIG_PRESSED_FREE && DR16.Get_Keyboard_Key_Shift() == DR16_Key_Status_FREE)
             {
                 Keyboard_Control_Type = Keyboard_Control_Type_WORKING;
             }
             // X键进入平动模式
-            else if (DR16.Get_Keyboard_Key_X() == DR16_Key_Status_TRIG_PRESSED_FREE)
+            else if (DR16.Get_Keyboard_Key_X() == DR16_Key_Status_TRIG_PRESSED_FREE && DR16.Get_Keyboard_Key_Shift() == DR16_Key_Status_FREE)
             {
                 Keyboard_Control_Type = Keyboard_Control_Type_MOVING;
             }
             // C键进入上台阶模式
-            else if (DR16.Get_Keyboard_Key_C() == DR16_Key_Status_TRIG_PRESSED_FREE)
+            else if (DR16.Get_Keyboard_Key_C() == DR16_Key_Status_TRIG_PRESSED_FREE && DR16.Get_Keyboard_Key_Shift() == DR16_Key_Status_FREE)
             {
                 Keyboard_Control_Type = Keyboard_Control_Type_UPLIFT;
             }
             // V键进入下台阶模式
-            else if (DR16.Get_Keyboard_Key_V() == DR16_Key_Status_TRIG_PRESSED_FREE)
+            else if (DR16.Get_Keyboard_Key_V() == DR16_Key_Status_TRIG_PRESSED_FREE && DR16.Get_Keyboard_Key_Shift() == DR16_Key_Status_FREE)
             {
                 Keyboard_Control_Type = Keyboard_Control_Type_DOWNLIFT;
+            }
+            // CTRL+Z 存取靠内的矿
+            else if (DR16.Get_Keyboard_Key_Z() == DR16_Key_Status_TRIG_PRESSED_FREE && DR16.Get_Keyboard_Key_Shift() == DR16_Key_Status_TRIG_PRESSED_FREE)
+            {
+                Keyboard_Control_Type = Keyboard_Control_Type_SAVE_LOAD;
+            }
+            else if (DR16.Get_Keyboard_Key_X() == DR16_Key_Status_TRIG_PRESSED_FREE && DR16.Get_Keyboard_Key_Shift() == DR16_Key_Status_TRIG_PRESSED_FREE)
+            {
+                Keyboard_Control_Type = Keyboard_Control_Type_SAVE_LOAD;
             }
 
             // 通用键位
@@ -534,15 +545,34 @@ void Class_Chariot::Control_Chassis()
             // 鼠标模拟杆量
             if (DR16.Get_Mouse_Right_Key() == DR16_Key_Status_FREE)
             {
-                right_x = DR16.Get_Mouse_X() * Mouse_Resolution;
+                right_x = DR16.Get_Mouse_X();
+                right_x *= Mouse_Resolution;
+                right_x = fabs(right_x);
+
+                // 设置阈值区间
+                if (right_x >= 0.2f)
+                {
+                    right_x = 1.0f;
+                }
+
+                // 正负号
+                if (DR16.Get_Mouse_X() > 0)
+                {
+                    right_x *= 1.0f;
+                }
+                else if (DR16.Get_Mouse_X() < 0)
+                {
+                    right_x *= -1.0f;
+                }
             }
 
             // 各种模式下特定的键位设置
             switch (Keyboard_Control_Type)
             {
             case (Keyboard_Control_Type_WORKING):
+            case (Keyboard_Control_Type_SAVE_LOAD):
             {
-                // 取兑矿模式
+                // 取兑矿模式以及存取矿模式
                 Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL);
                 // 默认1/2速度，按下Shift恢复原有速度
                 if (DR16.Get_Keyboard_Key_Shift() != DR16_Key_Status_PRESSED)
@@ -662,24 +692,32 @@ void Class_Chariot::Control_Chassis()
         else if (Active_Controller == Controller_VT13)
         {
             // Z键进入取兑矿模式
-            if (VT13.Get_Keyboard_Key_Z() == VT13_Key_Status_TRIG_PRESSED_FREE)
+            if (VT13.Get_Keyboard_Key_Z() == VT13_Key_Status_TRIG_PRESSED_FREE && VT13.Get_Keyboard_Key_Shift() == VT13_Key_Status_FREE)
             {
                 Keyboard_Control_Type = Keyboard_Control_Type_WORKING;
             }
             // X键进入平动模式
-            else if (VT13.Get_Keyboard_Key_X() == VT13_Key_Status_TRIG_PRESSED_FREE)
+            else if (VT13.Get_Keyboard_Key_X() == VT13_Key_Status_TRIG_PRESSED_FREE && VT13.Get_Keyboard_Key_Shift() == VT13_Key_Status_FREE)
             {
                 Keyboard_Control_Type = Keyboard_Control_Type_MOVING;
             }
             // C键进入上台阶模式
-            else if (VT13.Get_Keyboard_Key_C() == VT13_Key_Status_TRIG_PRESSED_FREE)
+            else if (VT13.Get_Keyboard_Key_C() == VT13_Key_Status_TRIG_PRESSED_FREE && VT13.Get_Keyboard_Key_Shift() == VT13_Key_Status_FREE)
             {
                 Keyboard_Control_Type = Keyboard_Control_Type_UPLIFT;
             }
             // V键进入下台阶模式
-            else if (VT13.Get_Keyboard_Key_V() == VT13_Key_Status_TRIG_PRESSED_FREE)
+            else if (VT13.Get_Keyboard_Key_V() == VT13_Key_Status_TRIG_PRESSED_FREE && VT13.Get_Keyboard_Key_Shift() == VT13_Key_Status_FREE)
             {
                 Keyboard_Control_Type = Keyboard_Control_Type_DOWNLIFT;
+            }
+            else if (VT13.Get_Keyboard_Key_Z() == VT13_Key_Status_TRIG_PRESSED_FREE && VT13.Get_Keyboard_Key_Shift() == VT13_Key_Status_TRIG_PRESSED_FREE)
+            {
+                Keyboard_Control_Type_SAVE_LOAD;
+            }
+            else if (VT13.Get_Keyboard_Key_X() == VT13_Key_Status_TRIG_PRESSED_FREE && VT13.Get_Keyboard_Key_Shift() == VT13_Key_Status_TRIG_PRESSED_FREE)
+            {
+                Keyboard_Control_Type_SAVE_LOAD;
             }
 
             // 通用键位
@@ -705,7 +743,25 @@ void Class_Chariot::Control_Chassis()
             // 鼠标模拟杆量
             if (VT13.Get_Mouse_Right_Key() == VT13_Key_Status_FREE)
             {
-                right_x = VT13.Get_Mouse_X() * Mouse_Resolution;
+                right_x = VT13.Get_Mouse_X();
+                right_x *= Mouse_Resolution;
+                right_x = fabs(right_x);
+
+                // 设置阈值区间
+                if (right_x >= 0.2f)
+                {
+                    right_x = 1.0f;
+                }
+
+                // 正负号
+                if (VT13.Get_Mouse_X() > 0)
+                {
+                    right_x = right_x;
+                }
+                else if (VT13.Get_Mouse_X() < 0)
+                {
+                    right_x = -right_x;
+                }
             }
 
             // 各种模式下特定的键位设置
@@ -715,9 +771,10 @@ void Class_Chariot::Control_Chassis()
             {
                 Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
             }
+            case (Keyboard_Control_Type_SAVE_LOAD):
             case (Keyboard_Control_Type_WORKING):
             {
-                // 取兑矿模式
+                // 取兑矿以及存取矿模式
                 Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL);
                 // 默认1/2速度，按下Shift恢复原有速度
                 if (VT13.Get_Keyboard_Key_Shift() != VT13_Key_Status_PRESSED)
@@ -1232,19 +1289,7 @@ void Class_Chariot::Control_Gimbal()
     float tmp_vt03_pitch, tmp_vt03_yaw;
     tmp_vt03_pitch = Gimbal.Get_Target_VT03_Pitch_Angle();
     tmp_vt03_yaw = Gimbal.Get_Target_VT03_Yaw_Angle();
-// 机械臂关节角度
-#ifdef PUMA
-    /*获取当前各个关节的角度值，用来给使用遥控器控制关节时计算目标角度*/
-    tmp_arm_yaw = Gimbal.Get_Target_Yaw_Radian();
-    /*以下除了roll以外的关节改之前为调用电机对象的Get_Target_Angle函数，但是我认为使用云台类中各个关节的目标角度应该也一样
-      在加入平动模式时，解算出的角度也需要使用Gimbal对象中各个关节的Set函数进行设置，这样可以保证两个模式下数据的同步*/
-    tmp_arm_pitch1 = Gimbal.Get_Target_Pitch_Radian();
-    tmp_arm_pitch2 = Gimbal.Get_Target_Pitch_2_Radian();
-    tmp_arm_pitch3 = Gimbal.Get_Target_Pitch_3_Radian();
-    tmp_arm_roll = Gimbal.Get_Target_Roll_Radian() - Gimbal.Get_Roll_Min_Radian(); // 安全规范的写法，可以避免模式切换时数据不同步导致的关节转动
-    tmp_arm_roll_2 = Gimbal.Get_Target_Roll_2_Radian();                            // 统一使用弧度制
-#endif
-    tmp_gripper_radian = last_gripper_value;
+    // 机械臂关节角度
     tmp_j0_pitch_radian = Gimbal.Get_Target_J0_Pitch_Radian();
     tmp_j1_yaw_radian = Gimbal.Get_Target_J1_Yaw_Radian();
     tmp_j2_yaw_radian = Gimbal.Get_Target_J2_Yaw_Radian();
@@ -1342,13 +1387,13 @@ void Class_Chariot::Control_Gimbal()
         }
         else if (VT13.Get_Switch() == VT13_Switch_Status_Right) // 右，自定义控制器控制机械臂
         {
-            tmp_j0_pitch_radian = Offline_Controller_Data.Angle[0];
-            tmp_j1_yaw_radian = Offline_Controller_Data.Angle[1];
-            tmp_j2_yaw_radian = Offline_Controller_Data.Angle[2];
-            tmp_j3_roll_radian = Offline_Controller_Data.Angle[3];
-            tmp_j4_pitch_radian = Offline_Controller_Data.Angle[4];
-            tmp_j5_roll_radian = Offline_Controller_Data.Angle[5];
-            if (Offline_Controller_Data.gripper_status)
+            tmp_j0_pitch_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[0];
+            tmp_j1_yaw_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[1];
+            tmp_j2_yaw_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[2];
+            tmp_j3_roll_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[3];
+            tmp_j4_pitch_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[4];
+            tmp_j5_roll_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[5];
+            if (VT13.Custom_Controller.Custom_Controller_Data.gripper_status)
             {
                 tmp_gripper_position = 255;
             }
@@ -1366,29 +1411,37 @@ void Class_Chariot::Control_Gimbal()
     else if ((Active_Controller == Controller_DR16 && DR16_Control_Type == DR16_Control_Type_KEYBOARD) ||
              (Active_Controller == Controller_VT13 && VT13_Control_Type == VT13_Control_Type_KEYBOARD))
     {
-
         // DR16键鼠
         if (Active_Controller == Controller_DR16)
         {
             // Z键进入取兑矿模式
-            if (DR16.Get_Keyboard_Key_Z() == DR16_Key_Status_TRIG_PRESSED_FREE)
+            if (DR16.Get_Keyboard_Key_Z() == DR16_Key_Status_TRIG_PRESSED_FREE && DR16.Get_Keyboard_Key_Shift() == DR16_Key_Status_FREE)
             {
                 Keyboard_Control_Type = Keyboard_Control_Type_WORKING;
             }
             // X键进入平动模式
-            else if (DR16.Get_Keyboard_Key_X() == DR16_Key_Status_TRIG_PRESSED_FREE)
+            else if (DR16.Get_Keyboard_Key_X() == DR16_Key_Status_TRIG_PRESSED_FREE && DR16.Get_Keyboard_Key_Shift() == DR16_Key_Status_FREE)
             {
                 Keyboard_Control_Type = Keyboard_Control_Type_MOVING;
             }
             // C键进入上台阶模式
-            else if (DR16.Get_Keyboard_Key_C() == DR16_Key_Status_TRIG_PRESSED_FREE)
+            else if (DR16.Get_Keyboard_Key_C() == DR16_Key_Status_TRIG_PRESSED_FREE && DR16.Get_Keyboard_Key_Shift() == DR16_Key_Status_FREE)
             {
                 Keyboard_Control_Type = Keyboard_Control_Type_UPLIFT;
             }
             // V键进入下台阶模式
-            else if (DR16.Get_Keyboard_Key_V() == DR16_Key_Status_TRIG_PRESSED_FREE)
+            else if (DR16.Get_Keyboard_Key_V() == DR16_Key_Status_TRIG_PRESSED_FREE && DR16.Get_Keyboard_Key_Shift() == DR16_Key_Status_FREE)
             {
                 Keyboard_Control_Type = Keyboard_Control_Type_DOWNLIFT;
+            }
+            // CTRL+Z 存取靠内的矿
+            else if (DR16.Get_Keyboard_Key_Z() == DR16_Key_Status_TRIG_PRESSED_FREE && DR16.Get_Keyboard_Key_Shift() == DR16_Key_Status_TRIG_PRESSED_FREE)
+            {
+                Keyboard_Control_Type = Keyboard_Control_Type_SAVE_LOAD;
+            }
+            else if (DR16.Get_Keyboard_Key_X() == DR16_Key_Status_TRIG_PRESSED_FREE && DR16.Get_Keyboard_Key_Shift() == DR16_Key_Status_TRIG_PRESSED_FREE)
+            {
+                Keyboard_Control_Type = Keyboard_Control_Type_SAVE_LOAD;
             }
 
             // 各种模式下对应的键位设置
@@ -1397,14 +1450,14 @@ void Class_Chariot::Control_Gimbal()
             case (Keyboard_Control_Type_WORKING):
             {
                 // 读取自定义控制器关节数据，暂时设置为读取离线版自定义控制器数据
-                tmp_j0_pitch_radian = Offline_Controller_Data.Angle[0];
-                tmp_j1_yaw_radian = Offline_Controller_Data.Angle[1];
-                tmp_j2_yaw_radian = Offline_Controller_Data.Angle[2];
-                tmp_j3_roll_radian = Offline_Controller_Data.Angle[3];
-                tmp_j4_pitch_radian = Offline_Controller_Data.Angle[4];
-                tmp_j5_roll_radian = Offline_Controller_Data.Angle[5];
+                tmp_j0_pitch_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[0];
+                tmp_j1_yaw_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[1];
+                tmp_j2_yaw_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[2];
+                tmp_j3_roll_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[3];
+                tmp_j4_pitch_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[4];
+                tmp_j5_roll_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[5];
 
-                if (Offline_Controller_Data.gripper_status)
+                if (VT13.Custom_Controller.Custom_Controller_Data.gripper_status)
                 {
                     tmp_gripper_position = 255;
                 }
@@ -1436,24 +1489,35 @@ void Class_Chariot::Control_Gimbal()
         else if (Active_Controller == Controller_VT13)
         {
             // Z键进入取兑矿模式
-            if (VT13.Get_Keyboard_Key_Z() == VT13_Key_Status_TRIG_PRESSED_FREE)
+            if (VT13.Get_Keyboard_Key_Z() == VT13_Key_Status_TRIG_PRESSED_FREE && VT13.Get_Keyboard_Key_Shift() == VT13_Key_Status_FREE)
             {
                 Keyboard_Control_Type = Keyboard_Control_Type_WORKING;
             }
             // X键进入平动模式
-            else if (VT13.Get_Keyboard_Key_X() == VT13_Key_Status_TRIG_PRESSED_FREE)
+            else if (VT13.Get_Keyboard_Key_X() == VT13_Key_Status_TRIG_PRESSED_FREE && VT13.Get_Keyboard_Key_Shift() == VT13_Key_Status_FREE)
             {
                 Keyboard_Control_Type = Keyboard_Control_Type_MOVING;
             }
             // C键进入上台阶模式
-            else if (VT13.Get_Keyboard_Key_C() == VT13_Key_Status_TRIG_PRESSED_FREE)
+            else if (VT13.Get_Keyboard_Key_C() == VT13_Key_Status_TRIG_PRESSED_FREE && VT13.Get_Keyboard_Key_Shift() == VT13_Key_Status_FREE)
             {
                 Keyboard_Control_Type = Keyboard_Control_Type_UPLIFT;
             }
             // V键进入下台阶模式
-            else if (VT13.Get_Keyboard_Key_V() == VT13_Key_Status_TRIG_PRESSED_FREE)
+            else if (VT13.Get_Keyboard_Key_V() == VT13_Key_Status_TRIG_PRESSED_FREE && VT13.Get_Keyboard_Key_Shift() == VT13_Key_Status_FREE)
             {
                 Keyboard_Control_Type = Keyboard_Control_Type_DOWNLIFT;
+            }
+            // CTRL+Z 存取靠内的矿
+            else if (VT13.Get_Keyboard_Key_Z() == VT13_Key_Status_TRIG_PRESSED_FREE && VT13.Get_Keyboard_Key_Shift() == VT13_Key_Status_TRIG_PRESSED_FREE)
+            {
+                Keyboard_Control_Type = Keyboard_Control_Type_SAVE_LOAD;
+                Save_Load_Unit = SAVE_LOAD_UNIT_1;
+            }
+            else if (VT13.Get_Keyboard_Key_Z() == VT13_Key_Status_TRIG_PRESSED_FREE && VT13.Get_Keyboard_Key_Shift() == VT13_Key_Status_TRIG_PRESSED_FREE)
+            {
+                Keyboard_Control_Type = Keyboard_Control_Type_SAVE_LOAD;
+                Save_Load_Unit = SAVE_LOAD_UNIT_2;
             }
 
             // 各种模式下对应的键位设置
@@ -1461,14 +1525,35 @@ void Class_Chariot::Control_Gimbal()
             {
             case (Keyboard_Control_Type_WORKING):
             {
-                // 读取自定义控制器关节数据，暂时设置为读取离线版自定义控制器数据
-                tmp_j0_pitch_radian = Offline_Controller_Data.Angle[0];
-                tmp_j1_yaw_radian = Offline_Controller_Data.Angle[1];
-                tmp_j2_yaw_radian = Offline_Controller_Data.Angle[2];
-                tmp_j3_roll_radian = Offline_Controller_Data.Angle[3];
-                tmp_j4_pitch_radian = Offline_Controller_Data.Angle[4];
-                tmp_j5_roll_radian = Offline_Controller_Data.Angle[5];
+                // 读取自定义控制器关节数据
+                tmp_j0_pitch_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[0];
+                tmp_j1_yaw_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[1];
+                tmp_j2_yaw_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[2];
+                tmp_j3_roll_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[3];
+                tmp_j4_pitch_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[4];
+                tmp_j5_roll_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[5];
+
+                if (VT13.Custom_Controller.Custom_Controller_Data.gripper_status)
+                {
+                    tmp_gripper_position = 255;
+                }
+                else
+                {
+                    tmp_gripper_position = 0;
+                }
+
                 break;
+            }
+            // 存取矿模式
+            case (Keyboard_Control_Type_SAVE_LOAD):
+            {
+                bool step = (VT13.Get_Mouse_Right_Key() == VT13_Key_Status_TRIG_PRESSED_FREE);
+                FSM_Save_Load.Reload_TIM_Status_PeriodElapsedCallback(Save_Load_Unit, step);
+
+                if (VT13.Get_Mouse_Left_Key() == VT13_Key_Status_TRIG_PRESSED_FREE)
+                {
+                    tmp_gripper_position = (tmp_gripper_position > 0) ? 0 : 255;
+                }
             }
             case (Keyboard_Control_Type_MOVING):
             case (Keyboard_Control_Type_UPLIFT):
@@ -1495,13 +1580,18 @@ void Class_Chariot::Control_Gimbal()
         Keyboard_Control_Type = Keyboard_Control_Type_DISABLE;
     }
 
-    // 机械臂，夹爪以及图传目标位置赋值
-    Gimbal.Set_Target_J0_Pitch_Radian(tmp_j0_pitch_radian);
-    Gimbal.Set_Target_J1_Yaw_Radian(tmp_j1_yaw_radian);
-    Gimbal.Set_Target_J2_Yaw_Radian(tmp_j2_yaw_radian);
-    Gimbal.Set_Target_J3_Roll_Radian(tmp_j3_roll_radian);
-    Gimbal.Set_Target_J4_Pitch_Radian(tmp_j4_pitch_radian);
-    Gimbal.Set_Target_J5_Roll_Radian(tmp_j5_roll_radian);
+    if (Keyboard_Control_Type != Keyboard_Control_Type_SAVE_LOAD)
+    {
+        FSM_Save_Load.Set_Status(0);
+        // 机械臂，夹爪以及图传目标位置赋值
+        Gimbal.Set_Target_J0_Pitch_Radian(tmp_j0_pitch_radian);
+        Gimbal.Set_Target_J1_Yaw_Radian(tmp_j1_yaw_radian);
+        Gimbal.Set_Target_J2_Yaw_Radian(tmp_j2_yaw_radian);
+        Gimbal.Set_Target_J3_Roll_Radian(tmp_j3_roll_radian);
+        Gimbal.Set_Target_J4_Pitch_Radian(tmp_j4_pitch_radian);
+        Gimbal.Set_Target_J5_Roll_Radian(tmp_j5_roll_radian);
+    }
+
     Gimbal.Set_Target_Gripper_Position(tmp_gripper_position);
     Gimbal.Set_Target_VT03_Pitch_Angle(tmp_vt03_pitch);
     Gimbal.Set_Target_VT03_Yaw_Angle(tmp_vt03_yaw);
@@ -1792,9 +1882,8 @@ void Class_Chariot::TIM_Control_Callback()
     Judge_DR16_Control_Type();
     Judge_VT13_Control_Type();
     // 底盘，云台，发射机构控制逻辑
-    Control_Chassis();
     Control_Gimbal();
-    Control_Booster();
+    Control_Chassis();
 }
 #endif
 /**
@@ -1937,7 +2026,6 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
 #endif
 
 #endif
-
         Gimbal.J0_Pitch_4340.TIM_Alive_PeriodElapsedCallback();
         Gimbal.J1_Yaw_8009P.TIM_Alive_PeriodElapsedCallback();
         Gimbal.J2_Yaw_4340P.TIM_Alive_PeriodElapsedCallback();
@@ -2378,35 +2466,127 @@ void Class_FSM_Alive_Control_VT13::Reload_TIM_Status_PeriodElapsedCallback()
     break;
     }
 }
-#endif
 
-#ifdef MOTOR_TEST_CHASSIS
-void Class_Chariot::Init_Motor_Test_Chassis()
+// 存取矿状态机定时器回调函数
+void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load_Type Enum_Save_Load_Type, bool step)
 {
-    // 电机PID初始化
-    Test_Motor.PID_Omega.Init(1200.0f, 0.0f, 0.0f, 0.0f, Test_Motor.Get_Output_Max(), Test_Motor.Get_Output_Max());
-    Test_Motor.PID_Angle.Init(4.5f, 0.0f, 0.0f, 0.0f, 0.0f, 6.0f * PI);
-    // 电机ID初始化
-    Test_Motor.Init(&hfdcan2, DJI_Motor_ID_0x202, DJI_Motor_Control_Method_OMEGA);
-}
+    Status[Now_Status_Serial].Time++;
 
-void Class_Chariot::Output_Motor_Test_Chassis()
-{
-    // static uint8_t ms_cnt = 0;
-    // ms_cnt++;
+    // 选取数据源
+    Struct_Enery_Unit_Position &active_unit = ((Enum_Save_Load_Type == SAVE_LOAD_UNIT_1) ? Enery_Unit_1 : Enery_Unit_2);
 
-    Test_Motor.Set_DJI_Motor_Control_Method(Test_Method);
-    Test_Motor.Set_Target_Radian(target_angle);
-    Test_Motor.Set_Target_Omega_Radian(target_omega);
+    // 状态转移函数
+    switch (Now_Status_Serial)
+    {
+    case (0):
+    {
+        // 准备阶段
+        if (step)
+        {
+            Set_Status(1);
+        }
 
-    // 模拟实际中的电机通信，500hz，每2ms与一个电机通信一次
-    // if(ms_cnt % 2 == 0)
-    // {
-    calculate_s = DWT_GetDeltaT(&cal_cnt);
-    Test_Motor.TIM_PID_PeriodElapsedCallback();
-    // ms_cnt = 0;
-    //}
+        break;
+    }
+    case (1):
+    {
+        // 移动到初始位置
+        Gimbal->Set_Target_J0_Pitch_Radian(active_unit.init_pos[0]);
+        Gimbal->Set_Target_J1_Yaw_Radian(active_unit.init_pos[1]);
+        Gimbal->Set_Target_J2_Yaw_Radian(active_unit.init_pos[2]);
+        Gimbal->Set_Target_J3_Roll_Radian(active_unit.init_pos[3]);
+        Gimbal->Set_Target_J4_Pitch_Radian(active_unit.init_pos[4]);
+        Gimbal->Set_Target_J5_Roll_Radian(active_unit.init_pos[5]);
+
+        bool finish_flag = false;
+        test_flag[0] = (fabs((Gimbal->J0_Pitch_4340.Get_Now_Angle() - PI) - Gimbal->Get_Target_J0_Pitch_Radian()) <= 0.1f);
+        test_flag[1] = (fabs((Gimbal->J1_Yaw_8009P.Get_Now_Angle() - PI) - Gimbal->Get_Target_J1_Yaw_Radian()) <= 0.1f);
+        test_flag[2] = (fabs((Gimbal->J2_Yaw_4340P.Get_Now_Angle() - PI) - Gimbal->Get_Target_J2_Yaw_Radian()) <= 0.1f);
+        test_flag[3] = (fabs((Gimbal->J3_Roll_2325.Get_Now_Angle() - PI) - Gimbal->Get_Target_J3_Roll_Radian_In_PI()) <= 0.1f);
+        test_flag[4] = (fabs((Gimbal->J4_Pitch_2325.Get_Now_Angle() - PI) - Gimbal->Get_Target_J4_Pitch_Radian_In_PI()) <= 0.1f);
+        test_flag[5] = (fabs(Gimbal->Jodell_ERG150T.Get_Now_Roll() - Gimbal->Get_Target_J5_Roll_Radian()) <= 0.1f);
+        finish_flag = test_flag[0]&&
+                      test_flag[1]&&
+                      test_flag[2]&&
+                      test_flag[3]&&
+                      test_flag[4]&&
+                      test_flag[5]&&
+                      (true);
+
+        if (finish_flag)
+        {
+            Set_Status(2);
+        }
+
+        break;
+    }
+    case (2):
+    {
+        // J2先移动
+        Gimbal->Set_Target_J2_Yaw_Radian(active_unit.finish_pos[2]);
+
+        bool finish_flag = (fabs((Gimbal->J2_Yaw_4340P.Get_Now_Angle() - PI) * 4.0f - Gimbal->Get_Target_J2_Yaw_Radian()) <= 0.1f);
+        if (finish_flag)
+        {
+            Set_Status(3);
+        }
+
+        break;
+    }
+    case (3):
+    {
+        // J1开始移动到存矿位置
+        Gimbal->Set_Target_J1_Yaw_Radian(active_unit.finish_pos[1]);
+
+        bool finish_flag = (fabs((Gimbal->J1_Yaw_8009P.Get_Now_Angle() - PI) * 4.0f - Gimbal->Get_Target_J1_Yaw_Radian()) <= 0.1f);
+        if (finish_flag)
+        {
+            Set_Status(4);
+        }
+
+        break;
+    }
+    case (4):
+    {
+        // 等待操作手操作
+        if(step)
+        {
+            Set_Status(5);
+        }
+
+        break;
+    }
+    case (5):
+    {
+        // 移动到辅助位置，防止存矿后归位时卡矿
+        Gimbal->Set_Target_J1_Yaw_Radian(active_unit.auxiliary_pos[1]);
+        Gimbal->Set_Target_J2_Yaw_Radian(active_unit.auxiliary_pos[2]);
+
+        bool finish_flag = false;
+        finish_flag = (fabs((Gimbal->J1_Yaw_8009P.Get_Now_Angle() - PI) * 4.0f - Gimbal->Get_Target_J1_Yaw_Radian()) <= 0.1f) &&
+                      (fabs((Gimbal->J2_Yaw_4340P.Get_Now_Angle() - PI) * 4.0f - Gimbal->Get_Target_J2_Yaw_Radian()) <= 0.1f) &&
+                      (true);
+
+        if (finish_flag)
+        {
+            Set_Status(6);
+        }
+
+        break;
+    }
+    case (6):
+        // 归位到初始位置
+        {
+            Gimbal->Set_Target_J0_Pitch_Radian(active_unit.init_pos[0]);
+            Gimbal->Set_Target_J1_Yaw_Radian(active_unit.init_pos[1]);
+            Gimbal->Set_Target_J2_Yaw_Radian(active_unit.init_pos[2]);
+            Gimbal->Set_Target_J3_Roll_Radian(active_unit.init_pos[3]);
+            Gimbal->Set_Target_J4_Pitch_Radian(active_unit.init_pos[4]);
+            Gimbal->Set_Target_J5_Roll_Radian(active_unit.init_pos[5]);
+
+            break;
+        }
+    }
 }
 #endif
-
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

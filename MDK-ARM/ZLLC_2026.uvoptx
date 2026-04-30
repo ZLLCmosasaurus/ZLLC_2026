@@ -120,7 +120,6 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>DLGUARM</Key>
-          <Name>挑O</Name>
         </SetRegEntry>
         <SetRegEntry>
           <Number>0</Number>
@@ -534,6 +533,16 @@
           <count>76</count>
           <WinNumber>1</WinNumber>
           <ItemText>huart1</ItemText>
+        </Ww>
+        <Ww>
+          <count>77</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>CAN1_0xxf2_Tx_Data</ItemText>
+        </Ww>
+        <Ww>
+          <count>78</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>CAN1_0xxf3_Tx_Data</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>

@@ -27,7 +27,6 @@ virtualFolder:
         - path: ../User/Chariot/Src/crt_chassis.cpp
         - path: ../User/Chariot/Src/crt_gimbal.cpp
         - path: ../User/Chariot/Src/arm_model.cpp
-        - path: ../User/Chariot/Src/dh_model.cpp
         - path: ../User/Chariot/Src/crt_force_control_chassis.cpp
       folders: []
     - name: Device
@@ -361,6 +360,7 @@ targets:
       libList: []
     excludeList:
       - ../DSP/libCMSISDSP.a
+      - <virtual_root>/Chariot/dh_model.cpp
     settings:
       debugger: cortex-debug
     toolchain: AC6

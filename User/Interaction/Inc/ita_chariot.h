@@ -94,7 +94,18 @@ enum Enum_Keyboard_Control_Type
     Keyboard_Control_Type_MOVING,   // 平地移动
     Keyboard_Control_Type_WORKING,  // 取兑矿模式
     Keyboard_Control_Type_UPLIFT,   // 上台阶模式
-    Keyboard_Control_Type_DOWNLIFT  // 下台阶模式
+    Keyboard_Control_Type_DOWNLIFT, // 下台阶模式
+    Keyboard_Control_Type_SAVE_LOAD // 存取矿模式
+};
+
+/**
+ * @brief 存取矿数据来源类型
+ *
+ */
+enum Enum_Save_Load_Type
+{
+    SAVE_LOAD_UNIT_1 = 1,
+    SAVE_LOAD_UNIT_2
 };
 
 /**
@@ -118,31 +129,66 @@ public:
     void Reload_TIM_Status_PeriodElapsedCallback();
 };
 
+// 存取矿状态机
+class Class_FSM_Save_Load : public Class_FSM
+{
+public:
+    Class_Gimbal *Gimbal;
+    void Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load_Type Enum_Save_Load_Type, bool step);
+
+private:
+    bool test_flag[6] = {false};
+    struct Struct_Enery_Unit_Position
+    {
+        /* angles */
+        float init_pos[6];
+        float auxiliary_pos[6];
+        float finish_pos[6];
+    };
+
+    // 靠内的存取矿角度
+    Struct_Enery_Unit_Position Enery_Unit_1 =
+        {
+            {0.0f},
+            {0.0f, 0.1058f, 2.004f, 0.0f, 0.0f, 0.0f},
+            {0.0f, 0.4904f, 1.5144f, 0.0f, 0.0f, 0.0f}};
+
+    // 靠外的存取矿角度
+    Struct_Enery_Unit_Position Enery_Unit_2 =
+        {
+            {0.0f},
+            {0.0f, -0.2532f, 2.004f, 0.0f, 0.0f, 0.0f},
+            {0.0f, 0.0832f, 1.742f, 0.0f, 0.0f, 0.0f}};
+};
+
 // 云台发送底盘相关通信帧格式
 // Data[6] 的位域定义
-struct LiftControl {
-    uint8_t lift_select : 4; // 0-3位：控制四个抬升，0为不选中，1为选中
-    uint8_t lift_direction   : 4; // 4-7位：控制升高/降低，0为降低，1为抬高
+struct LiftControl
+{
+    uint8_t lift_select : 4;    // 0-3位：控制四个抬升，0为不选中，1为选中
+    uint8_t lift_direction : 4; // 4-7位：控制升高/降低，0为降低，1为抬高
 } __attribute__((packed));
 
 // Data[7] 的位域定义
-struct OtherStatus {
-    uint8_t chassis_contorl_mode     : 2; // 0-1位：底盘控制模式，00:失能，01：使能，10：上台阶状态机
-    uint8_t uplift_fsm_direction     : 1; // 2位：上台阶状态机前进/保持
-    uint8_t backdoor_jump            : 1; // 3位：150mm台阶后门跳转开关
-    uint8_t downlift_init            : 1; // 4位：下台阶初始抬升高度跳转
-    uint8_t wheel_slave_ctrl         : 1; // 5位：小轮子从动开关
-    uint8_t reserved                 : 2; // 6-7位：保留
+struct OtherStatus
+{
+    uint8_t chassis_contorl_mode : 2; // 0-1位：底盘控制模式，00:失能，01：使能，10：上台阶状态机
+    uint8_t uplift_fsm_direction : 1; // 2位：上台阶状态机前进/保持
+    uint8_t backdoor_jump : 1;        // 3位：150mm台阶后门跳转开关
+    uint8_t downlift_init : 1;        // 4位：下台阶初始抬升高度跳转
+    uint8_t wheel_slave_ctrl : 1;     // 5位：小轮子从动开关
+    uint8_t reserved : 2;             // 6-7位：保留
 } __attribute__((packed));
 
 // 完整的协议数据结构
-struct Gimbal_Tx_Chassis_Frame {
-    int16_t x_velocity;      // Data[0,1] X轴速度
-    int16_t y_velocity;      // Data[2,3] Y轴速度
-    int16_t yaw_data;        // Data[4,5] Yaw速度/角度
-    LiftControl lift;        // Data[6]   抬升控制
-    OtherStatus status;     // Data[7]   其他状态
-}__attribute__((packed));
+struct Gimbal_Tx_Chassis_Frame
+{
+    int16_t x_velocity; // Data[0,1] X轴速度
+    int16_t y_velocity; // Data[2,3] Y轴速度
+    int16_t yaw_data;   // Data[4,5] Yaw速度/角度
+    LiftControl lift;   // Data[6]   抬升控制
+    OtherStatus status; // Data[7]   其他状态
+} __attribute__((packed));
 
 /**
  * @brief 控制对象
@@ -181,6 +227,9 @@ public:
 
     Class_FSM_Alive_Control_VT13 FSM_Alive_Control_VT13;
     friend class Class_FSM_Alive_Control_VT13;
+
+    // 存取矿状态机
+    Class_FSM_Save_Load FSM_Save_Load;
 
 #elifdef CHASSIS_TEST
     Class_DR16 DR16;
@@ -258,7 +307,7 @@ public:
     Enum_Referee_UI_Refresh_Status Referee_UI_Refresh_Status = Referee_UI_Refresh_Status_DISABLE;
     // 云台发送到底盘的数据帧结构体
     Gimbal_Tx_Chassis_Frame Rx_Frame;
-    
+
     void Judge_DR16_Control_Type();
     void Judge_VT13_Control_Type();
 
@@ -270,11 +319,12 @@ public:
     float tmp_gripper_radian;
 
     // 遥控器摇杆值
+    float left_x, left_y, right_x, yaw;
     float dr16_right_x, dr16_right_y, dr16_left_x, dr16_left_y, dr16_yaw;
     float vt13_right_x, vt13_right_y, vt13_left_x, vt13_left_y, vt13_yaw;
 
     // 鼠标转向灵敏度值
-    float Mouse_Resolution = 100.0f;
+    float Mouse_Resolution = 5.0f;
 
 protected:
     // 初始化相关常量
@@ -324,6 +374,8 @@ protected:
     float DR16_Mouse_VT03_Pitch_Angle_Resolution = 57.8f * 10.0f;
     // 键鼠控制模式下机器人工况模式
     Enum_Keyboard_Control_Type Keyboard_Control_Type = Keyboard_Control_Type_DISABLE;
+    /*存取矿状态机数据来源*/
+    Enum_Save_Load_Type Save_Load_Unit = SAVE_LOAD_UNIT_1;
 
     // 内部变量
     // 遥控器离线计数

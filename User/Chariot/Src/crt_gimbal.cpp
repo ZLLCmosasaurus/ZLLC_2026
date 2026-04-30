@@ -53,21 +53,6 @@ void Class_Gimbal::Output()
 {
     if (Gimbal_Control_Type == Gimbal_Control_Type_DISABLE)
     {
-#ifdef PUMA
-        // 云台失能
-        Motor_DM_J0_Yaw.Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
-        Motor_DM_J1_Pitch.Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
-        Motor_DM_J2_Pitch_2.Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
-        Motor_DM_J4_Pitch_3.Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
-        Motor_DM_J3_Roll.Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
-
-        Motor_6020_J5_Roll_2.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_TORQUE);
-        Motor_6020_J5_Roll_2.PID_Angle.Set_Integral_Error(0.0f);
-        Motor_6020_J5_Roll_2.PID_Omega.Set_Integral_Error(0.0f);
-        Motor_6020_J5_Roll_2.PID_Torque.Set_Integral_Error(0.0f);
-        Motor_6020_J5_Roll_2.Set_Target_Torque(0.0f);
-        Motor_6020_J5_Roll_2.Set_Out(0.0f);
-#endif
         J0_Pitch_4340.Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
         J1_Yaw_8009P.Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
         J2_Yaw_4340P.Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
@@ -137,12 +122,6 @@ void Class_Gimbal::TIM_Calculate_PeriodElapsedCallback()
 
     // 电机优先级计数器
     can_priority_cnt++;
-
-    // // 单编码器电机校准状态机回调函数
-    // if (arm_init)
-    // {
-    //     Calibration_FSM.Reload_TIM_Status_PeriodElapsedCallback();
-    // }
 
     switch (can_priority_cnt % 5)
     {
@@ -330,7 +309,7 @@ void Class_FSM_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
             if (pitch_cali_status)
             {
                 Gimbal->J4_Pitch_Cali_Offset = pitch_offset;
-                Gimbal->J4_Pitch_Min_Radian = (Gimbal->J4_Pitch_Cali_Offset / PI) * pitch_range;
+                Gimbal->J4_Pitch_Min_Radian = (Gimbal->J4_Pitch_Cali_Offset / PI) * 160.0f;
                 Gimbal->J4_Pitch_Max_Radian = Gimbal->J4_Pitch_Min_Radian + pitch_range;
                 Gimbal->J4_Pitch_Zero_Position_Radian = (Gimbal->J4_Pitch_Min_Radian + Gimbal->J4_Pitch_Max_Radian) / 2.0f;
                 Gimbal->Set_Target_J4_Pitch_Radian(0.0f);
@@ -470,4 +449,5 @@ bool Class_FSM_Calibration::Motor_Calibration(Class_DJI_Motor_C610 *Motor, float
     }
     return false;
 }
+
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

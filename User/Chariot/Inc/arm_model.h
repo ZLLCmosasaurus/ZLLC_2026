@@ -4,6 +4,7 @@
 #include "robotics.h"
 #include "matrix.h"
 #include "user_lib.h"
+#include "trajectories.h"
 
 using namespace robotics;
 using namespace matrixf;

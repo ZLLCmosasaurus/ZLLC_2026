@@ -109,7 +109,7 @@ private:
     float Target_Roll = 0.0f;
     float Target_Relative_Roll = 0.0f;
     int8_t Target_Roll_Turns = 0;
-    float Target_Omega = 5.0f;
+    float Target_Omega = 17.4527f;
     float Target_Torque = 1.5f;
     uint8_t Target_Gripper_Position = 0;
 

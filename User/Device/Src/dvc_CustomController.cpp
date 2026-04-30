@@ -1,5 +1,6 @@
 #include "dvc_CustomController.h"
 
+// 自定义控制器数据解包
 void Class_Custom_Controller::Custom_Controller_Data_Process(uint8_t *Rx_Data)
 {
     memcpy(Data_Buffer, Rx_Data, 15);
@@ -30,4 +31,10 @@ void Class_Custom_Controller::Custom_Controller_Data_Process(uint8_t *Rx_Data)
 
         rx_frequence = DWT_GetDeltaT(&frequence_cnt);
     }
+}
+
+// 键鼠数据同步
+void Class_Custom_Controller::Image_Keyboard_Data_Process(uint8_t *Rx_Data)
+{
+    memcpy(&Image_Keyborad_Data, Rx_Data, KEYBOARD_DATA_LENGTH);
 }
