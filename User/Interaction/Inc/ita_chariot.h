@@ -41,6 +41,17 @@ enum Enum_Chassis_Status
     Chassis_Status_ENABLE,
 };
 
+#ifdef GIMBAL
+enum Enum_Controller_Key_Status
+{
+    Controller_Key_Status_FREE = 0,
+    Controller_Key_Status_PRESSED,
+    Controller_Key_Status_TRIG_FREE_PRESSED,
+    Controller_Key_Status_TRIG_PRESSED_FREE,
+};
+
+#endif
+
 /**
  * @brief 云台通讯状态
  *
@@ -217,7 +228,6 @@ public:
 
     // 离线状态下自定义控制器
     Class_Custom_Controller Offline_Custom_Controller;
-    Struct_Custom_Controller_Data Offline_Controller_Data = Offline_Custom_Controller.Custom_Controller_Data;
 
     uint8_t Controller_Buffer[15];
 
@@ -246,15 +256,6 @@ public:
     inline void Set_Pre_Chassis_Control_Type(Enum_Chassis_Control_Type __Chassis_Control_Type);
     inline void Set_Pre_Chassis_Control_Type__(Enum_Chassis_Control_Type__ __Chassis_Control_Type);
 
-#endif
-
-#ifdef MOTOR_TEST_CHASSIS
-    Class_DJI_Motor_C620 Test_Motor;
-    void Init_Motor_Test_Chassis();
-    void Output_Motor_Test_Chassis();
-    float target_omega = 0.0f; // rad
-    float target_angle = 0.0f; // rad
-    Enum_DJI_Motor_Control_Method Test_Method = DJI_Motor_Control_Method_OMEGA;
 #endif
 
     void Init(float __DR16_Dead_Zone = 0);
@@ -376,6 +377,31 @@ protected:
     Enum_Keyboard_Control_Type Keyboard_Control_Type = Keyboard_Control_Type_DISABLE;
     /*存取矿状态机数据来源*/
     Enum_Save_Load_Type Save_Load_Unit = SAVE_LOAD_UNIT_1;
+    float controller_right_y = 0.0f;
+    float controller_mouse_x = 0.0f;
+    float controller_mouse_y = 0.0f;
+    float controller_mouse_z = 0.0f;
+    Enum_Controller_Key_Status controller_mouse_left_key = Controller_Key_Status_FREE;
+    Enum_Controller_Key_Status controller_mouse_right_key = Controller_Key_Status_FREE;
+    Enum_Controller_Key_Status controller_key_w = Controller_Key_Status_FREE;
+    Enum_Controller_Key_Status controller_key_s = Controller_Key_Status_FREE;
+    Enum_Controller_Key_Status controller_key_a = Controller_Key_Status_FREE;
+    Enum_Controller_Key_Status controller_key_d = Controller_Key_Status_FREE;
+    Enum_Controller_Key_Status controller_key_shift = Controller_Key_Status_FREE;
+    Enum_Controller_Key_Status controller_key_ctrl = Controller_Key_Status_FREE;
+    Enum_Controller_Key_Status controller_key_q = Controller_Key_Status_FREE;
+    Enum_Controller_Key_Status controller_key_e = Controller_Key_Status_FREE;
+    Enum_Controller_Key_Status controller_key_r = Controller_Key_Status_FREE;
+    Enum_Controller_Key_Status controller_key_f = Controller_Key_Status_FREE;
+    Enum_Controller_Key_Status controller_key_g = Controller_Key_Status_FREE;
+    Enum_Controller_Key_Status controller_key_z = Controller_Key_Status_FREE;
+    Enum_Controller_Key_Status controller_key_x = Controller_Key_Status_FREE;
+    Enum_Controller_Key_Status controller_key_c = Controller_Key_Status_FREE;
+    Enum_Controller_Key_Status controller_key_v = Controller_Key_Status_FREE;
+    Enum_Controller_Key_Status controller_key_b = Controller_Key_Status_FREE;
+    Enum_DR16_Switch_Status controller_dr16_left_switch = DR16_Switch_Status_UP;
+    Enum_DR16_Switch_Status controller_dr16_right_switch = DR16_Switch_Status_UP;
+    Enum_VT13_Switch_Status controller_vt13_switch = VT13_Switch_Status_Left;
 
     // 内部变量
     // 遥控器离线计数
@@ -414,11 +440,17 @@ protected:
     Enum_DR16_Control_Type Get_DR16_Control_Type();
     // 获取VT13控制类型
     Enum_VT13_Control_Type Get_VT13_Control_Type();
+    void Controller_Data_Update();
+    void Create_Controller_Snapshot();
+    void Judge_Keyboard_Mode();
+    void Judge_Gimbal_Control_Type();
 
     // void Judge_DR16_Control_Type();
 
     // void Control_Chassis();
     void Control_Gimbal();
+    void New_Control_Chassis();
+    void New_Control_Gimbal();
     void Control_Booster();
 
     void Transform_Mouse_Axis();

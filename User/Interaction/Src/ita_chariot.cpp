@@ -26,6 +26,97 @@ static uint32_t cal_cnt = 0;
 float calculate_s;
 /* Private function declarations ---------------------------------------------*/
 
+#ifdef GIMBAL
+static Enum_Controller_Key_Status To_Controller_Key_Status(Enum_DR16_Key_Status status)
+{
+    switch (status)
+    {
+    case DR16_Key_Status_PRESSED:
+        return Controller_Key_Status_PRESSED;
+    case DR16_Key_Status_TRIG_FREE_PRESSED:
+        return Controller_Key_Status_TRIG_FREE_PRESSED;
+    case DR16_Key_Status_TRIG_PRESSED_FREE:
+        return Controller_Key_Status_TRIG_PRESSED_FREE;
+    case DR16_Key_Status_FREE:
+    default:
+        return Controller_Key_Status_FREE;
+    }
+}
+
+static Enum_Controller_Key_Status To_Controller_Key_Status(Enum_VT13_Key_Status status)
+{
+    switch (status)
+    {
+    case VT13_Key_Status_PRESSED:
+        return Controller_Key_Status_PRESSED;
+    case VT13_Key_Status_TRIG_FREE_PRESSED:
+        return Controller_Key_Status_TRIG_FREE_PRESSED;
+    case VT13_Key_Status_TRIG_PRESSED_FREE:
+        return Controller_Key_Status_TRIG_PRESSED_FREE;
+    case VT13_Key_Status_FREE:
+    default:
+        return Controller_Key_Status_FREE;
+    }
+}
+
+static bool Key_Is_Pressed(Enum_Controller_Key_Status status)
+{
+    return status == Controller_Key_Status_PRESSED;
+}
+
+static bool Key_Is_Trig_Pressed_Free(Enum_Controller_Key_Status status)
+{
+    return status == Controller_Key_Status_TRIG_PRESSED_FREE;
+}
+
+static bool Key_Is_Shift_Active(Enum_Controller_Key_Status status)
+{
+    return status == Controller_Key_Status_PRESSED ||
+           status == Controller_Key_Status_TRIG_FREE_PRESSED ||
+           status == Controller_Key_Status_TRIG_PRESSED_FREE;
+}
+
+static float Apply_Dead_Zone(float value, float dead_zone)
+{
+    return (Math_Abs(value) > dead_zone) ? value : 0.0f;
+}
+
+static float Build_Mouse_Right_X(float mouse_x, float resolution)
+{
+    float right_x = fabs(mouse_x * resolution);
+
+    if (right_x >= 0.2f)
+    {
+        right_x = 1.0f;
+    }
+
+    if (mouse_x < 0.0f)
+    {
+        right_x = -right_x;
+    }
+
+    return right_x;
+}
+
+static void Load_Custom_Controller_Targets(const Struct_Custom_Controller_Data &data,
+                                           float &j0_pitch,
+                                           float &j1_yaw,
+                                           float &j2_yaw,
+                                           float &j3_roll,
+                                           float &j4_pitch,
+                                           float &j5_roll,
+                                           uint8_t &gripper_position)
+{
+    j0_pitch = data.Angle[0];
+    j1_yaw = data.Angle[1];
+    j2_yaw = data.Angle[2];
+    j3_roll = data.Angle[3];
+    j4_pitch = data.Angle[4];
+    j5_roll = data.Angle[5];
+    gripper_position = data.gripper_status ? 255 : 0;
+}
+#endif
+
 /* Function prototypes -------------------------------------------------------*/
 
 /**
@@ -338,66 +429,36 @@ float Offset_K = 0.175f;
 #ifdef GIMBAL
 void Class_Chariot::Control_Chassis()
 {
-    // 判断当前使用的遥控器
-    Judge_Active_Controller();
-    // 用于计算底盘速度的杆量
-
-    // 底盘坐标系速度目标值 float
-    float chassis_velocity_x = 0, chassis_velocity_y = 0;
-    float chassis_delta_radian = 0;
-    // 抬升选择以及方向
-    bool lift_select[4] = {false};
-    Enum_Lift_Direction lift_drc[4] = {Lift_Direction_HOLD};
-    // 小轮子从动
+    float chassis_velocity_x = 0.0f;
+    float chassis_velocity_y = 0.0f;
+    float chassis_delta_radian = 0.0f;
+    bool lift_select[4] = {false, false, false, false};
+    Enum_Lift_Direction lift_drc[4] = {Lift_Direction_HOLD, Lift_Direction_HOLD, Lift_Direction_HOLD, Lift_Direction_HOLD};
     Enum_Wheel_Slave_Status wheel_slave_status = Chassis.Get_Wheel_Slave_Status();
-    // 抬升状态机方向
     Enum_Uplift_FSM_Direction uplift_fsm_dir = Uplift_FSM_HOLD;
-    // 150mm后门开关
     bool backdoor_status = false;
-    // 下台阶初始开关
     bool downlift_init = false;
+    float move_left_x = left_x;
+    float move_left_y = left_y;
+    float move_right_x = right_x;
 
-    /************************************遥控器控制逻辑*********************************************/
-
-    // DR16遥控器控制
     if (Active_Controller == Controller_DR16 && DR16_Control_Type == DR16_Control_Type_REMOTE)
     {
-        // 排除遥控器死区
-        dr16_right_x = (Math_Abs(DR16.Get_Right_X()) > DR16_Dead_Zone) ? DR16.Get_Right_X() : 0;
-        dr16_left_y = (Math_Abs(DR16.Get_Left_Y()) > DR16_Dead_Zone) ? DR16.Get_Left_Y() : 0;
-        dr16_left_x = (Math_Abs(DR16.Get_Left_X()) > DR16_Dead_Zone) ? DR16.Get_Left_X() : 0;
-        dr16_yaw = (Math_Abs(DR16.Get_Yaw()) > DR16_Dead_Zone) ? DR16.Get_Yaw() : 0;
-
-        // 遥控器操作逻辑
-        volatile int DR16_Left_Switch_Status = DR16.Get_Left_Switch();
-        volatile int DR16_Right_Switch_Status = DR16.Get_Right_Switch();
-        switch (DR16_Left_Switch_Status)
+        switch (controller_dr16_left_switch)
         {
-        case (DR16_Switch_Status_UP):
-        {
+        case DR16_Switch_Status_UP:
             Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
             break;
-        }
-        case (DR16_Switch_Status_MIDDLE): // 左中 正常模式控制底盘，只有当机械臂移动到初始位姿后才将底盘设置为正常模式
-        {
-            if (Gimbal.arm_init)
-            {
-                Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL);
-            }
-            else
-            {
-                Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
-            }
-
-            // 测试抬升
-            if (DR16_Right_Switch_Status == DR16_Switch_Status_UP)
+        case DR16_Switch_Status_MIDDLE:
+            Chassis.Set_Chassis_Control_Type(Gimbal.arm_init ? Chassis_Control_Type_NORMAL : Chassis_Control_Type_DISABLE);
+            if (controller_dr16_right_switch == DR16_Switch_Status_UP)
             {
                 lift_select[0] = true;
                 lift_select[1] = true;
                 lift_drc[0] = Lift_Direction_UP;
                 lift_drc[1] = Lift_Direction_UP;
             }
-            else if (DR16_Right_Switch_Status == DR16_Switch_Status_DOWN)
+            else if (controller_dr16_right_switch == DR16_Switch_Status_DOWN)
             {
                 lift_select[0] = true;
                 lift_select[1] = true;
@@ -405,520 +466,181 @@ void Class_Chariot::Control_Chassis()
                 lift_drc[1] = Lift_Direction_DOWN;
             }
             break;
-        }
-        case (DR16_Switch_Status_DOWN):
-        {
-            if (Gimbal.arm_init)
-            {
-                Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SLOPE);
-            }
-            else
-            {
-                Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
-            }
+        case DR16_Switch_Status_DOWN:
+            Chassis.Set_Chassis_Control_Type(Gimbal.arm_init ? Chassis_Control_Type_SLOPE : Chassis_Control_Type_DISABLE);
             break;
-        }
         default:
-        {
             break;
         }
-        }
-
-        // 传递杆量
-        left_x = dr16_left_x;
-        left_y = dr16_left_y;
-        right_x = dr16_right_x;
-        yaw = dr16_yaw;
     }
-    // VT13遥控器控制
     else if (Active_Controller == Controller_VT13 && VT13_Control_Type == VT13_Control_Type_REMOTE)
     {
-        // 排除遥控器死区，VT13和DR16共用一个死区
-        vt13_right_x = (Math_Abs(VT13.Get_Right_X()) > DR16_Dead_Zone) ? VT13.Get_Right_X() : 0;
-        vt13_right_y = (Math_Abs(VT13.Get_Right_Y()) > DR16_Dead_Zone) ? VT13.Get_Right_Y() : 0;
-        vt13_left_y = (Math_Abs(VT13.Get_Left_Y()) > DR16_Dead_Zone) ? VT13.Get_Left_Y() : 0;
-        vt13_left_x = (Math_Abs(VT13.Get_Left_X()) > DR16_Dead_Zone) ? VT13.Get_Left_X() : 0;
-        vt13_yaw = (Math_Abs(VT13.Get_Yaw()) > DR16_Dead_Zone) ? VT13.Get_Yaw() : 0;
-
-        // 遥控器操作逻辑
-        Enum_VT13_Switch_Status VT13_Left_Switch_Status = VT13.Get_Switch();
-        switch (VT13_Left_Switch_Status)
+        switch (controller_vt13_switch)
         {
-        case (VT13_Switch_Status_Left):
-        {
+        case VT13_Switch_Status_Left:
             Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
             break;
-        }
-        case (VT13_Switch_Status_Middle): // 左中 正常模式控制底盘，只有当机械臂移动到初始位姿后才将底盘设置为正常模式
-        {
-            if (Gimbal.arm_init)
-            {
-                Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL);
-            }
-            else
-            {
-                Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
-            }
+        case VT13_Switch_Status_Middle:
+            Chassis.Set_Chassis_Control_Type(Gimbal.arm_init ? Chassis_Control_Type_NORMAL : Chassis_Control_Type_DISABLE);
             break;
-        }
-        case (VT13_Switch_Status_Right):
-        {
-            if (Gimbal.arm_init)
-            {
-                Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SLOPE);
-            }
-            else
-            {
-                Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
-            }
+        case VT13_Switch_Status_Right:
+            Chassis.Set_Chassis_Control_Type(Gimbal.arm_init ? Chassis_Control_Type_SLOPE : Chassis_Control_Type_DISABLE);
             break;
-        }
         default:
-        {
             break;
         }
-        }
-
-        // 传递杆量
-        left_x = vt13_left_x;
-        left_y = vt13_left_y;
-        right_x = vt13_right_x;
-        yaw = vt13_yaw;
     }
-    // 键鼠控制
     else if ((Active_Controller == Controller_DR16 && DR16_Control_Type == DR16_Control_Type_KEYBOARD) ||
              (Active_Controller == Controller_VT13 && VT13_Control_Type == VT13_Control_Type_KEYBOARD))
     {
-        // DR16键鼠
-        if (Active_Controller == Controller_DR16)
+        move_left_x = 0.0f;
+        move_left_y = 0.0f;
+        move_right_x = 0.0f;
+
+        if (Key_Is_Pressed(controller_key_w))
         {
-            // Z键进入取兑矿模式
-            if (DR16.Get_Keyboard_Key_Z() == DR16_Key_Status_TRIG_PRESSED_FREE && DR16.Get_Keyboard_Key_Shift() == DR16_Key_Status_FREE)
-            {
-                Keyboard_Control_Type = Keyboard_Control_Type_WORKING;
-            }
-            // X键进入平动模式
-            else if (DR16.Get_Keyboard_Key_X() == DR16_Key_Status_TRIG_PRESSED_FREE && DR16.Get_Keyboard_Key_Shift() == DR16_Key_Status_FREE)
-            {
-                Keyboard_Control_Type = Keyboard_Control_Type_MOVING;
-            }
-            // C键进入上台阶模式
-            else if (DR16.Get_Keyboard_Key_C() == DR16_Key_Status_TRIG_PRESSED_FREE && DR16.Get_Keyboard_Key_Shift() == DR16_Key_Status_FREE)
-            {
-                Keyboard_Control_Type = Keyboard_Control_Type_UPLIFT;
-            }
-            // V键进入下台阶模式
-            else if (DR16.Get_Keyboard_Key_V() == DR16_Key_Status_TRIG_PRESSED_FREE && DR16.Get_Keyboard_Key_Shift() == DR16_Key_Status_FREE)
-            {
-                Keyboard_Control_Type = Keyboard_Control_Type_DOWNLIFT;
-            }
-            // CTRL+Z 存取靠内的矿
-            else if (DR16.Get_Keyboard_Key_Z() == DR16_Key_Status_TRIG_PRESSED_FREE && DR16.Get_Keyboard_Key_Shift() == DR16_Key_Status_TRIG_PRESSED_FREE)
-            {
-                Keyboard_Control_Type = Keyboard_Control_Type_SAVE_LOAD;
-            }
-            else if (DR16.Get_Keyboard_Key_X() == DR16_Key_Status_TRIG_PRESSED_FREE && DR16.Get_Keyboard_Key_Shift() == DR16_Key_Status_TRIG_PRESSED_FREE)
-            {
-                Keyboard_Control_Type = Keyboard_Control_Type_SAVE_LOAD;
-            }
-
-            // 通用键位
-            // WASD模拟杆量
-            if (DR16.Get_Keyboard_Key_W() == DR16_Key_Status_PRESSED)
-            {
-                left_y = 1.0f;
-            }
-            else if (DR16.Get_Keyboard_Key_S() == DR16_Key_Status_PRESSED)
-            {
-                left_y = -1.0f;
-            }
-
-            if (DR16.Get_Keyboard_Key_A() == DR16_Key_Status_PRESSED)
-            {
-                left_x = -1.0f;
-            }
-            else if (DR16.Get_Keyboard_Key_D() == DR16_Key_Status_PRESSED)
-            {
-                left_x = 1.0f;
-            }
-
-            // 鼠标模拟杆量
-            if (DR16.Get_Mouse_Right_Key() == DR16_Key_Status_FREE)
-            {
-                right_x = DR16.Get_Mouse_X();
-                right_x *= Mouse_Resolution;
-                right_x = fabs(right_x);
-
-                // 设置阈值区间
-                if (right_x >= 0.2f)
-                {
-                    right_x = 1.0f;
-                }
-
-                // 正负号
-                if (DR16.Get_Mouse_X() > 0)
-                {
-                    right_x *= 1.0f;
-                }
-                else if (DR16.Get_Mouse_X() < 0)
-                {
-                    right_x *= -1.0f;
-                }
-            }
-
-            // 各种模式下特定的键位设置
-            switch (Keyboard_Control_Type)
-            {
-            case (Keyboard_Control_Type_WORKING):
-            case (Keyboard_Control_Type_SAVE_LOAD):
-            {
-                // 取兑矿模式以及存取矿模式
-                Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL);
-                // 默认1/2速度，按下Shift恢复原有速度
-                if (DR16.Get_Keyboard_Key_Shift() != DR16_Key_Status_PRESSED)
-                {
-                    left_x *= 0.5f;
-                    left_y *= 0.5f;
-                    right_x *= 0.5f;
-                }
-                // Q，E控制机械臂抬升
-                if (DR16.Get_Keyboard_Key_Q() == DR16_Key_Status_PRESSED)
-                {
-                    lift_select[0] = true;
-                    lift_drc[0] = Lift_Direction_UP;
-                }
-                else if (DR16.Get_Keyboard_Key_E() == DR16_Key_Status_PRESSED)
-                {
-                    lift_select[0] = true;
-                    lift_drc[0] = Lift_Direction_DOWN;
-                }
-                else
-                {
-                    lift_select[0] = false;
-                }
-                break;
-            }
-            case (Keyboard_Control_Type_MOVING):
-            {
-                Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL);
-
-                if (DR16.Get_Keyboard_Key_Shift() == DR16_Key_Status_PRESSED)
-                {
-                    left_x *= 0.5f;
-                    left_y *= 0.5f;
-                    right_x *= 0.5f;
-                }
-                break;
-            }
-            case (Keyboard_Control_Type_UPLIFT):
-            {
-                // 进入上台阶状态机模式
-                Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SLOPE);
-
-                // 按下ctrl键切换
-                if (DR16.Get_Keyboard_Key_Ctrl() == DR16_Key_Status_TRIG_PRESSED_FREE)
-                {
-                    if (wheel_slave_status == Wheel_Slave_OFF)
-                        wheel_slave_status = Wheel_Slave_ON;
-                    else if (wheel_slave_status == Wheel_Slave_ON)
-                        wheel_slave_status = Wheel_Slave_OFF;
-                }
-                // 150mm台阶后门
-                if (DR16.Get_Keyboard_Key_R() == DR16_Key_Status_PRESSED)
-                {
-                    backdoor_status = true;
-                }
-                // 状态机方向
-                if (DR16.Get_Keyboard_Key_Shift() == DR16_Key_Status_PRESSED && DR16.Get_Keyboard_Key_C() == DR16_Key_Status_PRESSED)
-                {
-                    uplift_fsm_dir = Uplift_FSM_FORWARD;
-                }
-
-                break;
-            }
-            case (Keyboard_Control_Type_DOWNLIFT):
-            {
-                // 默认1/2速度，按下Shift恢复原有速度
-                if (DR16.Get_Keyboard_Key_Shift() != DR16_Key_Status_PRESSED)
-                {
-                    left_x *= 0.5f;
-                    left_y *= 0.5f;
-                    right_x *= 0.5f;
-                }
-                // 控制前后抬升
-                if (DR16.Get_Keyboard_Key_Q() == DR16_Key_Status_PRESSED)
-                {
-                    lift_select[0] = true;
-                    lift_select[1] = true;
-                    lift_drc[0] = Lift_Direction_UP;
-                    lift_drc[1] = Lift_Direction_UP;
-                }
-                else if (DR16.Get_Keyboard_Key_E() == DR16_Key_Status_PRESSED)
-                {
-                    lift_select[0] = true;
-                    lift_select[1] = true;
-                    lift_drc[0] = Lift_Direction_DOWN;
-                    lift_drc[1] = Lift_Direction_DOWN;
-                }
-                if (DR16.Get_Keyboard_Key_F() == DR16_Key_Status_PRESSED)
-                {
-                    lift_select[2] = true;
-                    lift_select[3] = true;
-                    lift_drc[2] = Lift_Direction_UP;
-                    lift_drc[3] = Lift_Direction_UP;
-                }
-                else if (DR16.Get_Keyboard_Key_G() == DR16_Key_Status_PRESSED)
-                {
-                    lift_select[2] = true;
-                    lift_select[3] = true;
-                    lift_drc[2] = Lift_Direction_DOWN;
-                    lift_drc[3] = Lift_Direction_DOWN;
-                }
-
-                // 按下ctrl键切换
-                if (DR16.Get_Keyboard_Key_Ctrl() == DR16_Key_Status_TRIG_PRESSED_FREE)
-                {
-                    if (wheel_slave_status == Wheel_Slave_OFF)
-                        wheel_slave_status = Wheel_Slave_ON;
-                    else if (wheel_slave_status == Wheel_Slave_ON)
-                        wheel_slave_status = Wheel_Slave_OFF;
-                }
-                break;
-            }
-            default:
-                break;
-            }
+            move_left_y = 1.0f;
         }
-        else if (Active_Controller == Controller_VT13)
+        else if (Key_Is_Pressed(controller_key_s))
         {
-            // Z键进入取兑矿模式
-            if (VT13.Get_Keyboard_Key_Z() == VT13_Key_Status_TRIG_PRESSED_FREE && VT13.Get_Keyboard_Key_Shift() == VT13_Key_Status_FREE)
-            {
-                Keyboard_Control_Type = Keyboard_Control_Type_WORKING;
-            }
-            // X键进入平动模式
-            else if (VT13.Get_Keyboard_Key_X() == VT13_Key_Status_TRIG_PRESSED_FREE && VT13.Get_Keyboard_Key_Shift() == VT13_Key_Status_FREE)
-            {
-                Keyboard_Control_Type = Keyboard_Control_Type_MOVING;
-            }
-            // C键进入上台阶模式
-            else if (VT13.Get_Keyboard_Key_C() == VT13_Key_Status_TRIG_PRESSED_FREE && VT13.Get_Keyboard_Key_Shift() == VT13_Key_Status_FREE)
-            {
-                Keyboard_Control_Type = Keyboard_Control_Type_UPLIFT;
-            }
-            // V键进入下台阶模式
-            else if (VT13.Get_Keyboard_Key_V() == VT13_Key_Status_TRIG_PRESSED_FREE && VT13.Get_Keyboard_Key_Shift() == VT13_Key_Status_FREE)
-            {
-                Keyboard_Control_Type = Keyboard_Control_Type_DOWNLIFT;
-            }
-            else if (VT13.Get_Keyboard_Key_Z() == VT13_Key_Status_TRIG_PRESSED_FREE && VT13.Get_Keyboard_Key_Shift() == VT13_Key_Status_TRIG_PRESSED_FREE)
-            {
-                Keyboard_Control_Type_SAVE_LOAD;
-            }
-            else if (VT13.Get_Keyboard_Key_X() == VT13_Key_Status_TRIG_PRESSED_FREE && VT13.Get_Keyboard_Key_Shift() == VT13_Key_Status_TRIG_PRESSED_FREE)
-            {
-                Keyboard_Control_Type_SAVE_LOAD;
-            }
+            move_left_y = -1.0f;
+        }
 
-            // 通用键位
-            // WASD模拟杆量
-            if (VT13.Get_Keyboard_Key_W() == VT13_Key_Status_PRESSED)
-            {
-                left_y = 1.0f;
-            }
-            else if (VT13.Get_Keyboard_Key_S() == VT13_Key_Status_PRESSED)
-            {
-                left_y = -1.0f;
-            }
+        if (Key_Is_Pressed(controller_key_a))
+        {
+            move_left_x = -1.0f;
+        }
+        else if (Key_Is_Pressed(controller_key_d))
+        {
+            move_left_x = 1.0f;
+        }
 
-            if (VT13.Get_Keyboard_Key_A() == VT13_Key_Status_PRESSED)
-            {
-                left_x = -1.0f;
-            }
-            else if (VT13.Get_Keyboard_Key_D() == VT13_Key_Status_PRESSED)
-            {
-                left_x = 1.0f;
-            }
+        if (controller_mouse_right_key == Controller_Key_Status_FREE)
+        {
+            move_right_x = Build_Mouse_Right_X(controller_mouse_x, Mouse_Resolution);
+        }
 
-            // 鼠标模拟杆量
-            if (VT13.Get_Mouse_Right_Key() == VT13_Key_Status_FREE)
+        switch (Keyboard_Control_Type)
+        {
+        case Keyboard_Control_Type_DISABLE:
+            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
+            move_left_x = 0.0f;
+            move_left_y = 0.0f;
+            move_right_x = 0.0f;
+            break;
+        case Keyboard_Control_Type_WORKING:
+        case Keyboard_Control_Type_SAVE_LOAD:
+            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL);
+            if (!Key_Is_Pressed(controller_key_shift))
             {
-                right_x = VT13.Get_Mouse_X();
-                right_x *= Mouse_Resolution;
-                right_x = fabs(right_x);
-
-                // 设置阈值区间
-                if (right_x >= 0.2f)
-                {
-                    right_x = 1.0f;
-                }
-
-                // 正负号
-                if (VT13.Get_Mouse_X() > 0)
-                {
-                    right_x = right_x;
-                }
-                else if (VT13.Get_Mouse_X() < 0)
-                {
-                    right_x = -right_x;
-                }
+                move_left_x *= 0.5f;
+                move_left_y *= 0.5f;
+                move_right_x *= 0.5f;
             }
-
-            // 各种模式下特定的键位设置
-            switch (Keyboard_Control_Type)
+            if (Key_Is_Pressed(controller_key_q))
             {
-            case (Keyboard_Control_Type_DISABLE):
+                lift_select[0] = true;
+                lift_drc[0] = Lift_Direction_UP;
+            }
+            else if (Key_Is_Pressed(controller_key_e))
             {
-                Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
+                lift_select[0] = true;
+                lift_drc[0] = Lift_Direction_DOWN;
             }
-            case (Keyboard_Control_Type_SAVE_LOAD):
-            case (Keyboard_Control_Type_WORKING):
+            break;
+        case Keyboard_Control_Type_MOVING:
+            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL);
+            if (Key_Is_Pressed(controller_key_shift))
             {
-                // 取兑矿以及存取矿模式
-                Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL);
-                // 默认1/2速度，按下Shift恢复原有速度
-                if (VT13.Get_Keyboard_Key_Shift() != VT13_Key_Status_PRESSED)
-                {
-                    left_x *= 0.5f;
-                    left_y *= 0.5f;
-                    right_x *= 0.5f;
-                }
-                // Q，E控制机械臂抬升
-                if (VT13.Get_Keyboard_Key_Q() == VT13_Key_Status_PRESSED)
-                {
-                    lift_select[0] = true;
-                    lift_drc[0] = Lift_Direction_UP;
-                }
-                else if (VT13.Get_Keyboard_Key_E() == VT13_Key_Status_PRESSED)
-                {
-                    lift_select[0] = true;
-                    lift_drc[0] = Lift_Direction_DOWN;
-                }
-                else
-                {
-                    lift_select[0] = false;
-                }
-                break;
+                move_left_x *= 0.5f;
+                move_left_y *= 0.5f;
+                move_right_x *= 0.5f;
             }
-            case (Keyboard_Control_Type_MOVING):
+            break;
+        case Keyboard_Control_Type_UPLIFT:
+            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SLOPE);
+            if (Key_Is_Trig_Pressed_Free(controller_key_ctrl))
             {
-                Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL);
-
-                if (VT13.Get_Keyboard_Key_Shift() == VT13_Key_Status_PRESSED)
-                {
-                    left_x *= 0.5f;
-                    left_y *= 0.5f;
-                    right_x *= 0.5f;
-                }
-                break;
+                wheel_slave_status = (wheel_slave_status == Wheel_Slave_OFF) ? Wheel_Slave_ON : Wheel_Slave_OFF;
             }
-            case (Keyboard_Control_Type_UPLIFT):
+            if (Key_Is_Pressed(controller_key_r))
             {
-                // 进入上台阶状态机模式
-                Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SLOPE);
-
-                // 按下ctrl键切换
-                if (VT13.Get_Keyboard_Key_Ctrl() == VT13_Key_Status_TRIG_PRESSED_FREE)
-                {
-                    if (wheel_slave_status == Wheel_Slave_OFF)
-                        wheel_slave_status = Wheel_Slave_ON;
-                    else if (wheel_slave_status == Wheel_Slave_ON)
-                        wheel_slave_status = Wheel_Slave_OFF;
-                }
-                // 150mm台阶后门
-                if (VT13.Get_Keyboard_Key_R() == VT13_Key_Status_PRESSED)
-                {
-                    backdoor_status = true;
-                }
-                // 状态机方向
-                if (VT13.Get_Keyboard_Key_Shift() == VT13_Key_Status_PRESSED && VT13.Get_Keyboard_Key_C() == VT13_Key_Status_PRESSED)
-                {
-                    uplift_fsm_dir = Uplift_FSM_FORWARD;
-                }
-
-                break;
+                backdoor_status = true;
             }
-            case (Keyboard_Control_Type_DOWNLIFT):
+            if (Key_Is_Pressed(controller_key_shift) && Key_Is_Pressed(controller_key_c))
             {
-                // 默认1/2速度，按下Shift恢复原有速度
-                if (VT13.Get_Keyboard_Key_Shift() != VT13_Key_Status_PRESSED)
-                {
-                    left_x *= 0.5f;
-                    left_y *= 0.5f;
-                    right_x *= 0.5f;
-                }
-                // 控制前后抬升
-                if (VT13.Get_Keyboard_Key_Q() == VT13_Key_Status_PRESSED)
-                {
-                    lift_select[0] = true;
-                    lift_select[1] = true;
-                    lift_drc[0] = Lift_Direction_UP;
-                    lift_drc[1] = Lift_Direction_UP;
-                }
-                else if (VT13.Get_Keyboard_Key_E() == VT13_Key_Status_PRESSED)
-                {
-                    lift_select[0] = true;
-                    lift_select[1] = true;
-                    lift_drc[0] = Lift_Direction_DOWN;
-                    lift_drc[1] = Lift_Direction_DOWN;
-                }
-                if (VT13.Get_Keyboard_Key_F() == VT13_Key_Status_PRESSED)
-                {
-                    lift_select[2] = true;
-                    lift_select[3] = true;
-                    lift_drc[2] = Lift_Direction_UP;
-                    lift_drc[3] = Lift_Direction_UP;
-                }
-                else if (VT13.Get_Keyboard_Key_G() == VT13_Key_Status_PRESSED)
-                {
-                    lift_select[2] = true;
-                    lift_select[3] = true;
-                    lift_drc[2] = Lift_Direction_DOWN;
-                    lift_drc[3] = Lift_Direction_DOWN;
-                }
-
-                // 按下ctrl键切换
-                if (VT13.Get_Keyboard_Key_Ctrl() == VT13_Key_Status_TRIG_PRESSED_FREE)
-                {
-                    if (wheel_slave_status == Wheel_Slave_OFF)
-                        wheel_slave_status = Wheel_Slave_ON;
-                    else if (wheel_slave_status == Wheel_Slave_ON)
-                        wheel_slave_status = Wheel_Slave_OFF;
-                }
-                break;
+                uplift_fsm_dir = Uplift_FSM_FORWARD;
             }
-            default:
-                break;
+            break;
+        case Keyboard_Control_Type_DOWNLIFT:
+            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL);
+            if (!Key_Is_Pressed(controller_key_shift))
+            {
+                move_left_x *= 0.5f;
+                move_left_y *= 0.5f;
+                move_right_x *= 0.5f;
             }
+            if (Key_Is_Pressed(controller_key_q))
+            {
+                lift_select[0] = true;
+                lift_select[1] = true;
+                lift_drc[0] = Lift_Direction_UP;
+                lift_drc[1] = Lift_Direction_UP;
+            }
+            else if (Key_Is_Pressed(controller_key_e))
+            {
+                lift_select[0] = true;
+                lift_select[1] = true;
+                lift_drc[0] = Lift_Direction_DOWN;
+                lift_drc[1] = Lift_Direction_DOWN;
+            }
+            if (Key_Is_Pressed(controller_key_f))
+            {
+                lift_select[2] = true;
+                lift_select[3] = true;
+                lift_drc[2] = Lift_Direction_UP;
+                lift_drc[3] = Lift_Direction_UP;
+            }
+            else if (Key_Is_Pressed(controller_key_g))
+            {
+                lift_select[2] = true;
+                lift_select[3] = true;
+                lift_drc[2] = Lift_Direction_DOWN;
+                lift_drc[3] = Lift_Direction_DOWN;
+            }
+            if (Key_Is_Trig_Pressed_Free(controller_key_ctrl))
+            {
+                wheel_slave_status = (wheel_slave_status == Wheel_Slave_OFF) ? Wheel_Slave_ON : Wheel_Slave_OFF;
+            }
+            break;
         }
     }
-
-    // 云台到底盘坐标系转换
-    volatile int Chassis_control_type = Chassis.Get_Chassis_Control_Type();
-    switch (Chassis_control_type)
+    else
     {
-    case (Chassis_Control_Type_DISABLE):
-    { // 失能
-        chassis_velocity_x = 0;
-        chassis_velocity_y = 0;
-        chassis_delta_radian = 0;
+        Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
+    }
+
+    left_x = move_left_x;
+    left_y = move_left_y;
+    right_x = move_right_x;
+
+    switch (Chassis.Get_Chassis_Control_Type())
+    {
+    case Chassis_Control_Type_DISABLE:
+        chassis_velocity_x = 0.0f;
+        chassis_velocity_y = 0.0f;
+        chassis_delta_radian = 0.0f;
         break;
-    }
-    case (Chassis_Control_Type_NORMAL):
-    case (Chassis_Control_Type_SLOPE):
-    {
-        // 设定矩形到圆形映射进行控制，底盘前X左Y，遥控器上下为Y，左右为X，在这里反一下
+    case Chassis_Control_Type_NORMAL:
+    case Chassis_Control_Type_SLOPE:
         chassis_velocity_x = left_y * sqrt(1.0f - left_y * left_y / 2.0f) * Chassis.Get_Velocity_X_Max();
         chassis_velocity_y = -left_x * sqrt(1.0f - left_x * left_x / 2.0f) * Chassis.Get_Velocity_Y_Max();
         chassis_delta_radian = -right_x * sqrt(1.0f - right_x * right_x / 2.0f) * 0.01f;
-
         break;
     }
-    }
 
-    // 底盘控制相关变量赋值
     Chassis.Set_Target_Velocity_X(chassis_velocity_x);
-    Chassis.Set_Target_Velocity_Y(chassis_velocity_y); // 前x左y正
+    Chassis.Set_Target_Velocity_Y(chassis_velocity_y);
     Chassis.Set_Target_Omega(chassis_delta_radian);
     Chassis.Set_Lift_Select(lift_select[0], lift_select[1], lift_select[2], lift_select[3]);
     for (uint8_t i = 0; i < 4; i++)
@@ -1283,13 +1005,11 @@ void Class_Chariot::Transform_Mouse_Axis()
  *
  */
 #ifdef GIMBAL
+
 void Class_Chariot::Control_Gimbal()
 {
-    // 图传角度
-    float tmp_vt03_pitch, tmp_vt03_yaw;
-    tmp_vt03_pitch = Gimbal.Get_Target_VT03_Pitch_Angle();
-    tmp_vt03_yaw = Gimbal.Get_Target_VT03_Yaw_Angle();
-    // 机械臂关节角度
+    float tmp_vt03_pitch = Gimbal.Get_Target_VT03_Pitch_Angle();
+    float tmp_vt03_yaw = Gimbal.Get_Target_VT03_Yaw_Angle();
     tmp_j0_pitch_radian = Gimbal.Get_Target_J0_Pitch_Radian();
     tmp_j1_yaw_radian = Gimbal.Get_Target_J1_Yaw_Radian();
     tmp_j2_yaw_radian = Gimbal.Get_Target_J2_Yaw_Radian();
@@ -1297,293 +1017,118 @@ void Class_Chariot::Control_Gimbal()
     tmp_j4_pitch_radian = Gimbal.Get_Target_J4_Pitch_Radian_In_PI();
     tmp_j5_roll_radian = Gimbal.Get_Target_J5_Roll_Radian();
     tmp_gripper_position = Gimbal.Get_Target_Gripper_Position();
-    // 判断当前使用的遥控器
-    Judge_Active_Controller();
 
-    /************************************遥控器控制逻辑*********************************************/
+    Judge_Gimbal_Control_Type();
 
-    // DR16遥控器控制
     if (Active_Controller == Controller_DR16 && DR16_Control_Type == DR16_Control_Type_REMOTE)
     {
-        // 排除遥控器死区
-        dr16_right_x = (Math_Abs(DR16.Get_Right_X()) > DR16_Dead_Zone) ? DR16.Get_Right_X() : 0;
-        dr16_right_y = (Math_Abs(DR16.Get_Right_Y()) > DR16_Dead_Zone) ? DR16.Get_Right_Y() : 0;
-        dr16_left_y = (Math_Abs(DR16.Get_Left_Y()) > DR16_Dead_Zone) ? DR16.Get_Left_Y() : 0;
-        dr16_left_x = (Math_Abs(DR16.Get_Left_X()) > DR16_Dead_Zone) ? DR16.Get_Left_X() : 0;
-        // dr16左上角的滑杆，用来控制夹爪，不要被名字迷惑了
-        dr16_yaw = (Math_Abs(DR16.Get_Yaw()) > DR16_Dead_Zone) ? DR16.Get_Yaw() : 0;
-
-        if (DR16.Get_Left_Switch() == DR16_Switch_Status_UP) // 左上 失能
+        if (controller_dr16_left_switch == DR16_Switch_Status_MIDDLE)
         {
-            Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_DISABLE);
-            Keyboard_Control_Type = Keyboard_Control_Type_DISABLE;
-        }
-        // 其余位置都是遥控器控制
-        else if (DR16.Get_Left_Switch() == DR16_Switch_Status_MIDDLE) // 左中，摇杆控制机械臂
-        {
-            Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
-
-            if (dr16_yaw >= 0.80f)
+            if (yaw >= 0.80f)
             {
                 tmp_gripper_position = 0;
             }
-            else if (dr16_yaw <= -0.80f)
+            else if (yaw <= -0.80f)
             {
                 tmp_gripper_position = 255;
             }
         }
-        else if (DR16.Get_Left_Switch() == DR16_Switch_Status_DOWN)
+        else if (controller_dr16_left_switch == DR16_Switch_Status_DOWN &&
+                 controller_dr16_right_switch == DR16_Switch_Status_MIDDLE)
         {
-            if (DR16.Get_Right_Switch() == DR16_Switch_Status_MIDDLE)
-            {
-                tmp_j0_pitch_radian = Offline_Controller_Data.Angle[0];
-                tmp_j1_yaw_radian = Offline_Controller_Data.Angle[1];
-                tmp_j2_yaw_radian = Offline_Controller_Data.Angle[2];
-                tmp_j3_roll_radian = Offline_Controller_Data.Angle[3];
-                tmp_j4_pitch_radian = Offline_Controller_Data.Angle[4];
-                tmp_j5_roll_radian = Offline_Controller_Data.Angle[5];
-                if (Offline_Controller_Data.gripper_status)
-                {
-                    tmp_gripper_position = 255;
-                }
-                else
-                {
-                    tmp_gripper_position = 0;
-                }
-            }
-        }
-        else
-        {
-            Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
+            Load_Custom_Controller_Targets(Offline_Custom_Controller.Custom_Controller_Data,
+                                           tmp_j0_pitch_radian,
+                                           tmp_j1_yaw_radian,
+                                           tmp_j2_yaw_radian,
+                                           tmp_j3_roll_radian,
+                                           tmp_j4_pitch_radian,
+                                           tmp_j5_roll_radian,
+                                           tmp_gripper_position);
         }
     }
-    // VT13遥控器控制
     else if (Active_Controller == Controller_VT13 && VT13_Control_Type == VT13_Control_Type_REMOTE)
     {
-        // 排除遥控器死区，VT13和DR16共用一个死区
-        vt13_right_x = (Math_Abs(VT13.Get_Right_X()) > DR16_Dead_Zone) ? VT13.Get_Right_X() : 0;
-        vt13_right_y = (Math_Abs(VT13.Get_Right_Y()) > DR16_Dead_Zone) ? VT13.Get_Right_Y() : 0;
-        vt13_left_y = (Math_Abs(VT13.Get_Left_Y()) > DR16_Dead_Zone) ? VT13.Get_Left_Y() : 0;
-        vt13_left_x = (Math_Abs(VT13.Get_Left_X()) > DR16_Dead_Zone) ? VT13.Get_Left_X() : 0;
-        vt13_yaw = (Math_Abs(VT13.Get_Yaw()) > DR16_Dead_Zone) ? VT13.Get_Yaw() : 0;
-
-        if (VT13.Get_Switch() == VT13_Switch_Status_Left) // 左 失能
+        if (controller_vt13_switch == VT13_Switch_Status_Middle)
         {
-            Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_DISABLE);
-        }
-        // 其余位置都是遥控器控制
-        else if (VT13.Get_Switch() == VT13_Switch_Status_Middle) // 中，使能机器人
-        {
-            Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
-
-            if (vt13_yaw >= 0.80f)
+            if (yaw >= 0.80f)
             {
                 tmp_gripper_position = 0;
             }
-            else if (vt13_yaw <= -0.80f)
+            else if (yaw <= -0.80f)
             {
                 tmp_gripper_position = 255;
             }
         }
-        else if (VT13.Get_Switch() == VT13_Switch_Status_Right) // 右，自定义控制器控制机械臂
+        else if (controller_vt13_switch == VT13_Switch_Status_Right)
         {
-            tmp_j0_pitch_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[0];
-            tmp_j1_yaw_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[1];
-            tmp_j2_yaw_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[2];
-            tmp_j3_roll_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[3];
-            tmp_j4_pitch_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[4];
-            tmp_j5_roll_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[5];
-            if (VT13.Custom_Controller.Custom_Controller_Data.gripper_status)
-            {
-                tmp_gripper_position = 255;
-            }
-            else
-            {
-                tmp_gripper_position = 0;
-            }
-        }
-        else
-        {
-            Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
+            Load_Custom_Controller_Targets(VT13.Custom_Controller.Custom_Controller_Data,
+                                           tmp_j0_pitch_radian,
+                                           tmp_j1_yaw_radian,
+                                           tmp_j2_yaw_radian,
+                                           tmp_j3_roll_radian,
+                                           tmp_j4_pitch_radian,
+                                           tmp_j5_roll_radian,
+                                           tmp_gripper_position);
         }
     }
-    // 键鼠控制
     else if ((Active_Controller == Controller_DR16 && DR16_Control_Type == DR16_Control_Type_KEYBOARD) ||
              (Active_Controller == Controller_VT13 && VT13_Control_Type == VT13_Control_Type_KEYBOARD))
     {
-        // DR16键鼠
-        if (Active_Controller == Controller_DR16)
+        switch (Keyboard_Control_Type)
         {
-            // Z键进入取兑矿模式
-            if (DR16.Get_Keyboard_Key_Z() == DR16_Key_Status_TRIG_PRESSED_FREE && DR16.Get_Keyboard_Key_Shift() == DR16_Key_Status_FREE)
+        case Keyboard_Control_Type_WORKING:
+            if (Active_Controller == Controller_DR16)
             {
-                Keyboard_Control_Type = Keyboard_Control_Type_WORKING;
+                Load_Custom_Controller_Targets(Offline_Custom_Controller.Custom_Controller_Data,
+                                               tmp_j0_pitch_radian,
+                                               tmp_j1_yaw_radian,
+                                               tmp_j2_yaw_radian,
+                                               tmp_j3_roll_radian,
+                                               tmp_j4_pitch_radian,
+                                               tmp_j5_roll_radian,
+                                               tmp_gripper_position);
             }
-            // X键进入平动模式
-            else if (DR16.Get_Keyboard_Key_X() == DR16_Key_Status_TRIG_PRESSED_FREE && DR16.Get_Keyboard_Key_Shift() == DR16_Key_Status_FREE)
+            else
             {
-                Keyboard_Control_Type = Keyboard_Control_Type_MOVING;
+                Load_Custom_Controller_Targets(VT13.Custom_Controller.Custom_Controller_Data,
+                                               tmp_j0_pitch_radian,
+                                               tmp_j1_yaw_radian,
+                                               tmp_j2_yaw_radian,
+                                               tmp_j3_roll_radian,
+                                               tmp_j4_pitch_radian,
+                                               tmp_j5_roll_radian,
+                                               tmp_gripper_position);
             }
-            // C键进入上台阶模式
-            else if (DR16.Get_Keyboard_Key_C() == DR16_Key_Status_TRIG_PRESSED_FREE && DR16.Get_Keyboard_Key_Shift() == DR16_Key_Status_FREE)
-            {
-                Keyboard_Control_Type = Keyboard_Control_Type_UPLIFT;
-            }
-            // V键进入下台阶模式
-            else if (DR16.Get_Keyboard_Key_V() == DR16_Key_Status_TRIG_PRESSED_FREE && DR16.Get_Keyboard_Key_Shift() == DR16_Key_Status_FREE)
-            {
-                Keyboard_Control_Type = Keyboard_Control_Type_DOWNLIFT;
-            }
-            // CTRL+Z 存取靠内的矿
-            else if (DR16.Get_Keyboard_Key_Z() == DR16_Key_Status_TRIG_PRESSED_FREE && DR16.Get_Keyboard_Key_Shift() == DR16_Key_Status_TRIG_PRESSED_FREE)
-            {
-                Keyboard_Control_Type = Keyboard_Control_Type_SAVE_LOAD;
-            }
-            else if (DR16.Get_Keyboard_Key_X() == DR16_Key_Status_TRIG_PRESSED_FREE && DR16.Get_Keyboard_Key_Shift() == DR16_Key_Status_TRIG_PRESSED_FREE)
-            {
-                Keyboard_Control_Type = Keyboard_Control_Type_SAVE_LOAD;
-            }
-
-            // 各种模式下对应的键位设置
-            switch (Keyboard_Control_Type)
-            {
-            case (Keyboard_Control_Type_WORKING):
-            {
-                // 读取自定义控制器关节数据，暂时设置为读取离线版自定义控制器数据
-                tmp_j0_pitch_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[0];
-                tmp_j1_yaw_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[1];
-                tmp_j2_yaw_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[2];
-                tmp_j3_roll_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[3];
-                tmp_j4_pitch_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[4];
-                tmp_j5_roll_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[5];
-
-                if (VT13.Custom_Controller.Custom_Controller_Data.gripper_status)
-                {
-                    tmp_gripper_position = 255;
-                }
-                else
-                {
-                    tmp_gripper_position = 0;
-                }
-
-                break;
-            }
-            case (Keyboard_Control_Type_MOVING):
-            case (Keyboard_Control_Type_UPLIFT):
-            case (Keyboard_Control_Type_DOWNLIFT):
-            {
-                // 机械臂保持当前姿态
-                break;
-            }
-            default:
-                break;
-            }
-
-            // 各模式下固定键位，按住鼠标右键+鼠标移动图传
-            if (DR16.Get_Mouse_Right_Key() == DR16_Key_Status_PRESSED)
-            {
-                tmp_vt03_yaw += DR16.Get_Mouse_X();
-                tmp_vt03_pitch += DR16.Get_Mouse_Y();
-            }
-        }
-        else if (Active_Controller == Controller_VT13)
+            break;
+        case Keyboard_Control_Type_SAVE_LOAD:
         {
-            // Z键进入取兑矿模式
-            if (VT13.Get_Keyboard_Key_Z() == VT13_Key_Status_TRIG_PRESSED_FREE && VT13.Get_Keyboard_Key_Shift() == VT13_Key_Status_FREE)
-            {
-                Keyboard_Control_Type = Keyboard_Control_Type_WORKING;
-            }
-            // X键进入平动模式
-            else if (VT13.Get_Keyboard_Key_X() == VT13_Key_Status_TRIG_PRESSED_FREE && VT13.Get_Keyboard_Key_Shift() == VT13_Key_Status_FREE)
-            {
-                Keyboard_Control_Type = Keyboard_Control_Type_MOVING;
-            }
-            // C键进入上台阶模式
-            else if (VT13.Get_Keyboard_Key_C() == VT13_Key_Status_TRIG_PRESSED_FREE && VT13.Get_Keyboard_Key_Shift() == VT13_Key_Status_FREE)
-            {
-                Keyboard_Control_Type = Keyboard_Control_Type_UPLIFT;
-            }
-            // V键进入下台阶模式
-            else if (VT13.Get_Keyboard_Key_V() == VT13_Key_Status_TRIG_PRESSED_FREE && VT13.Get_Keyboard_Key_Shift() == VT13_Key_Status_FREE)
-            {
-                Keyboard_Control_Type = Keyboard_Control_Type_DOWNLIFT;
-            }
-            // CTRL+Z 存取靠内的矿
-            else if (VT13.Get_Keyboard_Key_Z() == VT13_Key_Status_TRIG_PRESSED_FREE && VT13.Get_Keyboard_Key_Shift() == VT13_Key_Status_TRIG_PRESSED_FREE)
-            {
-                Keyboard_Control_Type = Keyboard_Control_Type_SAVE_LOAD;
-                Save_Load_Unit = SAVE_LOAD_UNIT_1;
-            }
-            else if (VT13.Get_Keyboard_Key_Z() == VT13_Key_Status_TRIG_PRESSED_FREE && VT13.Get_Keyboard_Key_Shift() == VT13_Key_Status_TRIG_PRESSED_FREE)
-            {
-                Keyboard_Control_Type = Keyboard_Control_Type_SAVE_LOAD;
-                Save_Load_Unit = SAVE_LOAD_UNIT_2;
-            }
+            bool step = Key_Is_Trig_Pressed_Free(controller_mouse_right_key);
+            FSM_Save_Load.Reload_TIM_Status_PeriodElapsedCallback(Save_Load_Unit, step);
 
-            // 各种模式下对应的键位设置
-            switch (Keyboard_Control_Type)
+            if (Key_Is_Trig_Pressed_Free(controller_mouse_left_key))
             {
-            case (Keyboard_Control_Type_WORKING):
-            {
-                // 读取自定义控制器关节数据
-                tmp_j0_pitch_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[0];
-                tmp_j1_yaw_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[1];
-                tmp_j2_yaw_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[2];
-                tmp_j3_roll_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[3];
-                tmp_j4_pitch_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[4];
-                tmp_j5_roll_radian = VT13.Custom_Controller.Custom_Controller_Data.Angle[5];
-
-                if (VT13.Custom_Controller.Custom_Controller_Data.gripper_status)
-                {
-                    tmp_gripper_position = 255;
-                }
-                else
-                {
-                    tmp_gripper_position = 0;
-                }
-
-                break;
+                tmp_gripper_position = (tmp_gripper_position > 0) ? 0 : 255;
             }
-            // 存取矿模式
-            case (Keyboard_Control_Type_SAVE_LOAD):
-            {
-                bool step = (VT13.Get_Mouse_Right_Key() == VT13_Key_Status_TRIG_PRESSED_FREE);
-                FSM_Save_Load.Reload_TIM_Status_PeriodElapsedCallback(Save_Load_Unit, step);
-
-                if (VT13.Get_Mouse_Left_Key() == VT13_Key_Status_TRIG_PRESSED_FREE)
-                {
-                    tmp_gripper_position = (tmp_gripper_position > 0) ? 0 : 255;
-                }
-            }
-            case (Keyboard_Control_Type_MOVING):
-            case (Keyboard_Control_Type_UPLIFT):
-            case (Keyboard_Control_Type_DOWNLIFT):
-            {
-                // 机械臂保持当前姿态
-                break;
-            }
-            default:
-                break;
-            }
-
-            // 各模式下固定键位，按住鼠标右键+鼠标移动图传
-            if (VT13.Get_Mouse_Right_Key() == VT13_Key_Status_PRESSED)
-            {
-                tmp_vt03_yaw += VT13.Get_Mouse_X();
-                tmp_vt03_pitch += VT13.Get_Mouse_Y();
-            }
+            break;
         }
-    }
-    else if (Active_Controller == Controller_NONE)
-    {
-        Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_DISABLE);
-        Keyboard_Control_Type = Keyboard_Control_Type_DISABLE;
+        case Keyboard_Control_Type_MOVING:
+        case Keyboard_Control_Type_UPLIFT:
+        case Keyboard_Control_Type_DOWNLIFT:
+        case Keyboard_Control_Type_DISABLE:
+        default:
+            break;
+        }
+
+        if (Key_Is_Pressed(controller_mouse_right_key))
+        {
+            tmp_vt03_yaw += controller_mouse_x;
+            tmp_vt03_pitch += controller_mouse_y;
+        }
     }
 
     if (Keyboard_Control_Type != Keyboard_Control_Type_SAVE_LOAD)
     {
         FSM_Save_Load.Set_Status(0);
-        // 机械臂，夹爪以及图传目标位置赋值
         Gimbal.Set_Target_J0_Pitch_Radian(tmp_j0_pitch_radian);
         Gimbal.Set_Target_J1_Yaw_Radian(tmp_j1_yaw_radian);
         Gimbal.Set_Target_J2_Yaw_Radian(tmp_j2_yaw_radian);
@@ -1754,7 +1299,9 @@ void Class_Chariot::Judge_DR16_Control_Type()
     else
     {
         if (DR16.Get_DR16_Status() == DR16_Status_DISABLE)
+        {
             DR16_Control_Type = DR16_Control_Type_NONE;
+        }
     }
 }
 
@@ -1795,7 +1342,9 @@ void Class_Chariot::Judge_VT13_Control_Type()
     else
     {
         if (VT13.Get_VT13_Status() == VT13_Status_DISABLE)
+        {
             VT13_Control_Type = VT13_Control_Type_NONE;
+        }
     }
 }
 
@@ -1869,6 +1418,205 @@ Enum_VT13_Control_Type Class_Chariot::Get_VT13_Control_Type()
         return VT13_Control_Type_NONE;
     }
 }
+
+void Class_Chariot::Judge_Keyboard_Mode()
+{
+    const bool shift_active = Key_Is_Shift_Active(controller_key_shift);
+
+    if (Key_Is_Trig_Pressed_Free(controller_key_z) && !shift_active)
+    {
+        Keyboard_Control_Type = Keyboard_Control_Type_WORKING;
+    }
+    else if (Key_Is_Trig_Pressed_Free(controller_key_x) && !shift_active)
+    {
+        Keyboard_Control_Type = Keyboard_Control_Type_MOVING;
+    }
+    else if (Key_Is_Trig_Pressed_Free(controller_key_c) && !shift_active)
+    {
+        Keyboard_Control_Type = Keyboard_Control_Type_UPLIFT;
+    }
+    else if (Key_Is_Trig_Pressed_Free(controller_key_v) && !shift_active)
+    {
+        Keyboard_Control_Type = Keyboard_Control_Type_DOWNLIFT;
+    }
+    else if (Key_Is_Trig_Pressed_Free(controller_key_z) && shift_active)
+    {
+        Keyboard_Control_Type = Keyboard_Control_Type_SAVE_LOAD;
+        Save_Load_Unit = SAVE_LOAD_UNIT_1;
+    }
+    else if (Key_Is_Trig_Pressed_Free(controller_key_x) && shift_active)
+    {
+        Keyboard_Control_Type = Keyboard_Control_Type_SAVE_LOAD;
+        Save_Load_Unit = SAVE_LOAD_UNIT_2;
+    }
+}
+
+void Class_Chariot::Create_Controller_Snapshot()
+{
+    controller_right_y = 0.0f;
+    controller_mouse_x = 0.0f;
+    controller_mouse_y = 0.0f;
+    controller_mouse_z = 0.0f;
+    controller_mouse_left_key = Controller_Key_Status_FREE;
+    controller_mouse_right_key = Controller_Key_Status_FREE;
+    controller_key_w = Controller_Key_Status_FREE;
+    controller_key_s = Controller_Key_Status_FREE;
+    controller_key_a = Controller_Key_Status_FREE;
+    controller_key_d = Controller_Key_Status_FREE;
+    controller_key_shift = Controller_Key_Status_FREE;
+    controller_key_ctrl = Controller_Key_Status_FREE;
+    controller_key_q = Controller_Key_Status_FREE;
+    controller_key_e = Controller_Key_Status_FREE;
+    controller_key_r = Controller_Key_Status_FREE;
+    controller_key_f = Controller_Key_Status_FREE;
+    controller_key_g = Controller_Key_Status_FREE;
+    controller_key_z = Controller_Key_Status_FREE;
+    controller_key_x = Controller_Key_Status_FREE;
+    controller_key_c = Controller_Key_Status_FREE;
+    controller_key_v = Controller_Key_Status_FREE;
+    controller_key_b = Controller_Key_Status_FREE;
+    controller_dr16_left_switch = DR16_Switch_Status_UP;
+    controller_dr16_right_switch = DR16_Switch_Status_UP;
+    controller_vt13_switch = VT13_Switch_Status_Left;
+    left_x = 0.0f;
+    left_y = 0.0f;
+    right_x = 0.0f;
+    yaw = 0.0f;
+    dr16_left_x = 0.0f;
+    dr16_left_y = 0.0f;
+    dr16_right_x = 0.0f;
+    dr16_right_y = 0.0f;
+    dr16_yaw = 0.0f;
+    vt13_left_x = 0.0f;
+    vt13_left_y = 0.0f;
+    vt13_right_x = 0.0f;
+    vt13_right_y = 0.0f;
+    vt13_yaw = 0.0f;
+
+    if (Active_Controller == Controller_DR16)
+    {
+        left_x = Apply_Dead_Zone(DR16.Get_Left_X(), DR16_Dead_Zone);
+        left_y = Apply_Dead_Zone(DR16.Get_Left_Y(), DR16_Dead_Zone);
+        right_x = Apply_Dead_Zone(DR16.Get_Right_X(), DR16_Dead_Zone);
+        controller_right_y = Apply_Dead_Zone(DR16.Get_Right_Y(), DR16_Dead_Zone);
+        yaw = Apply_Dead_Zone(DR16.Get_Yaw(), DR16_Dead_Zone);
+        controller_mouse_x = DR16.Get_Mouse_X();
+        controller_mouse_y = DR16.Get_Mouse_Y();
+        controller_mouse_z = DR16.Get_Mouse_Z();
+        controller_mouse_left_key = To_Controller_Key_Status(DR16.Get_Mouse_Left_Key());
+        controller_mouse_right_key = To_Controller_Key_Status(DR16.Get_Mouse_Right_Key());
+        controller_key_w = To_Controller_Key_Status(DR16.Get_Keyboard_Key_W());
+        controller_key_s = To_Controller_Key_Status(DR16.Get_Keyboard_Key_S());
+        controller_key_a = To_Controller_Key_Status(DR16.Get_Keyboard_Key_A());
+        controller_key_d = To_Controller_Key_Status(DR16.Get_Keyboard_Key_D());
+        controller_key_shift = To_Controller_Key_Status(DR16.Get_Keyboard_Key_Shift());
+        controller_key_ctrl = To_Controller_Key_Status(DR16.Get_Keyboard_Key_Ctrl());
+        controller_key_q = To_Controller_Key_Status(DR16.Get_Keyboard_Key_Q());
+        controller_key_e = To_Controller_Key_Status(DR16.Get_Keyboard_Key_E());
+        controller_key_r = To_Controller_Key_Status(DR16.Get_Keyboard_Key_R());
+        controller_key_f = To_Controller_Key_Status(DR16.Get_Keyboard_Key_F());
+        controller_key_g = To_Controller_Key_Status(DR16.Get_Keyboard_Key_G());
+        controller_key_z = To_Controller_Key_Status(DR16.Get_Keyboard_Key_Z());
+        controller_key_x = To_Controller_Key_Status(DR16.Get_Keyboard_Key_X());
+        controller_key_c = To_Controller_Key_Status(DR16.Get_Keyboard_Key_C());
+        controller_key_v = To_Controller_Key_Status(DR16.Get_Keyboard_Key_V());
+        controller_key_b = To_Controller_Key_Status(DR16.Get_Keyboard_Key_B());
+        controller_dr16_left_switch = DR16.Get_Left_Switch();
+        controller_dr16_right_switch = DR16.Get_Right_Switch();
+
+        dr16_left_x = left_x;
+        dr16_left_y = left_y;
+        dr16_right_x = right_x;
+        dr16_right_y = controller_right_y;
+        dr16_yaw = yaw;
+    }
+    else if (Active_Controller == Controller_VT13)
+    {
+        left_x = Apply_Dead_Zone(VT13.Get_Left_X(), DR16_Dead_Zone);
+        left_y = Apply_Dead_Zone(VT13.Get_Left_Y(), DR16_Dead_Zone);
+        right_x = Apply_Dead_Zone(VT13.Get_Right_X(), DR16_Dead_Zone);
+        controller_right_y = Apply_Dead_Zone(VT13.Get_Right_Y(), DR16_Dead_Zone);
+        yaw = Apply_Dead_Zone(VT13.Get_Yaw(), DR16_Dead_Zone);
+        controller_mouse_x = VT13.Get_Mouse_X();
+        controller_mouse_y = VT13.Get_Mouse_Y();
+        controller_mouse_z = VT13.Get_Mouse_Z();
+        controller_mouse_left_key = To_Controller_Key_Status(VT13.Get_Mouse_Left_Key());
+        controller_mouse_right_key = To_Controller_Key_Status(VT13.Get_Mouse_Right_Key());
+        controller_key_w = To_Controller_Key_Status(VT13.Get_Keyboard_Key_W());
+        controller_key_s = To_Controller_Key_Status(VT13.Get_Keyboard_Key_S());
+        controller_key_a = To_Controller_Key_Status(VT13.Get_Keyboard_Key_A());
+        controller_key_d = To_Controller_Key_Status(VT13.Get_Keyboard_Key_D());
+        controller_key_shift = To_Controller_Key_Status(VT13.Get_Keyboard_Key_Shift());
+        controller_key_ctrl = To_Controller_Key_Status(VT13.Get_Keyboard_Key_Ctrl());
+        controller_key_q = To_Controller_Key_Status(VT13.Get_Keyboard_Key_Q());
+        controller_key_e = To_Controller_Key_Status(VT13.Get_Keyboard_Key_E());
+        controller_key_r = To_Controller_Key_Status(VT13.Get_Keyboard_Key_R());
+        controller_key_f = To_Controller_Key_Status(VT13.Get_Keyboard_Key_F());
+        controller_key_g = To_Controller_Key_Status(VT13.Get_Keyboard_Key_G());
+        controller_key_z = To_Controller_Key_Status(VT13.Get_Keyboard_Key_Z());
+        controller_key_x = To_Controller_Key_Status(VT13.Get_Keyboard_Key_X());
+        controller_key_c = To_Controller_Key_Status(VT13.Get_Keyboard_Key_C());
+        controller_key_v = To_Controller_Key_Status(VT13.Get_Keyboard_Key_V());
+        controller_key_b = To_Controller_Key_Status(VT13.Get_Keyboard_Key_B());
+        controller_vt13_switch = VT13.Get_Switch();
+
+        vt13_left_x = left_x;
+        vt13_left_y = left_y;
+        vt13_right_x = right_x;
+        vt13_right_y = controller_right_y;
+        vt13_yaw = yaw;
+    }
+}
+
+void Class_Chariot::Controller_Data_Update()
+{
+    Judge_Active_Controller();
+    Create_Controller_Snapshot();
+
+    if ((Active_Controller == Controller_DR16 && DR16_Control_Type == DR16_Control_Type_KEYBOARD) ||
+        (Active_Controller == Controller_VT13 && VT13_Control_Type == VT13_Control_Type_KEYBOARD))
+    {
+        Judge_Keyboard_Mode();
+    }
+}
+
+void Class_Chariot::Judge_Gimbal_Control_Type()
+{
+    if (Active_Controller == Controller_DR16 && DR16_Control_Type == DR16_Control_Type_REMOTE)
+    {
+        if (controller_dr16_left_switch == DR16_Switch_Status_UP)
+        {
+            Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_DISABLE);
+            Keyboard_Control_Type = Keyboard_Control_Type_DISABLE;
+        }
+        else
+        {
+            Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
+        }
+    }
+    else if (Active_Controller == Controller_VT13 && VT13_Control_Type == VT13_Control_Type_REMOTE)
+    {
+        if (controller_vt13_switch == VT13_Switch_Status_Left)
+        {
+            Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_DISABLE);
+            Keyboard_Control_Type = Keyboard_Control_Type_DISABLE;
+        }
+        else
+        {
+            Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
+        }
+    }
+    else if ((Active_Controller == Controller_DR16 && DR16_Control_Type == DR16_Control_Type_KEYBOARD) ||
+             (Active_Controller == Controller_VT13 && VT13_Control_Type == VT13_Control_Type_KEYBOARD))
+    {
+        Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
+    }
+    else
+    {
+        Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_DISABLE);
+        Keyboard_Control_Type = Keyboard_Control_Type_DISABLE;
+    }
+}
 #endif
 
 /**
@@ -1879,8 +1627,7 @@ Enum_VT13_Control_Type Class_Chariot::Get_VT13_Control_Type()
 void Class_Chariot::TIM_Control_Callback()
 {
     // 判断遥控器数据来源
-    Judge_DR16_Control_Type();
-    Judge_VT13_Control_Type();
+    Controller_Data_Update();
     // 底盘，云台，发射机构控制逻辑
     Control_Gimbal();
     Control_Chassis();
@@ -2505,12 +2252,12 @@ void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load
         test_flag[3] = (fabs((Gimbal->J3_Roll_2325.Get_Now_Angle() - PI) - Gimbal->Get_Target_J3_Roll_Radian_In_PI()) <= 0.1f);
         test_flag[4] = (fabs((Gimbal->J4_Pitch_2325.Get_Now_Angle() - PI) - Gimbal->Get_Target_J4_Pitch_Radian_In_PI()) <= 0.1f);
         test_flag[5] = (fabs(Gimbal->Jodell_ERG150T.Get_Now_Roll() - Gimbal->Get_Target_J5_Roll_Radian()) <= 0.1f);
-        finish_flag = test_flag[0]&&
-                      test_flag[1]&&
-                      test_flag[2]&&
-                      test_flag[3]&&
-                      test_flag[4]&&
-                      test_flag[5]&&
+        finish_flag = test_flag[0] &&
+                      test_flag[1] &&
+                      test_flag[2] &&
+                      test_flag[3] &&
+                      test_flag[4] &&
+                      test_flag[5] &&
                       (true);
 
         if (finish_flag)
@@ -2549,7 +2296,7 @@ void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load
     case (4):
     {
         // 等待操作手操作
-        if(step)
+        if (step)
         {
             Set_Status(5);
         }
