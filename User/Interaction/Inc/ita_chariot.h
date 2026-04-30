@@ -312,8 +312,6 @@ public:
     void Judge_DR16_Control_Type();
     void Judge_VT13_Control_Type();
 
-    void Control_Chassis();
-
     // 角度目标值
     float tmp_j0_pitch_radian, tmp_j1_yaw_radian, tmp_j2_yaw_radian, tmp_j3_roll_radian, tmp_j4_pitch_radian, tmp_j5_roll_radian;
     uint8_t tmp_gripper_position;
@@ -381,6 +379,7 @@ protected:
     float controller_mouse_x = 0.0f;
     float controller_mouse_y = 0.0f;
     float controller_mouse_z = 0.0f;
+    
     Enum_Controller_Key_Status controller_mouse_left_key = Controller_Key_Status_FREE;
     Enum_Controller_Key_Status controller_mouse_right_key = Controller_Key_Status_FREE;
     Enum_Controller_Key_Status controller_key_w = Controller_Key_Status_FREE;
@@ -447,10 +446,8 @@ protected:
 
     // void Judge_DR16_Control_Type();
 
-    // void Control_Chassis();
+    void Control_Chassis();
     void Control_Gimbal();
-    void New_Control_Chassis();
-    void New_Control_Gimbal();
     void Control_Booster();
 
     void Transform_Mouse_Axis();

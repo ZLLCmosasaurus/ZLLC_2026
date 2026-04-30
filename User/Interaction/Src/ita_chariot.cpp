@@ -1076,6 +1076,7 @@ void Class_Chariot::Control_Gimbal()
     {
         switch (Keyboard_Control_Type)
         {
+
         case Keyboard_Control_Type_WORKING:
             if (Active_Controller == Controller_DR16)
             {
@@ -1100,6 +1101,7 @@ void Class_Chariot::Control_Gimbal()
                                                tmp_gripper_position);
             }
             break;
+
         case Keyboard_Control_Type_SAVE_LOAD:
         {
             bool step = Key_Is_Trig_Pressed_Free(controller_mouse_right_key);
@@ -1111,6 +1113,7 @@ void Class_Chariot::Control_Gimbal()
             }
             break;
         }
+
         case Keyboard_Control_Type_MOVING:
         case Keyboard_Control_Type_UPLIFT:
         case Keyboard_Control_Type_DOWNLIFT:
@@ -2250,7 +2253,7 @@ void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load
         test_flag[1] = (fabs((Gimbal->J1_Yaw_8009P.Get_Now_Angle() - PI) - Gimbal->Get_Target_J1_Yaw_Radian()) <= 0.1f);
         test_flag[2] = (fabs((Gimbal->J2_Yaw_4340P.Get_Now_Angle() - PI) - Gimbal->Get_Target_J2_Yaw_Radian()) <= 0.1f);
         test_flag[3] = (fabs((Gimbal->J3_Roll_2325.Get_Now_Angle() - PI) - Gimbal->Get_Target_J3_Roll_Radian_In_PI()) <= 0.1f);
-        test_flag[4] = (fabs((Gimbal->J4_Pitch_2325.Get_Now_Angle() - PI) - Gimbal->Get_Target_J4_Pitch_Radian_In_PI()) <= 0.1f);
+        test_flag[4] = (fabs((Gimbal->J4_Pitch_2325.Get_Now_Angle() - PI + 0.52741) - Gimbal->Get_Target_J4_Pitch_Radian_In_PI()) <= 0.1f);
         test_flag[5] = (fabs(Gimbal->Jodell_ERG150T.Get_Now_Roll() - Gimbal->Get_Target_J5_Roll_Radian()) <= 0.1f);
         finish_flag = test_flag[0] &&
                       test_flag[1] &&

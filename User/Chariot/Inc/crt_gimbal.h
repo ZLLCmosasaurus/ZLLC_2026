@@ -250,7 +250,7 @@ protected:
     bool pitch_cali_status = false;
     float pitch_locked_torque = 3.5f;
     float pitch_offset = 0.0f;
-    float pitch_range = 157.0f;
+    float pitch_range = 174.0f;
 
     float gripper_offset = 0.0f;           // 夹爪校准后的偏差角度，rad
     float gripper_locked_torque = 1600.0f; // 暂定为8.0f，待测
