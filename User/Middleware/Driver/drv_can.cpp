@@ -225,6 +225,7 @@ void TIM_CAN_PeriodElapsedCallback()
         // CAN1超级电容
         CAN_Send_Data(&hcan1, 0x66, CAN_Supercap_Tx_Data, 8);
         CAN_Send_Data(&hcan2, 0x88, CAN2_Chassis_Tx_Gimbal_Data, 8);
+        CAN_Send_Data(&hcan2, 0x89, CAN2_Chassis_Tx_Gimbal_Data_1, 8);
     }
 
     // CAN1总线  四个底盘电机

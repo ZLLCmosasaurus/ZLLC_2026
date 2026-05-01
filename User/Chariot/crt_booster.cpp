@@ -27,72 +27,66 @@
 /* Function prototypes -------------------------------------------------------*/
 
 /**
- * @brief 定时器处理函数
- * 这是一个模板, 使用时请根据不同处理情况在不同文件内重新定义
+ * @brief 根据拨弹盘角度变化计算发弹量与热量
  *
  */
 Enum_Friction_Control_Type Last_Friction_Control_Type =
     Friction_Control_Type_DISABLE;
 void Class_FSM_Heat_Detect::Reload_TIM_Status_PeriodElapsedCallback()
 {
-    Status[Now_Status_Serial].Time++;
+    // 每发弹丸对应拨弹盘的运动位移角度
+    constexpr float ANGLE_PER_BULLET = 40.0f;
 
-    // static Enum_Friction_Control_Type Last_Friction_Control_Type =
-    // Friction_Control_Type_DISABLE;
+    // 当拨弹盘走过位移角度的多少时，便判定为发弹
+    constexpr float SHOOT_JUDGE_RATIO = 0.9f;
 
-    // 自己接着编写状态转移函数
-    switch (Now_Status_Serial) {
-        case (0): {
-            // 正常状态
+    // 是否启用依靠裁判系统数据的同步机制，以消除多算或少算发弹的误差
+    constexpr bool IS_SHADOW_SYNCHRONIZATION_ENABLE = true;
 
-            if (abs(Booster->Motor_Friction_Right.Get_Now_Torque()) >=
-                    Booster->Friction_Torque_Threshold &&
-                abs(Booster->Motor_Friction_Right.Get_Now_Torque()) <= 10000) {
-                // 大扭矩->检测状态
-                Set_Status(1);
+    // 计算得到的热量比裁判系统低时，本地热量追赶的速度系数
+    constexpr float HEAT_CHASE_FACTOR = 0.05f;
 
-            } else if (Booster->Booster_Control_Type == Booster_Control_Type_DISABLE) {
-                // 停机->停机状态
-                Set_Status(3);
-            }
-        } break;
-        case (1): {
-            // 发射嫌疑状态
+    // 计算得到的热量比裁判系统高时，本地热量等待的速度系数
+    constexpr float HEAT_WAIT_FACTOR = 0.005f;
 
-            if (Status[Now_Status_Serial].Time >= 30) {
-                // 长时间大扭矩->确认是发射了
-                Set_Status(2);
-            }
-        } break;
-        case (2): {
-            if (Last_Friction_Control_Type == Friction_Control_Type_DISABLE &&
-                Booster->Friction_Control_Type == Friction_Control_Type_ENABLE) {
-                // Heat += 100.0f;
-                Last_Friction_Control_Type = Booster->Get_Friction_Control_Type();
-                Set_Status(0);
-            } else if (Last_Friction_Control_Type == Friction_Control_Type_ENABLE &&
-                       Booster->Friction_Control_Type ==
-                           Friction_Control_Type_DISABLE) {
-                // Heat += 100.0f;
-                Last_Friction_Control_Type = Booster->Get_Friction_Control_Type();
-                Set_Status(0);
-            } else {
-                // 发射完成状态->加上热量进入下一轮检测
-                Booster->actual_bullet_num++;
-                // shoot_num ++;
-                Heat += 10.0f;
-                Set_Status(0);
-            }
-        } break;
-        case (3): {
-            // 停机状态
+    // 拨弹盘初始角度偏移量
+    static float ANGLE_OFFSET = 0.0f;
 
-            if (abs(Booster->Motor_Friction_Right.Get_Now_Omega_Radian()) >=
-                Booster->Friction_Omega_Threshold) {
-                // 开机了->正常状态
-                Set_Status(0);
-            }
-        } break;
+    // 初始化判断标志位
+    static bool is_initialized = false;
+
+    if (!is_initialized) {
+        // 初始化拨弹盘角度偏移量
+        ANGLE_OFFSET   = Booster->Motor_Driver.Get_Now_Angle();
+        is_initialized = true;
+    }
+
+    // 当前拨弹盘总位移角度
+    float total_displacement = Booster->Motor_Driver.Get_Now_Angle() - ANGLE_OFFSET;
+
+    // 当下发弹量对应的拨弹盘位移
+    float expected_displacement = Booster->actual_bullet_num * ANGLE_PER_BULLET;
+
+    // 发弹判断
+    float delta = total_displacement - expected_displacement;
+    if (delta > ANGLE_PER_BULLET * SHOOT_JUDGE_RATIO) {
+        Booster->actual_bullet_num++;
+        Heat += 10.0f;
+    }
+
+    uint16_t referee_heat = Booster->Referee->Get_Booster_17mm_1_Heat();
+
+    if (IS_SHADOW_SYNCHRONIZATION_ENABLE) {
+        // 与裁判系统值比对，修正误差
+        float error = referee_heat - Heat;
+        if (error > 0) {
+            // 补偿少算
+            Heat += HEAT_CHASE_FACTOR * error;
+        } else if (Booster->Get_Booster_Control_Type() == Booster_Control_Type_DISABLE ||
+                   Booster->Get_Booster_Control_Type() == Booster_Control_Type_CEASEFIRE) {
+            // 当停止发射时才补偿多算
+            Heat += HEAT_WAIT_FACTOR * error;
+        }
     }
 
     // 热量冷却到0
@@ -360,6 +354,7 @@ void Class_Booster::Output()
             float a = static_cast<float>(Referee->Get_Booster_17mm_1_Heat_CD());
             // 枪口还能利用的热量上限(单位：点)
             float m = static_cast<float>(Referee->Get_Booster_17mm_1_Heat_Max() - FSM_Heat_Detect.Heat);
+            // float m = static_cast<float>(Referee->Get_Booster_17mm_1_Heat_Max() - Referee->Get_Booster_17mm_1_Heat());
             // 每射击一发消耗热量(单位：点)
             constexpr float d = 10.0f;
             // 射速(单位：发/s)
@@ -439,8 +434,8 @@ void Class_Booster::Output()
                 target_omega = 0.0f;
                 shoot_time   = 0;
             }
-            Motor_Driver.Set_Target_Omega_Radian(target_omega);
 
+            Motor_Driver.Set_Target_Omega_Radian(target_omega);
             Swtich_To_Angle_Control_Flag = 1;
 
 #endif

@@ -212,7 +212,6 @@ void Class_Chariot::CAN_Gimbal_Rx_Chassis_Callback()
 
     Enum_Referee_Data_Robots_ID robo_id;
     Enum_Referee_Game_Status_Stage game_stage;
-    uint16_t Shooter_Barrel_Heat;
     uint16_t Shooter_Barrel_Heat_Limit;
     uint16_t tmp_shooter_speed;
     uint16_t Shooter_Barrel_Cooling_Value;
@@ -224,7 +223,6 @@ void Class_Chariot::CAN_Gimbal_Rx_Chassis_Callback()
     memcpy(&tmp_shooter_speed, CAN_Manage_Object->Rx_Buffer.Data + 6, sizeof(uint16_t));
     Shooter_Speed = tmp_shooter_speed / 10.0f;
     Referee.Set_Robot_ID(robo_id);
-    // Referee.Set_Booster_17mm_1_Heat(Shooter_Barrel_Heat);
     Referee.Set_Booster_17mm_1_Heat_Max(Shooter_Barrel_Heat_Limit);
     Referee.Set_Game_Stage(game_stage);
     Referee.Set_Booster_Speed(Shooter_Speed);
@@ -232,9 +230,9 @@ void Class_Chariot::CAN_Gimbal_Rx_Chassis_Callback()
 }
 void Class_Chariot::CAN_Gimbal_Rx_Chassis_Callback_1()
 {
-    uint16_t tmp_heat;
-    memcpy(&tmp_heat, &CAN_Manage_Object->Rx_Buffer.Data[2], sizeof(uint16_t));
-    // Booster.set_heat(tmp_heat);
+    uint16_t Shooter_Barrel_Heat;
+    memcpy(&Shooter_Barrel_Heat, &CAN_Manage_Object->Rx_Buffer.Data[2], sizeof(uint16_t));
+    Referee.Set_Booster_17mm_1_Heat(Shooter_Barrel_Heat);
 }
 #endif
 
@@ -852,17 +850,38 @@ void Class_Chariot::Control_Booster()
         {
             if (VT13.Get_Yaw() > -0.2f && VT13.Get_Yaw() < 0.2f)
             {
+                Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
                 Shoot_Flag = 0;
             }
             if (VT13.Get_Yaw() < -0.8f && Shoot_Flag == 0) // 单发
             {
-                Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
-                Shoot_Flag = 1;
+                if (Gimbal.Get_Gimbal_Control_Type() == Gimbal_Control_Type_MINIPC) {
+                    if (MiniPC.Get_Shoot_Status()) {
+                        Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                        Shoot_Flag = 1;
+                    } else {
+                        Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+                        Shoot_Flag = 0;
+                    }
+                } else {
+                    Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                    Shoot_Flag = 1;
+                }
             }
-            if (VT13.Get_Yaw() > 0.8f && Shoot_Flag == 0) // 五连发
+            if (VT13.Get_Yaw() > 0.8f && Shoot_Flag == 0) // 连发
             {
-                Booster.Set_Booster_Control_Type(Booster_Control_Type_MULTI);
-                Shoot_Flag = 1;
+                if (Gimbal.Get_Gimbal_Control_Type() == Gimbal_Control_Type_MINIPC) {
+                    if (MiniPC.Get_Shoot_Status()) {
+                        Booster.Set_Booster_Control_Type(Booster_Control_Type_REPEATED);
+                        Shoot_Flag = 1;
+                    } else {
+                        Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+                        Shoot_Flag = 0;
+                    }
+                } else {
+                    Booster.Set_Booster_Control_Type(Booster_Control_Type_REPEATED);
+                    Shoot_Flag = 1;
+                }
             }
         }
     }

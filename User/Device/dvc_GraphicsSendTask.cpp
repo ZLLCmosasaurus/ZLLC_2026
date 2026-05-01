@@ -860,24 +860,45 @@ void Antispin_Draw(uint8_t Init_Cnt)
  */
 void Booster_Heat_Draw(uint16_t heat, uint16_t heat_max, uint8_t Init_Flag)
 {
-    static uint16_t degree;                                                         // 角度
-    static uint8_t operation               = (Init_Flag == 0) ? Op_Change : Op_Add; // 操作类型
-    static constexpr uint8_t HeatArcName[] = "Han";                                 // 圆弧
-    static constexpr uint32_t radius       = 24;                                    // 半径
-    static constexpr uint16_t line_width   = 2;                                     // 线宽
+    constexpr uint8_t HeatArcName[] = "Han"; // 圆弧
+    constexpr uint32_t radius       = 64;    // 半径
+    constexpr uint16_t line_width   = 8;     // 线宽
+
+    /**
+     * @brief 旋转方向，分为顺时针与逆时针
+     */
+    enum class Direction {
+        CLOCKWISE,
+        COUNTER_CLOCKWISE,
+    };
+
+    constexpr Direction direction = Direction::COUNTER_CLOCKWISE;          // 方向
+    uint8_t operation             = (Init_Flag == 0) ? Op_Change : Op_Add; // 操作类型
 
     graphic_data_struct_t *P_graphic_data;
 
     // 计算填充角度
-    float ratio = (heat_max > 0) ? ((float)heat / heat_max) : 0.0f;
+    float ratio = (heat_max > 0) ? (static_cast<float>(heat) / heat_max) : 0.0f;
     if (ratio > 1.0f)
         ratio = 1.0f;
-    degree = ratio * 360;
+    uint16_t degree = static_cast<uint16_t>(ratio * 360.0f); // 角度
 
     // 绘制图形
+    uint16_t start_angle;
+    uint16_t end_angle;
+
+    // 利用if constexpr在编译期确定分支，需要编译器支持C++17标准
+    if constexpr (direction == Direction::CLOCKWISE) {
+        start_angle = 0;
+        end_angle   = degree;
+    } else if constexpr (direction == Direction::COUNTER_CLOCKWISE) {
+        end_angle   = 360;
+        start_angle = 360 - degree;
+    }
+
     P_graphic_data = Arc_Draw(0, operation,
                               0.5f * SCREEN_LENGTH, 0.5f * SCREEN_WIDTH,
-                              0, degree,
+                              start_angle, end_angle,
                               radius, radius,
                               line_width,
                               (ratio <= 0.5f) ? Green : Orange, HeatArcName);
