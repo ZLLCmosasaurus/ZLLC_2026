@@ -143,7 +143,7 @@ protected:
 
     uint8_t error = BMI088_NO_ERROR;
 
-    const uint8_t caliOffset = 0;
+    const uint8_t caliOffset = 1;
 
     uint32_t fac_us = 0;
     uint32_t fac_ms = 0;

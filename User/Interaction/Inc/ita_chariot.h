@@ -303,7 +303,7 @@ protected:
         //DR16鼠标云台pitch灵敏度系数, 不同鼠标不同参数
         float DR16_Mouse_Pitch_Angle_Resolution = 57.8f;
         //富斯遥控器死区
-        float FS_i6X_Dead_Zone=0.0f;
+        float FS_i6X_Dead_Zone=0.03f;
 
         float FS_i6X_Yaw_Angle_Resolution= 0.0023f * PI * 57.29577951308232;
         float FS_i6X_Pitch_Angle_Resolution= 0.010f * PI* 57.29577951308232;

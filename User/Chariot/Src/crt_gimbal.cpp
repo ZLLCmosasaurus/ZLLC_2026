@@ -268,7 +268,7 @@ void Class_Gimbal::Output()
 
                 phi0_yaw   = asinf(ratio_yaw);
                 phi0_pitch = asinf(ratio_pitch);
-                cruise_start_time = Single_time;
+                cruise_start_time = Single_time;  
             }
             last_mode_for_cruise = 0;
 

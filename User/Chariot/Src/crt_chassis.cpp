@@ -82,9 +82,9 @@ void Class_Tricycle_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max
     Steer_Power_Ratio = __Steer_Power_Ratio;
 
         //斜坡函数加减速速度X  控制周期1ms
-    Slope_Velocity_X.Init(0.0070f,0.005f);
+    Slope_Velocity_X.Init(0.0070f,0.003f);
     //斜坡函数加减速速度Y  控制周期1ms
-    Slope_Velocity_Y.Init(0.0070f,0.005f);
+    Slope_Velocity_Y.Init(0.0070f,0.003f);
     //斜坡函数加减速角速度
     Slope_Omega.Init(0.05f, 0.05f);
 
@@ -138,10 +138,10 @@ void Class_Tricycle_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max
     // PID_Omega.Init(25.0f, 0.0f, 0.0f, 0.0f, 10.0f, 400.0f, 0.002f);
 
     // 底盘速度xPID, 输出摩擦力
-    PID_Velocity_X.Init(50.0f, 0.0f, 0.0f, 0.0f, 150.0f, 1000.0f, 0.002f);
+    PID_Velocity_X.Init(50.0f, 0.0f, 0.0f, 0.0f, 150.0f, 500.0f, 0.002f);
 
     // 底盘速度yPID, 输出摩擦力
-    PID_Velocity_Y.Init(50.0f, 0.0f, 0.0f, 0.0f, 150.0f, 1000.0f, 0.002f);
+    PID_Velocity_Y.Init(50.0f, 0.0f, 0.0f, 0.0f, 150.0f, 500.0f, 0.002f);
 
     // 底盘角速度PID, 输出扭矩
     PID_Omega.Init(3.0f, 0.0f, 0.0f, 0.0f, 10.0f, 10.0f, 0.002f);
@@ -632,6 +632,7 @@ void Class_Tricycle_Chassis::Force_Speed_Resolution()
             // }
 
 
+            Target_Wheel_Torque[i] = (Math_Abs(Target_Wheel_Torque[i]) > 0.25f) ? Target_Wheel_Torque[i] : 0;
             
             Motor_Wheel[i].Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_TORQUE);
             Motor_Wheel[i].Set_Target_Torque(Target_Wheel_Torque[i]);

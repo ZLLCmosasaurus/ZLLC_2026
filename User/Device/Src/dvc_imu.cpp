@@ -26,7 +26,7 @@ void Class_IMU::Init()
     IMU_MahonyAHRS.init(INS_Quat);
  
     //EKF初始化                         第三个加速度参数加大，减小运动过程中的影响    过于不相信加速度导致静止到目标收敛慢，看起来在飘
-    IMU_QuaternionEKF_Init(10, 0.001, 10000000, 0.9996, 0.05, -0.0014f, &QEKF_INS);
+    IMU_QuaternionEKF_Init(10, 0.001, 10000000, 0.9996, 0.05, 0.00016f, &QEKF_INS);
 
     INS.AccelLPF = 0.05f;
 

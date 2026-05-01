@@ -464,6 +464,8 @@ void MiniPC_UART_Callback(uint8_t *Buffer, uint16_t Length)
 extern Referee_Rx_A_t CAN3_Chassis_Rx_Data_A;
 float Sin_Single;
 uint32_t Single_Time;
+uint32_t ad;
+float Dt_ad;
 void Task100us_TIM4_Callback()
 {
     #ifdef CHASSIS
@@ -473,7 +475,7 @@ void Task100us_TIM4_Callback()
     #elif defined(GIMBAL)
         // 单给IMU消息开的定时器 ims
         chariot.Gimbal.Boardc_BMI.TIM_Calculate_PeriodElapsedCallback();     
-
+        Dt_ad=DWT_GetDeltaT(&ad);
         //开始比赛但是遥控器断连了
          #ifdef USE_DR16  
         if(chariot.Referee.Get_Game_Stage() == Referee_Game_Status_Stage_BATTLE && chariot.DR16.Get_DR16_Status() == DR16_Status_DISABLE && chariot.Referee.Get_Referee_Status() == Referee_Status_ENABLE){                               //比赛开始状态
