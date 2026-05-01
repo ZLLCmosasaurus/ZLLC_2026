@@ -73,7 +73,7 @@ void Class_Chariot::Init(float __DR16_Dead_Zone)
     Booster.Init();
 
     // 上位机
-    MiniPC.Init(&MiniPC_USB_Manage_Object);
+    //MiniPC.Init(&MiniPC_USB_Manage_Object);
     MiniPC.Init(&hcan1);
     MiniPC.IMU = &Gimbal.Boardc_BMI;
     MiniPC.Referee = &Referee;
@@ -278,7 +278,7 @@ void Class_Chariot::CAN_Gimbal_Tx_Chassis_Callback_1()
     tmp_fric_omega_left = (uint16_t)abs(Booster.Motor_Friction_Left.Get_Now_Omega_Radian());
     tmp_fric_omega_right = (uint16_t)abs(Booster.Motor_Friction_Right.Get_Now_Omega_Radian());
     // tmp_actual_bullet_num = Booster.actual_bullet_num;
-    CAN2_Gimbal_Tx_Chassis_Data_1[0] = MiniPC.Get_MiniPC_Type();
+    //CAN2_Gimbal_Tx_Chassis_Data_1[0] = MiniPC.Get_MiniPC_Type();
     // CAN2_Gimbal_Tx_Chassis_Data_1[1] = MiniPC.Get_Antispin_Type();
     memcpy(CAN2_Gimbal_Tx_Chassis_Data_1 + 2, &tmp_fric_omega_left, sizeof(uint16_t));
     memcpy(CAN2_Gimbal_Tx_Chassis_Data_1 + 4, &tmp_fric_omega_right, sizeof(uint16_t));
@@ -510,6 +510,7 @@ float true_pitch = 0.0f, true_yaw = 0.0f;
 float dr16_pitch, dr16_yaw;
 bool init_finish_flag = true;
 bool position_init_flag = true;
+float test_gimbal_pitch = -45.0f;
 
 void Class_Chariot::Control_Gimbal()
 {
@@ -564,10 +565,10 @@ void Class_Chariot::Control_Gimbal()
             Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_MINIPC);
 
             // 两次开启自瞄分别切换四点五点
-            if (Gimbal.MiniPC->Get_MiniPC_Type() == MiniPC_Type_Nomal)
-                Gimbal.MiniPC->Set_MiniPC_Type(MiniPC_Type_Windmill); // 五点
-            else
-                Gimbal.MiniPC->Set_MiniPC_Type(MiniPC_Type_Nomal);
+            // if (Gimbal.MiniPC->Get_MiniPC_Type() == MiniPC_Type_Nomal)
+            //     Gimbal.MiniPC->Set_MiniPC_Type(MiniPC_Type_Windmill); // 五点
+            // else
+            //     Gimbal.MiniPC->Set_MiniPC_Type(MiniPC_Type_Nomal);
         }
         else // 非自瞄模式
         {
@@ -606,10 +607,10 @@ void Class_Chariot::Control_Gimbal()
                 Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
 
             // 两次开启自瞄分别切换四点五点
-            if (Gimbal.MiniPC->Get_MiniPC_Type() == MiniPC_Type_Nomal)
-                Gimbal.MiniPC->Set_MiniPC_Type(MiniPC_Type_Windmill); // 五点
-            else
-                Gimbal.MiniPC->Set_MiniPC_Type(MiniPC_Type_Nomal);
+            // if (Gimbal.MiniPC->Get_MiniPC_Type() == MiniPC_Type_Nomal)
+            //     Gimbal.MiniPC->Set_MiniPC_Type(MiniPC_Type_Windmill); // 五点
+            // else
+            //     Gimbal.MiniPC->Set_MiniPC_Type(MiniPC_Type_Nomal);
         }
 
         // 遥控器操作逻辑
@@ -674,14 +675,14 @@ void Class_Chariot::Control_Gimbal()
             // V键按下 自瞄模式中切换四点和五点模式
             if (DR16.Get_Keyboard_Key_V() == DR16_Key_Status_TRIG_FREE_PRESSED)
             {
-                if (Gimbal.MiniPC->Get_MiniPC_Type() == MiniPC_Type_Windmill)
-                {
-                    Gimbal.MiniPC->Set_MiniPC_Type(MiniPC_Type_Nomal);
-                }
-                else
-                {
-                    Gimbal.MiniPC->Set_MiniPC_Type(MiniPC_Type_Windmill);
-                }
+                // if (Gimbal.MiniPC->Get_MiniPC_Type() == MiniPC_Type_Windmill)
+                // {
+                //     Gimbal.MiniPC->Set_MiniPC_Type(MiniPC_Type_Nomal);
+                // }
+                // else
+                // {
+                //     Gimbal.MiniPC->Set_MiniPC_Type(MiniPC_Type_Windmill);
+                // }
             }
             // Z键按下 切换反小陀螺开关
             // if (DR16.Get_Keyboard_Key_Z() == DR16_Key_Status_TRIG_FREE_PRESSED)
@@ -769,14 +770,14 @@ void Class_Chariot::Control_Gimbal()
             // V键按下 自瞄模式中切换四点和五点模式
             if (VT13.Get_Keyboard_Key_V() == VT13_Key_Status_TRIG_FREE_PRESSED)
             {
-                if (Gimbal.MiniPC->Get_MiniPC_Type() == MiniPC_Type_Windmill)
-                {
-                    Gimbal.MiniPC->Set_MiniPC_Type(MiniPC_Type_Nomal);
-                }
-                else
-                {
-                    Gimbal.MiniPC->Set_MiniPC_Type(MiniPC_Type_Windmill);
-                }
+                // if (Gimbal.MiniPC->Get_MiniPC_Type() == MiniPC_Type_Windmill)
+                // {
+                //     Gimbal.MiniPC->Set_MiniPC_Type(MiniPC_Type_Nomal);
+                // }
+                // else
+                // {
+                //     Gimbal.MiniPC->Set_MiniPC_Type(MiniPC_Type_Windmill);
+                // }
             }
             // G键按下切换Pitch锁定模式和free模式
             if (VT13.Get_Keyboard_Key_G() == VT13_Key_Status_TRIG_FREE_PRESSED)
@@ -1361,6 +1362,7 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
         // Booster.Motor_Driver.TIM_Alive_PeriodElapsedCallback();
         Booster.Motor_Friction_Left.TIM_Alive_PeriodElapsedCallback();
         Booster.Motor_Friction_Right.TIM_Alive_PeriodElapsedCallback();
+        Booster.Motor_Friction_Down.TIM_Alive_PeriodElapsedCallback();
 #endif
 
         mod50 = 0;

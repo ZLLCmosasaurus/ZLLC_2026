@@ -29,6 +29,10 @@
  *
  */
 uint8_t Swtich_To_Angle_Control_Flag = 0;
+uint8_t Friction_Soft_Start_Flag = 0; //=0为当前状态不是由关摩擦轮状态变为开摩擦轮状态，反之为是
+float Friction_Soft_Start_Increase_Rate = 0.0f; //每个控制周期摩擦轮转速的值增长为目标值的百分比，例如=0.01代表每触发一次回调函数，值增长1%
+float Friction_Soft_Start_Progress = 0.0f; //缓启动进度，=1代表退出缓启动
+Enum_Friction_Control_Type Pre_Friction_Control_Type = Friction_Control_Type_DISABLE;
 
 #include <cmath>
 
@@ -158,7 +162,6 @@ void Class_FSM_Heat_Detect::Reload_TIM_Status_PeriodElapsedCallback()
 void Class_FSM_Antijamming::Reload_TIM_Status_PeriodElapsedCallback()
 {
     Status[Now_Status_Serial].Time++;
-
     // 自己接着编写状态转移函数
     switch (Now_Status_Serial)
     {
@@ -166,8 +169,7 @@ void Class_FSM_Antijamming::Reload_TIM_Status_PeriodElapsedCallback()
     {
         // 正常状态
         Booster->Output();
-
-        if (fabs(Booster->Motor_Driver.Get_Now_Torque()) >= Booster->Driver_Torque_Threshold)
+        if (abs(Booster->Motor_Driver.Get_Now_Torque()) >= Booster->Driver_Torque_Threshold)
         {
             // 大扭矩->卡弹嫌疑状态
             Set_Status(1);
@@ -178,13 +180,12 @@ void Class_FSM_Antijamming::Reload_TIM_Status_PeriodElapsedCallback()
     {
         // 卡弹嫌疑状态
         Booster->Output();
-
         if (Status[Now_Status_Serial].Time >= 100)
         {
             // 长时间大扭矩->卡弹反应状态
             Set_Status(2);
         }
-        else if (fabs(Booster->Motor_Driver.Get_Now_Torque()) < Booster->Driver_Torque_Threshold)
+        else if (abs(Booster->Motor_Driver.Get_Now_Torque()) < Booster->Driver_Torque_Threshold)
         {
             // 短时间大扭矩->正常状态
             Set_Status(0);
@@ -194,21 +195,61 @@ void Class_FSM_Antijamming::Reload_TIM_Status_PeriodElapsedCallback()
     case (2):
     {
         // 卡弹反应状态->准备卡弹处理
-        Booster->JammedCounter++;
         Booster->Motor_Driver.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
-        Booster->Drvier_Angle = Booster->Motor_Driver.Get_Now_Radian() + PI / 12.0f;
-        Booster->Motor_Driver.Set_Target_Radian(Booster->Drvier_Angle);
+        // Booster->Driver_Angle = Booster->Motor_Driver.Get_Now_Radian() + PI / 12.0f;//原版本
+        Booster->Driver_Angle = Booster->Motor_Driver.Get_Now_Radian() - (2 * PI / 8.0f);
+        Booster->Motor_Driver.Set_Target_Radian(Booster->Driver_Angle);
         Set_Status(3);
     }
     break;
     case (3):
     {
-        // 卡弹处理状态
-
-        if (Status[Now_Status_Serial].Time >= 300)
+        static uint16_t tim1_check_cnt = 0, tim2_check_cnt = 0;
+        // 卡弹处理跳转正常状态
+        if (abs(Booster->Motor_Driver.Get_Now_Torque()) < Booster->Driver_Torque_Threshold)
+        {
+            tim1_check_cnt++;
+            tim2_check_cnt = 0;
+        }
+        else
+        {
+            // 刷新时间重新计时
+            tim1_check_cnt = 0;
+            // 超阈值计时
+            tim2_check_cnt++;
+        }
+        if (tim1_check_cnt >= 200)
         {
             // 长时间回拨->正常状态
+            tim1_check_cnt = 0;
             Set_Status(0);
+        }
+        // 检测卡死状态跳转到失能摩擦轮状态
+        if (tim2_check_cnt >= 400)
+        {
+            tim2_check_cnt = 0;
+            Set_Status(4);
+        }
+    }
+    break;
+    case (4):
+    {
+        Booster->Output();
+        // 发射机构失能
+        Booster->Motor_Driver.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OPENLOOP);
+        Booster->Motor_Driver.PID_Angle.Set_Integral_Error(0.0f);
+        Booster->Motor_Driver.PID_Omega.Set_Integral_Error(0.0f);
+        Booster->Motor_Driver.Set_Out(0.0f);
+        static uint16_t tim3_check_cnt = 0;
+        tim3_check_cnt++;
+        if (tim3_check_cnt > 1000)
+        {
+            if (abs(Booster->Motor_Driver.Get_Now_Torque()) < Booster->Driver_Torque_Threshold)
+            {
+                Booster->Motor_Driver.Set_Target_Radian(Booster->Motor_Driver.Get_Now_Radian());
+                tim3_check_cnt = 0;
+                Set_Status(1);
+            }
         }
     }
     break;
@@ -309,6 +350,10 @@ bool Swtich_To_Chasefire_Control_Flag = 0; //=0为没有从连发状态切换为
 void Class_Booster::Output()
 {
     // 控制拨弹轮
+    if (Pre_Friction_Control_Type == Friction_Control_Type_DISABLE && this->Friction_Control_Type == Friction_Control_Type_ENABLE)
+    {
+        Friction_Soft_Start_Flag = 1;
+    }
     switch (Booster_Control_Type)
     {
     case (Booster_Control_Type_DISABLE):
@@ -347,7 +392,7 @@ void Class_Booster::Output()
         {
 
             Motor_Driver.Set_Target_Omega_Radian(0.0f);
-            Drvier_Angle = Motor_Driver.Get_Now_Angle();
+            Driver_Angle = Motor_Driver.Get_Now_Angle();
             Motor_Driver.PID_Angle.Set_Now(Motor_Driver.Get_Now_Angle());
             Motor_Driver.PID_Angle.Set_Integral_Error(0.0f);
             Motor_Driver.PID_Omega.Set_Integral_Error(0.0f);
@@ -355,22 +400,20 @@ void Class_Booster::Output()
             Motor_Friction_Right.PID_Omega.Set_Integral_Error(0.0f);
             Motor_Friction_Down.PID_Omega.Set_Integral_Error(0.0f);
             float Tmp_Driver_Angle = Motor_Driver.Get_Now_Angle();
-            Drvier_Angle = Motor_Driver.Get_Now_Radian();
+            Driver_Angle = Motor_Driver.Get_Now_Radian();
             if (Swtich_To_Chasefire_Control_Flag)
             {
                 Motor_Driver.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
-                
-                //float Tmp_Drvier_Angle = convertToRange(Drvier_Angle);
-                Adjust_Radian = angleToTargetForm(Drvier_Angle, 2.0f * PI / 9.0f);
+
+                // float Tmp_Driver_Angle = convertToRange(Driver_Angle);
+                Adjust_Radian = angleToTargetForm(Driver_Angle, 2.0f * PI / 9.0f);
                 if (Adjust_Radian >= 0.03)
-                    Adjust_Radian = (2.0f * PI / 9.0f) - angleToTargetForm(Drvier_Angle, 2.0f * PI / 9.0f);
+                    Adjust_Radian = (2.0f * PI / 9.0f) - angleToTargetForm(Driver_Angle, 2.0f * PI / 9.0f);
                 else
                     Adjust_Radian = 0.0f;
-                Motor_Driver.Set_Target_Radian(Drvier_Angle + Adjust_Radian + (2.0f * PI / 9.0f));
+                Motor_Driver.Set_Target_Radian(Driver_Angle + Adjust_Radian + (2.0f * PI / 9.0f));
                 Swtich_To_Chasefire_Control_Flag = 0;
-                
             }
-
         }
     }
     break;
@@ -383,19 +426,19 @@ void Class_Booster::Output()
         Motor_Friction_Down.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
         if (Swtich_To_Angle_Control_Flag == 1)
         {
-            Drvier_Angle = Motor_Driver.Get_Now_Radian();
+            Driver_Angle = Motor_Driver.Get_Now_Radian();
 
             Swtich_To_Angle_Control_Flag = 0;
         }
-        Drvier_Angle = Motor_Driver.Get_Now_Radian();
-        Drvier_Angle += 2.0f * PI / 9.0f;
-        Adjust_Radian = angleToTargetForm(Drvier_Angle, 2.0f * PI / 9.0f);
+        Driver_Angle = Motor_Driver.Get_Now_Radian();
+        Driver_Angle += 2.0f * PI / 9.0f;
+        Adjust_Radian = angleToTargetForm(Driver_Angle, 2.0f * PI / 9.0f);
         if (Adjust_Radian >= 0.03)
-            Adjust_Radian = (2.0f * PI / 9.0f) - angleToTargetForm(Drvier_Angle, 2.0f * PI / 9.0f);
+            Adjust_Radian = (2.0f * PI / 9.0f) - angleToTargetForm(Driver_Angle, 2.0f * PI / 9.0f);
         else
             Adjust_Radian = 0.0f;
 
-        Motor_Driver.Set_Target_Radian(Drvier_Angle + Adjust_Radian);
+        Motor_Driver.Set_Target_Radian(Driver_Angle + Adjust_Radian);
 
         // 点一发立刻停火
         Booster_Control_Type = Booster_Control_Type_CEASEFIRE;
@@ -404,14 +447,14 @@ void Class_Booster::Output()
         //         if (FSM_Heat_Detect.Heat + 20 < Referee->Get_Booster_17mm_1_Heat_Max())
         //         {
 
-        //             Drvier_Angle += 2.0f * PI / 9.0f;
-        //             Motor_Driver.Set_Target_Radian(Drvier_Angle);
+        //             Driver_Angle += 2.0f * PI / 9.0f;
+        //             Motor_Driver.Set_Target_Radian(Driver_Angle);
         //         }
         // #endif
 
         // #ifdef Heat_Detect_DISABLE
-        //         Drvier_Angle += 2.0f * PI / 9.0f;
-        //         Motor_Driver.Set_Target_Radian(Drvier_Angle);
+        //         Driver_Angle += 2.0f * PI / 9.0f;
+        //         Motor_Driver.Set_Target_Radian(Driver_Angle);
         // #endif
         //         // 点一发立刻停火
         //         Booster_Control_Type = Booster_Control_Type_CEASEFIRE;
@@ -425,9 +468,9 @@ void Class_Booster::Output()
         Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
         Motor_Friction_Down.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
 
-        // Drvier_Angle = Motor_Driver.Get_Now_Angle();
-        Drvier_Angle += 2.0f * PI / 9.0f * 5.0f; // 五连发
-        Motor_Driver.Set_Target_Radian(Drvier_Angle);
+        // Driver_Angle = Motor_Driver.Get_Now_Angle();
+        Driver_Angle += 2.0f * PI / 9.0f * 5.0f; // 五连发
+        Motor_Driver.Set_Target_Radian(Driver_Angle);
 
         // 点一发立刻停火
         Booster_Control_Type = Booster_Control_Type_CEASEFIRE;
@@ -445,7 +488,7 @@ void Class_Booster::Output()
         Motor_Friction_Down.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
 
         Motor_Driver.Set_Target_Omega_Radian(-Driver_Omega);
-        //Drvier_Angle = Motor_Driver.Get_Now_Radian();
+        // Driver_Angle = Motor_Driver.Get_Now_Radian();
     }
     break;
     }
@@ -453,12 +496,35 @@ void Class_Booster::Output()
     // 控制摩擦轮
     if (Friction_Control_Type != Friction_Control_Type_DISABLE)
     {
-        Motor_Friction_Left.Set_Target_Omega_Radian(Friction_Omega);
-        Motor_Friction_Right.Set_Target_Omega_Radian(Friction_Omega);
-        Motor_Friction_Down.Set_Target_Omega_Radian(Friction_Omega);
+        if (Friction_Soft_Start_Flag == 0)
+        {
+            Motor_Friction_Left.Set_Target_Omega_Radian(Friction_Omega);
+            Motor_Friction_Right.Set_Target_Omega_Radian(Friction_Omega);
+            Motor_Friction_Down.Set_Target_Omega_Radian(Friction_Omega);
+        }
+        else
+        {
+            if (Friction_Soft_Start_Progress >= 1.0f)
+            {
+                Friction_Soft_Start_Progress = 0.0f;
+                Friction_Soft_Start_Flag = 0;
+            }
+            else
+            {
+                Friction_Soft_Start_Progress += Friction_Soft_Start_Increase_Rate;
+                float Soft_Start_Friction_Omega = Friction_Omega * Friction_Soft_Start_Progress;
+                Motor_Friction_Left.Set_Target_Omega_Radian(Soft_Start_Friction_Omega);
+                Motor_Friction_Right.Set_Target_Omega_Radian(Soft_Start_Friction_Omega);
+                Motor_Friction_Down.Set_Target_Omega_Radian(Soft_Start_Friction_Omega);
+            }
+        }
     }
     else
     {
+
+        Motor_Friction_Left.Set_Out(0.0f);
+        Motor_Friction_Right.Set_Out(0.0f);
+        Motor_Friction_Down.Set_Out(0.0f);
         Motor_Friction_Left.Set_Target_Omega_Radian(0.0f);
         Motor_Friction_Right.Set_Target_Omega_Radian(0.0f);
         Motor_Friction_Down.Set_Target_Omega_Radian(0.0f);
@@ -474,6 +540,7 @@ void Class_Booster::TIM_Calculate_PeriodElapsedCallback()
 {
 
     // 无需裁判系统的热量控制计算
+    Pre_Friction_Control_Type = this->Friction_Control_Type;
     FSM_Heat_Detect.Reload_TIM_Status_PeriodElapsedCallback();
     // 卡弹处理
     FSM_Antijamming.Reload_TIM_Status_PeriodElapsedCallback();

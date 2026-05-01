@@ -3,9 +3,9 @@
  * @author lez by yssickjgd
  * @brief 迷你主机
  * @version 0.1
- * @date 2024-07-1 0.1 24赛季定稿
+ * @date 2025-07-1 0.1 26赛季定稿
  *
- * @copyright ZLLC 2024
+ * @copyright ZLLC 2026
  *
  */
 
@@ -18,12 +18,14 @@
 #include "main.h"
 #include "drv_usb.h"
 #include "drv_can.h"
+//#include "dvc_dmimu.h"
+#include "dvc_boardc_bmi088.h"
 #include "dvc_imu.h"
 #include "dvc_referee.h"
 #include "math.h"
 #include "config.h"
 /* Exported macros -----------------------------------------------------------*/
-
+#define PI 3.14159f
 /* Exported types ------------------------------------------------------------*/
 
 static const uint16_t MINPC_CRC16_INIT = 0xFFFF;
@@ -78,7 +80,7 @@ enum Enum_MiniPC_Type : uint8_t
  */
 enum Enum_Antispin_Type : uint8_t
 {
-    Antispin_Off=0,
+    Antispin_Off = 0,
     Antispin_On,
 };
 
@@ -202,51 +204,14 @@ struct Struct_MiniPC_Tx_Data
     uint8_t Carriage_Return;
 } __attribute__((packed));
 
-//can协议下发送数据包
-struct Pack_tx_can_t_A{
-    int16_t Roll;
-    int16_t Pitch;
-    int16_t Yaw;
-    int16_t Gyro_Yaw;
-}__attribute__((packed));
-
-//can协议下发送数据包
-struct Pack_tx_can_t_B{
-    Enum_MiniPC_Game_Stage game_stage : 3;
-    Enum_MiniPC_Type target_type      : 1;
-    Enum_Windmill_Type windmill_type  : 1;
-}__attribute__((packed));
-
 /**
  * @brief 发送数据包
  *
  */
 struct Pack_tx_t
 {
-#ifdef MINIPC_COMM_USB
-    uint8_t header;
-    Enum_MiniPC_Game_Stage game_stage;
-    Enum_MiniPC_Type target_type;
-    Enum_Windmill_Type windmill_type;
-    uint8_t detect_color;
-    uint8_t target_id;
-    float roll;
-    float pitch;
-    float yaw;
-    uint16_t crc16;
-#endif
-
-#ifdef MINIPC_COMM_CAN
-    Enum_MiniPC_Game_Stage game_stage : 3;
-    Enum_MiniPC_Type target_type : 1;
-    Enum_Windmill_Type windmill_type : 1;
-    Enum_Antispin_Type antispin_type:1;
-    int16_t roll;
-    int16_t pitch;
-    int16_t yaw;
-#endif
+    int16_t q[4];
 } __attribute__((packed));
-
 /**
  * @brief 接收数据包
  *
@@ -257,10 +222,10 @@ struct Pack_rx_t
     // int16_t target_y;
     // int16_t target_z;
     // int8_t  Fire;
+    uint8_t alive;
+    uint8_t Fire;
     int16_t yaw;
     int16_t pitch;
-    int16_t Fire;
-
 } __attribute__((packed));
 
 /**
@@ -270,11 +235,10 @@ struct Pack_rx_t
 class Class_MiniPC
 {
 public:
-    void Init(Struct_USB_Manage_Object *__MiniPC_USB_Manage_Object, uint8_t __frame_header = 0x5A, uint8_t __frame_rear = 0x01);
     void Init(CAN_HandleTypeDef *hcan);
 
     inline Enum_MiniPC_Status Get_MiniPC_Status();
-    //inline Enum_Antispin_Type Get_Antispin_Type();
+    // inline Enum_Antispin_Type Get_Antispin_Type();
     inline float Get_Chassis_Target_Velocity_X();
     inline float Get_Chassis_Target_Velocity_Y();
     inline float Get_Chassis_Target_Omega();
@@ -288,9 +252,9 @@ public:
     inline float Get_Booster_Frequency();
     inline float Get_Rx_Pitch_Angle();
     inline float Get_Rx_Yaw_Angle();
-    inline float Get_Distance();
     inline uint8_t Get_Fire_Status();
-    inline Enum_MiniPC_Type Get_MiniPC_Type();
+    inline uint8_t Get_Alive_Status();
+    inline float Get_Distance();
     inline Enum_MiniPC_Move_Control_Mode Get_Move_Control_Mode();
 
     inline void Set_Game_Stage(Enum_MiniPC_Game_Stage __Game_Stage);
@@ -306,14 +270,12 @@ public:
     inline void Set_Self_Color(Enum_MiniPC_Self_Color __Self_Color);
     inline void Set_Outpost_Status(Enum_MiniPC_Data_Status __Outpost_Status);
     inline void Set_Outpost_Protect_Status(Enum_MiniPC_Data_Status __Outpost_Protect_Status);
-    inline void Set_MiniPC_Type(Enum_MiniPC_Type __MiniPC_Type);
-    //inline void Set_Antispin_Type(Enum_Antispin_Type __Antispin_Type);
+    // inline void Set_Antispin_Type(Enum_Antispin_Type __Antispin_Type);
     void Append_CRC16_Check_Sum(uint8_t *pchMessage, uint32_t dwLength);
     bool Verify_CRC16_Check_Sum(const uint8_t *pchMessage, uint32_t dwLength);
     uint16_t Get_CRC16_Check_Sum(const uint8_t *pchMessage, uint32_t dwLength, uint16_t wCRC);
 
     inline void Transform_Angle_Tx();
-
 
     float calc_yaw(float x, float y, float z);
     float calc_distance(float x, float y, float z);
@@ -322,7 +284,6 @@ public:
 
     float meanFilter(float input);
 
-    void USB_RxCpltCallback(uint8_t *Rx_Data);
     void CAN_RxCpltCallback(uint8_t *rx_data);
     void TIM1msMod50_Alive_PeriodElapsedCallback();
     void TIM_Write_PeriodElapsedCallback();
@@ -344,7 +305,6 @@ protected:
     // 数据包尾标
     uint8_t Frame_Rear;
 
-    uint8_t Fire;
     // 常量
 
     // 内部变量
@@ -360,23 +320,25 @@ protected:
     Enum_MiniPC_Status MiniPC_Status = MiniPC_Status_DISABLE;
     // 迷你主机对外接口信息
     Struct_MiniPC_Rx_Data Data_NUC_To_MCU;
-   
-    uint8_t *CAN_Tx_Data_A;
-    uint8_t *CAN_Tx_Data_B;
-    Pack_tx_can_t_A Pack_Tx_CAN_A;
-    Pack_tx_can_t_B Pack_Tx_CAN_B;
+
+    Pack_tx_t Pack_Tx_CAN;
     Pack_rx_t Pack_Rx;
 
     float Tx_Angle_Roll;
     float Tx_Angle_Pitch;
     float Tx_Angle_Yaw;
+    float Tx_Angle_Gyro_Yaw;
 
     float Rx_Angle_Roll;
     float Rx_Angle_Pitch;
     float Rx_Angle_Yaw;
 
+    uint8_t Fire;
+    uint8_t alive;
+
     const float g = 9.8;         // 重力加速度
     const float bullet_v = 21.7; // 子弹速度
+    const float a_d = 0.0595f;
 
     // 距离
     float Distance;
@@ -406,11 +368,6 @@ Enum_MiniPC_Status Class_MiniPC::Get_MiniPC_Status()
 {
     return (MiniPC_Status);
 }
-
-// inline Enum_Antispin_Type Class_MiniPC::Get_Antispin_Type()
-// {
-//     return (Pack_Tx.antispin_type);
-// }
 
 /**
  * @brief 获取底盘目标速度x
@@ -513,16 +470,6 @@ float Class_MiniPC::Get_Distance()
 }
 
 /**
- * @brief 获取迷你主机类型
- *
- * @return Enum_MiniPC_Type 迷你主机类型
- */
-Enum_MiniPC_Type Class_MiniPC::Get_MiniPC_Type()
-{
-    return (Pack_Tx_CAN_B.target_type);
-}
-
-/**
  * @brief 获取云台目标速度pitch
  *
  * @return float 云台目标速度pitch
@@ -560,6 +507,16 @@ float Class_MiniPC::Get_Rx_Pitch_Angle()
 float Class_MiniPC::Get_Rx_Yaw_Angle()
 {
     return (Rx_Angle_Yaw);
+}
+
+inline uint8_t Class_MiniPC::Get_Fire_Status()
+{
+    return Fire;
+}
+
+inline uint8_t Class_MiniPC::Get_Alive_Status()
+{
+    return alive;
 }
 
 /**
@@ -663,21 +620,6 @@ void Class_MiniPC::Set_Armor_Attacked_Ammo_Status(Enum_MiniPC_Data_Status __Armo
 }
 
 /**
- * @brief 设定己方颜色
- *
- * @param __Self_Color 己方颜色
- */
-void Class_MiniPC::Set_MiniPC_Type(Enum_MiniPC_Type __MiniPC_Type)
-{
-    Pack_Tx_CAN_B.target_type = __MiniPC_Type;
-}
-
-// inline void Class_MiniPC::Set_Antispin_Type(Enum_Antispin_Type __Antispin_Type)
-// {
-//     Pack_Tx.antispin_type=__Antispin_Type;
-// }
-
-/**
  * @brief 设定迷你主机类型
  *
  * @param __MiniPC_Type 迷你主机类型
@@ -718,10 +660,6 @@ void Class_MiniPC::Transform_Angle_Tx()
     Tx_Angle_Yaw = IMU->Get_Angle_Yaw();
 }
 
-inline uint8_t Class_MiniPC::Get_Fire_Status()
-{
-  return Fire;
-}
 
 #endif
 

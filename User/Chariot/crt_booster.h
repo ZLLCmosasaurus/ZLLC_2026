@@ -172,7 +172,7 @@ protected:
     //float Driver_Omega = -2.0f * PI * 20.0f / 9.0f;
     float Driver_Omega = -2.0f * PI * 2.5f * 20.0f / 9.0f;
     //拨弹轮目标绝对角度 加圈数
-    float Drvier_Angle = 0.0f;
+    float Driver_Angle = 0.0f;
     //读写变量
 
     //内部函数

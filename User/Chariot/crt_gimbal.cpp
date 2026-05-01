@@ -30,6 +30,17 @@
 float test_angle = 0;
 float Test_Target_Omega = 0;
 float last_angle = 0;
+
+float Get_Friction_Compensation(float omega, float omega_th)
+{
+    if (Math_Abs(omega) >= omega_th)
+        return (omega > 0 ? 1 : -1);
+    else
+    {
+        return omega / omega_th;
+    }
+}
+
 void Class_Gimbal_Yaw_Motor_GM6020::TIM_PID_PeriodElapsedCallback()
 {
     switch (DJI_Motor_Control_Method)
@@ -285,9 +296,14 @@ void Class_Gimbal_Pitch_Motor_J4310::TIM_PID_PeriodElapsedCallback()
         PID_Omega.TIM_Adjust_PeriodElapsedCallback();
 
         Target_Torque = PID_Omega.Get_Out();
+        //				if (True_Rad_Pitch < -30.0f)
+        //				{
+        //					Target_Torque *= 0.5f;
+        //				}
 
         // Set_Out(Target_Torque);
-        Set_Out(-(Target_Torque + Gravity_Compensate * cosf(True_Rad_Pitch))); // 补偿重力
+        Target_Torque += Gravity_Compensate * cosf(True_Rad_Pitch - 27.85f * PI / 180.0f) + Friction_Compensate * Get_Friction_Compensation(Get_Now_Omega(), 10.0f);
+        Set_Out(-(Target_Torque)); // 补偿重力，pitch水平时，重心与pitch转轴连线与水平面夹角27.85度
     }
     break;
 
@@ -588,13 +604,13 @@ void Class_Gimbal::Init()
     Motor_Yaw.PID_Angle.Init(55.0f, 0.01f, 0.95f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.001f);
     Motor_Yaw.PID_Omega.Init(40.0f, 0.075f, 0.005f, 0.0f, 2000.0f, 20000.0f, 0.0f, 0.0f, 0.0f, 0.001f);
     Motor_Yaw.IMU = &Boardc_BMI;
-    Motor_Yaw.Init(&hcan1, DJI_Motor_ID_0x205, DJI_Motor_Control_Method_IMU_ANGLE);
+    Motor_Yaw.Init(&hcan1, DJI_Motor_ID_0x206, DJI_Motor_Control_Method_IMU_ANGLE);
 
     // pitch轴4310电机
     //  Motor_Pitch_J4310.PID_Angle.Init(18.0f,1.0f,0.0f,0.0f,2000,4090,0.0f,0.0f,0,0.001f,0.0f,PID_D_First_ENABLE);
     //  Motor_Pitch_J4310.PID_Omega.Init(37.0f,0.0f,0.0f,0.0f,2000,4090, 0.0f, 0.0f, 0.0f, 0.001f, 0.0f);
-    Motor_Pitch_J4310.PID_Angle.Init(40.0f, 1.0f, 0.015f, 0.0f, 1000, 4090, 0.0f, 0.0f, 0, 0.001f, 0.0f, PID_D_First_ENABLE);
-    Motor_Pitch_J4310.PID_Omega.Init(6.0f, 10.0f, 0.01f, 0.0f, 1000, 4090, 0.0f, 0.0f, 0.0f, 0.001f, 0.5f);
+    Motor_Pitch_J4310.PID_Angle.Init(50.0f, 2.0f, 0.9f, 0.0f, 1000, 2048, 0.0f, 0.0f, 0, 0.001f, 0.0f, PID_D_First_ENABLE);
+    Motor_Pitch_J4310.PID_Omega.Init(4.0f, 14.0f, 0.002f, 0.0f, 1000, 2048, 0.0f, 0.0f, 0.0f, 0.001f, 0.5f);
     Motor_Pitch_J4310.IMU = &Boardc_BMI;
     Motor_Pitch_J4310.Init(&hcan1, (Enum_DM_Motor_ID)0x71, DM_Motor_Control_Method_MIT_IMU_Angle, 0, 20.94f, 5.0f);
     Motor_Pitch_J4310.PID_Angle.Set_I_Separate_Threshold(5.0f);

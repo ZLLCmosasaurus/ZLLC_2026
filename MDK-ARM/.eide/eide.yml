@@ -2,7 +2,7 @@ version: "4.1"
 name: infantry
 type: ARM
 deviceName: null
-packDir: null
+packDir: .pack/Keil/STM32F4xx_DFP.1.0.8
 srcDirs: []
 virtualFolder:
   name: <virtual_root>
@@ -325,8 +325,8 @@ targets:
         baseAddr: ""
         bin: D:\SEGGER\Jlink
         cpuInfo:
-          cpuName: "null"
-          vendor: "null"
+          cpuName: STM32F407IG
+          vendor: ST
         otherCmds: ""
         proType: 1
         speed: 8000

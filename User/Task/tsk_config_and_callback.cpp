@@ -366,7 +366,7 @@ void MiniPC_USB_Callback(uint8_t *Buffer, uint32_t Length)
     static float freq;
     static uint32_t time_s;
     freq = 1 / DWT_GetDeltaT(&time_s);
-    chariot.MiniPC.USB_RxCpltCallback(Buffer);
+    //chariot.MiniPC.USB_RxCpltCallback(Buffer);
 }
 #endif
 float delta_time;

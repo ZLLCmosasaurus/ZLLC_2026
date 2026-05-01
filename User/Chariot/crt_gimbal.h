@@ -179,7 +179,8 @@ protected:
     //常量
 
     // 重力补偿
-    float Gravity_Compensate = 0.35f;
+    float Gravity_Compensate = 580.0f;
+    float Friction_Compensate = 100.0f;
 
     //内部变量
     float True_Rad_Pitch = 0.0f;
@@ -371,7 +372,7 @@ protected:
     // pitch轴最小值
     float Min_Pitch_Angle = -45.0f;
     // pitch轴最大值
-    float Max_Pitch_Angle = 15.0f ; 
+    float Max_Pitch_Angle = 10.0f ; 
 
     //内部变量 
 

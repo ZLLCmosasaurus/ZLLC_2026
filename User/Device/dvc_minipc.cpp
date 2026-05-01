@@ -1,18 +1,17 @@
 /**
  * @file dvc_minipc.cpp
- * @author lez by yssickjgd
+ * @author cjw by yssickjgd
  * @brief 迷你主机
  * @version 0.1
- * @date 2024-07-1 0.1 24赛季定稿
+ * @date 2025-07-1 0.1 26赛季定稿
  *
- * @copyright ZLLC 2024
+ * @copyright ZLLC 2026
  *
  */
 
 /* includes ------------------------------------------------------------------*/
 
 #include "dvc_minipc.h"
-
 
 /* private macros ------------------------------------------------------------*/
 
@@ -25,22 +24,6 @@
 /* function prototypes -------------------------------------------------------*/
 
 /**
- * @brief 迷你主机初始化,usb
- *
- * @param __frame_header 数据包头标
- * @param __frame_rear 数据包尾标
- */
-void Class_MiniPC::Init(Struct_USB_Manage_Object *__USB_Manage_Object, uint8_t __frame_header, uint8_t __frame_rear)
-{
-  USB_Manage_Object = __USB_Manage_Object;
-  Frame_Header = __frame_header;
-  Frame_Rear = __frame_rear;
-  Pack_Tx_CAN_B.target_type = MiniPC_Type_Nomal;
-  Pack_Tx_CAN_B.windmill_type = Windmill_Type_Small;
-  Pack_Tx_CAN_B.game_stage = MiniPC_Game_Stage_NOT_STARTED;
-}
-
-/**
  * @brief 迷你主机初始化,can
  *
  */
@@ -49,18 +32,16 @@ void Class_MiniPC::Init(CAN_HandleTypeDef *hcan)
   if (hcan->Instance == CAN1)
   {
     CAN_Manage_Object = &CAN1_Manage_Object;
-    CAN_Tx_Data_A = CAN1_MiniPc_Tx_Data;
+    CAN_Tx_Data = CAN1_MiniPc_Tx_Data;
   }
   else if (hcan->Instance == CAN2)
   {
     CAN_Manage_Object = &CAN2_Manage_Object;
-    CAN_Tx_Data_A = CAN2_MiniPc_Tx_Data;
+    CAN_Tx_Data = CAN2_MiniPc_Tx_Data;
   }
 }
 
-float camera_distance_z = -0.036;
-float camera_distance_y = -0.036;
-float camera_distance_x =0;
+float camera_distance = 0.036;
 /**
  * @brief 数据处理过程
  *
@@ -73,64 +54,36 @@ void Class_MiniPC::Data_Process()
   // float target_x = Pack_Rx.target_x / 1000.0f;
   // float target_y = Pack_Rx.target_y / 1000.0f;
   // float target_z = Pack_Rx.target_z / 1000.0f;
-  tmp_yaw = Pack_Rx.yaw /1000.0f;
-  tmp_pitch = Pack_Rx.pitch /1000.0f;
+  tmp_yaw = Pack_Rx.yaw / 10000.0f;
+  tmp_pitch = Pack_Rx.pitch / 10000.0f;
   Fire = Pack_Rx.Fire;
-  
+  alive = Pack_Rx.alive;
+
   // Self_aim(target_x, target_y, target_z + camera_distance, &tmp_yaw, &tmp_pitch, &Distance);
   // Self_aim(target_x, target_y, target_z, &tmp_yaw, &tmp_pitch, &Distance);
-  Rx_Angle_Pitch = tmp_pitch * 180 / PI;
+  Rx_Angle_Pitch = -tmp_pitch * 180 / PI;
   Rx_Angle_Yaw = tmp_yaw * 180 / PI;
-  Math_Constrain(&Rx_Angle_Pitch, -45.0f, 15.0f);
+  Math_Constrain(&Rx_Angle_Pitch, -45.0f, 10.0f);
 }
 
-/**
- * @brief 迷你主机发送数据输出到usb发送缓冲区
- *
- */
 /**
  * @brief 迷你主机发送数据输出
  *
  */
 void Class_MiniPC::Output()
 {
-#ifdef MINIPC_COMM_USB
-  Pack_Tx.header = Frame_Header;
-
-  // 根据referee判断红蓝方
-  if (Referee->Get_ID() >= 101)
-    Pack_Tx.detect_color = 101;
-  else
-    Pack_Tx.detect_color = 0;
-
-  Pack_Tx.target_id = 0x08;
-  Pack_Tx.roll = Tx_Angle_Roll;
-  Pack_Tx.pitch = Tx_Angle_Pitch; // 2024.5.7 未知原因添加负号，使得下位机发送数据不满足右手螺旋定则，但是上位机意外可以跑通
-  Pack_Tx.yaw = Tx_Angle_Yaw;
-  Pack_Tx.crc16 = 0xffff;
-  Pack_Tx.game_stage = (Enum_MiniPC_Game_Stage)Referee->Get_Game_Stage();
-  memcpy(USB_Manage_Object->Tx_Buffer, &Pack_Tx, sizeof(Pack_Tx));
-  Append_CRC16_Check_Sum(USB_Manage_Object->Tx_Buffer, sizeof(Pack_Tx));
-  USB_Manage_Object->Tx_Buffer_Length = sizeof(Pack_Tx);
-#endif
-
-#ifdef MINIPC_COMM_CAN
   // 设置发送数据
-  Pack_Tx_CAN_B.game_stage = (Enum_MiniPC_Game_Stage)Referee->Get_Game_Stage();
-  Pack_Tx_CAN_B.target_type = Get_MiniPC_Type();
 
-  // Pack_Tx_CAN_A.Roll = Tx_Angle_Roll*100.0f;
-  // Pack_Tx_CAN_A.Yaw = Tx_Angle_Yaw*100.0f;
-  Pack_Tx_CAN_A.Roll = Tx_Angle_Roll*100.0f;
-  Pack_Tx_CAN_A.Yaw = Tx_Angle_Yaw*100.0f;
-  //Pack_Tx_CAN_A.Pitch = -1.0f * Tx_Angle_Pitch*100.0f; //左手螺旋
-  Pack_Tx_CAN_A.Pitch = 1.0f * Tx_Angle_Pitch*100.0f;//右手螺旋
-  //Pack_Tx_CAN_A.Gyro_Yaw = Tx_Angle_Gyro_Yaw * 100.0f; 
-  memcpy(CAN_Tx_Data_A, &Pack_Tx_CAN_A, sizeof(Pack_tx_can_t_A));
-  memcpy(CAN_Tx_Data_B, &Pack_Tx_CAN_B, sizeof(Pack_tx_can_t_B));
-  
+  float Yaw_rad = Tx_Angle_Yaw * PI / 180.0f;
+  float Pitch_rad = Tx_Angle_Pitch * PI / 180.0f;
+  float Roll_rad = Tx_Angle_Roll * PI / 180.0f;
 
-#endif
+  Pack_Tx_CAN.q[3] = (int16_t)((arm_cos_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f) + arm_sin_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f)) * 10000.f);
+  Pack_Tx_CAN.q[0] = (int16_t)((arm_sin_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f) - arm_cos_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f)) * 10000.f);
+  Pack_Tx_CAN.q[1] = (int16_t)((arm_cos_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f) + arm_sin_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f)) * 10000.f);
+  Pack_Tx_CAN.q[2] = (int16_t)((arm_cos_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f) - arm_sin_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f)) * 10000.f);
+
+  memcpy(CAN_Tx_Data, &Pack_Tx_CAN, sizeof(Pack_tx_t));
 }
 
 /**
@@ -141,18 +94,6 @@ void Class_MiniPC::TIM_Write_PeriodElapsedCallback()
 {
   Transform_Angle_Tx();
   Output();
-}
-
-/**
- * @brief usb通信接收回调函数
- *
- * @param rx_data 接收的数据
- */
-void Class_MiniPC::USB_RxCpltCallback(uint8_t *rx_data)
-{
-  // 滑动窗口, 判断迷你主机是否在线
-  Flag += 1;
-  Data_Process();
 }
 
 /**
@@ -282,43 +223,34 @@ float Class_MiniPC::calc_distance(float x, float y, float z)
  * @param z 向量的z分量
  * @return 计算得到的俯仰角（以角度制表示）
  */
-
+float dist;
 float Class_MiniPC::calc_pitch(float x, float y, float z)
 {
-  // 根据 x、y 分量计算的平面投影的模长和 z 分量计算的反正切值，得到弧度制的俯仰角
-  float pitch = atan2f(z, sqrtf(x * x + y * y));
-  // 使用重力加速度模型迭代更新俯仰角
-  for (size_t i = 0; i < 20; i++)
+  float d = calc_distance(x, y, z);
+  if (d < a_d)
   {
-    float v_x;
-    float v_y;
-    if (Referee->Get_Referee_Status() == Referee_Status_ENABLE && Referee->Get_Shoot_Speed() > 15)
-    {
-      v_x = Referee->Get_Shoot_Speed() * cosf(pitch);
-      v_y = Referee->Get_Shoot_Speed() * sinf(pitch);
-    }
-    else
-    {
-      v_x = bullet_v * cosf(pitch);
-      v_y = bullet_v * sinf(pitch);
-    } // 计算子弹飞行时间
-    float t = sqrtf(x * x + y * y) / v_x;
-    float h = v_y * t - 0.5 * g * t * t;
-    float dz = z - h;
-
-    if (abs(dz) < 0.01)
-    {
-      break;
-    }
-    // 根据 dz 和向量的欧几里德距离计算新的俯仰角的变化量，进行迭代更新
-    pitch += asinf(dz / calc_distance(x, y, z));
+    // return 当前pitch，因为无解1
+    return IMU->Get_Angle_Pitch();
   }
 
-  // 将弧度制的俯仰角转换为角度制
-  pitch = -(pitch * 180 / PI); // 向上为负，向下为正
+  float v0 =
+      Referee->Get_Referee_Status() == Referee_Status_ENABLE &&
+              Referee->Get_Shoot_Speed()
+          ? Referee->Get_Shoot_Speed()
+          : bullet_v;
 
-  return pitch;
+  // 初始估值一定偏小一点点
+  float t = (d - a_d) / v0;
+  const float t1 = 2.0f * a_d * v0, t2 = v0 * v0 - z * g;
+
+  // 牛顿迭代法，可省略，最好两次
+  t -= (d * d - a_d * a_d + t * (-t1 + t * (-t2 + 0.25f * g * g * t * t))) / (-t1 + t * (-2.0f * t2 + g * g * t * t));
+  t -= (d * d - a_d * a_d + t * (-t1 + t * (-t2 + 0.25f * g * g * t * t))) / (-t1 + t * (-2.0f * t2 + g * g * t * t));
+
+  // pitch向下为正，加负号
+  return 180.0f * atanf((z + 0.5 * g * t * t) / sqrtf(x * x + y * y)) / PI;
 }
+
 /**
  * 计算计算yaw，pitch
  *
@@ -359,7 +291,6 @@ float Class_MiniPC::meanFilter(float input)
 }
 
 /************************ copyright(c) ustc-robowalker **************************/
-
 /**
  * @brief CAN通信接收回调函数
  *
@@ -367,15 +298,12 @@ float Class_MiniPC::meanFilter(float input)
  */
 void Class_MiniPC::CAN_RxCpltCallback(uint8_t *rx_data)
 {
-#ifdef MINIPC_COMM_CAN
-    // 滑动窗口, 判断迷你主机是否在线
-    Flag += 1;
-    
-    // 直接将接收到的数据复制到结构体
-    memcpy(&Pack_Rx, rx_data, sizeof(Pack_Rx));
-    
-    // 处理数据
-    Data_Process();
-  
-#endif
+  // 滑动窗口, 判断迷你主机是否在线
+  Flag += 1;
+
+  // 直接将接收到的数据复制到结构体
+  memcpy(&Pack_Rx, rx_data, 6);
+  // memcpy(&Pack_Rx_test, rx_data, sizeof(Pack_Rx_test));
+  //  处理数据
+  Data_Process();
 }
