@@ -50,7 +50,7 @@ void Class_Chariot::Init(float __DR16_Dead_Zone)
 
     #elif defined(GIMBAL)
 
-        Referee.Init(&huart10);
+        Referee.Init(&huart7);
         
         Chassis.Set_Velocity_X_Max(4.0f);
         Chassis.Set_Velocity_Y_Max(4.0f);

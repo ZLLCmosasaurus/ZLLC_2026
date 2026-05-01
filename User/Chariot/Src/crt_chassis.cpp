@@ -82,9 +82,9 @@ void Class_Tricycle_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max
     Steer_Power_Ratio = __Steer_Power_Ratio;
 
         //斜坡函数加减速速度X  控制周期1ms
-    Slope_Velocity_X.Init(0.005f,0.0065f);
+    Slope_Velocity_X.Init(0.0070f,0.005f);
     //斜坡函数加减速速度Y  控制周期1ms
-    Slope_Velocity_Y.Init(0.005f,0.0065f);
+    Slope_Velocity_Y.Init(0.0070f,0.005f);
     //斜坡函数加减速角速度
     Slope_Omega.Init(0.05f, 0.05f);
 
@@ -576,8 +576,6 @@ void Class_Tricycle_Chassis::Force_Speed_Resolution()
     case (Chassis_Control_Type_FLLOW):
     case (Chassis_Control_Type_SPIN):
     {
-
-       
         PID_Velocity_X.Set_Target(Slope_Velocity_X.Get_Out());
         PID_Velocity_X.Set_Now(Now_Velocity_X);
         PID_Velocity_X.TIM_Adjust_PeriodElapsedCallback();
@@ -683,7 +681,7 @@ void Class_Tricycle_Chassis::TIM_Calculate_PeriodElapsedCallback()
     //Speed_Resolution();
 
     Chassis_Speed_Estimate();
-      Stree_Angle_Resolution();
+    Stree_Angle_Resolution();
     Force_Speed_Resolution();
 
     #if POWER_CONTROL == 1

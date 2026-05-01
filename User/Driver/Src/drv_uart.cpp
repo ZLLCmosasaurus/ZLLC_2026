@@ -14,6 +14,7 @@
 #include "drv_uart.h"
 #include "string.h"
 #include "dvc_dwt.h"
+#include "config.h"
 /* Private macros ------------------------------------------------------------*/
 
 /* Private types -------------------------------------------------------------*/
@@ -83,7 +84,7 @@ void UART_Init(UART_HandleTypeDef *huart, UART_Call_Back Callback_Function, uint
         UART7_Manage_Object.Callback_Function = Callback_Function;
         UART7_Manage_Object.Rx_Buffer_Length = Rx_Buffer_Length;
         HAL_UARTEx_ReceiveToIdle_DMA(huart, UART7_Manage_Object.Rx_Buffer, UART7_Manage_Object.Rx_Buffer_Length);
-		__HAL_DMA_DISABLE_IT(&hdma_uart7_rx, DMA_IT_HT);
+		// __HAL_DMA_DISABLE_IT(&hdma_uart7_rx, DMA_IT_HT);
         //HAL_UART_Receive_DMA(huart, UART7_Manage_Object.Rx_Buffer, UART7_Manage_Object.Rx_Buffer_Length);
     }
     else if (huart->Instance == UART8)
@@ -106,6 +107,10 @@ void UART_Init(UART_HandleTypeDef *huart, UART_Call_Back Callback_Function, uint
         UART10_Manage_Object.Callback_Function = Callback_Function;
         UART10_Manage_Object.Rx_Buffer_Length = Rx_Buffer_Length;
         HAL_UARTEx_ReceiveToIdle_DMA(huart, UART10_Manage_Object.Rx_Buffer, UART10_Manage_Object.Rx_Buffer_Length);
+
+        #ifdef GIMBAL
+        __HAL_DMA_DISABLE_IT(&hdma_usart10_rx, DMA_IT_HT);
+        #endif
     }
     
 }
@@ -172,7 +177,7 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
         UART7_Manage_Object.Rx_Length = Size;
         UART7_Manage_Object.Callback_Function(UART7_Manage_Object.Rx_Buffer, Size);
         HAL_UARTEx_ReceiveToIdle_DMA(huart, UART7_Manage_Object.Rx_Buffer, UART7_Manage_Object.Rx_Buffer_Length);
-		__HAL_DMA_DISABLE_IT(&hdma_uart7_rx, DMA_IT_HT);
+		// __HAL_DMA_DISABLE_IT(&hdma_uart7_rx, DMA_IT_HT);
         //HAL_UART_Receive_DMA(huart, UART7_Manage_Object.Rx_Buffer, UART7_Manage_Object.Rx_Buffer_Length);
     }
     else if (huart->Instance == UART8)
@@ -197,6 +202,9 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
     {
         UART10_Manage_Object.Rx_Length = Size;        
         HAL_UARTEx_ReceiveToIdle_DMA(huart, UART10_Manage_Object.Rx_Buffer, UART10_Manage_Object.Rx_Buffer_Length);
+        #ifdef GIMBAL
+        __HAL_DMA_DISABLE_IT(&hdma_usart10_rx, DMA_IT_HT);
+        #endif
         if( UART10_Manage_Object.Rx_Length<=UART10_Manage_Object.Rx_Buffer_Length)
             UART10_Manage_Object.Callback_Function(UART10_Manage_Object.Rx_Buffer, Size);
         // else
@@ -207,12 +215,15 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
     //速率太快导致接收可能出现满中断
-    if (huart->Instance == UART7)
+    if (huart->Instance == USART10)
     {
-        UART7_Manage_Object.Rx_Length = UART7_Manage_Object.Rx_Buffer_Length;
-        UART7_Manage_Object.Callback_Function(UART7_Manage_Object.Rx_Buffer, UART7_Manage_Object.Rx_Buffer_Length);
-        HAL_UARTEx_ReceiveToIdle_DMA(huart, UART7_Manage_Object.Rx_Buffer, UART7_Manage_Object.Rx_Buffer_Length);
-		__HAL_DMA_DISABLE_IT(&hdma_uart7_rx, DMA_IT_HT);
+        UART10_Manage_Object.Rx_Length = UART10_Manage_Object.Rx_Buffer_Length;
+        UART10_Manage_Object.Callback_Function(UART10_Manage_Object.Rx_Buffer, UART10_Manage_Object.Rx_Buffer_Length);
+        HAL_UARTEx_ReceiveToIdle_DMA(huart, UART10_Manage_Object.Rx_Buffer, UART10_Manage_Object.Rx_Buffer_Length);
+        
+		#ifdef GIMBAL
+        __HAL_DMA_DISABLE_IT(&hdma_usart10_rx, DMA_IT_HT);
+        #endif
     }
 }
 
@@ -229,7 +240,6 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart){
         UART7_Manage_Object.Rx_Length = 0;
         memset(UART7_Manage_Object.Rx_Buffer, 0, UART_BUFFER_SIZE);
         HAL_UARTEx_ReceiveToIdle_DMA(huart, UART7_Manage_Object.Rx_Buffer, UART7_Manage_Object.Rx_Buffer_Length);
-		__HAL_DMA_DISABLE_IT(&hdma_uart7_rx, DMA_IT_HT);
     }
     if(huart->Instance == USART10){
         huart->ErrorCode = 0;     
@@ -241,6 +251,9 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart){
         UART10_Manage_Object.Rx_Length = 0;
         memset(UART10_Manage_Object.Rx_Buffer, 0, UART_BUFFER_SIZE);
         HAL_UARTEx_ReceiveToIdle_DMA(huart, UART10_Manage_Object.Rx_Buffer, UART10_Manage_Object.Rx_Buffer_Length);
+        #ifdef GIMBAL
+        __HAL_DMA_DISABLE_IT(&hdma_usart10_rx, DMA_IT_HT);
+        #endif
 
         // else
     }

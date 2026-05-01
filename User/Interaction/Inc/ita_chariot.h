@@ -305,8 +305,8 @@ protected:
         //富斯遥控器死区
         float FS_i6X_Dead_Zone=0.0f;
 
-        float FS_i6X_Yaw_Angle_Resolution= 0.003f * PI * 57.29577951308232;
-        float FS_i6X_Pitch_Angle_Resolution= 0.013f * PI* 57.29577951308232;
+        float FS_i6X_Yaw_Angle_Resolution= 0.0023f * PI * 57.29577951308232;
+        float FS_i6X_Pitch_Angle_Resolution= 0.010f * PI* 57.29577951308232;
         
         //迷你主机云台pitch自瞄控制系数
         float MiniPC_Autoaiming_Yaw_Angle_Resolution = 0.003f;

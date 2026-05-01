@@ -250,7 +250,7 @@ protected:
     // 轮向电机摩擦阻力连续化的角速度阈值
     float Wheel_Resistance_Omega_Threshold = 1.0f;
     // 防单轮超速系数
-    float Wheel_Speed_Limit_Factor = 0.0f;
+    float Wheel_Speed_Limit_Factor = 0.3f;
 
     float Target_Wheel_Omega[4];
     float Target_Wheel_Torque[4];

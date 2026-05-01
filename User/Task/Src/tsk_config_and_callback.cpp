@@ -500,14 +500,19 @@ void Task100us_TIM4_Callback()
         // }
         #elif defined(USE_FS_i6X)
          if(chariot.Referee.Get_Game_Stage() == Referee_Game_Status_Stage_BATTLE && chariot.FS_i6X.Get_FS_Status() == FS_Status_DISABLE && chariot.Referee.Get_Referee_Status() == Referee_Status_ENABLE){                               //比赛开始状态
-            chariot.FS_i6X.Set_Switch_0(FS_Switch_Status_DOWN);                  //保险 强制上位机
-            chariot.FS_i6X.Set_Switch_2(FS_Switch_Status_DOWN);                 //强制上位机自动打弹
-            chariot.TIM_Control_Callback();                                         //里面上位机离线的相关处理了
+            // chariot.FS_i6X.Set_Switch_0(FS_Switch_Status_DOWN);                  //保险 强制上位机
+            // chariot.FS_i6X.Set_Switch_2(FS_Switch_Status_DOWN);                 //强制上位机自动打弹
+            // chariot.TIM_Control_Callback();                                         //里面上位机离线的相关处理了
+            chariot.FSM_Alive_Control_Fs_i6x.Reload_TIM_Status_PeriodElapsedCallback();    //遥控器离线失能保护
+            
+            if(chariot.FS_i6X.Get_FS_Status() == FS_Status_ENABLE && 
+                chariot.Gimbal.External_IMU.Get_IMU_Status() == IMU_Status_ENABLE){               //如果遥控器不在线也跑，就会和FSM抢状态，车子不能正确失能了
+                chariot.TIM_Control_Callback();
+            }
         }
         else{      
                                                                           //非比赛状态/遥控器在线
             chariot.FSM_Alive_Control_Fs_i6x.Reload_TIM_Status_PeriodElapsedCallback();    //遥控器离线失能保护
-           
             
             if(chariot.FS_i6X.Get_FS_Status() == FS_Status_ENABLE && 
                 chariot.Gimbal.External_IMU.Get_IMU_Status() == IMU_Status_ENABLE){               //如果遥控器不在线也跑，就会和FSM抢状态，车子不能正确失能了
@@ -546,6 +551,7 @@ void Task100us_TIM4_Callback()
  *
  */
 extern Referee_Rx_A_t CAN3_Chassis_Rx_Data_A;
+uint8_t message[3] = "12";  // "123"
 void Task1ms_TIM5_Callback()
 {
     static uint8_t mod2 = 0;
@@ -602,7 +608,6 @@ void Task1ms_TIM5_Callback()
             #endif
             mod68 = 0;
         }
-
     }
 }
 
@@ -626,6 +631,8 @@ extern "C" void Task_Init()
         SPI_Init(&hspi2,Device_SPI2_Callback);
 
         //裁判系统
+        huart10.Init.BaudRate = 115200;
+        HAL_UART_Init(&huart10);
         UART_Init(&huart10, Referee_UART10_Callback, 128);//并未使用环形队列 尽量给长范围增加检索时间 减少丢包
 
         #ifdef POWER_LIMIT
@@ -658,10 +665,10 @@ extern "C" void Task_Init()
         //上位机串口
         UART_Init(&huart8, MiniPC_UART_Callback, 56);
 
-        UART_Init(&huart10, Referee_UART10_Callback, 128);
+        UART_Init(&huart7, Referee_UART10_Callback, 128);
 
         //外置IMU串口   接收长度14，但是串口空闲中断刚好接满14的时候不会进入空闲事件中断，只进入接收满中断
-        UART_Init(&huart7, IMUB_USART7_Callback, 14 * 2);           
+        UART_Init(&huart10, IMUB_USART7_Callback, 14 * 2);     
 
     #endif
 
