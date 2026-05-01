@@ -145,7 +145,8 @@ class Class_FSM_Save_Load : public Class_FSM
 {
 public:
     Class_Gimbal *Gimbal;
-    void Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load_Type Enum_Save_Load_Type, bool step);
+    void Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load_Type unit_type, bool step);
+    void Reset();
 
 private:
     bool test_flag[6] = {false};
@@ -161,15 +162,33 @@ private:
     Struct_Enery_Unit_Position Enery_Unit_1 =
         {
             {0.0f},
-            {0.0f, 0.1058f, 2.004f, 0.0f, 0.0f, 0.0f},
-            {0.0f, 0.4904f, 1.5144f, 0.0f, 0.0f, 0.0f}};
+            {0.0f, 0.1058f, 2.004f, 0.0f, 0.0f, 0.0f},  // 0, 36.06, 204, 0, 0, 0
+            {0.0f, 0.4904f, 1.5144f, 0.0f, 0.0f, 0.0f}};// 0, 58, 176.77, 0, 0, 0
 
     // 靠外的存取矿角度
     Struct_Enery_Unit_Position Enery_Unit_2 =
         {
             {0.0f},
-            {0.0f, -0.2532f, 2.004f, 0.0f, 0.0f, 0.0f},
+            {0.0f, -0.2532f, 2.004f, 0.0f, 0.0f, 0.0f}, // 0, 
             {0.0f, 0.0832f, 1.742f, 0.0f, 0.0f, 0.0f}};
+
+    Enum_Save_Load_Type Selected_Unit_Type = SAVE_LOAD_UNIT_1;
+    Enum_Save_Load_Type Active_Unit_Type = SAVE_LOAD_UNIT_1;
+
+    float Sync_Forward_Duration_s = 1.0f;
+    float Sync_Return_Duration_s = 1.0f;
+    float Sync_Start_J1 = 0.0f;
+    float Sync_Start_J2 = 0.0f;
+    float Sync_End_J1 = 0.0f;
+    float Sync_End_J2 = 0.0f;
+    uint32_t Sync_Total_ms = 0;
+    uint32_t Sync_Elapsed_ms = 0;
+    uint8_t Return_Init_Stage = 0;
+
+    Struct_Enery_Unit_Position &Get_Unit_Position(Enum_Save_Load_Type unit_type);
+    void Hold_Init_Pose(const Struct_Enery_Unit_Position &active_unit);
+    void Prepare_Sync_Move(bool forward);
+    bool Run_Sync_Move();
 };
 
 // 云台发送底盘相关通信帧格式
@@ -375,6 +394,7 @@ protected:
     Enum_Keyboard_Control_Type Keyboard_Control_Type = Keyboard_Control_Type_DISABLE;
     /*存取矿状态机数据来源*/
     Enum_Save_Load_Type Save_Load_Unit = SAVE_LOAD_UNIT_1;
+    bool Save_Load_Confirm_Request = false;
     float controller_right_y = 0.0f;
     float controller_mouse_x = 0.0f;
     float controller_mouse_y = 0.0f;

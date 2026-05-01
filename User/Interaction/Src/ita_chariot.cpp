@@ -177,6 +177,7 @@ void Class_Chariot::Init(float __DR16_Dead_Zone)
 
     // 存取矿状态机
     FSM_Save_Load.Gimbal = &this->Gimbal;
+    FSM_Save_Load.Init(10, 0);
 
 #endif
 
@@ -1104,8 +1105,10 @@ void Class_Chariot::Control_Gimbal()
 
         case Keyboard_Control_Type_SAVE_LOAD:
         {
-            bool step = Key_Is_Trig_Pressed_Free(controller_mouse_right_key);
-            FSM_Save_Load.Reload_TIM_Status_PeriodElapsedCallback(Save_Load_Unit, step);
+            if (Key_Is_Trig_Pressed_Free(controller_mouse_right_key))
+            {
+                Save_Load_Confirm_Request = true;
+            }
 
             if (Key_Is_Trig_Pressed_Free(controller_mouse_left_key))
             {
@@ -1122,7 +1125,8 @@ void Class_Chariot::Control_Gimbal()
             break;
         }
 
-        if (Key_Is_Pressed(controller_mouse_right_key))
+        if (Keyboard_Control_Type != Keyboard_Control_Type_SAVE_LOAD &&
+            Key_Is_Pressed(controller_mouse_right_key))
         {
             tmp_vt03_yaw += controller_mouse_x;
             tmp_vt03_pitch += controller_mouse_y;
@@ -1131,7 +1135,7 @@ void Class_Chariot::Control_Gimbal()
 
     if (Keyboard_Control_Type != Keyboard_Control_Type_SAVE_LOAD)
     {
-        FSM_Save_Load.Set_Status(0);
+        FSM_Save_Load.Reset();
         Gimbal.Set_Target_J0_Pitch_Radian(tmp_j0_pitch_radian);
         Gimbal.Set_Target_J1_Yaw_Radian(tmp_j1_yaw_radian);
         Gimbal.Set_Target_J2_Yaw_Radian(tmp_j2_yaw_radian);
@@ -1251,6 +1255,18 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
 #elif defined(GIMBAL)
 
     // 各个模块的分别解算
+
+    // 自动存取矿状态机
+    if (Keyboard_Control_Type == Keyboard_Control_Type_SAVE_LOAD)
+    {
+        FSM_Save_Load.Reload_TIM_Status_PeriodElapsedCallback(Save_Load_Unit, Save_Load_Confirm_Request);
+    }
+    else
+    {
+        FSM_Save_Load.Reset();
+    }
+    Save_Load_Confirm_Request = false;
+
     Gimbal.TIM_Calculate_PeriodElapsedCallback();
     Booster.TIM_Calculate_PeriodElapsedCallback();
     // 传输数据给上位机
@@ -1426,7 +1442,17 @@ void Class_Chariot::Judge_Keyboard_Mode()
 {
     const bool shift_active = Key_Is_Shift_Active(controller_key_shift);
 
-    if (Key_Is_Trig_Pressed_Free(controller_key_z) && !shift_active)
+    if (Key_Is_Trig_Pressed_Free(controller_key_z) && shift_active)
+    {
+        Keyboard_Control_Type = Keyboard_Control_Type_SAVE_LOAD;
+        Save_Load_Unit = SAVE_LOAD_UNIT_1;
+    }
+    else if (Key_Is_Trig_Pressed_Free(controller_key_x) && shift_active)
+    {
+        Keyboard_Control_Type = Keyboard_Control_Type_SAVE_LOAD;
+        Save_Load_Unit = SAVE_LOAD_UNIT_2;
+    }
+    else if (Key_Is_Trig_Pressed_Free(controller_key_z) && !shift_active)
     {
         Keyboard_Control_Type = Keyboard_Control_Type_WORKING;
     }
@@ -1441,16 +1467,6 @@ void Class_Chariot::Judge_Keyboard_Mode()
     else if (Key_Is_Trig_Pressed_Free(controller_key_v) && !shift_active)
     {
         Keyboard_Control_Type = Keyboard_Control_Type_DOWNLIFT;
-    }
-    else if (Key_Is_Trig_Pressed_Free(controller_key_z) && shift_active)
-    {
-        Keyboard_Control_Type = Keyboard_Control_Type_SAVE_LOAD;
-        Save_Load_Unit = SAVE_LOAD_UNIT_1;
-    }
-    else if (Key_Is_Trig_Pressed_Free(controller_key_x) && shift_active)
-    {
-        Keyboard_Control_Type = Keyboard_Control_Type_SAVE_LOAD;
-        Save_Load_Unit = SAVE_LOAD_UNIT_2;
     }
 }
 
@@ -2218,125 +2234,233 @@ void Class_FSM_Alive_Control_VT13::Reload_TIM_Status_PeriodElapsedCallback()
 }
 
 // 存取矿状态机定时器回调函数
-void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load_Type Enum_Save_Load_Type, bool step)
+Class_FSM_Save_Load::Struct_Enery_Unit_Position &Class_FSM_Save_Load::Get_Unit_Position(Enum_Save_Load_Type unit_type)
 {
-    Status[Now_Status_Serial].Time++;
+    return (unit_type == SAVE_LOAD_UNIT_1) ? Enery_Unit_1 : Enery_Unit_2;
+}
 
-    // 选取数据源
-    Struct_Enery_Unit_Position &active_unit = ((Enum_Save_Load_Type == SAVE_LOAD_UNIT_1) ? Enery_Unit_1 : Enery_Unit_2);
+void Class_FSM_Save_Load::Hold_Init_Pose(const Struct_Enery_Unit_Position &active_unit)
+{
+    Gimbal->Set_Target_J0_Pitch_Radian(active_unit.init_pos[0]);
+    Gimbal->Set_Target_J1_Yaw_Radian(active_unit.init_pos[1]);
+    Gimbal->Set_Target_J2_Yaw_Radian(active_unit.init_pos[2]);
+    Gimbal->Set_Target_J3_Roll_Radian(active_unit.init_pos[3]);
+    Gimbal->Set_Target_J4_Pitch_Radian(active_unit.init_pos[4]);
+    Gimbal->Set_Target_J5_Roll_Radian(active_unit.init_pos[5]);
+}
 
-    // 状态转移函数
-    switch (Now_Status_Serial)
+void Class_FSM_Save_Load::Prepare_Sync_Move(bool forward)
+{
+    Struct_Enery_Unit_Position &active_unit = Get_Unit_Position(Active_Unit_Type);
+    float request_duration_s = forward ? Sync_Forward_Duration_s : Sync_Return_Duration_s;
+
+    Sync_Start_J1 = forward ? active_unit.auxiliary_pos[1] : active_unit.finish_pos[1];
+    Sync_Start_J2 = forward ? active_unit.auxiliary_pos[2] : active_unit.finish_pos[2];
+    Sync_End_J1 = forward ? active_unit.finish_pos[1] : active_unit.auxiliary_pos[1];
+    Sync_End_J2 = forward ? active_unit.finish_pos[2] : active_unit.auxiliary_pos[2];
+    Sync_Elapsed_ms = 0;
+
+    float j1_omega = fabs(Gimbal->J1_Yaw_8009P.Get_Target_Omega());
+    float j2_omega = fabs(Gimbal->J2_Yaw_4340P.Get_Target_Omega());
+    float j1_min_duration_s = (j1_omega > 1e-6f) ? fabs(Sync_End_J1 - Sync_Start_J1) / j1_omega : request_duration_s;
+    float j2_min_duration_s = (j2_omega > 1e-6f) ? fabs(Sync_End_J2 - Sync_Start_J2) / j2_omega : request_duration_s;
+    float actual_duration_s = fmaxf(request_duration_s, fmaxf(j1_min_duration_s, j2_min_duration_s));
+
+    Sync_Total_ms = (uint32_t)(actual_duration_s * 1000.0f + 0.999f);
+    if (Sync_Total_ms == 0)
     {
-    case (0):
-    {
-        // 准备阶段
-        if (step)
-        {
-            Set_Status(1);
-        }
-
-        break;
+        Sync_Total_ms = 1;
     }
-    case (1):
+}
+
+bool Class_FSM_Save_Load::Run_Sync_Move()
+{
+    float progress = (Sync_Total_ms == 0) ? 1.0f : ((float)Sync_Elapsed_ms / (float)Sync_Total_ms);
+    Math_Constrain(&progress, 0.0f, 1.0f);
+
+    Gimbal->Set_Target_J1_Yaw_Radian(Sync_Start_J1 + progress * (Sync_End_J1 - Sync_Start_J1));
+    Gimbal->Set_Target_J2_Yaw_Radian(Sync_Start_J2 + progress * (Sync_End_J2 - Sync_Start_J2));
+
+    if (Sync_Elapsed_ms >= Sync_Total_ms)
     {
-        // 移动到初始位置
-        Gimbal->Set_Target_J0_Pitch_Radian(active_unit.init_pos[0]);
-        Gimbal->Set_Target_J1_Yaw_Radian(active_unit.init_pos[1]);
-        Gimbal->Set_Target_J2_Yaw_Radian(active_unit.init_pos[2]);
-        Gimbal->Set_Target_J3_Roll_Radian(active_unit.init_pos[3]);
-        Gimbal->Set_Target_J4_Pitch_Radian(active_unit.init_pos[4]);
-        Gimbal->Set_Target_J5_Roll_Radian(active_unit.init_pos[5]);
-
-        bool finish_flag = false;
-        test_flag[0] = (fabs((Gimbal->J0_Pitch_4340.Get_Now_Angle() - PI) - Gimbal->Get_Target_J0_Pitch_Radian()) <= 0.1f);
-        test_flag[1] = (fabs((Gimbal->J1_Yaw_8009P.Get_Now_Angle() - PI) - Gimbal->Get_Target_J1_Yaw_Radian()) <= 0.1f);
-        test_flag[2] = (fabs((Gimbal->J2_Yaw_4340P.Get_Now_Angle() - PI) - Gimbal->Get_Target_J2_Yaw_Radian()) <= 0.1f);
-        test_flag[3] = (fabs((Gimbal->J3_Roll_2325.Get_Now_Angle() - PI) - Gimbal->Get_Target_J3_Roll_Radian_In_PI()) <= 0.1f);
-        test_flag[4] = (fabs((Gimbal->J4_Pitch_2325.Get_Now_Angle() - PI + 0.52741) - Gimbal->Get_Target_J4_Pitch_Radian_In_PI()) <= 0.1f);
-        test_flag[5] = (fabs(Gimbal->Jodell_ERG150T.Get_Now_Roll() - Gimbal->Get_Target_J5_Roll_Radian()) <= 0.1f);
-        finish_flag = test_flag[0] &&
-                      test_flag[1] &&
-                      test_flag[2] &&
-                      test_flag[3] &&
-                      test_flag[4] &&
-                      test_flag[5] &&
-                      (true);
-
-        if (finish_flag)
-        {
-            Set_Status(2);
-        }
-
-        break;
+        Gimbal->Set_Target_J1_Yaw_Radian(Sync_End_J1);
+        Gimbal->Set_Target_J2_Yaw_Radian(Sync_End_J2);
+        return true;
     }
-    case (2):
+
+    Sync_Elapsed_ms++;
+    return false;
+}
+
+void Class_FSM_Save_Load::Reset()
+{
+    if (Get_Now_Status_Serial() != 0)
     {
-        // J2先移动
-        Gimbal->Set_Target_J2_Yaw_Radian(active_unit.finish_pos[2]);
-
-        bool finish_flag = (fabs((Gimbal->J2_Yaw_4340P.Get_Now_Angle() - PI) * 4.0f - Gimbal->Get_Target_J2_Yaw_Radian()) <= 0.1f);
-        if (finish_flag)
-        {
-            Set_Status(3);
-        }
-
-        break;
+        Set_Status(0);
     }
-    case (3):
+    Status[0].Time = 0;
+    Sync_Total_ms = 0;
+    Sync_Elapsed_ms = 0;
+    Return_Init_Stage = 0;
+    Active_Unit_Type = Selected_Unit_Type;
+}
+
+void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load_Type unit_type, bool step)
+{
     {
-        // J1开始移动到存矿位置
-        Gimbal->Set_Target_J1_Yaw_Radian(active_unit.finish_pos[1]);
+        Selected_Unit_Type = unit_type;
+        Status[Now_Status_Serial].Time++;
 
-        bool finish_flag = (fabs((Gimbal->J1_Yaw_8009P.Get_Now_Angle() - PI) * 4.0f - Gimbal->Get_Target_J1_Yaw_Radian()) <= 0.1f);
-        if (finish_flag)
+        Struct_Enery_Unit_Position &current_unit = Get_Unit_Position(Active_Unit_Type);
+
+        switch (Now_Status_Serial)
         {
-            Set_Status(4);
-        }
-
-        break;
-    }
-    case (4):
-    {
-        // 等待操作手操作
-        if (step)
+        case (0):
         {
-            Set_Status(5);
-        }
+            Return_Init_Stage = 0;
+            Sync_Total_ms = 0;
+            Sync_Elapsed_ms = 0;
 
-        break;
-    }
-    case (5):
-    {
-        // 移动到辅助位置，防止存矿后归位时卡矿
-        Gimbal->Set_Target_J1_Yaw_Radian(active_unit.auxiliary_pos[1]);
-        Gimbal->Set_Target_J2_Yaw_Radian(active_unit.auxiliary_pos[2]);
-
-        bool finish_flag = false;
-        finish_flag = (fabs((Gimbal->J1_Yaw_8009P.Get_Now_Angle() - PI) * 4.0f - Gimbal->Get_Target_J1_Yaw_Radian()) <= 0.1f) &&
-                      (fabs((Gimbal->J2_Yaw_4340P.Get_Now_Angle() - PI) * 4.0f - Gimbal->Get_Target_J2_Yaw_Radian()) <= 0.1f) &&
-                      (true);
-
-        if (finish_flag)
-        {
-            Set_Status(6);
-        }
-
-        break;
-    }
-    case (6):
-        // 归位到初始位置
-        {
-            Gimbal->Set_Target_J0_Pitch_Radian(active_unit.init_pos[0]);
-            Gimbal->Set_Target_J1_Yaw_Radian(active_unit.init_pos[1]);
-            Gimbal->Set_Target_J2_Yaw_Radian(active_unit.init_pos[2]);
-            Gimbal->Set_Target_J3_Roll_Radian(active_unit.init_pos[3]);
-            Gimbal->Set_Target_J4_Pitch_Radian(active_unit.init_pos[4]);
-            Gimbal->Set_Target_J5_Roll_Radian(active_unit.init_pos[5]);
-
+            if (step)
+            {
+                Active_Unit_Type = Selected_Unit_Type;
+                Set_Status(1);
+            }
             break;
         }
+        case (1):
+        {
+            Hold_Init_Pose(current_unit);
+
+            bool finish_flag = false;
+            test_flag[0] = (fabs((Gimbal->J0_Pitch_4340.Get_Now_Angle() - PI) - Gimbal->Get_Target_J0_Pitch_Radian()) <= 0.1f);
+            test_flag[1] = (fabs((Gimbal->J1_Yaw_8009P.Get_Now_Angle() - PI) - Gimbal->Get_Target_J1_Yaw_Radian()) <= 0.1f);
+            test_flag[2] = (fabs((Gimbal->J2_Yaw_4340P.Get_Now_Angle() - PI) - Gimbal->Get_Target_J2_Yaw_Radian()) <= 0.1f);
+            test_flag[3] = (fabs((Gimbal->J3_Roll_2325.Get_Now_Angle() - PI) - Gimbal->Get_Target_J3_Roll_Radian_In_PI()) <= 0.1f);
+            test_flag[4] = (fabs(Gimbal->J4_Pitch_2325.Get_Now_Omega()) <= 0.1f);
+            //test_flag[4] = (fabs((Gimbal->J4_Pitch_2325.Get_Now_Angle() - PI + 0.52741f) - Gimbal->Get_Target_J4_Pitch_Radian_In_PI()) <= 0.1f);
+            test_flag[5] = (fabs(Gimbal->Jodell_ERG150T.Get_Now_Roll() - Gimbal->Get_Target_J5_Roll_Radian()) <= 0.1f);
+            finish_flag = test_flag[0] &&
+                          test_flag[1] &&
+                          test_flag[2] &&
+                          test_flag[3] &&
+                          test_flag[4] &&
+                          test_flag[5];
+
+            if (finish_flag)
+            {
+                Set_Status(2);
+            }
+            break;
+        }
+        case (2):
+        {
+            Hold_Init_Pose(current_unit);
+            Gimbal->Set_Target_J2_Yaw_Radian(current_unit.auxiliary_pos[2]);
+
+            bool finish_flag = (fabs((Gimbal->J2_Yaw_4340P.Get_Now_Angle() - PI) * 4.0f - Gimbal->Get_Target_J2_Yaw_Radian()) <= 0.1f);
+            if (finish_flag)
+            {
+                Set_Status(3);
+            }
+            break;
+        }
+        case (3):
+        {
+            Hold_Init_Pose(current_unit);
+            Gimbal->Set_Target_J2_Yaw_Radian(current_unit.auxiliary_pos[2]);
+            Gimbal->Set_Target_J1_Yaw_Radian(current_unit.auxiliary_pos[1]);
+
+            bool finish_flag = (fabs((Gimbal->J1_Yaw_8009P.Get_Now_Angle() - PI) * 4.0f - Gimbal->Get_Target_J1_Yaw_Radian()) <= 0.1f);
+            if (finish_flag)
+            {
+                Set_Status(4);
+            }
+            break;
+        }
+        case (4):
+        {
+            Hold_Init_Pose(current_unit);
+            Prepare_Sync_Move(true);
+            Set_Status(5);
+            break;
+        }
+        case (5):
+        {
+            Hold_Init_Pose(current_unit);
+            if (Run_Sync_Move())
+            {
+                Set_Status(6);
+            }
+            break;
+        }
+        case (6):
+        {
+            Hold_Init_Pose(current_unit);
+            Gimbal->Set_Target_J1_Yaw_Radian(current_unit.finish_pos[1]);
+            Gimbal->Set_Target_J2_Yaw_Radian(current_unit.finish_pos[2]);
+
+            if (step)
+            {
+                Set_Status(7);
+            }
+            break;
+        }
+        case (7):
+        {
+            Hold_Init_Pose(current_unit);
+            Prepare_Sync_Move(false);
+            Set_Status(8);
+            break;
+        }
+        case (8):
+        {
+            Hold_Init_Pose(current_unit);
+            if (Run_Sync_Move())
+            {
+                Return_Init_Stage = 0;
+                Set_Status(9);
+            }
+            break;
+        }
+        case (9):
+        {
+            Hold_Init_Pose(current_unit);
+
+            if (Return_Init_Stage == 0)
+            {
+                Gimbal->Set_Target_J1_Yaw_Radian(current_unit.init_pos[1]);
+                Gimbal->Set_Target_J2_Yaw_Radian(current_unit.auxiliary_pos[2]);
+
+                bool finish_flag = (fabs((Gimbal->J1_Yaw_8009P.Get_Now_Angle() - PI) * 4.0f - Gimbal->Get_Target_J1_Yaw_Radian()) <= 0.1f);
+                if (finish_flag)
+                {
+                    Return_Init_Stage = 1;
+                }
+            }
+            else
+            {
+                Gimbal->Set_Target_J1_Yaw_Radian(current_unit.init_pos[1]);
+                Gimbal->Set_Target_J2_Yaw_Radian(current_unit.init_pos[2]);
+
+                bool finish_flag = (fabs((Gimbal->J2_Yaw_4340P.Get_Now_Angle() - PI) * 4.0f - Gimbal->Get_Target_J2_Yaw_Radian()) <= 0.1f);
+                if (finish_flag)
+                {
+                    Set_Status(0);
+                }
+            }
+            break;
+        }
+        default:
+        {
+            Reset();
+            break;
+        }
+        }
+
+        return;
     }
+
 }
 #endif
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/
