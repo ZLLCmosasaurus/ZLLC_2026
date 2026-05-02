@@ -31,6 +31,7 @@
 #include "dvc_jd_motor.h"
 #include "alg_fsm.h"
 #include "arm_model.h"
+#include "crt_joint_planner.h"
 #include "dvc_dwt.h"
 #include "buzzer.h"
 #include "trajectories.h"
@@ -279,6 +280,8 @@ public:
     Class_DM_Motor_J4310 J2_Yaw_4340P;
     Class_DM_Motor_J4310 J3_Roll_2325;
     Class_DM_Motor_J4310 J4_Pitch_2325;
+    Class_Gimbal_Joint_Planner J1_Yaw_Planner;
+    Class_Gimbal_Joint_Planner J2_Yaw_Planner;
     Class_Jodell_Motor Jodell_ERG150T; // 钧舵ERG150T夹爪电机，兼具Roll和夹爪功能
 
     Class_FSM_Calibration Calibration_FSM; // 校准状态机类
@@ -329,6 +332,9 @@ public:
     inline float Get_Target_VT03_Yaw_Angle();
     inline void Set_Target_VT03_Pitch_Angle(float __Target_VT03_Pitch_Angle);
     inline void Set_Target_VT03_Yaw_Angle(float __Target_VT03_Yaw_Angle);
+    inline void Set_Planner_Enable(Enum_Gimbal_Joint joint, bool enable);
+    inline void Set_Planner_Mode(Enum_Gimbal_Joint joint, Enum_Joint_Planner_Mode mode);
+    inline void Reset_Planner(Enum_Gimbal_Joint joint);
 
     void TIM_Calculate_PeriodElapsedCallback();
 
@@ -350,8 +356,8 @@ protected:
 
     float J2_Yaw_Min_Radian = -2.443f;
     float J2_Yaw_Max_Radian = 2.443f;
-    float J2_Yaw_MIT_KP = 70.0f;
-    float J2_Yaw_MIT_KD = 5.0f;
+    float J2_Yaw_MIT_KP = 90.0f;
+    float J2_Yaw_MIT_KD = 2.5f;
 
     float J3_Roll_Cali_Offset;
     float J3_Roll_Min_Radian = -(150.0f / 180.0f) * PI * DM2325_GEAR_RATIO;
@@ -428,6 +434,8 @@ protected:
     float delta_time = 0.0f; // 用DWT测得的时间间隔，用这个看解析解的计算速度
 
     // 内部函数
+    void Dispatch_J1_With_Planner();
+    void Dispatch_J2_With_Planner();
     void Output();
 };
 
@@ -453,6 +461,69 @@ Enum_Gimbal_Control_Type Class_Gimbal::Get_Gimbal_Control_Type()
 void Class_Gimbal::Set_Gimbal_Control_Type(Enum_Gimbal_Control_Type __Gimbal_Control_Type)
 {
     Gimbal_Control_Type = __Gimbal_Control_Type;
+}
+
+void Class_Gimbal::Set_Planner_Enable(Enum_Gimbal_Joint joint, bool enable)
+{
+    switch (joint)
+    {
+    case (Gimbal_Joint_J1_Yaw):
+    {
+        J1_Yaw_Planner.Set_Enable(enable);
+        break;
+    }
+    case (Gimbal_Joint_J2_Yaw):
+    {
+        J2_Yaw_Planner.Set_Enable(enable);
+        break;
+    }
+    default:
+    {
+        break;
+    }
+    }
+}
+
+void Class_Gimbal::Set_Planner_Mode(Enum_Gimbal_Joint joint, Enum_Joint_Planner_Mode mode)
+{
+    switch (joint)
+    {
+    case (Gimbal_Joint_J1_Yaw):
+    {
+        J1_Yaw_Planner.Set_Mode(mode);
+        break;
+    }
+    case (Gimbal_Joint_J2_Yaw):
+    {
+        J2_Yaw_Planner.Set_Mode(mode);
+        break;
+    }
+    default:
+    {
+        break;
+    }
+    }
+}
+
+void Class_Gimbal::Reset_Planner(Enum_Gimbal_Joint joint)
+{
+    switch (joint)
+    {
+    case (Gimbal_Joint_J1_Yaw):
+    {
+        J1_Yaw_Planner.Reset(J1_Yaw_8009P.Get_Now_Angle_Rad());
+        break;
+    }
+    case (Gimbal_Joint_J2_Yaw):
+    {
+        J2_Yaw_Planner.Reset(J2_Yaw_4340P.Get_Now_Angle_Rad());
+        break;
+    }
+    default:
+    {
+        break;
+    }
+    }
 }
 
 #ifdef PUMA

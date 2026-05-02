@@ -1006,7 +1006,6 @@ void Class_Chariot::Transform_Mouse_Axis()
  *
  */
 #ifdef GIMBAL
-
 void Class_Chariot::Control_Gimbal()
 {
     float tmp_vt03_pitch = Gimbal.Get_Target_VT03_Pitch_Angle();
@@ -1135,7 +1134,22 @@ void Class_Chariot::Control_Gimbal()
 
     if (Keyboard_Control_Type != Keyboard_Control_Type_SAVE_LOAD)
     {
+        Gimbal.Set_Planner_Mode(Gimbal_Joint_J1_Yaw, Joint_Planner_Mode_CONSTANT_ACCEL);
+        Gimbal.Set_Planner_Mode(Gimbal_Joint_J2_Yaw, Joint_Planner_Mode_CONSTANT_ACCEL);
         FSM_Save_Load.Reset();
+
+        if (Gimbal.J1_Yaw_Planner.Get_Enable() == false)
+        {
+            Gimbal.Reset_Planner(Gimbal_Joint_J1_Yaw);
+            Gimbal.Set_Planner_Enable(Gimbal_Joint_J1_Yaw, true);
+        }
+
+        if (Gimbal.J2_Yaw_Planner.Get_Enable() == false)
+        {
+            Gimbal.Reset_Planner(Gimbal_Joint_J2_Yaw);
+            Gimbal.Set_Planner_Enable(Gimbal_Joint_J2_Yaw, true);
+        }
+
         Gimbal.Set_Target_J0_Pitch_Radian(tmp_j0_pitch_radian);
         Gimbal.Set_Target_J1_Yaw_Radian(tmp_j1_yaw_radian);
         Gimbal.Set_Target_J2_Yaw_Radian(tmp_j2_yaw_radian);
@@ -2323,10 +2337,33 @@ bool Class_FSM_Save_Load::Run_Trajectory()
     return false;
 }
 
+void Class_FSM_Save_Load::Configure_Joint_Planner(bool enable)
+{
+    Gimbal->Set_Planner_Mode(Gimbal_Joint_J1_Yaw, Joint_Planner_Mode_CONSTANT_ACCEL);
+    Gimbal->Set_Planner_Mode(Gimbal_Joint_J2_Yaw, Joint_Planner_Mode_CONSTANT_ACCEL);
+
+    if (enable)
+    {
+        if (Gimbal->J1_Yaw_Planner.Get_Enable() == false)
+        {
+            Gimbal->Reset_Planner(Gimbal_Joint_J1_Yaw);
+        }
+
+        if (Gimbal->J2_Yaw_Planner.Get_Enable() == false)
+        {
+            Gimbal->Reset_Planner(Gimbal_Joint_J2_Yaw);
+        }
+    }
+
+    Gimbal->Set_Planner_Enable(Gimbal_Joint_J1_Yaw, enable);
+    Gimbal->Set_Planner_Enable(Gimbal_Joint_J2_Yaw, enable);
+}
+
 void Class_FSM_Save_Load::Reset()
 {
     if (Get_Now_Status_Serial() != 0)
     {
+        Configure_Joint_Planner(true);
         Set_Status(0);
     }
     Status[0].Time = 0;
@@ -2365,13 +2402,14 @@ void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load
         }
         case (1):
         {
+            Configure_Joint_Planner(true);
             Hold_Init_Pose(current_unit);
 
             bool finish_flag = false;
             test_flag[0] = (fabs((Gimbal->J0_Pitch_4340.Get_Now_Angle_Rad()) - Gimbal->Get_Target_J0_Pitch_Radian()) <= 0.1f);
             test_flag[1] = (fabs((Gimbal->J1_Yaw_8009P.Get_Now_Angle_Rad()) - Gimbal->Get_Target_J1_Yaw_Radian()) <= 0.1f);
-            test_flag[2] = (fabs((Gimbal->J2_Yaw_4340P.Get_Now_Angle_Rad()) - Gimbal->Get_Target_J2_Yaw_Radian()) <= 0.1f);
-            test_flag[3] = (fabs((Gimbal->J3_Roll_2325.Get_Now_Angle_Rad()) - Gimbal->J3_Roll_2325.Get_Target_Angle()) <= 0.15f);
+            test_flag[2] = (fabs((Gimbal->J2_Yaw_4340P.Get_Now_Angle_Rad()) - Gimbal->Get_Target_J2_Yaw_Radian()) <= 0.2f);
+            test_flag[3] = (fabs((Gimbal->J3_Roll_2325.Get_Now_Angle_Rad()) - Gimbal->J3_Roll_2325.Get_Target_Angle()) <= 0.1f);
             test_flag[4] = (fabs(Gimbal->J4_Pitch_2325.Get_Now_Omega()) <= 0.1f);
             //test_flag[4] = (fabs((Gimbal->J4_Pitch_2325.Get_Now_Angle() - PI + 0.52741f) - Gimbal->Get_Target_J4_Pitch_Radian_In_PI()) <= 0.1f);
             test_flag[5] = (fabs(Gimbal->Jodell_ERG150T.Get_Now_Roll() - Gimbal->Get_Target_J5_Roll_Radian()) <= 0.1f);
@@ -2390,6 +2428,7 @@ void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load
         }
         case (2):
         {
+            Configure_Joint_Planner(true);
             Hold_Init_Pose(current_unit);
             Gimbal->Set_Target_J2_Yaw_Radian(Get_Trajectory_Start_J2());
 
@@ -2402,6 +2441,7 @@ void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load
         }
         case (3):
         {
+            Configure_Joint_Planner(true);
             Hold_Init_Pose(current_unit);
             Gimbal->Set_Target_J2_Yaw_Radian(Get_Trajectory_Start_J2());
             Gimbal->Set_Target_J1_Yaw_Radian(Get_Trajectory_Start_J1());
@@ -2415,6 +2455,7 @@ void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load
         }
         case (4):
         {
+            Configure_Joint_Planner(false);
             Hold_Init_Pose(current_unit);
             Prepare_Trajectory(true);
             Set_Status(5);
@@ -2422,6 +2463,7 @@ void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load
         }
         case (5):
         {
+            Configure_Joint_Planner(false);
             Hold_Init_Pose(current_unit);
             if (Run_Trajectory())
             {
@@ -2431,6 +2473,7 @@ void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load
         }
         case (6):
         {
+            Configure_Joint_Planner(true);
             Hold_Init_Pose(current_unit);
             Gimbal->Set_Target_J1_Yaw_Radian(Get_Trajectory_End_J1());
             Gimbal->Set_Target_J2_Yaw_Radian(Get_Trajectory_End_J2());
@@ -2443,6 +2486,7 @@ void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load
         }
         case (7):
         {
+            Configure_Joint_Planner(false);
             Hold_Init_Pose(current_unit);
             Prepare_Trajectory(false);
             Set_Status(8);
@@ -2450,6 +2494,7 @@ void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load
         }
         case (8):
         {
+            Configure_Joint_Planner(false);
             Hold_Init_Pose(current_unit);
             if (Run_Trajectory())
             {
@@ -2460,6 +2505,7 @@ void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load
         }
         case (9):
         {
+            Configure_Joint_Planner(true);
             Hold_Init_Pose(current_unit);
 
             if (Return_Init_Stage == 0)

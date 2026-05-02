@@ -33,7 +33,7 @@ void Class_Gimbal::Init()
 
     J0_Pitch_4340.Init(&hfdcan1, DM_Motor_ID_0xA1, DM_Motor_Control_Method_POSITION_OMEGA, 0, 12.5f, 20.0f);
     J1_Yaw_8009P.Init(&hfdcan1, DM_Motor_ID_0xA2, DM_Motor_Control_Method_POSITION_OMEGA, 0, 12.5f, 10.0f);
-    J2_Yaw_4340P.Init(&hfdcan1, DM_Motor_ID_0xA3, DM_Motor_Control_Method_MIT_POSITION, 0, 12.5f, 10.0f);
+    J2_Yaw_4340P.Init(&hfdcan1, DM_Motor_ID_0xA3, DM_Motor_Control_Method_MIT_POSITION, 0, PI, 10.0f);
     J3_Roll_2325.Init(&hfdcan2, DM_Motor_ID_0xA4, DM_Motor_Control_Method_POSITION_OMEGA, 0, 310.0f, 10.0f);
     J4_Pitch_2325.Init(&hfdcan2, DM_Motor_ID_0xA5, DM_Motor_Control_Method_POSITION_OMEGA, 0, 160.0f, 10.0f);
     Jodell_ERG150T.Init(&huart2, 9);
@@ -41,6 +41,10 @@ void Class_Gimbal::Init()
     // 4340P MIT 参数
     J2_Yaw_4340P.Set_MIT_K_P(J2_Yaw_MIT_KP);
     J2_Yaw_4340P.Set_MIT_K_D(J2_Yaw_MIT_KD);
+    J1_Yaw_Planner.Init(&J1_Yaw_8009P, &Target_J1_Yaw_Radian, Target_J1_Yaw_Omega, 1.0f, 0.001f);
+    J2_Yaw_Planner.Init(&J2_Yaw_4340P, &Target_J2_Yaw_Radian, Target_J2_Yaw_Omega, 1.0f, 0.001f);
+    Set_Planner_Mode(Gimbal_Joint_J1_Yaw, Joint_Planner_Mode_CONSTANT_ACCEL);
+    Set_Planner_Mode(Gimbal_Joint_J2_Yaw, Joint_Planner_Mode_CONSTANT_ACCEL);
 
     /*初始化状态机，不进行初始化的话状态机没法访问云台对象中的电机*/
     Calibration_FSM.Gimbal = this;
@@ -57,6 +61,10 @@ void Class_Gimbal::Output()
 {
     if (Gimbal_Control_Type == Gimbal_Control_Type_DISABLE)
     {
+        Set_Planner_Enable(Gimbal_Joint_J1_Yaw, false);
+        Set_Planner_Enable(Gimbal_Joint_J2_Yaw, false);
+        Reset_Planner(Gimbal_Joint_J1_Yaw);
+        Reset_Planner(Gimbal_Joint_J2_Yaw);
         J0_Pitch_4340.Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
         J1_Yaw_8009P.Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
         J2_Yaw_4340P.Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
@@ -123,6 +131,8 @@ void Class_Gimbal::TIM_Calculate_PeriodElapsedCallback()
 {
     // 控制模式，用于设置电机的转动模式，转动的目标速度和角度
     Output();
+    J1_Yaw_Planner.Update();
+    J2_Yaw_Planner.Update();
 
     // 电机优先级计数器
     can_priority_cnt++;
@@ -137,12 +147,12 @@ void Class_Gimbal::TIM_Calculate_PeriodElapsedCallback()
     }
     case (2):
     {
-        J1_Yaw_8009P.TIM_Process_PeriodElapsedCallback();
+        Dispatch_J1_With_Planner();
         break;
     }
     case (3):
     {
-        J2_Yaw_4340P.TIM_Process_PeriodElapsedCallback();
+        Dispatch_J2_With_Planner();
         break;
     }
     case (4):
@@ -166,8 +176,35 @@ void Class_Gimbal::TIM_Calculate_PeriodElapsedCallback()
     // Trajectory_Tracer.arm_pos_rpy_update();
 }
 
+void Class_Gimbal::Dispatch_J1_With_Planner()
+{
+    if (J1_Yaw_Planner.Get_Enable())
+    {
+        J1_Yaw_Planner.Dispatch();
+    }
+    else
+    {
+        J1_Yaw_8009P.TIM_Process_PeriodElapsedCallback();
+    }
+}
+
+void Class_Gimbal::Dispatch_J2_With_Planner()
+{
+    if (J2_Yaw_Planner.Get_Enable())
+    {
+        J2_Yaw_Planner.Dispatch();
+    }
+    else
+    {
+        J2_Yaw_4340P.TIM_Process_PeriodElapsedCallback();
+    }
+}
+
 void Class_FSM_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
 {
+    Gimbal->Set_Planner_Enable(Gimbal_Joint_J1_Yaw, false);
+    Gimbal->Set_Planner_Enable(Gimbal_Joint_J2_Yaw, false);
+
     Status[Now_Status_Serial].Time++;
     switch (Now_Status_Serial)
     {

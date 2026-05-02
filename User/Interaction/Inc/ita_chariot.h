@@ -194,6 +194,7 @@ private:
     float Get_Trajectory_End_J2() const;
     void Prepare_Trajectory(bool forward);
     bool Run_Trajectory();
+    void Configure_Joint_Planner(bool enable);
 };
 
 // 云台发送底盘相关通信帧格式
