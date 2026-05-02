@@ -346,6 +346,7 @@ targets:
         - ../Drivers/CMSIS/Include
         - .cmsis/include
         - RTE/_ZLLC_2026
+        - ../Drivers/CMSIS/DSP/Include
       libList: []
     excludeList: []
     settings: {}

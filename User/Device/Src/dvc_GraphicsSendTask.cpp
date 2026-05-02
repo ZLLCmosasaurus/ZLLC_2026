@@ -580,22 +580,22 @@ void Char_Init(void)
 	uint8_t fric_speed_label[] = "OMEGA :";
 	Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.35 * SCREEN_WIDTH, 20, sizeof(fric_speed_label), 2, Yellow, FricSpeedName, fric_speed_label);
 
-	uint8_t bullet_num_label[] = "BULLET :";
-	Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.60 * SCREEN_WIDTH, 20, sizeof(bullet_num_label), 2, Yellow, BulletNumName, bullet_num_label);
+	// uint8_t bullet_num_label[] = "BULLET :";
+	// Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.60 * SCREEN_WIDTH, 20, sizeof(bullet_num_label), 2, Yellow, BulletNumName, bullet_num_label);
 
-	uint8_t antispintype_label[] = "Antispin :";
-	Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.65 * SCREEN_WIDTH, 20, sizeof(antispintype_label), 2, Yellow, BulletNumName, antispintype_label);
+	// uint8_t antispintype_label[] = "Antispin :";
+	// Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.65 * SCREEN_WIDTH, 20, sizeof(antispintype_label), 2, Yellow, BulletNumName, antispintype_label);
 	/*              MINIPC MODE字符*/
 	uint8_t minipc_mode_label[] = "MINIPC :";
 	Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.55 * SCREEN_WIDTH, 20, sizeof(minipc_mode_label), 2, Yellow, MiniPCModeLabelName, minipc_mode_label);
 
-	/*              BOOSTER MODE字符*/
-	uint8_t booster_mode_label[] = "BOOSTER:";
-	Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.50 * SCREEN_WIDTH, 20, sizeof(booster_mode_label), 2, Yellow, BoosterModeLabelName, booster_mode_label);
+	// /*              BOOSTER MODE字符*/
+	// uint8_t booster_mode_label[] = "BOOSTER:";
+	// Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.50 * SCREEN_WIDTH, 20, sizeof(booster_mode_label), 2, Yellow, BoosterModeLabelName, booster_mode_label);
 
-	/*              GIMBAL状态标签            */
-	uint8_t gimbal_status_label[] = "GIMBAL :";
-	Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.45 * SCREEN_WIDTH, 20, sizeof(gimbal_status_label), 2, Yellow, GimbalStatusLabelName, gimbal_status_label);
+	// /*              GIMBAL状态标签            */
+	// uint8_t gimbal_status_label[] = "GIMBAL :";
+	// Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.45 * SCREEN_WIDTH, 20, sizeof(gimbal_status_label), 2, Yellow, GimbalStatusLabelName, gimbal_status_label);
 }
 
 void MiniPC_Aim_Change(uint8_t Init_Cnt)
@@ -639,8 +639,8 @@ void PitchUI_Change(float Pitch, uint8_t Init_Cnt)
 	uint16_t radiusX = 200; // X轴半径
 	uint16_t radiusY = 300; // Y轴半径（大于X轴半径，形成竖直方向的椭圆）
 
-	float pitchMin = -30.0f;
-	float pitchMax = 30.0f;
+	float pitchMin = -23.0f;
+	float pitchMax = 40.0f;
 
 	uint16_t bgStartAngle = 30;
 	uint16_t bgEndAngle = 150;
@@ -822,19 +822,25 @@ void MiniPCMode_Draw(uint8_t Init_Cnt)
 	static uint8_t optype;
 	static uint8_t ARMOR[] = "ARMOR  ";
 	static uint8_t WINDMILL[] = "WINDMILL";
+	static uint8_t DISABLE[] = "DISABLE";
+	static uint8_t RADAR[] = "RADAR  ";
+	static uint8_t AIMER[] = "AIMER  ";
 
 	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
 
 	switch (JudgeReceiveData.Minipc_Mode)
 	{
-	case 0: // MiniPC_Mode_ARMOR
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.55 * SCREEN_WIDTH, 20, sizeof(ARMOR), 2, Green, MiniPCModeStatusName, ARMOR);
+	case 0: // MiniPC_Mode_DISABLE
+		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.55 * SCREEN_WIDTH, 20, sizeof(DISABLE), 2, Orange, MiniPCModeStatusName, DISABLE);
 		break;
-	case 1: // MiniPC_Mode_WINDMILL
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.55 * SCREEN_WIDTH, 20, sizeof(WINDMILL), 2, Orange, MiniPCModeStatusName, WINDMILL);
+	case 1: // MiniPC_Mode_AIMER
+		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.55 * SCREEN_WIDTH, 20, sizeof(AIMER), 2, Green, MiniPCModeStatusName, AIMER);
+		break;
+	case 2: // MiniPC_Mode_RADAR
+		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.55 * SCREEN_WIDTH, 20, sizeof(RADAR), 2, Green, MiniPCModeStatusName, RADAR);
 		break;
 	default:
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.55 * SCREEN_WIDTH, 20, sizeof(ARMOR), 2, Green, MiniPCModeStatusName, ARMOR);
+		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.55 * SCREEN_WIDTH, 20, sizeof(DISABLE), 2, Orange, MiniPCModeStatusName, DISABLE);
 		break;
 	}
 }
@@ -907,13 +913,14 @@ void GraphicSendtask(void)
 		CapDraw(JudgeReceiveData.Supercap_Voltage, Init_Cnt);
 		MiniPC_Aim_Change(Init_Cnt);
 		FrictSpeed_Draw(JudgeReceiveData.booster_fric_omega_left, JudgeReceiveData.booster_fric_omega_right, Init_Cnt);
-		BulletNum_Draw(JudgeReceiveData.Booster_bullet_num, Init_Cnt);
-		Antispin_Draw(Init_Cnt);
 		CapUI_Change(JudgeReceiveData.Supercap_Voltage, Init_Cnt);
-		BoosterMode_Draw(Init_Cnt);
-		GimbalStatus_Draw(Init_Cnt);
-		RadarDoubleDamage_Draw(Init_Cnt);
-		MiniPCMode_Draw(Init_Cnt); // 添加MiniPC模式初始化
+		MiniPCMode_Draw(Init_Cnt);
+		// BulletNum_Draw(JudgeReceiveData.Booster_bullet_num, Init_Cnt);
+		// Antispin_Draw(Init_Cnt);
+		// BoosterMode_Draw(Init_Cnt);
+		// GimbalStatus_Draw(Init_Cnt);
+		// RadarDoubleDamage_Draw(Init_Cnt);
+		
 
 		Init_Cnt--;
 

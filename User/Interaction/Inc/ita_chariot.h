@@ -41,10 +41,10 @@ enum Enum_Pitch_Control_Status
     Pitch_Status_Control_Lock ,
 };
 
-enum Enum_MinPC_Aim_Status
+enum Enum_MiniPC_Aim_Status
 {
-    MinPC_Aim_Status_DISABLE = 0,
-    MinPC_Aim_Status_ENABLE,
+    MiniPC_Aim_Status_DISABLE = 0,
+    MiniPC_Aim_Status_ENABLE,
 };
 
 /**
@@ -87,6 +87,13 @@ enum Enum_Gimbal_Status
 {
     Gimbal_Status_DISABLE = 0,
     Gimbal_Status_ENABLE,
+};
+
+enum Enum_MiniPC_Mode
+{
+    MiniPC_DISABLE = 0,
+    MiniPC_AIMER,
+    MiniPC_RADAR,
 };
 
 /**
@@ -276,9 +283,11 @@ public:
     //超级电容超级放电状态
     Enum_Supercap_Control_Status  Supercap_Control_Status = Supercap_Control_Status_DISABLE;
     //自瞄锁住状态
-    Enum_MinPC_Aim_Status MiniPC_Aim_Status = MinPC_Aim_Status_DISABLE;
+    Enum_MiniPC_Aim_Status MiniPC_Aim_Status = MiniPC_Aim_Status_DISABLE;
     //迷你主机状态
     Enum_MiniPC_Status MiniPC_Status = MiniPC_Status_DISABLE;
+    //上位机控制模式
+    Enum_MiniPC_Mode MiniPC_Mode = MiniPC_DISABLE;
     /*
     Enum_Radar_Target UI_Radar_Target = Radar_Target_Pos_Outpost;
     Enum_Radar_Target_Outpost UI_Radar_Target_Pos = Radar_Target_Pos_Outpost_A;

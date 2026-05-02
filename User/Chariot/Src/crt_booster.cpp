@@ -81,7 +81,6 @@ void Class_FSM_Heat_Detect::Reload_TIM_Status_PeriodElapsedCallback()
         {
             // 发射完成状态->加上热量进入下一轮检测
             Booster->actual_bullet_num++;
-            // shoot_num ++;
             Heat += 100.0f;
             Set_Status(0);
         }
@@ -303,14 +302,12 @@ void Class_Booster::Init()
     FSM_Antijamming.Init(6, 0);
 
     //拨弹盘电机
-    // Motor_Driver.PID_Angle.Init(20.0f, 0.0f, 0.0f, 0.0f, 0.0f,0.0f);
-    // Motor_Driver.PID_Omega.Init(1200.0f, 20.0f, 0.0f, 0.0f, 16000.0f, 16000.0f);
-    // Motor_Driver.Init(&hfdcan3, DJI_Motor_ID_0x204, DJI_Motor_Control_Method_OMEGA, 50.895f);
-    //Motor_Driver.PID_Angle.Init(100.0f, 5.0f, 0.0f, 0.0f, 0.0f,0.0f);
-    //Motor_Driver.PID_Omega.Init(3000.0f, 40.0f, 0.0f, 0.0f, 14000.0f,  14000.0f);
-		Motor_Driver.PID_Angle.Init(100.0f, 2.0f, 4.0f, 0.0f, 0.0f,0.0f);
-    Motor_Driver.PID_Omega.Init(1000.0f, 15.0f, 0.0f, 0.0f, 16000.0f,  16000.0f);
-    Motor_Driver.Init(&hfdcan3, DJI_Motor_ID_0x201, DJI_Motor_Control_Method_OMEGA, 50.895f);
+
+	Motor_Driver.PID_Angle.Init(10.0f, 0.1f, 0.0f, 0.0f, 0.0f,0.0f);
+    Motor_Driver.PID_Omega.Init(1000.0f, 13.0f, 0.0f, 0.0f, 15000.0f,  15000.0f);
+    // Motor_Driver.PID_Angle.Init(3.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.001f, 0.5f, PID_D_First_DISABLE);
+    // Motor_Driver.PID_Omega.Init(800.0f, 1.5f, 0.0f, 0.0f, 12288.0f, 12288.0f, 0.3f, 1.5f, 0.0f, 0.001f, 0.0f, PID_D_First_ENABLE);
+    Motor_Driver.Init(&hfdcan3, DJI_Motor_ID_0x203, DJI_Motor_Control_Method_OMEGA, 50.895f);
     kalman_init(&Kf_Omega,0.0f);
     //注意初始化ID 此版本6020为电流环版本 可能会有ID冲突
     #ifdef Single_Friction
@@ -325,16 +322,18 @@ void Class_Booster::Init()
     #ifdef Double_Friction
     //4*摩擦轮初始化
     Fric[0].Init(&hfdcan1, DJI_Motor_ID_0x201, DJI_Motor_Control_Method_OMEGA, 1.0f);
-    Fric[0].PID_Omega.Init(10.0f, 0.05f, 0.0f, 0.0f, 2000.0f,13000.0f);
+    Fric[0].PID_Omega.Init(10.0f, 0.05f, 0.0f, 0.0f, 2000.0f,12288.0f);
 
     Fric[1].Init(&hfdcan1, DJI_Motor_ID_0x202, DJI_Motor_Control_Method_OMEGA, 1.0f);
-    Fric[1].PID_Omega.Init(10.0f, 0.05f, 0.0f, 0.0f, 2000.0f,13000.0f);
+    Fric[1].PID_Omega.Init(10.0f, 0.05f, 0.0f, 0.0f, 2000.0f,12288.0f);
 
     Fric[2].Init(&hfdcan1, DJI_Motor_ID_0x203, DJI_Motor_Control_Method_OMEGA, 1.0f);
-    Fric[2].PID_Omega.Init(10.0f, 0.05f, 0.0f, 0.0f, 2000.0f,13000.0f);
+    Fric[2].PID_Omega.Init(10.0f, 0.05f, 0.0f, 0.0f, 2000.0f,12288.0f);
 
     Fric[3].Init(&hfdcan1, DJI_Motor_ID_0x204, DJI_Motor_Control_Method_OMEGA, 1.0f);
-    Fric[3].PID_Omega.Init(10.0f, 0.05f, 0.0f, 0.0f, 2000.0f,13000.0f);
+    Fric[3].PID_Omega.Init(10.0f, 0.05f, 0.0f, 0.0f, 2000.0f,12288.0f);
+
+    Shooter_Mode = Normal;
     #endif
 
 }
@@ -586,10 +585,21 @@ void Class_Booster::Output()
     #ifdef Double_Friction
     if (Friction_Control_Type != Friction_Control_Type_DISABLE)
     {
-        Fric[0].Set_Target_Omega_Rpm(-(Fric_Low_Rpm + Fric_Transform_Rpm));
-        Fric[1].Set_Target_Omega_Rpm(Fric_Low_Rpm + Fric_Transform_Rpm);
-        Fric[2].Set_Target_Omega_Rpm(-(Fric_High_Rpm + Fric_Transform_Rpm));
-        Fric[3].Set_Target_Omega_Rpm(Fric_High_Rpm + Fric_Transform_Rpm);
+        if(Shooter_Mode == Launcher)
+        {
+            Fric[0].Set_Target_Omega_Rpm(-(Fric_Low_Rpm_16m_s + Fric_Transform_Rpm));
+            Fric[1].Set_Target_Omega_Rpm(Fric_Low_Rpm_16m_s + Fric_Transform_Rpm);
+            Fric[2].Set_Target_Omega_Rpm(-(Fric_High_Rpm_16m_s + Fric_Transform_Rpm));
+            Fric[3].Set_Target_Omega_Rpm(Fric_High_Rpm_16m_s + Fric_Transform_Rpm);
+        }
+        else
+        {
+            Fric[0].Set_Target_Omega_Rpm(-(Fric_Low_Rpm_12m_s + Fric_Transform_Rpm));
+            Fric[1].Set_Target_Omega_Rpm(Fric_Low_Rpm_12m_s + Fric_Transform_Rpm);
+            Fric[2].Set_Target_Omega_Rpm(-(Fric_High_Rpm_12m_s + Fric_Transform_Rpm));
+            Fric[3].Set_Target_Omega_Rpm(Fric_High_Rpm_12m_s + Fric_Transform_Rpm);
+        }
+        
     }
     else
     {
@@ -599,6 +609,10 @@ void Class_Booster::Output()
         Fric[3].Set_Target_Omega_Rpm(0);
     }
     #endif
+    if(Motor_Driver.Get_DJI_Motor_Status() == DJI_Motor_Status_DISABLE)
+    {
+        Driver_Angle = Now_Angle;
+    }
 }
 
 /**
@@ -621,21 +635,43 @@ void Class_Booster::TIM_Adjust_Bullet_Velocity_PeriodElapsedCallback()
         {
         case Referee_Bullet_Velocity_Updata_Status_ENABLE:
         {
-            if (fabs(Referee_Bullet_Velocity - Pre_Referee_Bullet_Velocity) <= 0.3f)
+            if(Shooter_Mode == Launcher)
             {
-                if (Referee_Bullet_Velocity >= 12.0f)
+                if (fabs(Referee_Bullet_Velocity - Pre_Referee_Bullet_Velocity) <= 0.3f)
                 {
-                    Fric_Transform_Rpm -= (int16_t)(150.0f * fabs(Referee_Bullet_Velocity - 12.0f));
-                }
-                else if (Referee_Bullet_Velocity >= 11.85f && Referee_Bullet_Velocity < 12.0f)
-                {
-                    Fric_Transform_Rpm -= (int16_t)(50.0f * fabs(Referee_Bullet_Velocity - 11.85f));
-                }
-                else if (Referee_Bullet_Velocity <= 11.60f)
-                {
-                    Fric_Transform_Rpm += (int16_t)(50.0f * fabs(Referee_Bullet_Velocity - 11.65f));
+                    if (Referee_Bullet_Velocity >= 16.0f)
+                    {
+                        Fric_Transform_Rpm -= (int16_t)(100.0f * fabs(Referee_Bullet_Velocity - 16.0f));
+                    }
+                    else if (Referee_Bullet_Velocity >= 15.85f && Referee_Bullet_Velocity < 16.0f)
+                    {
+                        Fric_Transform_Rpm -= (int16_t)(50.0f * fabs(Referee_Bullet_Velocity - 15.85f));
+                    }
+                    else if (Referee_Bullet_Velocity <= 15.80f)
+                    {
+                        Fric_Transform_Rpm += (int16_t)(50.0f * fabs(Referee_Bullet_Velocity - 15.80f));
+                    }
                 }
             }
+            else
+            {
+                if (fabs(Referee_Bullet_Velocity - Pre_Referee_Bullet_Velocity) <= 0.3f)
+                {
+                    if (Referee_Bullet_Velocity >= 12.0f)
+                    {
+                        Fric_Transform_Rpm -= (int16_t)(100.0f * fabs(Referee_Bullet_Velocity - 12.0f));
+                    }
+                    else if (Referee_Bullet_Velocity >= 11.85f && Referee_Bullet_Velocity < 12.0f)
+                    {
+                        Fric_Transform_Rpm -= (int16_t)(50.0f * fabs(Referee_Bullet_Velocity - 11.85f));
+                    }
+                    else if (Referee_Bullet_Velocity <= 11.60f)
+                    {
+                        Fric_Transform_Rpm += (int16_t)(50.0f * fabs(Referee_Bullet_Velocity - 11.65f));
+                    }
+                }
+            }
+            
         }
         break;
         default:
@@ -675,12 +711,6 @@ void Class_Booster::TIM_Calculate_PeriodElapsedCallback()
         Fric[i].TIM_PID_PeriodElapsedCallback();
     }
     #endif
-
-    if(Referee->Get_Shoot_Speed()>10.0f && Referee->Get_Shoot_Speed()<16.0f)
-    {
-        Speed = Referee->Get_Shoot_Speed();
-    }
-
 
     Cmd_if_Fire = Get_Shoot_Cmd(FSM_Heat_Detect.Heat,100);
     

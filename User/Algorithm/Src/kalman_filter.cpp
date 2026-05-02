@@ -480,8 +480,8 @@ static void H_K_R_Adjustment(KalmanFilter_t *kf)
 }
 // 初始化卡尔曼滤波器
 void kalman_init(KalmanFilter *kf, float initial_value) {
-    kf->Q = 0.1f;  // 过程噪声协方差
-    kf->R = 1.0f;  // 观测噪声协方差
+    kf->Q = 0.01f;  // 过程噪声协方差
+    kf->R = 1.5f;  // 观测噪声协方差
     kf->A = 1.0f;  // 状态转移矩阵
     kf->H = 1.0f;  // 观测矩阵
     

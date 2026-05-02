@@ -98,17 +98,17 @@ void Chassis_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
             chariot.Force_Control_Chassis.Motor_Wheel[3].CAN_RxCpltCallback(CAN_RxMessage->Data);
         }
         break;
-        case (0x67): //超电
-        {
-            chariot.Chassis.Supercap.CAN_RxCpltCallback(CAN_RxMessage->Data);
-            chariot.Force_Control_Chassis.Supercap.CAN_RxCpltCallback(CAN_RxMessage->Data);
-        }
-        break;
-        case (0x55):
-        {
-            chariot.Chassis.Supercap.CAN_RxCpltCallback(CAN_RxMessage->Data);
-        }
-        break;
+        // case (0x67): //超电
+        // {
+        //     chariot.Chassis.Supercap.CAN_RxCpltCallback(CAN_RxMessage->Data);
+        //     chariot.Force_Control_Chassis.Supercap.CAN_RxCpltCallback(CAN_RxMessage->Data);
+        // }
+        // break;
+        // case (0x55):
+        // {
+        //     chariot.Chassis.Supercap.CAN_RxCpltCallback(CAN_RxMessage->Data);
+        // }
+        // break;
         #endif
 
 
@@ -140,12 +140,12 @@ void Chassis_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
         }
         case(0x201):
         {
-            chariot.Chassis.Motor_Track[0].CAN_RxCpltCallback(CAN_RxMessage->Data);
+            chariot.Force_Control_Chassis.Motor_Track[0].CAN_RxCpltCallback(CAN_RxMessage->Data);
             break;
         }
         case(0x202):
         {
-            chariot.Chassis.Motor_Track[1].CAN_RxCpltCallback(CAN_RxMessage->Data);
+            chariot.Force_Control_Chassis.Motor_Track[1].CAN_RxCpltCallback(CAN_RxMessage->Data);
             break;
         }
         case (0x203):
@@ -298,7 +298,7 @@ void Gimbal_Device_CAN3_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage){
         // chariot.Gimbal.Motor_Yaw.CAN_RxCpltCallback(CAN_RxMessage->Data);
     }
     break;
-    case (0x201):
+    case (0x203):
     {
         chariot.Booster.Motor_Driver.CAN_RxCpltCallback(CAN_RxMessage->Data);
     }
@@ -542,7 +542,7 @@ void Task1ms_TIM5_Callback()
         if (mod5 == 5)
         {
             // 上位机
-            // TIM_USB_PeriodElapsedCallback(&MiniPC_USB_Manage_Object);
+            TIM_USB_PeriodElapsedCallback(&MiniPC_USB_Manage_Object);
 
             // 串口统一发送
             // TIM_UART_PeriodElapsedCallback();
@@ -572,7 +572,9 @@ void Task1ms_TIM5_Callback()
  *
  */
 extern "C" void Task_Init()
-{  
+{   
+    
+
 
     DWT_Init(480);
 
@@ -635,8 +637,10 @@ extern "C" void Task_Init()
     //设备层集成在交互层初始化中，没有显视地初始化
 
     /********************************* 交互层初始化 *********************************/
-
+    __disable_irq();    
     chariot.Init();
+    __enable_irq();
+    
 	buzzer_setTask(&buzzer, BUZZER_MARIO_SIMPLE_PRIORITY);
 
     /********************************* 使能调度时钟 *********************************/
@@ -663,7 +667,6 @@ extern "C" void Task_Init()
         freq = 1 / DWT_GetDeltaT(&time_s);
 
         JudgeReceiveData.robot_id = chariot.Referee.Get_ID(); //Robot ID
-        JudgeReceiveData.Pitch_Angle = chariot.Gimbal_Tx_Pitch_Angle; // pitch角度
         JudgeReceiveData.Bullet_Status = chariot.Bulletcap_Status;    // 弹舱
         JudgeReceiveData.Fric_Status = chariot.Fric_Status;           // 摩擦轮
         JudgeReceiveData.Minipc_Status = chariot.MiniPC_Status;       // 自瞄是否离线
@@ -674,22 +677,11 @@ extern "C" void Task_Init()
         JudgeReceiveData.booster_fric_omega_right = chariot.Booster_fric_omega_right; // 右摩擦轮速度
 		JudgeReceiveData.Booster_bullet_num = chariot.Booster_bullet_num-chariot.Booster_bullet_num_before;
         JudgeReceiveData.MiniPC_Aim_Status = chariot.Aim_Status;      // 自瞄是否控制打弹
-		// JudgeReceiveData.Antispin_Type=chariot.Antispin_Type;
+		JudgeReceiveData.Minipc_Mode = chariot.MiniPC_Mode; // 上位机模式
         if (chariot.Referee_UI_Refresh_Status == Referee_UI_Refresh_Status_ENABLE)
             Init_Cnt = 10;
     }
     #endif
-
-     static uint32_t lastCheck = 0;
-    if ((HAL_GetTick() - lastCheck) > 100)   // 每 100ms 检查一次
-    {
-        lastCheck = HAL_GetTick();
-        extern FDCAN_HandleTypeDef hfdcan3;
-        if (hfdcan3.ErrorCode & HAL_FDCAN_ERROR_FIFO_FULL)
-        {
-          //FDCAN_RecoverFromFifoFull(&hfdcan3);
-        }
-    }
 }
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

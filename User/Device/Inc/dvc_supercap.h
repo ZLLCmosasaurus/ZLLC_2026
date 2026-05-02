@@ -122,6 +122,7 @@ public:
 
     void TIM_UART_Tx_PeriodElapsedCallback();
     void TIM_Supercap_PeriodElapsedCallback();
+    void TIM_Supercap_Strategy_PeriodElapsedCallback();
     float Totol_Energy  = 20000.0f;
 protected:
     //初始化相关常量

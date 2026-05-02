@@ -409,6 +409,7 @@ public:
     inline void Set_Target_Omega_Rpm(int16_t __Target_Omega_Rpm);
     inline void Set_Target_Torque(float __Target_Torque);
     inline void Set_Out(float __Out);
+    inline void Reset_Out_And_Output(float __Out);
 
     void CAN_RxCpltCallback(uint8_t *Rx_Data);
     void TIM_Alive_PeriodElapsedCallback();
@@ -1271,6 +1272,18 @@ void Class_DJI_Motor_C620::Set_Out(float __Out)
     Out = __Out;
     Output();
 }
+
+/**
+ * @brief 重置输出量
+ * 
+ * @param __Out 输出量
+ */
+void Class_DJI_Motor_C620::Reset_Out_And_Output(float __Out)
+{
+    Out = __Out;
+    Output();
+}
+
 
 inline float Class_DJI_Motor_C620_Steer::Get_Now_Zero_Offset_Radian(){
     return Zero_Offset_Radian;

@@ -15,12 +15,13 @@
 /* Includes ------------------------------------------------------------------*/
 
 /* Exported macros -----------------------------------------------------------*/
-#define MINIPC_COMM_CAN
-// #define MINIPC_COMM_USB
+// #define MINIPC_COMM_CAN
+#define MINIPC_COMM_USB
 
 //底盘或云台状态
 //#define CHASSIS
 #define GIMBAL
+
 
 //调试或比赛状态
 // #define DEBUG

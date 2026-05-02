@@ -357,7 +357,7 @@ void TIM_CAN_PeriodElapsedCallback()
         mod5 = 0;
         
         #ifdef TRACK_LEG
-        CAN_Send_Data(&hfdcan2, 0x200, CAN2_0x200_Tx_Data, 8); // 履带3508电机、导轮电机
+        // CAN_Send_Data(&hfdcan2, 0x200, CAN2_0x200_Tx_Data, 8); // 履带3508电机、导轮电机
         CAN_Send_Data(&hfdcan1, 0x200, CAN1_0x200_Tx_Data, 8); // 行进3508电机
         #endif
         
@@ -367,7 +367,7 @@ void TIM_CAN_PeriodElapsedCallback()
     }
     if(mod5 == 1) //200Hz
     {
-        //CAN1 超电
+        //CAN2 超电
 		CAN_Send_Data(&hfdcan2, 0x66, CAN_Supercap_Tx_Data, 8);
         
     }
@@ -412,17 +412,18 @@ void TIM_CAN_PeriodElapsedCallback()
         CAN_Send_Data(&hfdcan3, 0x52, CAN3_Gimbal_Tx_Chassis_Data, 8); //给底盘发送控制命令 按照0x77 ID 发送
     }
 
-     if(mod5 == 4 )
+    if(mod5 == 4 )
     {
         CAN_Send_Data(&hfdcan3,0x03,CAN3_0xxf3_Tx_Data,8);// YAW
     }
-     if(mod5 == 3 )
+    if(mod5 == 3 )
     {
         CAN_Send_Data(&hfdcan3, 0x200, CAN3_0x200_Tx_Data, 8); //拨弹盘  按照0x200 ID 发送 可控制多个电机
     }
+
     if(mod4 == 4)
     {
-        CAN_Send_Data(&hfdcan1, 0xa0, CAN1_MiniPc_Tx_Data, 8); // 上位机
+        // CAN_Send_Data(&hfdcan1, 0xa0, CAN1_MiniPc_Tx_Data, 8); // 上位机
         mod4 = 0;
     }
     if(mod3 == 3)

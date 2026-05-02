@@ -97,6 +97,14 @@ void Class_Chassis::Init()
     Motor_Wheel[3].Init(&hfdcan1, Motor_DJI_ID_0x202, Motor_DJI_Control_Method_OMEGA);
     Motor_Wheel[3].PID_Omega.Init(1.0f, 0.0f, 0.0f, 0.0f, 20.0f, 20.0f);
     #endif
+    // 履带驱动电机初始化
+    Motor_Track[0].Init(&hfdcan2, DJI_Motor_ID_0x201);
+    Motor_Track[0].PID_Omega.Init(1500.0f, 50.0f, 0.0f, 0.0f, Motor_Track[0].Get_Output_Max(), Motor_Track[0].Get_Output_Max());
+    // 履带驱动电机初始化
+    Motor_Track[1].Init(&hfdcan2, DJI_Motor_ID_0x202);
+    Motor_Track[1].PID_Omega.Init(1250.0f, 50.0f, 0.0f, 0.0f, Motor_Track[1].Get_Output_Max(), Motor_Track[1].Get_Output_Max()); 
+   
+    
     // 超级电容初始化
     Supercap.Init(&hfdcan2, 100);
 
@@ -139,6 +147,10 @@ void Class_Chassis::TIM_100ms_Alive_PeriodElapsedCallback()
     {
        // Motor_Steer[i].TIM_100ms_Alive_PeriodElapsedCallback();
         Motor_Wheel[i].TIM_100ms_Alive_PeriodElapsedCallback();
+    }
+    for (int j = 0; j < 2; j++)
+    {
+        Motor_Track[j].TIM_Alive_PeriodElapsedCallback();
     }
 }
 /**
@@ -318,19 +330,19 @@ void Class_Chassis::Dynamics_Inverse_Resolution()
         //#define force (20.0f/(0.154f/2.0f)*7.0f*0.01562f) 预测最大的摩擦力为28.4N左右
         // 摩擦力转换至扭矩 
         Target_Wheel_Current[i] = -1.0f * (tmp_force[i] * Wheel_Radius) + Wheel_Speed_Limit_Factor * (Target_Wheel_Omega[i] - Motor_Wheel[i].Get_Now_Omega()) ;//(tmp_force[i] * Wheel_Radius) / (13.933f * 0.5f) / M3508_Kt;//Wheel_Speed_Limit_Factor * (Target_Wheel_Omega[i] - Motor_Wheel[i].Get_Now_Omega());
-        // // 动摩擦阻力前馈
-        // if (Target_Wheel_Omega[i] > Wheel_Resistance_Omega_Threshold)
-        // {
-        //     Target_Wheel_Current[i] += Dynamic_Resistance_Wheel_Current[i];
-        // }
-        // else if (Target_Wheel_Omega[i] < -Wheel_Resistance_Omega_Threshold)
-        // {
-        //     Target_Wheel_Current[i] -= Dynamic_Resistance_Wheel_Current[i];
-        // }
-        // else
-        // {
-        //     Target_Wheel_Current[i] += Motor_Wheel[i].Get_Now_Omega() / Wheel_Resistance_Omega_Threshold * Dynamic_Resistance_Wheel_Current[i];
-        // }
+        // 动摩擦阻力前馈
+        if (Target_Wheel_Omega[i] > Wheel_Resistance_Omega_Threshold)
+        {
+            Target_Wheel_Current[i] += Dynamic_Resistance_Wheel_Current[i];
+        }
+        else if (Target_Wheel_Omega[i] < -Wheel_Resistance_Omega_Threshold)
+        {
+            Target_Wheel_Current[i] -= Dynamic_Resistance_Wheel_Current[i];
+        }
+        else
+        {
+            Target_Wheel_Current[i] += Motor_Wheel[i].Get_Now_Omega() / Wheel_Resistance_Omega_Threshold * Dynamic_Resistance_Wheel_Current[i];
+        }
     }
 
     // 根据斜坡与压力进行电流限幅防止贴地打滑
@@ -383,49 +395,50 @@ void Class_Chassis::Output_To_Motor()
         break;
     }
     }
+    switch(Track_Control_Type)
+    {
+        case Track_Off__:
+        {
+            for (int j = 0; j < 2; j++)
+            {
+                Motor_Track[j].Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OPENLOOP);
+                Motor_Track[j].Set_Target_Torque(0.0f);
+            }
+            break;
+        }
+        case Track_On__:
+        {
+            Motor_Track[0].Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
+            Motor_Track[1].Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
+            Motor_Track[0].Set_Target_Omega_Radian(-Target_Track_Omega);
+            Motor_Track[1].Set_Target_Omega_Radian(Target_Track_Omega);
+            break;
+        }
+    }
 
     for (int i = 0; i < 4; i++)
     {
         Motor_Wheel[i].TIM_Calculate_PeriodElapsedCallback();
     }
 
+    for (int j = 0; j < 2; j++)
+    {
+        Motor_Track[j].TIM_PID_PeriodElapsedCallback();
+    }
 
-    // //进行功率限制
-    // if(Supercap.Get_Supercap_Status() == Supercap_Status_ENABLE) // 如果有超电
-    // {
-    //     Power_Management.Max_Power = Supercap.Get_Chassis_Device_LimitPower();
-    //     Power_Management.Actual_Power = Supercap.Get_Chassis_Actual_Power();
-    //     Power_Limit.Set_Control_Status(1);
-    // }
-    // else if(Supercap.Get_Supercap_Status() == Supercap_Status_DISABLE) // 无超电
-    // {
-    //     Power_Limit.Set_Control_Status(0);
-    //     if(Referee->Get_Referee_Status() == Referee_Status_ENABLE) 
-    //     {
-    //         float energyBuffer = Referee->Get_Chassis_Energy_Buffer();
-    //         // 归一化到[-1, 1]范围，中心点在40J
-    //         float normalized = (energyBuffer - 40.0f) / 20.0f;
-    //         // 使用tanh实现平滑过渡，范围[-20, 20]
-    //         float bufferPower = 20.0f * tanhf(normalized);
-            
-    //         //bufferPower = 0;
-
-    //         Power_Management.Max_Power = Referee->Get_Chassis_Power_Max() + bufferPower;
-    //     }
-    //     else
-    //     {
-    //         Power_Management.Max_Power = 100.0f;
-    //     }
-    // }
-
-    // Power_Management.Max_Power = Supercap.Get_Chassis_Device_LimitPower();
-    Power_Management.Max_Power = 120.0f;
+    Power_Management.Max_Power = Supercap.Get_Chassis_Device_LimitPower();
+    // Power_Management.Max_Power = 120.0f;
     
     Power_Limit.Power_Task(Power_Management);
 
     for (int i = 1, j = 0; i < 8; i+=2, ++j)
     {
         Motor_Wheel[j].Reset_Set_Out_And_Output(Power_Management.Motor_Data[i].output);
+    }
+
+    for(int i = 0, j = 0; i < 4; i+=2, ++j)
+    {
+        Motor_Track[j].Reset_Out_And_Output(Power_Management.Motor_Data[i].output);
     }
 }
 
@@ -497,6 +510,13 @@ void Class_Chassis::Self_Resolution()
 
         //Power_Management.Motor_Data[i].Target_error = fabs(Motor_Wheel[i].Get_Target_Omega_Radian() - Motor_Wheel[i].Get_Now_Omega_Radian());
         
+    }
+    for(int i = 0, j = 0; i < 4; i+=2, ++j)
+    {
+        Power_Management.Motor_Data[i].feedback_omega = Motor_Track[j].Get_Now_Omega_Radian() * M3508_REDUATION * RAD_TO_RPM;
+        Power_Management.Motor_Data[i].feedback_torque = Motor_Track[j].Get_Now_Torque() * M3508_CMD_CURRENT_TO_TORQUE;
+        Power_Management.Motor_Data[i].pid_output = Motor_Track[j].Get_Out();
+        Power_Management.Motor_Data[i].torque = Motor_Track[j].Get_Out() * M3508_CMD_CURRENT_TO_TORQUE;
     }
     #ifdef  filter_complementary
     //互补滤波-计算车体速度

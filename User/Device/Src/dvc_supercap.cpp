@@ -348,4 +348,9 @@ void Class_Supercap::TIM_Supercap_PeriodElapsedCallback()
     memcpy(CAN_Tx_Data, &Supercap_Tx_Data, sizeof(Struct_Supercap_Tx_Data));
 }
 
+void Class_Supercap::TIM_Supercap_Strategy_PeriodElapsedCallback()
+{
+    Use_SuperCap_Strategy();
+}
+
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

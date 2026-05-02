@@ -133,7 +133,7 @@ void Class_BoardC_BMI::Calibrate_MPU_Offset(IMU_Data_t *bmi088)
             bmi088->GyroOffset[1] = GyOFFSET;
             bmi088->GyroOffset[2] = GzOFFSET;
             bmi088->gNorm = gNORM;
-            bmi088->TempWhenCali = 40;
+            bmi088->TempWhenCali = 40.0f;
             break;
         }
 

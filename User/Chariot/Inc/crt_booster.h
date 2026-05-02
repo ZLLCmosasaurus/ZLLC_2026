@@ -53,10 +53,25 @@ enum Enum_Friction_Control_Type
     Friction_Control_Type_ENABLE,
 };
 
+/**
+ * @brief 裁判系统弹速更新状态
+ * 
+ */
 enum Enum_Referee_Bullet_Velocity_Updata_Status : uint8_t
 {
     Referee_Bullet_Velocity_Updata_Status_DISABLE = 0,
     Referee_Bullet_Velocity_Updata_Status_ENABLE,
+};
+
+/**
+ * @brief 发射模式选择
+ * 
+ */
+enum Enum_Shooter_Mode
+{
+    Normal,     // 正常发射
+    Aimer,      // 自瞄发射
+    Launcher,   // 部署发送
 };
 
 /**
@@ -140,9 +155,11 @@ public:
 
     inline Enum_Booster_Control_Type Get_Booster_Control_Type();
     inline Enum_Friction_Control_Type Get_Friction_Control_Type();
+    inline Enum_Shooter_Mode Get_Shooter_Mode();
 
     inline void Set_Booster_Control_Type(Enum_Booster_Control_Type __Booster_Control_Type);
     inline void Set_Friction_Control_Type(Enum_Friction_Control_Type __Friction_Control_Type);
+    inline void Set_Shooter_Mode(Enum_Shooter_Mode __Shooter_Mode);
     inline void Set_Friction_Omega(float __Friction_Omega);
     inline void Set_Driver_Omega(float __Driver_Omega);
     // inline void Set_Booster_Type(Enum_Booster_Type __Booster_Type);
@@ -189,11 +206,18 @@ protected:
     //发射机构状态
     Enum_Booster_Control_Type Booster_Control_Type = Booster_Control_Type_CEASEFIRE;
     Enum_Friction_Control_Type Friction_Control_Type = Friction_Control_Type_DISABLE;
+    Enum_Shooter_Mode Shooter_Mode = Normal;
     // Enum_Booster_Type Booster_Type;
     //摩擦轮角速度
     float Friction_Omega = 650.0f;
-    int16_t Fric_High_Rpm = 3750;//3800;//3750;
-    int16_t Fric_Low_Rpm = 3150;//3000;
+    // 12m/s 外级摩擦轮
+    int16_t Fric_High_Rpm_12m_s = 3600; //3700    
+    // 12m/s 内级摩擦轮
+    int16_t Fric_Low_Rpm_12m_s = 2750;      
+    // 16m/s 外级摩擦轮
+    int16_t Fric_High_Rpm_16m_s = 5260;     
+    // 16m/s 内级摩擦轮
+    int16_t Fric_Low_Rpm_16m_s = 4260;      
     int16_t Fric_Transform_Rpm = 50;
     //拨弹盘实际的目标速度, 一圈八发子弹
     float Driver_Omega = -2.0f * PI;
@@ -267,6 +291,16 @@ void Class_Booster::Set_Friction_Control_Type(Enum_Friction_Control_Type __Frict
     Friction_Control_Type = __Friction_Control_Type;
 }
 
+/**
+ * @brief 设定发射模式
+ * 
+ * @param __Shooter_Mode 
+ */
+void Class_Booster::Set_Shooter_Mode(Enum_Shooter_Mode __Shooter_Mode)
+{
+    Shooter_Mode = __Shooter_Mode;
+}
+
 
 /**
  * @brief 获得发射机构状态
@@ -287,6 +321,16 @@ Enum_Friction_Control_Type Class_Booster::Get_Friction_Control_Type()
 {
     return (Friction_Control_Type);
 
+}
+
+/**
+ * @brief 获得发射模式状态
+ * 
+ * @return Enum_Shooter_Mode 
+ */
+Enum_Shooter_Mode Class_Booster::Get_Shooter_Mode()
+{
+    return (Shooter_Mode);
 }
 
 /**

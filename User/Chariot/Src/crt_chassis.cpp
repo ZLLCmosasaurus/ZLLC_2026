@@ -126,7 +126,6 @@ void Class_DM_Motor_8009P::TIM_PID_PeriodElapsedCallback()
 void Class_HybridTrackLeg_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max, float __Omega_Max)
 {
     // 超级电容初始化
-    //  Supercap.Init(&hfdcan1,45.f);
 
     Velocity_X_Max = __Velocity_X_Max;
     Velocity_Y_Max = __Velocity_Y_Max;
@@ -182,7 +181,7 @@ void Class_HybridTrackLeg_Chassis::Init(float __Velocity_X_Max, float __Velocity
     Motor_Guider[1].Init(&hfdcan2, DJI_Motor_ID_0x204);
 
     // 底盘控制方式初始化
-    Chassis_Control_Type = Chassis_Control_Type_FLLOW;
+    Chassis_Control_Type = Chassis_Control_Type_DISABLE;
 }
 #endif
 
@@ -616,7 +615,6 @@ void Class_HybridTrackLeg_Chassis::Jointleg_Controller()
         Motor_Joint[i].TIM_Process_PeriodElapsedCallback();
         #endif
         #ifdef AUTO_SWITCH
-        // Motor_Leg[i].TIM_PID_PeriodElapsedCallback();
         Motor_Leg[i].TIM_Process_PeriodElapsedCallback();
         #endif
     }
@@ -651,10 +649,11 @@ void Class_HybridTrackLeg_Chassis::Track_Controller()
     break;
     }
 
-    for (int i = 0; i < 2; i++)
+    for (int i = 0 ; i < 2; i++)
     {
-        Motor_Track[i].TIM_PID_PeriodElapsedCallback();
+        // Motor_Track[i].TIM_PID_PeriodElapsedCallback();
     }
+
 }
 
 /**
@@ -735,10 +734,25 @@ void Class_HybridTrackLeg_Chassis::TIM_Calculate_PeriodElapsedCallback(Enum_Spri
 
 #endif
     // 过温保护
-    FSM_OverHeated_Detect.Reload_TIM_Status_PeriodElapsedCallback();
+    // FSM_OverHeated_Detect.Reload_TIM_Status_PeriodElapsedCallback();
 
     // 位姿切换
     Switch_Pose();
+
+#ifdef POWER_CONTROL
+    Power_Management.Max_Power = Supercap.Get_Chassis_Device_LimitPower();
+    
+    Power_Limit.Power_Task(Power_Management);
+
+    for(int i = 0, j = 0; i < 4; i+=2, ++j)
+    {
+        Power_Management.Motor_Data[i].feedback_omega = Motor_Track[j].Get_Now_Omega_Radian() * M3508_REDUATION * RAD_TO_RPM;
+        Power_Management.Motor_Data[i].feedback_torque = Motor_Track[j].Get_Now_Torque() * M3508_CMD_CURRENT_TO_TORQUE;
+        Power_Management.Motor_Data[i].pid_output = Motor_Track[j].Get_Out();
+        Power_Management.Motor_Data[i].torque = Motor_Track[j].Get_Out() * M3508_CMD_CURRENT_TO_TORQUE;
+        Motor_Track[j].Reset_Out_And_Output(Power_Management.Motor_Data[i].output);
+    }
+#endif
 
 }
 #endif

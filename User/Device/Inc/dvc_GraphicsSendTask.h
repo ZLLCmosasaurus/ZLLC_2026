@@ -200,7 +200,7 @@ typedef struct
 	uint16_t Booster_bullet_num;
 	float Supercap_Voltage;
 	float Pitch_Angle;
-	 float Chassis_Gimbal_Diff;
+	float Chassis_Gimbal_Diff;
 
 } JudgeReceive_t;
 
