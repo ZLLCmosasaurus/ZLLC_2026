@@ -157,7 +157,7 @@ void Class_MiniPC::Output()
   Data_MCU_To_NUC.Gimbal_Now_Yaw_Angle_Main      = Now_Angle_Main_Yaw;
   Data_MCU_To_NUC.Gimbal_Now_Yaw_Angle           = Now_Angle_Yaw;
   Data_MCU_To_NUC.Chassis_Now_yaw_Angle          = (IMU->Get_Angle_Yaw() - Now_Angle_Relative);
-  Data_MCU_To_NUC.Game_Progress                  = 4;//(uint8_t)Referee->Get_Game_Stage();
+  Data_MCU_To_NUC.Game_Progress                  = (uint8_t)Referee->Get_Game_Stage();
   Data_MCU_To_NUC.Self_HP                        = Referee->Get_HP();
   Data_MCU_To_NUC.Self_Outpost_HP                = Self_Outpost_HP;
   Data_MCU_To_NUC.Enemy_Outpost_HP               = Oppo_Outpost_HP;
