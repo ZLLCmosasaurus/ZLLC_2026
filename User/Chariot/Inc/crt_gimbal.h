@@ -33,7 +33,7 @@
 
 #define CRUISE_PITCH_SPEED 0.025 * 57.3f          //angle
 #define CRUISE_YAW_SPEED   1.3f                 //rad
-#define LIMIT_YAW_ANGLE    60.0f
+#define LIMIT_YAW_ANGLE    40.0f
 
 /**
  * @brief 云台控制类型
@@ -288,9 +288,9 @@ protected:
     float Yaw_Half_Turns;
 
     // pitch轴最小值
-    float Min_Pitch_Angle = -25.0f;
+    float Min_Pitch_Angle = -18.0f;
     // pitch轴最大值
-    float Max_Pitch_Angle = 22.0f ; //多10°
+    float Max_Pitch_Angle = 18.0f ; //多10°
 
     float Yaw_Compensite_KF = 150.0f;
     float Yaw_Compensite_Output = 0.0f;
@@ -300,12 +300,12 @@ protected:
 
     //读变量
 // ---------- 巡航正弦参数（常量）----------
-    static constexpr float YAW_AMPLITUDE   = 60.0f;   // 振幅，范围 [-60, 60]
+    static constexpr float YAW_AMPLITUDE   = 40.0f;   // 振幅，范围 [-60, 60]
     static constexpr float YAW_OFFSET      = 0.0f;    // 偏置
     static constexpr float YAW_FREQ        = 0.6f;    // 频率 (Hz)
 
-    static constexpr float PITCH_AMPLITUDE = 23.5f;   // 振幅，范围 [-25, 22]
-    static constexpr float PITCH_OFFSET    = -1.5f;   // 偏置
+    static constexpr float PITCH_AMPLITUDE = 18.0f;   // 振幅，范围 [-25, 22]
+    static constexpr float PITCH_OFFSET    = -0.0f;   // 偏置
     static constexpr float PITCH_FREQ      = 2.0f;    // 频率 (Hz)
 
     // ---------- 巡航状态变量 ----------

@@ -71,7 +71,7 @@ void __aeabi_atexit(void) {
   * @retval int
   */
 int main(void)
-{
+ {
 
   /* USER CODE BEGIN 1 */
 

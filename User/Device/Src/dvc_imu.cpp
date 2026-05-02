@@ -26,7 +26,7 @@ void Class_IMU::Init()
     IMU_MahonyAHRS.init(INS_Quat);
  
     //EKF初始化                         第三个加速度参数加大，减小运动过程中的影响    过于不相信加速度导致静止到目标收敛慢，看起来在飘
-    IMU_QuaternionEKF_Init(10, 0.001, 10000000, 0.9996, 0.05, 0.00016f, &QEKF_INS);
+    IMU_QuaternionEKF_Init(10, 0.001, 10000000, 0.9996, 0.05, 1.20000004e-06f, &QEKF_INS);
 
     INS.AccelLPF = 0.05f;
 
@@ -80,7 +80,7 @@ void Class_IMU::TIM_Calculate_PeriodElapsedCallback(void)
     if(Tempture_Cnt_mod50 % 50 == 0)
     {
         PID_IMU_Tempture.Set_Now(BMI088_Raw_Data.Temperature);
-        PID_IMU_Tempture.Set_Target(40.);
+        PID_IMU_Tempture.Set_Target(50.);
         PID_IMU_Tempture.TIM_Adjust_PeriodElapsedCallback();
         if(PID_IMU_Tempture.Get_Out() <= 0)TIM_Set_PWM(&htim3, TIM_CHANNEL_4, 0);
         else
