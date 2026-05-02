@@ -253,7 +253,7 @@ protected:
     float pitch_range = 174.0f;
 
     float gripper_offset = 0.0f;           // 夹爪校准后的偏差角度，rad
-    float gripper_locked_torque = 1600.0f; // 暂定为8.0f，待测
+    float gripper_locked_torque = 1600.0f; // 堵转力矩
     bool gripper_cali_status = false;
 
     uint16_t roll_locked_cnt = 0;    // Roll轴堵转时间计数
@@ -350,6 +350,8 @@ protected:
 
     float J2_Yaw_Min_Radian = -2.443f;
     float J2_Yaw_Max_Radian = 2.443f;
+    float J2_Yaw_MIT_KP = 70.0f;
+    float J2_Yaw_MIT_KD = 5.0f;
 
     float J3_Roll_Cali_Offset;
     float J3_Roll_Min_Radian = -(150.0f / 180.0f) * PI * DM2325_GEAR_RATIO;

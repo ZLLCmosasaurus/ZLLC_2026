@@ -1,7 +1,7 @@
 #ifndef TRAJECTORIES_H
 #define TRAJECTORIES_H
 
-/*自动存取矿靠内的矿*/
+/*自动存取矿-靠内的矿*/
 
 // 轨迹总点数: 251, 建议控制周期: 4ms
 // J1 起点: 0.1057 rad, 终点: 0.4887 rad
@@ -130,6 +130,5 @@ const float unit2_traj_J2[251] = {
     1.742179f, 1.742131f, 1.742093f, 1.742062f, 1.742040f, 1.742023f, 1.742012f, 1.742005f, 1.742002f, 1.742000f,
     1.742000f,
 };
-
 
 #endif // TRAJECTORIES_H

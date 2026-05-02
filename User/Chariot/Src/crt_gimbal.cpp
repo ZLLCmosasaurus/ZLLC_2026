@@ -31,12 +31,16 @@ void Class_Gimbal::Init()
     // imu初始化
     Boardc_BMI.Init();
 
-    J0_Pitch_4340.Init(&hfdcan1, DM_Motor_ID_0xA1, DM_Motor_Control_Method_POSITION_OMEGA, 0, 20.0f, 20.0f);
-    J1_Yaw_8009P.Init(&hfdcan1, DM_Motor_ID_0xA2, DM_Motor_Control_Method_POSITION_OMEGA, 0, 20.0f, 10.0f);
-    J2_Yaw_4340P.Init(&hfdcan1, DM_Motor_ID_0xA3, DM_Motor_Control_Method_POSITION_OMEGA, 0, 20.0f, 10.0f);
-    J3_Roll_2325.Init(&hfdcan2, DM_Motor_ID_0xA4, DM_Motor_Control_Method_POSITION_OMEGA, 0, 200.0f, 10.0f);
-    J4_Pitch_2325.Init(&hfdcan2, DM_Motor_ID_0xA5, DM_Motor_Control_Method_POSITION_OMEGA, 0, 200.0f, 10.0f);
+    J0_Pitch_4340.Init(&hfdcan1, DM_Motor_ID_0xA1, DM_Motor_Control_Method_POSITION_OMEGA, 0, 12.5f, 20.0f);
+    J1_Yaw_8009P.Init(&hfdcan1, DM_Motor_ID_0xA2, DM_Motor_Control_Method_POSITION_OMEGA, 0, 12.5f, 10.0f);
+    J2_Yaw_4340P.Init(&hfdcan1, DM_Motor_ID_0xA3, DM_Motor_Control_Method_MIT_POSITION, 0, 12.5f, 10.0f);
+    J3_Roll_2325.Init(&hfdcan2, DM_Motor_ID_0xA4, DM_Motor_Control_Method_POSITION_OMEGA, 0, 310.0f, 10.0f);
+    J4_Pitch_2325.Init(&hfdcan2, DM_Motor_ID_0xA5, DM_Motor_Control_Method_POSITION_OMEGA, 0, 160.0f, 10.0f);
     Jodell_ERG150T.Init(&huart2, 9);
+
+    // 4340P MIT 参数
+    J2_Yaw_4340P.Set_MIT_K_P(J2_Yaw_MIT_KP);
+    J2_Yaw_4340P.Set_MIT_K_D(J2_Yaw_MIT_KD);
 
     /*初始化状态机，不进行初始化的话状态机没法访问云台对象中的电机*/
     Calibration_FSM.Gimbal = this;
@@ -172,7 +176,7 @@ void Class_FSM_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
         {
             Gimbal->J0_Pitch_4340.Set_DM_Motor_Control_Method(DM_Motor_Control_Method_POSITION_OMEGA);
             Gimbal->J1_Yaw_8009P.Set_DM_Motor_Control_Method(DM_Motor_Control_Method_POSITION_OMEGA);
-            Gimbal->J2_Yaw_4340P.Set_DM_Motor_Control_Method(DM_Motor_Control_Method_POSITION_OMEGA);
+            Gimbal->J2_Yaw_4340P.Set_DM_Motor_Control_Method(DM_Motor_Control_Method_MIT_POSITION);
             Gimbal->J3_Roll_2325.Set_DM_Motor_Control_Method(DM_Motor_Control_Method_POSITION_OMEGA);
             Gimbal->J4_Pitch_2325.Set_DM_Motor_Control_Method(DM_Motor_Control_Method_POSITION_OMEGA);
 
@@ -194,9 +198,9 @@ void Class_FSM_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
             Gimbal->Jodell_ERG150T.Set_Target_Roll(0.0f);
 
             bool init_flag =
-                (fabs(Gimbal->J0_Pitch_4340.Get_Target_Angle() + PI - Gimbal->J0_Pitch_4340.Get_Now_Angle()) < 0.05f) &&
-                (fabs(Gimbal->J1_Yaw_8009P.Get_Target_Angle() + PI - Gimbal->J1_Yaw_8009P.Get_Now_Angle()) < 0.05f) &&
-                (fabs(Gimbal->J2_Yaw_4340P.Get_Target_Angle() + PI - Gimbal->J2_Yaw_4340P.Get_Now_Angle()) < 0.05f) &&
+                (fabs(Gimbal->J0_Pitch_4340.Get_Target_Angle() - Gimbal->J0_Pitch_4340.Get_Now_Angle_Rad()) < 0.05f) &&
+                (fabs(Gimbal->J1_Yaw_8009P.Get_Target_Angle() - Gimbal->J1_Yaw_8009P.Get_Now_Angle_Rad()) < 0.05f) &&
+                (fabs(Gimbal->J2_Yaw_4340P.Get_Target_Angle() - Gimbal->J2_Yaw_4340P.Get_Now_Angle_Rad()) < 0.05f) &&
                 (Gimbal->Jodell_ERG150T.Get_Motor_Working_Status() == Jodell_Motor_Working_ENABLE) &&
                 (Gimbal->Jodell_ERG150T.Get_Now_Omega() <= 0.1f) &&
                 (true);
@@ -214,7 +218,7 @@ void Class_FSM_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
         {
             if (Gimbal->J3_Roll_2325.Get_DM_Motor_Status() == DM_Motor_Status_ENABLE && !roll_cali_status)
             {
-                roll_cali_status = Motor_Calibration(&Gimbal->J3_Roll_2325, roll_offset, -310.0f, 5.0f * PI, roll_locked_torque, roll_locked_cnt);
+                roll_cali_status = Motor_Calibration(&Gimbal->J3_Roll_2325, roll_offset, -310.0f, 3.5f * PI, roll_locked_torque, roll_locked_cnt);
             }
 
             if (Gimbal->J4_Pitch_2325.Get_DM_Motor_Status() == DM_Motor_Status_ENABLE && !pitch_cali_status)
@@ -274,8 +278,8 @@ void Class_FSM_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
             // Gimbal->J4_Pitch_2325.Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
 
             bool finish_flag =
-                (fabs((Gimbal->J3_Roll_2325.Get_Target_Angle()) / DM2325_GEAR_RATIO + PI - Gimbal->J3_Roll_2325.Get_Now_Angle()) < 0.1f) &&
-                (fabs((Gimbal->J4_Pitch_2325.Get_Target_Angle()) / DM2325_GEAR_RATIO + PI - Gimbal->J4_Pitch_2325.Get_Now_Angle()) < 0.1f) &&
+                (fabs((Gimbal->J3_Roll_2325.Get_Target_Angle()) - Gimbal->J3_Roll_2325.Get_Now_Angle_Rad()) < 0.1f) &&
+                (fabs((Gimbal->J4_Pitch_2325.Get_Target_Angle()) - Gimbal->J4_Pitch_2325.Get_Now_Angle_Rad()) < 0.1f) &&
                 (true);
 
             if (finish_flag)
@@ -331,7 +335,7 @@ bool Class_FSM_Calibration::Motor_Calibration(Class_DM_Motor_J4310 *Motor, float
         {
             locked_cnt = 0;
 
-            Cali_Offset = Motor->Get_Now_Angle() - PI; // 协议里上电后默认角度映射为PI，但此时对应电机发送角度的映射为0.0rad，所以要减去PI
+            Cali_Offset = Motor->Get_Now_Radian() - PI; // 协议里上电后默认角度映射为PI，但此时对应电机发送角度的映射为0.0rad，所以要减去PI
 
             Motor->Set_Target_Angle((Cali_Offset + 0.05f) * DM2325_GEAR_RATIO); // 校准好后松开一点，乘以一个减速比
 

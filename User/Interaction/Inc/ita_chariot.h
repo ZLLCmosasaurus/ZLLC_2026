@@ -162,33 +162,38 @@ private:
     Struct_Enery_Unit_Position Enery_Unit_1 =
         {
             {0.0f},
-            {0.0f, 0.1058f, 2.004f, 0.0f, 0.0f, 0.0f},  // 0, 36.06, 204, 0, 0, 0
-            {0.0f, 0.4904f, 1.5144f, 0.0f, 0.0f, 0.0f}};// 0, 58, 176.77, 0, 0, 0
+            {0.0f, 0.1057f, 1.9896f, 0.0f, 0.0f, 0.0f},
+            {0.0f, 0.4887f, 1.5144f, 0.0f, 0.0f, 0.0f}};
 
     // 靠外的存取矿角度
     Struct_Enery_Unit_Position Enery_Unit_2 =
         {
             {0.0f},
-            {0.0f, -0.2532f, 2.004f, 0.0f, 0.0f, 0.0f}, // 0, 
+            {0.0f, -0.2532f, 2.0040f, 0.0f, 0.0f, 0.0f},
             {0.0f, 0.0832f, 1.742f, 0.0f, 0.0f, 0.0f}};
 
     Enum_Save_Load_Type Selected_Unit_Type = SAVE_LOAD_UNIT_1;
     Enum_Save_Load_Type Active_Unit_Type = SAVE_LOAD_UNIT_1;
 
-    float Sync_Forward_Duration_s = 1.0f;
-    float Sync_Return_Duration_s = 1.0f;
-    float Sync_Start_J1 = 0.0f;
-    float Sync_Start_J2 = 0.0f;
-    float Sync_End_J1 = 0.0f;
-    float Sync_End_J2 = 0.0f;
-    uint32_t Sync_Total_ms = 0;
-    uint32_t Sync_Elapsed_ms = 0;
+    uint16_t Trajectory_Point_Index = 0;
+    uint8_t Trajectory_Point_Tick = 0;
+    bool Trajectory_Forward = true;
     uint8_t Return_Init_Stage = 0;
+
+    float Now_J1_Radian;
+    float Now_J2_Radian;
 
     Struct_Enery_Unit_Position &Get_Unit_Position(Enum_Save_Load_Type unit_type);
     void Hold_Init_Pose(const Struct_Enery_Unit_Position &active_unit);
-    void Prepare_Sync_Move(bool forward);
-    bool Run_Sync_Move();
+    const float *Get_Trajectory_J1() const;
+    const float *Get_Trajectory_J2() const;
+    uint16_t Get_Trajectory_Point_Count() const;
+    float Get_Trajectory_Start_J1() const;
+    float Get_Trajectory_Start_J2() const;
+    float Get_Trajectory_End_J1() const;
+    float Get_Trajectory_End_J2() const;
+    void Prepare_Trajectory(bool forward);
+    bool Run_Trajectory();
 };
 
 // 云台发送底盘相关通信帧格式
@@ -399,7 +404,7 @@ protected:
     float controller_mouse_x = 0.0f;
     float controller_mouse_y = 0.0f;
     float controller_mouse_z = 0.0f;
-    
+
     Enum_Controller_Key_Status controller_mouse_left_key = Controller_Key_Status_FREE;
     Enum_Controller_Key_Status controller_mouse_right_key = Controller_Key_Status_FREE;
     Enum_Controller_Key_Status controller_key_w = Controller_Key_Status_FREE;
@@ -466,12 +471,12 @@ protected:
 
     // void Judge_DR16_Control_Type();
 
+    void Transform_Mouse_Axis();
+#endif
+
     void Control_Chassis();
     void Control_Gimbal();
     void Control_Booster();
-
-    void Transform_Mouse_Axis();
-#endif
 };
 
 /* Exported variables --------------------------------------------------------*/

@@ -861,7 +861,7 @@ void Class_Chariot::Control_Chassis()
         if (Chassis.Get_Wheel_Slave_Status() == Wheel_Slave_ON)
         {
             // 机械安装方向相反，因此乘以一个负号
-            track_omega = -1.0f * Force_Chassis.Get_Target_Velocity_X();
+            track_omega = -25.0f * (Force_Chassis.Get_Target_Velocity_X() / Chassis.Get_Velocity_X_Max());
         }
         else
         {
@@ -2249,46 +2249,77 @@ void Class_FSM_Save_Load::Hold_Init_Pose(const Struct_Enery_Unit_Position &activ
     Gimbal->Set_Target_J5_Roll_Radian(active_unit.init_pos[5]);
 }
 
-void Class_FSM_Save_Load::Prepare_Sync_Move(bool forward)
+const float *Class_FSM_Save_Load::Get_Trajectory_J1() const
 {
-    Struct_Enery_Unit_Position &active_unit = Get_Unit_Position(Active_Unit_Type);
-    float request_duration_s = forward ? Sync_Forward_Duration_s : Sync_Return_Duration_s;
-
-    Sync_Start_J1 = forward ? active_unit.auxiliary_pos[1] : active_unit.finish_pos[1];
-    Sync_Start_J2 = forward ? active_unit.auxiliary_pos[2] : active_unit.finish_pos[2];
-    Sync_End_J1 = forward ? active_unit.finish_pos[1] : active_unit.auxiliary_pos[1];
-    Sync_End_J2 = forward ? active_unit.finish_pos[2] : active_unit.auxiliary_pos[2];
-    Sync_Elapsed_ms = 0;
-
-    float j1_omega = fabs(Gimbal->J1_Yaw_8009P.Get_Target_Omega());
-    float j2_omega = fabs(Gimbal->J2_Yaw_4340P.Get_Target_Omega());
-    float j1_min_duration_s = (j1_omega > 1e-6f) ? fabs(Sync_End_J1 - Sync_Start_J1) / j1_omega : request_duration_s;
-    float j2_min_duration_s = (j2_omega > 1e-6f) ? fabs(Sync_End_J2 - Sync_Start_J2) / j2_omega : request_duration_s;
-    float actual_duration_s = fmaxf(request_duration_s, fmaxf(j1_min_duration_s, j2_min_duration_s));
-
-    Sync_Total_ms = (uint32_t)(actual_duration_s * 1000.0f + 0.999f);
-    if (Sync_Total_ms == 0)
-    {
-        Sync_Total_ms = 1;
-    }
+    return (Active_Unit_Type == SAVE_LOAD_UNIT_1) ? traj_J1 : unit2_traj_J1;
 }
 
-bool Class_FSM_Save_Load::Run_Sync_Move()
+const float *Class_FSM_Save_Load::Get_Trajectory_J2() const
 {
-    float progress = (Sync_Total_ms == 0) ? 1.0f : ((float)Sync_Elapsed_ms / (float)Sync_Total_ms);
-    Math_Constrain(&progress, 0.0f, 1.0f);
+    return (Active_Unit_Type == SAVE_LOAD_UNIT_1) ? traj_J2 : unit2_traj_J2;
+}
 
-    Gimbal->Set_Target_J1_Yaw_Radian(Sync_Start_J1 + progress * (Sync_End_J1 - Sync_Start_J1));
-    Gimbal->Set_Target_J2_Yaw_Radian(Sync_Start_J2 + progress * (Sync_End_J2 - Sync_Start_J2));
+uint16_t Class_FSM_Save_Load::Get_Trajectory_Point_Count() const
+{
+    return 251;
+}
 
-    if (Sync_Elapsed_ms >= Sync_Total_ms)
+float Class_FSM_Save_Load::Get_Trajectory_Start_J1() const
+{
+    return Get_Trajectory_J1()[0];
+}
+
+float Class_FSM_Save_Load::Get_Trajectory_Start_J2() const
+{
+    return Get_Trajectory_J2()[0];
+}
+
+float Class_FSM_Save_Load::Get_Trajectory_End_J1() const
+{
+    return Get_Trajectory_J1()[Get_Trajectory_Point_Count() - 1];
+}
+
+float Class_FSM_Save_Load::Get_Trajectory_End_J2() const
+{
+    return Get_Trajectory_J2()[Get_Trajectory_Point_Count() - 1];
+}
+
+void Class_FSM_Save_Load::Prepare_Trajectory(bool forward)
+{
+    Trajectory_Forward = forward;
+    Trajectory_Point_Tick = 0;
+    Trajectory_Point_Index = forward ? 0 : (Get_Trajectory_Point_Count() - 1);
+}
+
+bool Class_FSM_Save_Load::Run_Trajectory()
+{
+    const float *traj_j1 = Get_Trajectory_J1();
+    const float *traj_j2 = Get_Trajectory_J2();
+    const uint16_t last_index = Get_Trajectory_Point_Count() - 1;
+
+    Gimbal->Set_Target_J1_Yaw_Radian(traj_j1[Trajectory_Point_Index]);
+    Gimbal->Set_Target_J2_Yaw_Radian(traj_j2[Trajectory_Point_Index]);
+
+    if ((Trajectory_Forward && Trajectory_Point_Index >= last_index) ||
+        (!Trajectory_Forward && Trajectory_Point_Index == 0))
     {
-        Gimbal->Set_Target_J1_Yaw_Radian(Sync_End_J1);
-        Gimbal->Set_Target_J2_Yaw_Radian(Sync_End_J2);
         return true;
     }
 
-    Sync_Elapsed_ms++;
+    Trajectory_Point_Tick++;
+    if (Trajectory_Point_Tick >= 4)
+    {
+        Trajectory_Point_Tick = 0;
+        if (Trajectory_Forward)
+        {
+            Trajectory_Point_Index++;
+        }
+        else
+        {
+            Trajectory_Point_Index--;
+        }
+    }
+
     return false;
 }
 
@@ -2299,14 +2330,17 @@ void Class_FSM_Save_Load::Reset()
         Set_Status(0);
     }
     Status[0].Time = 0;
-    Sync_Total_ms = 0;
-    Sync_Elapsed_ms = 0;
+    Trajectory_Point_Index = 0;
+    Trajectory_Point_Tick = 0;
+    Trajectory_Forward = true;
     Return_Init_Stage = 0;
     Active_Unit_Type = Selected_Unit_Type;
 }
 
 void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load_Type unit_type, bool step)
 {
+    Now_J1_Radian = Gimbal->J1_Yaw_8009P.Get_Now_Angle_Rad();
+    Now_J2_Radian = Gimbal->J2_Yaw_4340P.Get_Now_Angle_Rad();
     {
         Selected_Unit_Type = unit_type;
         Status[Now_Status_Serial].Time++;
@@ -2318,8 +2352,9 @@ void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load
         case (0):
         {
             Return_Init_Stage = 0;
-            Sync_Total_ms = 0;
-            Sync_Elapsed_ms = 0;
+            Trajectory_Point_Index = 0;
+            Trajectory_Point_Tick = 0;
+            Trajectory_Forward = true;
 
             if (step)
             {
@@ -2333,10 +2368,10 @@ void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load
             Hold_Init_Pose(current_unit);
 
             bool finish_flag = false;
-            test_flag[0] = (fabs((Gimbal->J0_Pitch_4340.Get_Now_Angle() - PI) - Gimbal->Get_Target_J0_Pitch_Radian()) <= 0.1f);
-            test_flag[1] = (fabs((Gimbal->J1_Yaw_8009P.Get_Now_Angle() - PI) - Gimbal->Get_Target_J1_Yaw_Radian()) <= 0.1f);
-            test_flag[2] = (fabs((Gimbal->J2_Yaw_4340P.Get_Now_Angle() - PI) - Gimbal->Get_Target_J2_Yaw_Radian()) <= 0.1f);
-            test_flag[3] = (fabs((Gimbal->J3_Roll_2325.Get_Now_Angle() - PI) - Gimbal->Get_Target_J3_Roll_Radian_In_PI()) <= 0.1f);
+            test_flag[0] = (fabs((Gimbal->J0_Pitch_4340.Get_Now_Angle_Rad()) - Gimbal->Get_Target_J0_Pitch_Radian()) <= 0.1f);
+            test_flag[1] = (fabs((Gimbal->J1_Yaw_8009P.Get_Now_Angle_Rad()) - Gimbal->Get_Target_J1_Yaw_Radian()) <= 0.1f);
+            test_flag[2] = (fabs((Gimbal->J2_Yaw_4340P.Get_Now_Angle_Rad()) - Gimbal->Get_Target_J2_Yaw_Radian()) <= 0.1f);
+            test_flag[3] = (fabs((Gimbal->J3_Roll_2325.Get_Now_Angle_Rad()) - Gimbal->J3_Roll_2325.Get_Target_Angle()) <= 0.15f);
             test_flag[4] = (fabs(Gimbal->J4_Pitch_2325.Get_Now_Omega()) <= 0.1f);
             //test_flag[4] = (fabs((Gimbal->J4_Pitch_2325.Get_Now_Angle() - PI + 0.52741f) - Gimbal->Get_Target_J4_Pitch_Radian_In_PI()) <= 0.1f);
             test_flag[5] = (fabs(Gimbal->Jodell_ERG150T.Get_Now_Roll() - Gimbal->Get_Target_J5_Roll_Radian()) <= 0.1f);
@@ -2356,9 +2391,9 @@ void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load
         case (2):
         {
             Hold_Init_Pose(current_unit);
-            Gimbal->Set_Target_J2_Yaw_Radian(current_unit.auxiliary_pos[2]);
+            Gimbal->Set_Target_J2_Yaw_Radian(Get_Trajectory_Start_J2());
 
-            bool finish_flag = (fabs((Gimbal->J2_Yaw_4340P.Get_Now_Angle() - PI) * 4.0f - Gimbal->Get_Target_J2_Yaw_Radian()) <= 0.1f);
+            bool finish_flag = (fabs(Now_J2_Radian - Gimbal->Get_Target_J2_Yaw_Radian()) <= 0.1f);
             if (finish_flag)
             {
                 Set_Status(3);
@@ -2368,10 +2403,10 @@ void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load
         case (3):
         {
             Hold_Init_Pose(current_unit);
-            Gimbal->Set_Target_J2_Yaw_Radian(current_unit.auxiliary_pos[2]);
-            Gimbal->Set_Target_J1_Yaw_Radian(current_unit.auxiliary_pos[1]);
+            Gimbal->Set_Target_J2_Yaw_Radian(Get_Trajectory_Start_J2());
+            Gimbal->Set_Target_J1_Yaw_Radian(Get_Trajectory_Start_J1());
 
-            bool finish_flag = (fabs((Gimbal->J1_Yaw_8009P.Get_Now_Angle() - PI) * 4.0f - Gimbal->Get_Target_J1_Yaw_Radian()) <= 0.1f);
+            bool finish_flag = (fabs(Now_J1_Radian - Gimbal->Get_Target_J1_Yaw_Radian()) <= 0.1f);
             if (finish_flag)
             {
                 Set_Status(4);
@@ -2381,14 +2416,14 @@ void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load
         case (4):
         {
             Hold_Init_Pose(current_unit);
-            Prepare_Sync_Move(true);
+            Prepare_Trajectory(true);
             Set_Status(5);
             break;
         }
         case (5):
         {
             Hold_Init_Pose(current_unit);
-            if (Run_Sync_Move())
+            if (Run_Trajectory())
             {
                 Set_Status(6);
             }
@@ -2397,8 +2432,8 @@ void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load
         case (6):
         {
             Hold_Init_Pose(current_unit);
-            Gimbal->Set_Target_J1_Yaw_Radian(current_unit.finish_pos[1]);
-            Gimbal->Set_Target_J2_Yaw_Radian(current_unit.finish_pos[2]);
+            Gimbal->Set_Target_J1_Yaw_Radian(Get_Trajectory_End_J1());
+            Gimbal->Set_Target_J2_Yaw_Radian(Get_Trajectory_End_J2());
 
             if (step)
             {
@@ -2409,14 +2444,14 @@ void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load
         case (7):
         {
             Hold_Init_Pose(current_unit);
-            Prepare_Sync_Move(false);
+            Prepare_Trajectory(false);
             Set_Status(8);
             break;
         }
         case (8):
         {
             Hold_Init_Pose(current_unit);
-            if (Run_Sync_Move())
+            if (Run_Trajectory())
             {
                 Return_Init_Stage = 0;
                 Set_Status(9);
@@ -2430,9 +2465,9 @@ void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load
             if (Return_Init_Stage == 0)
             {
                 Gimbal->Set_Target_J1_Yaw_Radian(current_unit.init_pos[1]);
-                Gimbal->Set_Target_J2_Yaw_Radian(current_unit.auxiliary_pos[2]);
+                Gimbal->Set_Target_J2_Yaw_Radian(Get_Trajectory_Start_J2());
 
-                bool finish_flag = (fabs((Gimbal->J1_Yaw_8009P.Get_Now_Angle() - PI) * 4.0f - Gimbal->Get_Target_J1_Yaw_Radian()) <= 0.1f);
+                bool finish_flag = (fabs(Now_J1_Radian - Gimbal->Get_Target_J1_Yaw_Radian()) <= 0.1f);
                 if (finish_flag)
                 {
                     Return_Init_Stage = 1;
@@ -2443,7 +2478,7 @@ void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load
                 Gimbal->Set_Target_J1_Yaw_Radian(current_unit.init_pos[1]);
                 Gimbal->Set_Target_J2_Yaw_Radian(current_unit.init_pos[2]);
 
-                bool finish_flag = (fabs((Gimbal->J2_Yaw_4340P.Get_Now_Angle() - PI) * 4.0f - Gimbal->Get_Target_J2_Yaw_Radian()) <= 0.1f);
+                bool finish_flag = (fabs(Now_J2_Radian - Gimbal->Get_Target_J2_Yaw_Radian()) <= 0.1f);
                 if (finish_flag)
                 {
                     Set_Status(0);
