@@ -86,7 +86,7 @@ void Class_Jodell_Motor::Jodell_Motor_UART_RxCplt_Callback(uint8_t *Rx_Data, uin
         if (function == AGILE_MODBUS_FC_READ_HOLDING_REGISTERS)
         {
             // 返回的数据
-            uint16_t read_data[6];
+            uint16_t read_data[8];
             // 读取的寄存器个数
             int regs_read = agile_modbus_deserialize_read_registers(ctx, Length, read_data);
 
@@ -154,11 +154,11 @@ void Class_Jodell_Motor::TIM_UART_Tx_PeriodElapsedCallback()
             write_data[2] = (0xF0 << 8) | Target_Gripper_Position;
             write_data[3] = (0x80 << 8) | 0x01;
             // 旋转端位置，速度以及运动模式 0x03EC 0x03ED
-            write_data[4] = Target_Relative_Roll;
+            write_data[4] = static_cast<uint16_t>(Target_Absolute_Position_Deg);
             write_data[5] = ((uint8_t)((Target_Torque / MAX_TORQUE) * 255.0f) << 8) |
                             (uint8_t)((Target_Omega / MAX_OMEGA) * 255.0f);
             write_data[6] = 0x0000;                          // 0x03EE
-            write_data[7] = (Target_Roll_Turns << 8) | 0x01; // 0x03EF
+            write_data[7] = (static_cast<uint16_t>(static_cast<uint8_t>(Target_Absolute_Position_Turns)) << 8) | 0x01; // 0x03EF
 
             break;
         }
@@ -184,7 +184,7 @@ void Class_Jodell_Motor::TIM_UART_Tx_PeriodElapsedCallback()
     else if (Motor_Tx_Frame_Type == Jodell_Tx_Frame_READ)
     {
         read_addr = Gripper_rACT_Read_Register;
-        read_nb = 6;
+        read_nb = 8;
 
         Data_Length = agile_modbus_serialize_read_registers(ctx, read_addr, read_nb);
     }
@@ -228,8 +228,15 @@ void Class_Jodell_Motor::Data_Process(uint16_t *data, int regs)
     int16_t roll_pos_raw = (int16_t)data[4];
     uint8_t roll_torque_raw = data[5] >> 8;
     uint8_t roll_omega_raw = data[5] & 0xFF;
+    uint8_t roll_motion_mode = data[6] & 0xFF;
+    int8_t roll_turns_raw = static_cast<int8_t>(data[6] >> 8);
+    int16_t roll_relative_pos_raw = static_cast<int16_t>(data[7]);
 
-    Roll_Data.Now_Angle = ((float)roll_pos_raw / 360.0f) * PI;
+    Roll_Data.Now_Absolute_Angle = ((float)roll_pos_raw / 180.0f) * PI;
+    Roll_Data.Now_Relative_Angle = ((float)roll_relative_pos_raw / 180.0f) * PI;
+    Roll_Data.Now_Turns = roll_turns_raw;
+    Roll_Data.Motion_Mode = roll_motion_mode;
+    Roll_Data.Now_Angle = ((float)(roll_turns_raw * 360 + roll_pos_raw) / 180.0f) * PI;
     Roll_Data.Now_Torque = ((float)roll_torque_raw / 255.0f) * MAX_TORQUE;
     Roll_Data.Now_Omega = ((float)roll_omega_raw / 255.0f) * MAX_OMEGA;
 }
