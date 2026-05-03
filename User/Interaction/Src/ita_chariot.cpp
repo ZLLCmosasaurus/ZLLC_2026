@@ -485,7 +485,7 @@ void Class_Chariot::Control_Chassis()
             Chassis.Set_Chassis_Control_Type(Gimbal.arm_init ? Chassis_Control_Type_NORMAL : Chassis_Control_Type_DISABLE);
             break;
         case VT13_Switch_Status_Right:
-            Chassis.Set_Chassis_Control_Type(Gimbal.arm_init ? Chassis_Control_Type_SLOPE : Chassis_Control_Type_DISABLE);
+            Chassis.Set_Chassis_Control_Type(Gimbal.arm_init ? Chassis_Control_Type_NORMAL : Chassis_Control_Type_DISABLE);
             break;
         default:
             break;
