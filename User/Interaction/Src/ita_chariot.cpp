@@ -775,35 +775,35 @@ void Class_Chariot::Control_Gimbal()
     // 先判断当前活动的控制器
     Judge_Active_Controller();
 
-    // // 静态变量记录上一次的发射模式
-    // static Enum_Gimbal_Launch_Mode last_launch_mode = Launch_Disable;
-    // // 在 switch 之前检测模式变化
-    // if (Gimbal.Get_Gimbal_Launch_Mode() != last_launch_mode) 
-    // {
-    //     if (Gimbal.Get_Gimbal_Launch_Mode() == Launch_Enable)
-    //     {
-    //         // 刚进入吊射模式：将目标角度同步为当前编码器角度（防止突变）
-    //         float now_enc_yaw = Gimbal.Motor_Yaw_DM4310.Get_True_Angle_Yaw_From_Encoder();
-    //         float now_enc_pitch = Gimbal.Motor_Pitch_DM4310.Get_True_Angle_Pitch_From_Encoder();
-    //         Gimbal.Set_Target_Yaw_Angle(now_enc_yaw);
-    //         Gimbal.Set_Target_Pitch_Angle(now_enc_pitch);
-    //         // 同时更新 tmp 变量(遥控器累加的基础值)
-    //         tmp_gimbal_yaw = now_enc_yaw;
-    //         tmp_gimbal_pitch = now_enc_pitch;
-    //     }
-    //     else if (Gimbal.Get_Gimbal_Launch_Mode() == Launch_Disable)
-    //     {
-    //         // 退出吊射模式：同步到IMU角度
-    //         float now_imu_yaw = Gimbal.Motor_Yaw_DM4310.Get_True_Angle_Yaw();  // IMU角度
-    //         float now_imu_pitch = Gimbal.Motor_Pitch_DM4310.Get_True_Angle_Pitch();
-    //         Gimbal.Set_Target_Yaw_Angle(now_imu_yaw);
-    //         Gimbal.Set_Target_Pitch_Angle(now_imu_pitch);
-    //         // 同时更新 tmp 变量(遥控器累加的基础值)
-    //         tmp_gimbal_yaw = now_imu_yaw;
-    //         tmp_gimbal_pitch = now_imu_pitch;
-    //     }
-    // last_launch_mode = Gimbal.Get_Gimbal_Launch_Mode();
-    // }
+    // 静态变量记录上一次的发射模式
+    static Enum_Gimbal_Launch_Mode last_launch_mode = Launch_Disable;
+    // 在 switch 之前检测模式变化
+    if (Gimbal.Get_Gimbal_Launch_Mode() != last_launch_mode) 
+    {
+        if (Gimbal.Get_Gimbal_Launch_Mode() == Launch_Enable)
+        {
+            // 刚进入吊射模式：将目标角度同步为当前编码器角度（防止突变）
+            float now_enc_yaw = Gimbal.Motor_Yaw_DM4310.Get_True_Angle_Yaw_From_Encoder();
+            float now_enc_pitch = Gimbal.Motor_Pitch_DM4310.Get_True_Angle_Pitch_From_Encoder();
+            Gimbal.Set_Target_Yaw_Angle(now_enc_yaw);
+            Gimbal.Set_Target_Pitch_Angle(now_enc_pitch);
+            // 同时更新 tmp 变量(遥控器累加的基础值)
+            tmp_gimbal_yaw = now_enc_yaw;
+            tmp_gimbal_pitch = now_enc_pitch;
+        }
+        else if (Gimbal.Get_Gimbal_Launch_Mode() == Launch_Disable)
+        {
+            // 退出吊射模式：同步到IMU角度
+            float now_imu_yaw = Gimbal.Motor_Yaw_DM4310.Get_True_Angle_Yaw();  // IMU角度
+            float now_imu_pitch = Gimbal.Motor_Pitch_DM4310.Get_True_Angle_Pitch();
+            Gimbal.Set_Target_Yaw_Angle(now_imu_yaw);
+            Gimbal.Set_Target_Pitch_Angle(now_imu_pitch);
+            // 同时更新 tmp 变量(遥控器累加的基础值)
+            tmp_gimbal_yaw = now_imu_yaw;
+            tmp_gimbal_pitch = now_imu_pitch;
+        }
+    last_launch_mode = Gimbal.Get_Gimbal_Launch_Mode();
+    }
     /************************************遥控器控制逻辑*********************************************/   
     if (Active_Controller == Controller_DR16 && DR16_Control_Type == DR16_Control_Type_REMOTE)
     {
@@ -824,9 +824,9 @@ void Class_Chariot::Control_Gimbal()
         }
         else if (DR16.Get_Left_Switch() == DR16_Switch_Status_UP) //左上
         {
-            Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_MINIPC); // 上位机控制
+            // Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_MINIPC); // 上位机控制
             Gimbal.Set_Gimbal_Launch_Mode(Launch_Enable); // 吊射
-            // Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
+            Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
         }
         else // 其余位置都是遥控器控制
         {
@@ -835,7 +835,6 @@ void Class_Chariot::Control_Gimbal()
             Gimbal.Set_Gimbal_Launch_Mode(Launch_Disable); // 非吊射
         }
         
-        Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
     }
     else if(Active_Controller == Controller_VT13 && VT13_Control_Type == VT13_Control_Type_REMOTE)
     {
@@ -873,8 +872,8 @@ void Class_Chariot::Control_Gimbal()
                 Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_MINIPC);
                 if (MiniPC.Get_MiniPC_Status() == MiniPC_Status_ENABLE)
                 {
-                    tmp_gimbal_yaw = MiniPC.Get_Rx_Yaw_Angle() *180/PI;
-                    tmp_gimbal_pitch = MiniPC.Get_Rx_Pitch_Angle() *180/PI;
+                    tmp_gimbal_yaw = MiniPC.Get_Rx_Yaw_Angle();
+                    tmp_gimbal_pitch = MiniPC.Get_Rx_Pitch_Angle();
                 }
             }
             else

@@ -23,7 +23,7 @@
 #include "dvc_dmimu.h"
 #include "kalman_filter.h"
 /* Exported macros -----------------------------------------------------------*/
-
+#define J 0.091419f // 转动惯量
 /* Exported types ------------------------------------------------------------*/
 
 
@@ -118,14 +118,9 @@ class Class_Gimbal_Yaw_Motor_DM4310 : public Class_DM_Motor_J4310
 public:
     //陀螺仪获取云台角速度
     Class_IMU *IMU;
-    // Class_DM_IMU *IMU;
-    float Service_time = 0;
-    float K =  0.0242 / 1000000.0f; 
+
     // 加速度计KF
     KalmanFilter Kf_Gyro_Yaw;
-    
-    // Class_PID PID_Angle;
-    // Class_PID PID_Omega;
 
     inline float Get_True_Rad_Yaw();
     inline float Get_True_Gyro_Yaw();
@@ -299,7 +294,6 @@ public:
     //陀螺仪获取云台角速度
     Class_IMU *IMU;
     // Class_DM_IMU *IMU;
-
 
     inline float Get_True_Rad_Pitch();
     inline float Get_True_Gyro_Pitch();

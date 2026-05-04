@@ -19,7 +19,7 @@
 #define MINIPC_COMM_USB
 
 //底盘或云台状态
-//#define CHASSIS
+// #define CHASSIS
 #define GIMBAL
 
 

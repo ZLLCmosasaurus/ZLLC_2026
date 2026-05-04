@@ -135,10 +135,10 @@ void Class_MiniPC::Output()
   // Pack_Tx.pitch = Tx_Angle_Pitch; // 2024.5.7 未知原因添加负号，使得下位机发送数据不满足右手螺旋定则，但是上位机意外可以跑通
   // Pack_Tx.roll = Tx_Angle_Roll;
   // Pack_Tx.yaw = Tx_Angle_Yaw;
-  Pack_Tx.x = static_cast<int16_t>(Tx_Quaternion.x * 10000.0f);
-  Pack_Tx.y = static_cast<int16_t>(Tx_Quaternion.y * 10000.0f);
-  Pack_Tx.z = static_cast<int16_t>(Tx_Quaternion.z * 10000.0f);
-  Pack_Tx.w = static_cast<int16_t>(Tx_Quaternion.w * 10000.0f);
+  Pack_Tx.x = static_cast<int16_t>(Tx_Quaternion.x * 10000.0f);   // 原 qy → 新 qx
+  Pack_Tx.y = static_cast<int16_t>(Tx_Quaternion.y * 10000.0f);   // 原 qx → 新 qy
+  Pack_Tx.z = static_cast<int16_t>(Tx_Quaternion.z * 10000.0f);   // 原 qw → 新 qz (注意符号)
+  Pack_Tx.w = static_cast<int16_t>(Tx_Quaternion.w * 10000.0f);   // 原 qz → 新 qw
   Pack_Tx.yaw_vel = Tx_Gyro_Yaw;
   Pack_Tx.pitch_vel = Tx_Gyro_Pitch;
   Pack_Tx.bullet_speed = Tx_Bullet_Speed;

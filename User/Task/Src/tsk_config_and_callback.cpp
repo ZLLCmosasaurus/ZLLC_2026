@@ -450,7 +450,7 @@ uint32_t Last_cnt3 = 0;
 void Task100us_TIM4_Callback()
 {
     #ifdef CHASSIS
-    GraphicSendtask();
+    
     static uint16_t Referee_Sand_Cnt = 0;
     if (Referee_Sand_Cnt % 50 == 1)
     {
@@ -662,6 +662,7 @@ extern "C" void Task_Init()
     #ifdef CHASSIS
     if (start_flag == 1)
     {
+        GraphicSendtask();
         static float freq;
         static uint32_t time_s;
         freq = 1 / DWT_GetDeltaT(&time_s);

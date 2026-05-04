@@ -103,6 +103,11 @@ void Class_DM_Motor_8009P::TIM_PID_PeriodElapsedCallback()
             Out=Out;
         }
         break;
+        case(DM_Motor_Control_Method_MIT_POSITION):
+        {
+
+        }
+        break;
         default:
         {
             Set_Out(0.0);
@@ -477,12 +482,12 @@ float Class_HybridTrackLeg_Chassis::Leg_Kinematic_Computation(float __delta_h, f
 */
 void Class_HybridTrackLeg_Chassis::Transform_Angle_To_Relative()
 {
-    Chassis_Pitch = fabsf(Referance_Angle - BoardDM_BMI.Get_Rad_Roll());
+    Chassis_Pitch = BoardDM_BMI.Get_Rad_Roll();
+    Error_Pitch = Chassis_Pitch - Last_Chassis_Pitch;
+    Accumulated_Angle += Error_Pitch * K_INCR;
+    Last_Chassis_Pitch = Chassis_Pitch;
+    Error_Angle = Referance_Angle - Chassis_Pitch;
 
-    if(Chassis_Pitch < 0.01f) Chassis_Pitch = 0.0f; // 死区处理，避免小角度抖动
-
-    // Motor_Leg[0].Target_Angle_Calc = Leg_Kinematic_Computation(0.0f, Chassis_Pitch);
-    // Motor_Leg[1].Target_Angle_Calc = -Leg_Kinematic_Computation(0.0f, Chassis_Pitch);
 }
 
 /**

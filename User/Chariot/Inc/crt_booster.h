@@ -180,7 +180,7 @@ protected:
     uint16_t Cooling_Value = 24;
     float Heat_Consumption = 10.f;
     //拨弹盘堵转扭矩阈值, 超出被认为卡弹
-    uint16_t Driver_Torque_Threshold = 13000;
+    uint16_t Driver_Torque_Threshold = 10000;
     //摩擦轮单次判定发弹阈值, 超出被认为发射子弹
     uint16_t Friction_Torque_Threshold = 3000;
     //摩擦轮速度判定发弹阈值, 超出则说明已经开机
@@ -211,13 +211,14 @@ protected:
     //摩擦轮角速度
     float Friction_Omega = 650.0f;
     // 12m/s 外级摩擦轮
-    int16_t Fric_High_Rpm_12m_s = 3600; //3700    
+    int16_t Fric_High_Rpm_12m_s = 3600;
     // 12m/s 内级摩擦轮
     int16_t Fric_Low_Rpm_12m_s = 2750;      
     // 16m/s 外级摩擦轮
-    int16_t Fric_High_Rpm_16m_s = 5260;     
+    int16_t Fric_High_Rpm_16m_s = 5260;
     // 16m/s 内级摩擦轮
-    int16_t Fric_Low_Rpm_16m_s = 4260;      
+    int16_t Fric_Low_Rpm_16m_s = 4260;
+    // 弹速调整值 
     int16_t Fric_Transform_Rpm = 50;
     //拨弹盘实际的目标速度, 一圈八发子弹
     float Driver_Omega = -2.0f * PI;

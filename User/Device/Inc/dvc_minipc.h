@@ -417,6 +417,9 @@ protected:
     float Tx_Bullet_Speed;
     uint16_t Tx_Bullet_Num;
     Quaternion Tx_Quaternion;
+    float yaw_calc;
+    float pitch_calc;
+    float roll_calc;
 
     uint8_t Mode; // 自瞄控制模式:0-不控制，保持云台当前角度状态，1-控制云台角度状态但是不开火 2-控制云台角度状态且开火
     float Rx_Angle_Roll;
@@ -861,11 +864,26 @@ void Class_MiniPC::Transform_Angle_Tx()
     Tx_Angle_Pitch = -IMU->Get_Angle_Pitch();
     Tx_Angle_Roll = IMU->Get_Angle_Roll();
     Tx_Angle_Yaw = IMU->Get_Angle_Yaw();
-    Tx_Quaternion = IMU->Get_Quaternion();
     Tx_Gyro_Pitch = -IMU->Get_Gyro_Pitch();
     Tx_Gyro_Yaw = IMU->Get_Gyro_Yaw();
 
+    float cy = cosf(Tx_Angle_Yaw * (PI /180.0f) * 0.5f);
+    float sy = sinf(Tx_Angle_Yaw * (PI /180.0f) * 0.5f);
+    float cp = cosf(Tx_Angle_Pitch * (PI /180.0f) * 0.5f);
+    float sp = sinf(Tx_Angle_Pitch * (PI /180.0f) * 0.5f);
+    float cr = cosf(Tx_Angle_Roll * (PI /180.0f) * 0.5f);
+    float sr = sinf(Tx_Angle_Roll * (PI /180.0f) * 0.5f);
 
+    Tx_Quaternion.w = cr*cp*cy + sr*sp*sy;
+    Tx_Quaternion.x = sr*cp*cy - cr*sp*sy;
+    Tx_Quaternion.y = cr*sp*cy + sr*cp*sy;
+    Tx_Quaternion.z = cr*cp*sy - sr*sp*cy;
+
+    yaw_calc   = (180.0f / PI) * atan2f(2.0f * (Tx_Quaternion.w * Tx_Quaternion.z + Tx_Quaternion.x * Tx_Quaternion.y),
+                     1.0f - 2.0f * (Tx_Quaternion.y * Tx_Quaternion.y + Tx_Quaternion.z * Tx_Quaternion.z)) ;
+    pitch_calc = (180.0f / PI) * asinf(2.0f * (Tx_Quaternion.w * Tx_Quaternion.y - Tx_Quaternion.z * Tx_Quaternion.x));
+    roll_calc  = (180.0f / PI) * atan2f(2.0f * (Tx_Quaternion.w * Tx_Quaternion.x + Tx_Quaternion.y * Tx_Quaternion.z),
+                     1.0f - 2.0f * (Tx_Quaternion.x * Tx_Quaternion.x + Tx_Quaternion.y * Tx_Quaternion.y));
 }
 
 #endif

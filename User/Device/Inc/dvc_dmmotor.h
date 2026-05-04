@@ -185,6 +185,7 @@ public:
     inline void Set_Target_Omega_DEG(float __Target_Omega_DEG);
     inline void Set_Target_Torque(float __Target_Torque);
     inline void Set_Out(float __Out);
+    inline void Reset_Set_Out_And_Output(float __Out);
 	inline void Limit_Out();
 
     void CAN_RxCpltCallback(uint8_t *Rx_Data);
@@ -529,6 +530,17 @@ void Class_DM_Motor_J4310::Set_Out(float __Out)
 {
     Out=__Out;
 } 
+
+/**
+ * @brief 重置设定输出量
+ *
+ * @param __Out 输出量
+ */
+inline void Class_DM_Motor_J4310::Reset_Set_Out_And_Output(float __Out)
+{
+    Out = __Out;
+    Output();
+}
 
 /**
  * @brief 限制目标的输出

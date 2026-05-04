@@ -179,7 +179,7 @@ void Class_FSM_Antijamming::Reload_TIM_Status_PeriodElapsedCallback()
         {
             //卡弹处理状态
 
-            if (Status[Now_Status_Serial].Time >= 100)
+            if (Status[Now_Status_Serial].Time >= 1000)
             {
                 Booster->Driver_Angle = Original_Angle;
                 Booster->Motor_Driver.Set_Target_Radian(Booster->Driver_Angle);
@@ -218,19 +218,6 @@ void Class_FSM_Antijamming::Reload_TIM_Status_PeriodElapsedCallback()
 			{
 				Torque_tim_cnt2 = 0;
 			}
-			// if((abs(Booster->Motor_Driver.Get_Now_Torque()) > Booster->Driver_Torque_Threshold))
-			// {
-			// Torque_tim_cnt2++;
-			// if(Torque_tim_cnt2 > 50)
-			// {
-			// 	Set_Status(2);
-			// 	Torque_tim_cnt2 = 0;
-			// }
-			// }
-			// else
-			// {
-			// 	Torque_tim_cnt2 = 0;
-			// }
         }
         break;
         case (5):
@@ -304,7 +291,7 @@ void Class_Booster::Init()
     //拨弹盘电机
 
 	Motor_Driver.PID_Angle.Init(10.0f, 0.1f, 0.0f, 0.0f, 0.0f,0.0f);
-    Motor_Driver.PID_Omega.Init(1000.0f, 13.0f, 0.0f, 0.0f, 15000.0f,  15000.0f);
+    Motor_Driver.PID_Omega.Init(1000.0f, 13.0f, 0.0f, 0.0f, 12288.0f,  12288.0f);
     // Motor_Driver.PID_Angle.Init(3.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.001f, 0.5f, PID_D_First_DISABLE);
     // Motor_Driver.PID_Omega.Init(800.0f, 1.5f, 0.0f, 0.0f, 12288.0f, 12288.0f, 0.3f, 1.5f, 0.0f, 0.001f, 0.0f, PID_D_First_ENABLE);
     Motor_Driver.Init(&hfdcan3, DJI_Motor_ID_0x203, DJI_Motor_Control_Method_OMEGA, 50.895f);
@@ -696,7 +683,7 @@ void Class_Booster::TIM_Calculate_PeriodElapsedCallback()
     //卡弹处理
     FSM_Antijamming.Reload_TIM_Status_PeriodElapsedCallback();
     //弹速调整
-    TIM_Adjust_Bullet_Velocity_PeriodElapsedCallback();
+    //TIM_Adjust_Bullet_Velocity_PeriodElapsedCallback();
 	// Output();
      kalman_update(&Kf_Omega,Motor_Driver.Get_Now_Omega_Radian());
     //PID输出

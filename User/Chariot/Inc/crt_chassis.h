@@ -82,6 +82,7 @@
 #define GM6020_ENCODER_ANGLE 8192.0f
 
 #define RAD_TO_8191 8191.0f / PI / 2.0f
+#define K_INCR  0.0f// 增量系数，通过实验标定(单位：rad / rad)
 #endif
 /* Exported types ------------------------------------------------------------*/
 class Class_HybridTrackLeg_Chassis;
@@ -297,8 +298,13 @@ protected:
 
     //车体倾斜角度
     float Chassis_Pitch = 0.0f;
+    float Last_Chassis_Pitch = 0.0f;
     //距离车体水平的差值角度
     float Error_Pitch = 0.0f;
+    //累加的车体倾斜角度
+    float Accumulated_Angle = 0.0f;
+    //姿态环角度差值
+    float Error_Angle = 0.0f;
 
     //当前关节电机温度
     float Joint_Heat = 0.0f;
