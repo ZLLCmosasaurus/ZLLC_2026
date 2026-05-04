@@ -356,8 +356,8 @@ protected:
 
     float J2_Yaw_Min_Radian = -2.443f;
     float J2_Yaw_Max_Radian = 2.443f;
-    float J2_Yaw_MIT_KP = 90.0f;
-    float J2_Yaw_MIT_KD = 2.5f;
+    float J2_Yaw_MIT_KP = 120.0f;
+    float J2_Yaw_MIT_KD = 2.0f;
 
     float J3_Roll_Cali_Offset;
     float J3_Roll_Min_Radian = -(150.0f / 180.0f) * PI * DM2325_GEAR_RATIO;

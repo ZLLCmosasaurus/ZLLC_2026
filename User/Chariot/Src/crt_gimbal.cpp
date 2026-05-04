@@ -41,10 +41,14 @@ void Class_Gimbal::Init()
     // 4340P MIT 参数
     J2_Yaw_4340P.Set_MIT_K_P(J2_Yaw_MIT_KP);
     J2_Yaw_4340P.Set_MIT_K_D(J2_Yaw_MIT_KD);
+    // 速度规划器
     J1_Yaw_Planner.Init(&J1_Yaw_8009P, &Target_J1_Yaw_Radian, Target_J1_Yaw_Omega, 1.0f, 0.001f);
     J2_Yaw_Planner.Init(&J2_Yaw_4340P, &Target_J2_Yaw_Radian, Target_J2_Yaw_Omega, 1.0f, 0.001f);
     Set_Planner_Mode(Gimbal_Joint_J1_Yaw, Joint_Planner_Mode_CONSTANT_ACCEL);
     Set_Planner_Mode(Gimbal_Joint_J2_Yaw, Joint_Planner_Mode_CONSTANT_ACCEL);
+    // 默认启用速度规划器
+    Set_Planner_Enable(Gimbal_Joint_J1_Yaw, true);
+    Set_Planner_Enable(Gimbal_Joint_J2_Yaw, true);
 
     /*初始化状态机，不进行初始化的话状态机没法访问云台对象中的电机*/
     Calibration_FSM.Gimbal = this;
@@ -202,8 +206,8 @@ void Class_Gimbal::Dispatch_J2_With_Planner()
 
 void Class_FSM_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
 {
-    Gimbal->Set_Planner_Enable(Gimbal_Joint_J1_Yaw, false);
-    Gimbal->Set_Planner_Enable(Gimbal_Joint_J2_Yaw, false);
+    Gimbal->Set_Planner_Enable(Gimbal_Joint_J1_Yaw, true);
+    Gimbal->Set_Planner_Enable(Gimbal_Joint_J2_Yaw, true);
 
     Status[Now_Status_Serial].Time++;
     switch (Now_Status_Serial)

@@ -11,7 +11,7 @@
 
 #ifndef TSK_INTERACTION_H
 #define TSK_INTERACTION_H
-
+#endif
 /* Includes ------------------------------------------------------------------*/
 
 #include "dvc_dr16.h"
@@ -26,6 +26,7 @@
 #include "config.h"
 #include "alg_filter.h"
 #include "arm_model.h"
+#include "rm_ui_app.h"
 
 /* Exported macros -----------------------------------------------------------*/
 class Class_Chariot;
@@ -140,6 +141,7 @@ public:
     void Reload_TIM_Status_PeriodElapsedCallback();
 };
 
+#ifdef GIMBAL
 // 存取矿状态机
 class Class_FSM_Save_Load : public Class_FSM
 {
@@ -196,6 +198,7 @@ private:
     bool Run_Trajectory();
     void Configure_Joint_Planner(bool enable);
 };
+#endif
 
 // 云台发送底盘相关通信帧格式
 // Data[6] 的位域定义
@@ -632,5 +635,4 @@ Enum_Gimbal_Status Class_Chariot::Get_Gimbal_Status()
 
 #endif
 
-#endif
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

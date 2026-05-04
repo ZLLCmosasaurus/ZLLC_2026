@@ -297,7 +297,7 @@ void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback(uint8_t *Rx_Data)
         break;
     }
     case (0x95):
-        // 裁判系统数据回传
+        // UI数据更新回传
         {
             // memcpy(&CAN_Referee_Rx_Data, &CAN_Manage_Object->Rx_Buffer.Data, sizeof(Struct_CAN_Referee_Rx_Data_t));
             break;
@@ -2265,12 +2265,12 @@ void Class_FSM_Save_Load::Hold_Init_Pose(const Struct_Enery_Unit_Position &activ
 
 const float *Class_FSM_Save_Load::Get_Trajectory_J1() const
 {
-    return (Active_Unit_Type == SAVE_LOAD_UNIT_1) ? traj_J1 : unit2_traj_J1;
+    return (Active_Unit_Type == SAVE_LOAD_UNIT_1) ? j1_u1 : j1_u2;
 }
 
 const float *Class_FSM_Save_Load::Get_Trajectory_J2() const
 {
-    return (Active_Unit_Type == SAVE_LOAD_UNIT_1) ? traj_J2 : unit2_traj_J2;
+    return (Active_Unit_Type == SAVE_LOAD_UNIT_1) ? j2_u1 : j2_u2;
 }
 
 uint16_t Class_FSM_Save_Load::Get_Trajectory_Point_Count() const
@@ -2387,6 +2387,7 @@ void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load
         switch (Now_Status_Serial)
         {
         case (0):
+        // 等待操作手按下确认开始
         {
             Return_Init_Stage = 0;
             Trajectory_Point_Index = 0;
@@ -2401,6 +2402,7 @@ void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load
             break;
         }
         case (1):
+        // 机械臂移动到初始位置
         {
             Configure_Joint_Planner(true);
             Hold_Init_Pose(current_unit);
@@ -2427,12 +2429,13 @@ void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load
             break;
         }
         case (2):
+        // J2移动到辅助位置
         {
             Configure_Joint_Planner(true);
             Hold_Init_Pose(current_unit);
             Gimbal->Set_Target_J2_Yaw_Radian(Get_Trajectory_Start_J2());
 
-            bool finish_flag = (fabs(Now_J2_Radian - Gimbal->Get_Target_J2_Yaw_Radian()) <= 0.1f);
+            bool finish_flag = (fabs(Now_J2_Radian - Gimbal->Get_Target_J2_Yaw_Radian()) <= 0.002f);
             if (finish_flag)
             {
                 Set_Status(3);
@@ -2440,6 +2443,7 @@ void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load
             break;
         }
         case (3):
+        // J1移动到辅助位置
         {
             Configure_Joint_Planner(true);
             Hold_Init_Pose(current_unit);
@@ -2454,14 +2458,16 @@ void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load
             break;
         }
         case (4):
+        // 配置取矿预制轨迹
         {
-            Configure_Joint_Planner(false);
+            Configure_Joint_Planner(true);
             Hold_Init_Pose(current_unit);
             Prepare_Trajectory(true);
             Set_Status(5);
             break;
         }
         case (5):
+        // 同步移动到取矿位置，轨迹为直线
         {
             Configure_Joint_Planner(false);
             Hold_Init_Pose(current_unit);
@@ -2472,8 +2478,9 @@ void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load
             break;
         }
         case (6):
+        // 等待操作手按下确认
         {
-            Configure_Joint_Planner(true);
+            Configure_Joint_Planner(false);
             Hold_Init_Pose(current_unit);
             Gimbal->Set_Target_J1_Yaw_Radian(Get_Trajectory_End_J1());
             Gimbal->Set_Target_J2_Yaw_Radian(Get_Trajectory_End_J2());
@@ -2485,6 +2492,7 @@ void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load
             break;
         }
         case (7):
+        // 配置反向轨迹
         {
             Configure_Joint_Planner(false);
             Hold_Init_Pose(current_unit);
@@ -2493,6 +2501,7 @@ void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load
             break;
         }
         case (8):
+        // 移动回辅助位置
         {
             Configure_Joint_Planner(false);
             Hold_Init_Pose(current_unit);
@@ -2504,6 +2513,7 @@ void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load
             break;
         }
         case (9):
+        // 回归到初始位置
         {
             Configure_Joint_Planner(true);
             Hold_Init_Pose(current_unit);
@@ -2524,7 +2534,7 @@ void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load
                 Gimbal->Set_Target_J1_Yaw_Radian(current_unit.init_pos[1]);
                 Gimbal->Set_Target_J2_Yaw_Radian(current_unit.init_pos[2]);
 
-                bool finish_flag = (fabs(Now_J2_Radian - Gimbal->Get_Target_J2_Yaw_Radian()) <= 0.1f);
+                bool finish_flag = (fabs(Now_J2_Radian - Gimbal->Get_Target_J2_Yaw_Radian()) <= 0.01f);
                 if (finish_flag)
                 {
                     Set_Status(0);

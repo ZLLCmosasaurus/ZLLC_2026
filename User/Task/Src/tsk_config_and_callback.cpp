@@ -717,6 +717,9 @@ extern "C" void Task_Init()
     UART_Init(&huart7, TOFSense_UART7_Callback, 32);
 
     SPI_Init(&hspi2, Device_SPI2_Callback);
+
+    // UI任务初始化
+    RM_UI_Init(2);
 #ifdef POWER_LIMIT
 
 #endif
@@ -795,7 +798,8 @@ extern "C" void Task_Loop()
 #endif
 
 #ifdef CHASSIS
-
+    // UI更新
+    RM_UI_Commit();
 #endif
 }
 

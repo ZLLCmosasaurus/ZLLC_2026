@@ -6,8 +6,7 @@ packDir: .pack/Keil/STM32H7xx_DFP.4.0.0
 srcDirs: []
 virtualFolder:
   name: <virtual_root>
-  files:
-    - path: .cmsis/libdsp/arm/arm_cortexM7l_math.lib
+  files: []
   folders:
     - name: Config
       files:
@@ -18,17 +17,17 @@ virtualFolder:
         - path: ../User/Task/Src/tsk_config_and_callback.cpp
       folders: []
     - name: Interaction
-      files:
-        - path: ../User/Interaction/Src/ita_chariot.cpp
+      files: []
       folders: []
     - name: Chariot
       files:
+        - path: ../User/Interaction/Src/ita_chariot.cpp
         - path: ../User/Chariot/Src/crt_booster.cpp
         - path: ../User/Chariot/Src/crt_chassis.cpp
         - path: ../User/Chariot/Src/crt_gimbal.cpp
+        - path: ../User/Chariot/Src/crt_joint_planner.cpp
         - path: ../User/Chariot/Src/arm_model.cpp
         - path: ../User/Chariot/Src/crt_force_control_chassis.cpp
-        - path: ../User/Chariot/Src/crt_joint_planner.cpp
       folders: []
     - name: Device
       files:
@@ -49,6 +48,8 @@ virtualFolder:
         - path: ../User/Device/Src/dvc_buzzer.cpp
         - path: ../User/Device/Src/dvc_motor_dji.cpp
         - path: ../User/Device/Src/dvc_jd_motor.cpp
+        - path: ../User/Driver/Src/agile_modbus_rtu.c
+        - path: ../User/Driver/Src/agile_modbus.c
         - path: ../User/Device/Src/dvc_TOFSense.cpp
         - path: ../User/Device/Src/buzzer.c
         - path: ../User/Device/Src/buzzer_bsp.c
@@ -66,8 +67,6 @@ virtualFolder:
         - path: ../User/Driver/Src/drv_tim.cpp
         - path: ../User/Driver/Src/drv_uart.cpp
         - path: ../User/Driver/Src/drv_usb.cpp
-        - path: ../User/Driver/Src/agile_modbus.c
-        - path: ../User/Driver/Src/agile_modbus_rtu.c
       folders: []
     - name: Algorithm
       files:
@@ -83,8 +82,8 @@ virtualFolder:
         - path: ../User/Algorithm/Src/user_lib.cpp
         - path: ../User/Algorithm/Src/alg_SMC_Control.cpp
         - path: ../User/Algorithm/Src/utils.cpp
-        - path: ../User/Algorithm/Src/matrix.cpp
         - path: ../User/Algorithm/Src/robotics.cpp
+        - path: ../User/Algorithm/Src/matrix.cpp
         - path: ../User/Algorithm/Src/alg_new_power_limit.cpp
       folders: []
     - name: Application
@@ -100,7 +99,6 @@ virtualFolder:
                 - path: ../Core/Src/dma.c
                 - path: ../Core/Src/fdcan.c
                 - path: ../Core/Src/iwdg.c
-                - path: ../Core/Src/memorymap.c
                 - path: ../Core/Src/spi.c
                 - path: ../Core/Src/tim.c
                 - path: ../Core/Src/usart.c
@@ -171,8 +169,15 @@ virtualFolder:
             - path: ../Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c
             - path: ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c
           folders: []
+    - name: UI
+      files:
+        - path: ../User/UI/Src/rm_ui_app.c
+        - path: ../User/UI/Src/ui_g.c
+        - path: ../User/UI/Src/ui_interface.c
+      folders: []
     - name: ::CMSIS
-      files: []
+      files:
+        - path: ../Drivers/CMSIS/DSP/Lib/ARM/arm_cortexM7lfsp_math.lib
       folders: []
 dependenceList: []
 outDir: .
@@ -354,14 +359,13 @@ targets:
         - ../User/Driver/Inc
         - ../User/Algorithm/Inc
         - ../Drivers/CMSIS/Include
+        - ../User/UI/Inc
         - .cmsis/include
         - RTE/_ZLLC_2026
-        - ../DSP
-        - ../DSP/Include
-      libList: []
-    excludeList:
-      - ../DSP/libCMSISDSP.a
-      - <virtual_root>/Chariot/dh_model.cpp
+        - ../Drivers/CMSIS/DSP/Include
+      libList: 
+        - ../Drivers/CMSIS/DSP/Lib/ARM
+    excludeList: []
     settings:
       debugger: cortex-debug
     toolchain: AC6
@@ -375,6 +379,8 @@ targets:
           afterBuildTasks: []
           asm-compiler:
             $use: asm-auto
+            defines: []
+            misc-controls: ""
           beforeBuildTasks: []
           c/cpp-compiler:
             language-c: c99
@@ -388,6 +394,8 @@ targets:
             output-debug-info: enable
             use-microLIB: false
           linker:
+            $outputTaskExcludes:
+              - .bin
             misc-controls: --diag_suppress=L6329
             output-format: elf
             ro-base: ""
