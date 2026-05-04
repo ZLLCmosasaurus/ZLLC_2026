@@ -38,7 +38,7 @@ void Class_Chariot::Init(float __DR16_Dead_Zone)
 
         Motor_Main_Yaw.Init(&hfdcan2, LK_Motor_ID_0x141, LK_Motor_Control_Method_ANGLE, MAIN_YAW_ENCODER_OFFSET);
 
-        PID_Chassis_Fllow.Init(10.0f, 0.0f, 0.09f, 0.0f, 8.0f, 8.0f);
+        PID_Chassis_Fllow.Init(15.0f, 0.0f, 0.1f, 0.0f, 8.0f, 8.0f);
 
         //底盘
         Chassis.IMU = &Boardc_BMI;
@@ -648,8 +648,8 @@ void Class_Chariot::Control_Chassis()
         }
     }
    
-    if(chassis_omega > 4.0f)chassis_omega = 4.0f;
-    if(chassis_omega < -4.0f)chassis_omega = -4.0f;
+    if(chassis_omega > 6.5f)chassis_omega = 6.5f;
+    if(chassis_omega < -6.5f)chassis_omega = -6.5f;
 
     Math_Constrain(&gimbal_velocity_x, -4.0f, 4.0f);
     Math_Constrain(&gimbal_velocity_y, -4.0f, 4.0f);
@@ -881,6 +881,7 @@ void Class_Chariot::Control_Booster()
 #elif defined(USE_FS_i6X)
 void Class_Chariot::Control_Booster()
 {
+    static bool  last_fire_time_valid = false;
     static uint8_t booster_sign = 0;
     volatile int FS_Left1_Switch_Status = FS_i6X.Get_Switch_0();
 
@@ -903,8 +904,18 @@ void Class_Chariot::Control_Booster()
 
                 if(MiniPC.Get_mode() == 2 && MiniPC.MiniPC_Fire_Updata_Flag == 1)
                 { // 后边两个判断似乎不需要
+
+                    float interval_ok=1;
+                        if((DWT_GetTimeline_s() - single_shoot_pre_time) <= Booster.Get_Heat_Consumption()/Booster.Get_Cooling_Value()){
+                            interval_ok=0;
+                        }
                     MiniPC.MiniPC_Fire_Updata_Flag = 0;
-                    Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                    if (Booster.Get_Heat()+Booster.Get_Heat_Consumption()<=Booster.Get_Heat_Max()&&interval_ok==1)
+                    {
+                        Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                        single_shoot_pre_time = DWT_GetTimeline_s();
+                       
+                    }
                 } // 打完后会自动切到停火
                 else
                 {
@@ -1017,7 +1028,7 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
             PID_Chassis_Fllow.Set_Now(Chassis_Radian);
             PID_Chassis_Fllow.TIM_Adjust_PeriodElapsedCallback();
 
-            if(fabs(PID_Chassis_Fllow.Get_Out())<0.1f){
+            if(fabs(PID_Chassis_Fllow.Get_Out())<0.f){
                 Chassis.Set_Target_Omega(0.0f);
             }else{
                 Chassis.Set_Target_Omega(-PID_Chassis_Fllow.Get_Out());

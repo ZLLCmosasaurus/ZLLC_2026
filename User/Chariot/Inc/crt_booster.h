@@ -115,7 +115,9 @@ public:
     inline float Get_Friction_Omega();
     inline float Get_Friction_Omega_Threshold();
     inline uint16_t Get_Heat();
-    
+    inline uint16_t Get_Heat_Max();
+    inline uint16_t Get_Cooling_Value();
+    inline uint16_t Get_Heat_Consumption();
 
     inline Enum_Booster_Control_Type Get_Booster_Control_Type();
     inline Enum_Friction_Control_Type Get_Friction_Control_Type();
@@ -151,6 +153,7 @@ protected:
     float ShootTime = 0.f;
     float shoot_speed = 0.f;
     float Now_Angle = 0.f;
+   
     //读变量
 
     //拨弹盘默认速度, 一圈八发子弹, 此速度下与冷却均衡
@@ -184,6 +187,21 @@ uint16_t Class_Booster::Get_Heat()
 {
     return (Heat);
 }
+
+uint16_t Class_Booster::Get_Heat_Max()
+{
+    return (Heat_Max);
+}
+
+uint16_t Class_Booster::Get_Cooling_Value()
+{
+    return (Cooling_Value);
+}
+uint16_t Class_Booster::Get_Heat_Consumption()
+{
+    return (Heat_Consumption);
+}
+
 /**
  * @brief 获取拨弹盘默认速度, 一圈八发子弹, 此速度下与冷却均衡
  *

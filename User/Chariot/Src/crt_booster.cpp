@@ -176,7 +176,7 @@ void Class_Booster::Init()
 
     //拨弹盘电机
     Motor_Driver.PID_Angle.Init(28.0f, 0.0f, 0.0f, 0.0f, 5.0f * PI, 5.0f * PI);
-    Motor_Driver.PID_Omega.Init(1500.0f, 0.0f, 0.0f, 0.0f, Motor_Driver.Get_Output_Max(), Motor_Driver.Get_Output_Max());
+    Motor_Driver.PID_Omega.Init(1600.0f, 0.0f, 0.0f, 0.0f, Motor_Driver.Get_Output_Max(), Motor_Driver.Get_Output_Max());
     Motor_Driver.Init(&hfdcan2, DJI_Motor_ID_0x202, DJI_Motor_Control_Method_OMEGA, 36.0f * 2.5f);
 
     //摩擦轮电机左
@@ -185,7 +185,7 @@ void Class_Booster::Init()
     
     //摩擦轮电机右
     Motor_Friction_Right.PID_Omega.Init(80.0f, 0.0f, 0.f, 0.0f, 2000.0f, Motor_Friction_Right.Get_Output_Max());
-    Motor_Friction_Right.Init(&hfdcan1, DJI_Motor_ID_0x202, DJI_Motor_Control_Method_OMEGA, 1.0f);
+    Motor_Friction_Right.Init(&hfdcan1, DJI_Motor_ID_0x203, DJI_Motor_Control_Method_OMEGA, 1.0f);
 }
 
 /**
@@ -289,7 +289,7 @@ void Class_Booster::Output()
         {
             bt = DWT_GetDeltaT(&booster_t);
             // 连发模式
-            
+            Motor_Driver.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
             Motor_Friction_Left.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
             Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
 
@@ -297,14 +297,14 @@ void Class_Booster::Output()
             Default_Driver_Omega = Cooling_Value / Heat_Consumption / 9.0f * 2.0f * PI;
            // Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega);
 
-            if (Heat< Heat_Max * 0.95f) {        //这里和最大热量有关
+            if (Heat< Heat_Max * 0.85f) {        //这里和最大热量有关
             
             if (shoot_time == 0)                    //说明停火进来的
             {
                 ShootTime = ((Heat_Max - Heat) + 2 * Cooling_Value) * 10;
                 if (Heat_Max - Heat < 100)              //分级弹频
                 {
-                    shoot_speed = (10 * (Heat_Max - Heat) - Cooling_Value - 2 * Heat_Consumption) / (Heat_Consumption * (ShootTime / 100.f)) + Cooling_Value / Heat_Consumption;
+                    shoot_speed = (10 * (Heat_Max - Heat) - Cooling_Value - 3 * Heat_Consumption) / (Heat_Consumption * (ShootTime / 100.f)) + Cooling_Value / Heat_Consumption;
                 }
                 else
                 {
@@ -313,48 +313,53 @@ void Class_Booster::Output()
             }
             else if (0 < shoot_time && shoot_time < ShootTime)
             {
-                Motor_Driver.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
+                
                 Driver_Omega = shoot_speed * 2 * PI / 9.f;
                 Math_Constrain(&Driver_Omega, 0.0f, 18.0f);
                 Motor_Driver.Set_Target_Omega_Radian(Driver_Omega);
             }
            else {
-            
-            // 低射速用角度环控制（模拟匀速运动）
-            
-            Motor_Driver.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
+            if(Heat<Heat_Max*0.8){
+                shoot_time=-2;
+            }else{
+                shoot_speed = (Cooling_Value / Heat_Consumption);
+                Driver_Omega = shoot_speed * 2 * PI / 9.f;
+                Math_Constrain(&Driver_Omega, 0.0f, 18.0f);
+                Motor_Driver.Set_Target_Omega_Radian(Driver_Omega);
+            }
 
-            static uint8_t first = 1;
-            if (first) {
-                Driver_Angle = Now_Angle;   // 对齐当前实际角度
-                first = 0;
-            }
-            if(bt>0.0021f){
-                bt=0.002f;
-            }
-            // 计算平衡角速度 (rad/s)
-            float omega_balance = ((Cooling_Value / Heat_Consumption) * 2.0f * PI / 9.0f)*bt;
-            Driver_Angle += omega_balance; // 累加平衡角速度到目标角度
-            Motor_Driver.Set_Target_Radian(Driver_Angle);
-        }
+        //     // 低射速用角度环控制（模拟匀速运动）
+            
+        //     Motor_Driver.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
+
+        //     static uint8_t first = 1;
+        //     if (first) {
+        //         Driver_Angle = Now_Angle;   // 对齐当前实际角度
+        //         first = 0;
+        //     }
+        //     if(bt>0.0021f){
+        //         bt=0.002f;
+        //     }
+        //     // 计算平衡角速度 (rad/s)
+        //     float omega_balance = ((Cooling_Value / Heat_Consumption) * 2.0f * PI / 9.0f)*bt;
+        //     Driver_Angle += omega_balance; // 累加平衡角速度到目标角度
+        //     Motor_Driver.Set_Target_Radian(Driver_Angle); 
+         }
 
             if (shoot_time < ShootTime)
             {
                 //10 * 控制周期(s)
                 shoot_time += 2;                           //注意这里应该和运算频率有关
             }
-}
+
+					 }
             // Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega * 2.5f);//测试用 平常注释
            else        //这里和最大热量有关
             {
                 Motor_Driver.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
-                Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega * 0.4f);
+                Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega * 0.f);
             }
-            // if (Heat > 340)
-            // {
-            //     Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega * 0.25f);
-            // }
-
+            
             Set_Friction_Control_Type(Friction_Control_Type_ENABLE);
         }
         break;  
