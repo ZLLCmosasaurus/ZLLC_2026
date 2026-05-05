@@ -219,19 +219,31 @@ void Class_Gimbal::Output()
                 }
 
             }
-            
 
-            if(MiniPC->Get_mode() == 1 || MiniPC->Get_mode() == 2){
+            if (MiniPC->Get_mode() == 1 || MiniPC->Get_mode() == 2 ||
+                (MiniPC->Get_mode() == 0 && MiniPC->Get_Rx_Yaw_Angle() == 0.0f && MiniPC->Get_Rx_Pitch_Angle() == 0.0f))
+            { // 当进入巡航或者目标丢失时，进入巡航状态
                 Motor_Yaw.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
                 Motor_Pitch.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
 
-                float MiniPC_Target_Yaw    = MiniPC->Get_Rx_Yaw_Angle();
-                float MiniPC_Target_Pitch  = MiniPC->Get_Rx_Pitch_Angle();
+                float MiniPC_Target_Yaw = MiniPC->Get_Rx_Yaw_Angle();
+                float MiniPC_Target_Pitch = MiniPC->Get_Rx_Pitch_Angle();
 
-                Target_Yaw_Angle   = MiniPC_Target_Yaw - Motor_Main_Yaw.Get_Transform_Angle();
-                Target_Pitch_Angle = MiniPC_Target_Pitch;
+                if (MiniPC->Get_mode() == 0)
+                {
+                    Target_Yaw_Angle = pre_yaw_angle;
+                    Target_Pitch_Angle = pre_pitch_angle;
+                }
+                else
+                {
+                    Target_Yaw_Angle = MiniPC_Target_Yaw - Motor_Main_Yaw.Get_Transform_Angle();
+                    Target_Pitch_Angle = MiniPC_Target_Pitch;
+                    
+                    pre_yaw_angle = Motor_Yaw.Get_Zero_Offset_Angle();
+                    pre_pitch_angle = Motor_Pitch.Get_Transform_Angle();
+                }
 
-                //怕超出限位到死区
+                // 怕超出限位到死区
                 Math_Constrain(&Target_Yaw_Angle, -LIMIT_YAW_ANGLE, LIMIT_YAW_ANGLE);
                 Math_Constrain(&Target_Pitch_Angle, Min_Pitch_Angle, Max_Pitch_Angle);
 
@@ -245,56 +257,62 @@ void Class_Gimbal::Output()
                 Motor_Pitch.Set_Transform_Target_Vel(MiniPC->Get_pitch_vel() / 57.3f);
                 Motor_Pitch.Set_Transform_Target_Acc(MiniPC->Get_pitch_acc() / 57.3f);
 
+                if (MiniPC->Get_mode() == 0)
+                {
+                    last_mode_for_cruise = 1;
+                }
+                else
+                {
+                    last_mode_for_cruise = MiniPC->Get_mode();
+                }
+            }
+            else
+            {
+                // 检测是否刚进入巡航
+                if (last_mode_for_cruise == 1 || last_mode_for_cruise == 2 || last_mode_for_cruise == -1)
+                {
+                    float cur_yaw = Motor_Yaw.Get_Transform_Angle();
+                    float cur_pitch = Motor_Pitch.Get_Transform_Angle();
+
+                    float ratio_yaw = (cur_yaw - YAW_OFFSET) / YAW_AMPLITUDE;
+                    float ratio_pitch = (cur_pitch - PITCH_OFFSET) / PITCH_AMPLITUDE;
+
+                    // 钳位到 [-1, 1]
+                    if (ratio_yaw > 1.0f)
+                        ratio_yaw = 1.0f;
+                    if (ratio_yaw < -1.0f)
+                        ratio_yaw = -1.0f;
+                    if (ratio_pitch > 1.0f)
+                        ratio_pitch = 1.0f;
+                    if (ratio_pitch < -1.0f)
+                        ratio_pitch = -1.0f;
+
+                    phi0_yaw = asinf(ratio_yaw);
+                    phi0_pitch = asinf(ratio_pitch);
+                    cruise_start_time = Single_time;
+                }
+                last_mode_for_cruise = 0;
+
+                float t = (float)(Single_time - cruise_start_time) / 1000.0f;
+
+                Target_Yaw_Angle = YAW_AMPLITUDE * sinf(2.0f * PI * YAW_FREQ * t + phi0_yaw) + YAW_OFFSET;
+                Target_Pitch_Angle = PITCH_AMPLITUDE * sinf(2.0f * PI * PITCH_FREQ * t + phi0_pitch) + PITCH_OFFSET;
+
+                Motor_Yaw.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
+                Motor_Pitch.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
+                Angle_Continuity_Process(&Target_Yaw_Angle, Motor_Yaw.Get_Zero_Offset_Angle());
+                Math_Constrain(&Target_Yaw_Angle, -LIMIT_YAW_ANGLE, LIMIT_YAW_ANGLE);
+                Math_Constrain(&Target_Pitch_Angle, Min_Pitch_Angle, Max_Pitch_Angle);
+                Motor_Yaw.Set_Target_Angle(Target_Yaw_Angle);
+                Motor_Pitch.Set_Target_Angle(Target_Pitch_Angle);
+                Motor_Yaw.Set_Transform_Target_Vel(0.0f);
+                Motor_Yaw.Set_Transform_Target_Acc(0.0f);
+                Motor_Pitch.Set_Transform_Target_Vel(0.0f);
+                Motor_Pitch.Set_Transform_Target_Acc(0.0f);
+
                 pre_yaw_angle = Motor_Yaw.Get_Zero_Offset_Angle();
                 pre_pitch_angle = Motor_Pitch.Get_Transform_Angle();
-                last_mode_for_cruise = MiniPC->Get_mode();
             }
-            else{
-                
-
-            // 检测是否刚进入巡航
-            if (last_mode_for_cruise == 1 ||last_mode_for_cruise==2 || last_mode_for_cruise == -1) {
-                float cur_yaw   = Motor_Yaw.Get_Transform_Angle();
-                float cur_pitch = Motor_Pitch.Get_Transform_Angle();
-
-                float ratio_yaw   = (cur_yaw   - YAW_OFFSET)   / YAW_AMPLITUDE;
-                float ratio_pitch = (cur_pitch - PITCH_OFFSET) / PITCH_AMPLITUDE;
-
-                // 钳位到 [-1, 1]
-                if (ratio_yaw   >  1.0f) ratio_yaw   =  1.0f;
-                if (ratio_yaw   < -1.0f) ratio_yaw   = -1.0f;
-                if (ratio_pitch >  1.0f) ratio_pitch =  1.0f;
-                if (ratio_pitch < -1.0f) ratio_pitch = -1.0f;
-
-                phi0_yaw   = asinf(ratio_yaw);
-                phi0_pitch = asinf(ratio_pitch);
-                cruise_start_time = Single_time;  
-            }
-            last_mode_for_cruise = 0;
-
-            
-            float t = (float)(Single_time - cruise_start_time) / 1000.0f;
-
-            Target_Yaw_Angle   = YAW_AMPLITUDE   * sinf(2.0f * PI * YAW_FREQ   * t + phi0_yaw)   + YAW_OFFSET;
-            Target_Pitch_Angle = PITCH_AMPLITUDE * sinf(2.0f * PI * PITCH_FREQ * t + phi0_pitch) + PITCH_OFFSET;
-
-           
-            Motor_Yaw.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
-            Motor_Pitch.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
-            Angle_Continuity_Process(&Target_Yaw_Angle, Motor_Yaw.Get_Zero_Offset_Angle());
-            Math_Constrain(&Target_Yaw_Angle,   -LIMIT_YAW_ANGLE, LIMIT_YAW_ANGLE);
-            Math_Constrain(&Target_Pitch_Angle, Min_Pitch_Angle,  Max_Pitch_Angle);
-            Motor_Yaw.Set_Target_Angle(Target_Yaw_Angle);
-            Motor_Pitch.Set_Target_Angle(Target_Pitch_Angle);
-            Motor_Yaw.Set_Transform_Target_Vel(0.0f);
-            Motor_Yaw.Set_Transform_Target_Acc(0.0f);
-            Motor_Pitch.Set_Transform_Target_Vel(0.0f);
-            Motor_Pitch.Set_Transform_Target_Acc(0.0f);
-            pre_yaw_angle   = Motor_Yaw.Get_Zero_Offset_Angle();
-            pre_pitch_angle = Motor_Pitch.Get_Transform_Angle();
-
-            }
-
         }
        else if ((Get_Gimbal_Control_Type() == Gimbal_Control_Type_MINIPC) && (MiniPC->Get_MiniPC_Status() == MiniPC_Status_DISABLE))
         {
