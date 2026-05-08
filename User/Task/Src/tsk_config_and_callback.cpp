@@ -463,10 +463,10 @@ void MiniPC_UART_Callback(uint8_t *Buffer, uint16_t Length)
  */
 extern Referee_Rx_A_t CAN3_Chassis_Rx_Data_A;
 float Sin_Single;
-uint32_t Single_Time;
+ uint32_t Single_Time;
 uint32_t ad;
 float Dt_ad;
-void Task100us_TIM4_Callback()
+void Task1ms_TIM4_Callback()
 {
     #ifdef CHASSIS
 
@@ -675,7 +675,7 @@ extern "C" void Task_Init()
     #endif
 
     //定时器循环任务
-    TIM_Init(&htim4, Task100us_TIM4_Callback);
+    TIM_Init(&htim4, Task1ms_TIM4_Callback);
     TIM_Init(&htim5, Task1ms_TIM5_Callback);
 
     /********************************* 设备层初始化 *********************************/

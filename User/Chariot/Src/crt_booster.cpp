@@ -86,7 +86,7 @@ void Class_FSM_Heat_Detect::Reload_TIM_Status_PeriodElapsedCallback()
     //热量冷却到0
     if (Heat > 0)
     {
-        Heat -= 30.f / 1000.0f;//哨兵默认30
+        Heat -= 30.f / 500.0f;//哨兵默认30
     }
     else
     {
@@ -248,7 +248,7 @@ void Class_Booster::Output()
             Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
 
             if(Referee->Get_Referee_Status() == Referee_Status_ENABLE){
-                if(Referee->Get_Booster_17mm_1_Heat_Max() - Referee->Get_Booster_17mm_1_Heat() < 30){
+                if(Referee->Get_Booster_17mm_1_Heat_Max() - Heat < 10){
                     Driver_Angle = Now_Angle;
                 }
                 else{
@@ -392,6 +392,7 @@ void Class_Booster::TIM_Calculate_PeriodElapsedCallback()
         Cooling_Value = 30; // 裁判系统没反馈用默认速度
         //无需裁判系统的热量控制计算
         FSM_Heat_Detect.Reload_TIM_Status_PeriodElapsedCallback();
+        Heat=FSM_Heat_Detect.Heat;
     }
     else
     {
@@ -399,9 +400,11 @@ void Class_Booster::TIM_Calculate_PeriodElapsedCallback()
         Heat_Max = Referee->Get_Booster_17mm_1_Heat_Max();
         Cooling_Value = Referee->Get_Booster_17mm_1_Heat_CD();
     }
-
+   
+    
     //卡弹处理
     FSM_Antijamming.Reload_TIM_Status_PeriodElapsedCallback();
+    
     //PID输出
     Motor_Driver.TIM_PID_PeriodElapsedCallback();
     Motor_Friction_Left.TIM_PID_PeriodElapsedCallback();

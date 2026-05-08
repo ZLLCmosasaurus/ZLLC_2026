@@ -122,10 +122,10 @@ void Class_Tricycle_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max
     Motor_Steer[3].Init(&hfdcan1, DJI_Motor_ID_0x208, DJI_Motor_Control_Method_AGV_MODE, 8.0f);
 
     //舵向电机零点位置初始化
-    Motor_Steer[0].Set_Zero_Position(0.36000001f);               //应该是轮子朝向的正方向，行进轮超前，并且顺时针转动为正方向的角度
-    Motor_Steer[1].Set_Zero_Position(0.48f);
-    Motor_Steer[2].Set_Zero_Position(-1.51);
-    Motor_Steer[3].Set_Zero_Position(-2.518f);
+    Motor_Steer[0].Set_Zero_Position(0.479999989f);               //应该是轮子朝向的正方向，行进轮超前，并且顺时针转动为正方向的角度
+    Motor_Steer[1].Set_Zero_Position(0.50999999f);
+    Motor_Steer[2].Set_Zero_Position(-1.57000005);
+    Motor_Steer[3].Set_Zero_Position(-2.55999994f);
     #endif
 
     // // 底盘速度xPID, 输出摩擦力
