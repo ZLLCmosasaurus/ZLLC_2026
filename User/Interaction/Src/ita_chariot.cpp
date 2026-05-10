@@ -910,65 +910,7 @@ void Class_Chariot::Control_Booster()
                 if(MiniPC.Get_mode() == 2 && MiniPC.MiniPC_Fire_Updata_Flag == 1)
                 { // 后边两个判断似乎不需要
 
-
-                    
-                        
-                    MiniPC.MiniPC_Fire_Updata_Flag = 0;
-                   
-                } // 打完后会自动切到停火
-                else
-                {
-                    Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
-                }
-
-                break;
-            }
-            case (FS_Switch_Status_MIDDLE)://右1中开火
-            {
-                // 每次进来切回一次停火，防止一次可能是别的状态进来的
-                // Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
-                // Booster.Set_Friction_Control_Type(Friction_Control_Type_ENABLE);
-
-                auto switch_state= FS_i6X.Get_Switch_3();  // 返回当前开关状态
-                if (switch_state == FS_Switch_Status_UP) 
-                {       
-                    Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
-                    Shoot_Flag = 0;
-                }
-                else if (switch_state==FS_Switch_Status_DOWN&& Shoot_Flag == 0) // 单发
-                {
-                    Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
-                    Shoot_Flag = 1;
-                }
-                // else if (FS_i6X.Get_Yaw_left()>0) // 连发
-                // {
-                //     Booster.Set_Booster_Control_Type(Booster_Control_Type_REPEATED);
-               // }
-                else{
-                    Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
-                }
-                break;
-            }
-        }
-    }
-    else
-    {           //下位机模式
-        if (FS_i6X.Get_Switch_2() != FS_Switch_Status_MIDDLE)
-        {
-            Booster.Set_Booster_Control_Type(Booster_Control_Type_DISABLE);
-            Booster.Set_Friction_Control_Type(Friction_Control_Type_DISABLE);
-            return;
-        }
-        else
-        {
-            auto switch_state = FS_i6X.Get_Switch_3(); // 返回当前开关状态
-            if (switch_state == FS_Switch_Status_UP){
-                Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
-                Shoot_Flag = 0;
-            }
-            else if (switch_state == FS_Switch_Status_DOWN && Shoot_Flag == 0) // lian发
-    {
-            float time_banlance = (d/cooling) ;
+                    float time_banlance = (d/cooling) ;
             float now = DWT_GetTimeline_s();
 			int n_max=0;
            if (shoot_time_single == 0.0f)           // 空闲，可重新规划
@@ -1035,10 +977,72 @@ else                                                     // 爆发结束或平�
     }
        
     }
+
+                    
+                        
+                    MiniPC.MiniPC_Fire_Updata_Flag = 0;
+                   
+                } // 打完后会自动切到停火
+                else
+                {
+                    Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+                }
+
+                break;
+            }
+            case (FS_Switch_Status_MIDDLE)://右1中开火
+            {
+                // 每次进来切回一次停火，防止一次可能是别的状态进来的
+                // Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+                // Booster.Set_Friction_Control_Type(Friction_Control_Type_ENABLE);
+
+                auto switch_state= FS_i6X.Get_Switch_3();  // 返回当前开关状态
+                if (switch_state == FS_Switch_Status_UP) 
+                {       
+                    Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+                    Shoot_Flag = 0;
+                }
+                else if (switch_state==FS_Switch_Status_DOWN&& Shoot_Flag == 0) // 单发
+                {
+                    Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                    Shoot_Flag = 1;
+                }
+                // else if (FS_i6X.Get_Yaw_left()>0) // 连发
+                // {
+                //     Booster.Set_Booster_Control_Type(Booster_Control_Type_REPEATED);
+               // }
+                else{
+                    Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+                }
+                break;
+            }
+        }
+    }
+    else
+    {           //下位机模式
+        if (FS_i6X.Get_Switch_2() != FS_Switch_Status_MIDDLE)
+        {
+            Booster.Set_Booster_Control_Type(Booster_Control_Type_DISABLE);
+            Booster.Set_Friction_Control_Type(Friction_Control_Type_DISABLE);
+            return;
+        }
+        else
+        {
+            auto switch_state = FS_i6X.Get_Switch_3(); // 返回当前开关状态
+            if (switch_state == FS_Switch_Status_UP){
+                Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+                Shoot_Flag = 0;
+            }
+            else if (switch_state == FS_Switch_Status_DOWN && Shoot_Flag == 0) // lian发
+    {
+                Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                Shoot_Flag = 1;
+            }
+           
        
     }
 }
-		}}
+		}
 #endif
 #endif
 
