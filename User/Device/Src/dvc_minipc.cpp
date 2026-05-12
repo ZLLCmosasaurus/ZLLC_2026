@@ -81,7 +81,7 @@ void Class_MiniPC::Data_Process(Enum_MiniPC_Data_Source Data_Source)
     Rx_Chassis_Target_Velocity_X          = Data_NUC_To_MCU.Move_Linear_Velocity_X / 100.0f;
     Rx_Chassis_Target_Velocity_Y          = Data_NUC_To_MCU.Move_Linear_Velocity_Y / 100.0f;
     Rx_Gimbal_Angular_Velocity_Yaw_Main   = Data_NUC_To_MCU.Gimbal_Angular_Velocity_Yaw_Main / 100.0f;
-    mode = Data_NUC_To_MCU.mode;
+    //mode = Data_NUC_To_MCU.mode;
     Rx_Angle_Yaw = Data_NUC_To_MCU.yaw;
     Rx_Angle_Pitch = Data_NUC_To_MCU.pitch;
     Math_Constrain(&Rx_Angle_Pitch, -25.0f, 22.0f);
@@ -170,6 +170,7 @@ void Class_MiniPC::Output()
   Data_MCU_To_NUC.Target_Position_X              = Referee->Get_Map_Command_Taregt_Position_X() * 100.0f;
   Data_MCU_To_NUC.Target_Position_Y              = Referee->Get_Map_Command_Taregt_Position_Y() * 100.0f;
   Data_MCU_To_NUC.Dart_Target                    = Referee->Get_Dart_Command_Target();
+  Data_MCU_To_NUC.free_respawn_ready             = Referee->Get_Sentry_info();
 
   //顺序发送版本    可以从雷达获取敌方车辆位置，发送给上位机
   switch(index)
@@ -237,6 +238,7 @@ uint8_t Class_MiniPC::Get_mode()
 {
   return mode;
 }
+
 
 /**
  * @brief usb通信接收回调函数

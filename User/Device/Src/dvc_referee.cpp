@@ -264,14 +264,19 @@ void Class_Referee::Data_Process(uint16_t Length)
 
             break;
         }
+        case(Referee_Command_ID_ROBOT_Sentry_Info):{
+            memcpy(&Sentry_Info_Bits, tmp_buffer->Data, sizeof(Struct_Sentry_Info_Bits_t));
+
+            break;
 
         }
-
+}
         // 缓冲区直接推移
         i += 7 + tmp_buffer->Data_Length + 2;
-    }
-}
+    
 
+	}
+}
 /**
  * @brief UART通信接收回调函数
  *

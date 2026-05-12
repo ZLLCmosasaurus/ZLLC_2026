@@ -466,8 +466,18 @@ float Sin_Single;
  uint32_t Single_Time;
 uint32_t ad;
 float Dt_ad;
+
 void Task1ms_TIM4_Callback()
 {
+//    static uint16_t count = 0;
+//    count++;
+//    if(count>=1000)
+//    {
+//       uint8_t current_mode=chariot.MiniPC.Get_mode();
+//       if(current_mode==) 
+//        chariot.MiniPC.Set_mode(a);
+//        count = 0;
+//    }
     #ifdef CHASSIS
 
     chariot.Boardc_BMI.TIM_Calculate_PeriodElapsedCallback();

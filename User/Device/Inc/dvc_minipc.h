@@ -282,6 +282,7 @@ struct Struct_MiniPC_Tx_Data
     uint8_t Dart_Target;       // 飞镖随机固定靶信息
 
     uint16_t crc16;
+    uint32_t free_respawn_ready;//0没复活，1复活了
 } __attribute__((packed));
 
 // struct Struct_MiniPC_Aimmer_Tx_Data
@@ -402,7 +403,8 @@ public:
     inline void Set_Armor_Attacked_Ammo_Status(Enum_MiniPC_Data_Status __Armor_Attacked_Ammo_Status);
     inline void Set_Self_Color(Enum_MiniPC_Self_Color __Self_Color);
     inline void Set_Outpost_Status(Enum_MiniPC_Data_Status __Outpost_Status);
-
+    inline void Set_mode(uint8_t __mode);
+    
     void Append_CRC16_Check_Sum(uint8_t * pchMessage, uint32_t dwLength);
     bool Verify_CRC16_Check_Sum(const uint8_t * pchMessage, uint32_t dwLength);
     uint16_t Get_CRC16_Check_Sum(const uint8_t * pchMessage, uint32_t dwLength, uint16_t wCRC);
@@ -425,7 +427,7 @@ public:
     Class_Supercap *Supercap;
 
     uint8_t Get_mode();
-
+    
     uint8_t MiniPC_Fire_Updata_Flag = 0;
     // Struct_MiniPC_Tx_Data_Test Data_MCU_To_NUC_Test;
     // Struct_MiniPC_Rx_Data_Test Data_NUC_To_MCU_Test;
@@ -708,6 +710,10 @@ void Class_MiniPC::Set_Gimbal_Now_Roll_Angle(float __Gimbal_Now_Roll_Angle)
     Now_Angle_Roll = __Gimbal_Now_Roll_Angle;
 }
 
+inline void Class_MiniPC::Set_mode(uint8_t __mode)
+{
+    mode = __mode;
+}
 #endif
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

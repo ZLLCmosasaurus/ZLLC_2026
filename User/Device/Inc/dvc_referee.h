@@ -1130,6 +1130,28 @@ struct Struct_Sentry_To_Radar_t
 } __attribute__((packed));
 
 /**
+ * @brief 哨兵信息位域结构体 0x20D
+ * 
+ */
+struct Struct_Sentry_Info_Bits_t
+{
+    // 前4字节 sentry_info 的位域
+    uint32_t projectile_allowance    : 11; // bit 0-10
+    uint32_t remote_ammo_count       : 4;  // bit 11-14
+    uint32_t remote_heal_count       : 4;  // bit 15-18
+    uint32_t free_respawn_ready      : 1;  // bit 19  “复活进度完成”标志
+    uint32_t can_pay_respawn         : 1;  // bit 20
+    uint32_t pay_respawn_cost        : 10; // bit 21-30
+    uint32_t reserved_1              : 1;  // bit 31
+
+    // 后2字节 sentry_info_2 的位域
+    uint16_t out_of_combat           : 1;  // bit 0
+    uint16_t team_17mm_remain        : 11; // bit 1-11
+    uint16_t posture                 : 2;  // bit 12-13
+    uint16_t rune_activatable        : 1;  // bit 14
+    uint16_t reserved_2              : 1;  // bit 15
+} __attribute__((packed));
+/**
  * @brief 雷达发送给哨兵的自定义数据包数据，0x0210
  *
  */
@@ -1242,7 +1264,7 @@ public:
     inline uint16_t Get_Infantry_4_Position_Y();
     inline uint16_t Get_Sentry_Position_X();
     inline uint16_t Get_Sentry_Position_Y();
-
+    inline uint32_t Get_Sentry_info();
 
     //裁判系统状态
     Enum_Referee_Status Referee_Status = Referee_Status_DISABLE;
@@ -1363,6 +1385,8 @@ protected:
     Struct_Sentry_cmd_t Sentry_cmd;
     //哨兵发送雷达位置
     Struct_Sentry_To_Radar_t Sentry_To_Radar;
+    //哨兵信息位域
+    Struct_Sentry_Info_Bits_t Sentry_Info_Bits;
     //服务器发送给哨兵的地方机器人点位
 
     //读写变量
@@ -1674,7 +1698,14 @@ uint16_t Class_Referee::Get_Chassis_Power_Max()
 #endif
     return (Robot_Status.Chassis_Power_Limit);
 }
-
+/**
+ * @brief 获取哨兵复活状态
+ * 
+ */
+uint32_t Class_Referee::Get_Sentry_info()
+{
+    return (Sentry_Info_Bits.free_respawn_ready);
+}
 /**
  * @brief 获取Gimbal供电状态
  *

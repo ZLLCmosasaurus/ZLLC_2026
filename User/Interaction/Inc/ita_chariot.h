@@ -209,7 +209,7 @@ public:
         inline void Set_Pre_Chassis_Control_Type(Enum_Chassis_Control_Type __Chassis_Control_Type);
         inline void Set_Pre_Gimbal_Control_Type(Enum_Gimbal_Control_Type __Gimbal_Control_Type);
         inline void Set_Pre_Booster_Control_Type(Enum_Booster_Control_Type __Booster_Control_Type);
-        inline void Set_shoot_time_single(float _shoot_time_single);
+       
 
         inline Enum_Chassis_Status Get_Chassis_Status();
         inline Enum_DR16_Control_Type Get_DR16_Control_Type();
@@ -340,13 +340,7 @@ protected:
         Enum_DR16_Control_Type DR16_Control_Type = DR16_Control_Type_REMOTE;
         Enum_VT13_Control_Type VT13_Control_Type = VT13_Control_Type_NONE;
 
-        float ShootTime_single = 0;
-        float shoot_time_single = 0;
-        float shoot_number_single = 0;
-        float max_Heat=260.f;
-        float cur_Heat=0;
-        float cooling=30.f;
-        float d=10.f;
+      
         // void Judge_DR16_Control_Type();
 
         // void Control_Chassis();
@@ -455,10 +449,7 @@ protected:
         Pre_Booster_Control_Type = __Booster_Control_Type;
     }
 
-    void Class_Chariot::Set_shoot_time_single(float _shoot_time_single)
-    {
-        shoot_time_single=_shoot_time_single;
-    }
+    
     /**
      * @brief DR16离线计数加一
      */

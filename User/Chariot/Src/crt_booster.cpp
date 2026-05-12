@@ -142,6 +142,7 @@ void Class_FSM_Antijamming::Reload_TIM_Status_PeriodElapsedCallback()
             //Booster->Driver_Angle = Booster->Motor_Driver.Get_Now_Radian() + PI / 12.0f;//原版本
             Booster->Driver_Angle = Booster->Motor_Driver.Get_Now_Radian() - (2 * PI / 27.0f);      //1/3个弹丸
             Booster->Motor_Driver.Set_Target_Radian(Booster->Driver_Angle);
+      
             Set_Status(3);
         }
         break;
@@ -192,8 +193,8 @@ void Class_Booster::Init()
  * @brief 输出到电机
  *
  */
-uint32_t  booster_t=0;
-float bt = 0.0f;
+uint32_t  booster_t=0,single_t;
+float bt = 0.0f,dttt;
 extern Referee_Rx_B_t CAN3_Chassis_Rx_Data_B;
 void Class_Booster::Output()
 {
@@ -222,7 +223,8 @@ void Class_Booster::Output()
             Motor_Driver.Set_Target_Torque(0.0f);
             Motor_Friction_Left.Set_Target_Torque(0.0f);
             Motor_Friction_Right.Set_Target_Torque(0.0f);
-
+            
+        
             shoot_time = 0;
         }
         break;
@@ -237,6 +239,7 @@ void Class_Booster::Output()
             {
                 Motor_Driver.Set_Target_Omega_Radian(0.0f);         
             }
+      
             shoot_time = 0;
         }
         break;
@@ -247,12 +250,14 @@ void Class_Booster::Output()
             Motor_Friction_Left.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
             Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
 
+            dttt = DWT_GetDeltaT(&single_t);
+            
             if(Referee->Get_Referee_Status() == Referee_Status_ENABLE){
-                if(Referee->Get_Booster_17mm_1_Heat_Max() - Heat < 10){
-                    Driver_Angle = Now_Angle;
+                if(Heat+2*Heat_Consumption-Cooling_Value*dttt<=Heat_Max){
+                    Driver_Angle = Now_Angle + 2.0f * PI / 9.0f;
                 }
                 else{
-                    Driver_Angle = Now_Angle + 2.0f * PI / 9.0f;
+                    Driver_Angle = Now_Angle;
                 }
             }
             else{
@@ -401,7 +406,6 @@ void Class_Booster::TIM_Calculate_PeriodElapsedCallback()
         Cooling_Value = Referee->Get_Booster_17mm_1_Heat_CD();
     }
    
-    
     //卡弹处理
     FSM_Antijamming.Reload_TIM_Status_PeriodElapsedCallback();
     

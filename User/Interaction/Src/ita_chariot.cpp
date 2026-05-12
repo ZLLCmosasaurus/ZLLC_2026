@@ -904,81 +904,14 @@ void Class_Chariot::Control_Booster()
                 if(MiniPC.Get_MiniPC_Status() == MiniPC_Status_DISABLE){                    //上位机离线的时候不能打弹
                     Booster.Set_Booster_Control_Type(Booster_Control_Type_DISABLE);
                     Booster.Set_Friction_Control_Type(Friction_Control_Type_DISABLE);
+                  
                     break;
                 }
 
                 if(MiniPC.Get_mode() == 2 && MiniPC.MiniPC_Fire_Updata_Flag == 1)
                 { // 后边两个判断似乎不需要
 
-                    float time_banlance = (d/cooling) ;
-            float now = DWT_GetTimeline_s();
-			int n_max=0;
-           if (shoot_time_single == 0.0f)           // 空闲，可重新规划
-{if(cooling<100.0f){
-        float numerator = 10.0f * (max_Heat - cur_Heat) - cooling;
-        float denominator = 100.0f - cooling;
-        
-        float n_float = numerator / denominator;
-        n_max = (n_float > 0.0f) ? (int)n_float : 0;}
-else {
-    n_max=500-3;
-}
-    if (n_max > 0)
-    {
-        // 规划爆发
-        burst_start_time   = now;
-        ShootTime_single   = (float)n_max * 0.1f;
-        if(max_Heat-cur_Heat>100){
-        shoot_number_single = (float)n_max-3;
-        }
-        else{
-            shoot_number_single = (float)n_max-6;
-        }
-        // 立即打第一发
-        Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
-        shoot_number_single -= 1.0f;
-        single_time = now;
-        shoot_time_single = 1.0f;        // 标记进入爆发状态
-    }
-    else
-    {
-        // 无法爆发，直接进入平衡（保持空闲标志？不行，会死循环，所以必须切状态）
-        shoot_number_single = 0.0f;
-        shoot_time_single = 1.0f;        // 进入平衡状态标志
-    }
-}
-else if (shoot_time_single == 1.0f && shoot_number_single > 0.0f &&
-         (now - burst_start_time) < ShootTime_single)
-{
-    // 爆发进行中：每 0.1 秒才能打一发
-    if ((now - single_time) >= 0.1f && (cur_Heat + 2*d <= max_Heat))
-    {
-        Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
-        shoot_number_single -= 1.0f;
-        single_time = now;
-    }
-}
-else                                                     // 爆发结束或平衡模式
-{
-    shoot_number_single = 0.0f;
-    if (cur_Heat < max_Heat -6*d)
-    {
-        shoot_time_single = 0.0f;                        // 热量低了，允许下次重新规划
-    }
-    else
-    {
-        // 平衡射击：严格按 d/a 间隔
-        if (now-single_time>=time_banlance && (cur_Heat + 5*d <= max_Heat))
-        {
-            Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
-            single_time = now;
-        }
-        
-    }
-       
-    }
-
-                    
+                    Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
                         
                     MiniPC.MiniPC_Fire_Updata_Flag = 0;
                    
@@ -1013,6 +946,7 @@ else                                                     // 爆发结束或平�
                // }
                 else{
                     Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+                   
                 }
                 break;
             }
@@ -1104,18 +1038,8 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
         MiniPC.TIM_Write_PeriodElapsedCallback();
         //给下板发送数据
         CAN_Gimbal_Tx_Chassis_Callback();
-        if(Referee.Get_Referee_Status()==Referee_Status_ENABLE){
-            max_Heat=Referee.Get_Booster_17mm_1_Heat_Max();
-            cur_Heat=Referee.Get_Booster_17mm_1_Heat();
-            cooling=Referee.Get_Booster_17mm_1_Heat_CD();
-        }else{
-            max_Heat=260.f;
-            cur_Heat=Booster.Get_Heat();
-            cooling=30.f;
-        }
-   if(Booster.FSM_Antijamming.Get_Now_Status_Serial() == 3){
-        Set_shoot_time_single(0.0f);
-    }
+        
+  
     #endif   
 }
 
