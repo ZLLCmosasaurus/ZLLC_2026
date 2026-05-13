@@ -84,7 +84,7 @@ void Class_MiniPC::Data_Process()
   if(Lidar_if_Lob == 1)
   {
     Mode = Pack_Rx.mode;
-    Rx_Angle_Pitch = Pack_Rx.target_pitch;
+    Rx_Angle_Pitch = -Pack_Rx.target_pitch;
     Rx_Gyro_Pitch = Pack_Rx.target_pitch_vel;
     Rx_Acc_Pitch = Pack_Rx.target_pitch_acc;
     Rx_Angle_Yaw = Pack_Rx.target_yaw;

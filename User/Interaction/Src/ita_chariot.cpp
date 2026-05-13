@@ -41,7 +41,7 @@ void Class_Chariot::Init(float __DR16_Dead_Zone)
         Force_Control_Chassis.Referee = &Referee;
         Force_Control_Chassis.Init();
         // 底盘随动PID环初始化
-        PID_Chassis_Fllow.Init(14.0f, 0.0f, 0.0f, 0.0f, 0.0f, 6.0f, 0.0f, 0.0f, 0.0f, 0.001f);
+        PID_Chassis_Fllow.Init(8.0f, 0.0f, 0.0f, 0.0f, 0.0f, 6.0f, 0.0f, 0.0f, 0.0f, 0.001f);
         //Yaw轴电机初始化，只读数据，不参与控制
         Motor_Yaw_DM4310.Init(&hfdcan3,DM_Motor_ID_0xA3,DM_Motor_Control_Method_MIT_IMU_Angle);
 
@@ -466,14 +466,14 @@ void Class_Chariot::Control_Chassis()
         if (DR16.Get_Left_Switch() == DR16_Switch_Status_UP) // 左上 小陀螺模式
         {
             // 吊射模式 失能底盘
-            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
-            // Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SPIN_Positive);
-            // chassis_omega = Chassis.Get_Spin_Omega();
-            // if (DR16.Get_Right_Switch() == DR16_Switch_Status_DOWN) // 右下 小陀螺反向
-            // {
-            //     Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SPIN_Negative);
-            //     chassis_omega = -Chassis.Get_Spin_Omega();
-            // }
+            // Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
+            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SPIN_Positive);
+            chassis_omega = Chassis.Get_Spin_Omega();
+            if (DR16.Get_Right_Switch() == DR16_Switch_Status_DOWN) // 右下 小陀螺反向
+            {
+                Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SPIN_Negative);
+                chassis_omega = -Chassis.Get_Spin_Omega();
+            }
         }
         if (DR16.Get_Left_Switch() == DR16_Switch_Status_DOWN) //左下 位姿切换
         {
@@ -491,7 +491,10 @@ void Class_Chariot::Control_Chassis()
             }
             #endif
             #ifdef AUTO_SWITCH
-            
+            if (DR16.Get_Right_Switch() == DR16_Switch_Status_TRIG_MIDDLE_DOWN)
+            {
+                Chassis.Set_Pose_Control_Type(Pose_ENABLE);
+            }
             #endif
         }
 
@@ -825,7 +828,7 @@ void Class_Chariot::Control_Gimbal()
         else if (DR16.Get_Left_Switch() == DR16_Switch_Status_UP) //左上
         {
             // Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_MINIPC); // 上位机控制
-            Gimbal.Set_Gimbal_Launch_Mode(Launch_Enable); // 吊射
+            // Gimbal.Set_Gimbal_Launch_Mode(Launch_Enable); // 吊射
             Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
         }
         else // 其余位置都是遥控器控制
@@ -843,8 +846,8 @@ void Class_Chariot::Control_Gimbal()
         vt13_r_y = (Math_Abs(VT13.Get_Right_Y()) > DR16_Dead_Zone) ? VT13.Get_Right_Y() : 0;
 
         // 遥控器操作逻辑
-        tmp_gimbal_yaw -= vt13_y * DR16_Yaw_Angle_Resolution * Remote_K;
-        tmp_gimbal_pitch += vt13_r_y * DR16_Pitch_Angle_Resolution * Remote_K;
+        tmp_gimbal_yaw -= vt13_y * DR16_Yaw_Angle_Resolution;
+        tmp_gimbal_pitch += vt13_r_y * DR16_Pitch_Angle_Resolution;
 
         if(VT13.Get_Switch() != VT13_Switch_Status_Right && VT13.Get_Button_Right() == VT13_Button_PRESSED)
         {
@@ -1461,14 +1464,15 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
             }     
             #endif
             #ifdef TRACK_LEG
-            Chassis.Motor_Joint[0].TIM_Alive_PeriodElapsedCallback();
-            Chassis.Motor_Joint[1].TIM_Alive_PeriodElapsedCallback();
-            Chassis.Motor_Leg[0].TIM_Alive_PeriodElapsedCallback();
-            Chassis.Motor_Leg[1].TIM_Alive_PeriodElapsedCallback();
+            for (int i = 0; i < 2; i++)
+            {
+                Chassis.Motor_Joint[i].TIM_Alive_PeriodElapsedCallback();
+                Chassis.Motor_Leg[i].TIM_Alive_PeriodElapsedCallback();
+                Chassis.Motor_Guider[i].TIM_Alive_PeriodElapsedCallback();
+            }
             // Chassis.Motor_Track[0].TIM_Alive_PeriodElapsedCallback();
             // Chassis.Motor_Track[1].TIM_Alive_PeriodElapsedCallback();
-            Chassis.Motor_Guider[0].TIM_Alive_PeriodElapsedCallback();
-            Chassis.Motor_Guider[1].TIM_Alive_PeriodElapsedCallback();
+            Chassis.BoardDM_BMI.TIM1msMod50_Alive_PeriodElapsedCallback();
             //力控底盘
             Force_Control_Chassis.TIM_100ms_Alive_PeriodElapsedCallback();
             #endif

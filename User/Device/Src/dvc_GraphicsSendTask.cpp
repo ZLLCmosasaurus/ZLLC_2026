@@ -405,7 +405,8 @@ void CarPosture_Change(float theta, uint8_t Init_Cnt)
 	// 确定操作类型
 	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
 
-	uint8_t indicatorColor = (JudgeReceiveData.Minipc_Status > 0) ? Green : Orange;
+	// uint8_t indicatorColor = (JudgeReceiveData.Minipc_Status > 0) ? Green : Orange;
+	uint8_t indicatorColor = Cyan;
 	// 绘制圆弧
 	graphic_data_struct_t *P_graphic_data;
 	P_graphic_data = Arc_Draw(1, optype, RectCenterX, RectCenterY, start_angle, end_angle, radius, radius, 10, indicatorColor, CarPostureName);

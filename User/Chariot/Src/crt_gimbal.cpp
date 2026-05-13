@@ -340,7 +340,7 @@ void Class_Gimbal::Output()
             Motor_Pitch_DM4310.Set_DM_Motor_Control_Method(DM_Motor_Control_Method_MIT_IMU_Angle);
             Tmp_Now_Pitch_Angle = Motor_Pitch_DM4310.Get_True_Angle_Pitch();
             Tmp_Now_Yaw_Angle = Motor_Yaw_DM4310.Get_True_Angle_Yaw();
-            Motor_Yaw_DM4310.PID_Angle.Set_PID_Constants(50.0f, 0.0f, 0.0f);
+            Motor_Yaw_DM4310.PID_Angle.Set_PID_Constants(32.0f, 0.0f, 0.0f);
             Motor_Yaw_DM4310.PID_Omega.Set_PID_Constants(120.0f, 1.5f, 0.0f);
             Motor_Pitch_DM4310.PID_Angle.Set_PID_Constants(22.0f, 0.0f, 0.0f);
             Motor_Pitch_DM4310.PID_Omega.Set_PID_Constants(250.0f, 5.0f, 0.0f);
@@ -381,10 +381,7 @@ void Class_Gimbal::Output()
             // 设置目标角度
             Motor_Yaw_DM4310.Set_Target_Angle_DEG(Target_Yaw_Angle);
             Motor_Pitch_DM4310.Set_Target_Angle_DEG(Target_Pitch_Angle);
-            float tmp_torque_yaw = Motor_Yaw_DM4310.Get_Target_Torque() + J * MiniPC->Get_Rx_Yaw_Acc();
-            float tmp_torque_pitch = Motor_Pitch_DM4310.Get_Target_Torque() + J * MiniPC->Get_Rx_Pitch_Acc();
-            Motor_Yaw_DM4310.Reset_Set_Out_And_Output(tmp_torque_yaw);
-            Motor_Pitch_DM4310.Reset_Set_Out_And_Output(tmp_torque_pitch);
+            
 
         }
         else if ((Get_Gimbal_Control_Type() == Gimbal_Control_Type_MINIPC) && (MiniPC->Get_MiniPC_Status() != MiniPC_Status_DISABLE))
@@ -468,8 +465,15 @@ void Class_Gimbal::TIM_Calculate_PeriodElapsedCallback()
     //PID输出
     Motor_Yaw_DM4310.TIM_PID_PeriodElapsedCallback();
     Motor_Pitch_DM4310.TIM_PID_PeriodElapsedCallback();
-
-
+    //增加上位机MPC解算前馈
+    if(Gimbal_Control_Type != Gimbal_Control_Type_DISABLE)
+    {
+        float tmp_torque_yaw = Motor_Yaw_DM4310.Get_Target_Torque() + J * MiniPC->Get_Rx_Yaw_Acc();
+        float tmp_torque_pitch = Motor_Pitch_DM4310.Get_Target_Torque() + J * MiniPC->Get_Rx_Pitch_Acc();
+        Motor_Yaw_DM4310.Reset_Set_Out_And_Output(tmp_torque_yaw);
+        Motor_Pitch_DM4310.Reset_Set_Out_And_Output(tmp_torque_pitch);
+    }
+    
 }
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

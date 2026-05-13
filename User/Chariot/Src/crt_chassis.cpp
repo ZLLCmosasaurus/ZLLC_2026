@@ -64,57 +64,41 @@ void Class_FSM_OverHeated_Detect::Reload_TIM_Status_PeriodElapsedCallback()
 
 /**
  * @brief 失能关节电机
- * 
+ *
  */
 void Class_DM_Motor_8009P::Disable()
 {
-    Set_DM_Motor_Control_Method(DM_Motor_Control_Method_MIT_OPENLOOP);
-    Set_Out(0.0f);
-    Output();
+    Set_DM_Motor_Control_Method(DM_Motor_Control_Method_MIT_POSITION);
+    Set_Target_Angle(0.0f);
+    Set_Target_Omega(0.0f);
+    Set_MIT_K_P(0.0f);
+    Set_MIT_K_D(0.0f);
+    Set_Target_Torque(0.0f);
 }
 
 /**
- * @brief 关节电机PID控制周期回调函数,需传入车体倾角度作为输入
- * 
+ * @brief 关节电机PID控制周期回调函数,
+ *
  * @param None
  */
-void Class_DM_Motor_8009P::TIM_PID_PeriodElapsedCallback()
+void Class_DM_Motor_8009P::PID_Calculate(float __Target_Value, float __Now_Value)
 {
-    switch(DM_Motor_Control_Method)
+    switch (DM_Motor_Control_Method)
     {
-        case (DM_Motor_Control_Method_MIT_Angle):
-        {
-            PID_Angle.Set_Target(Target_Angle);
-            PID_Angle.Set_Now(Data.Now_Angle_Rad); 
-            PID_Angle.TIM_Adjust_PeriodElapsedCallback();
-
-            Target_Omega = PID_Angle.Get_Out();
-            //速度环
-            PID_Omega.Set_Target(Target_Omega);
-            PID_Omega.Set_Now(Data.Now_Omega_Radian);
-            PID_Omega.TIM_Adjust_PeriodElapsedCallback();
-
-            Target_Torque = PID_Omega.Get_Out();
-            Set_Out(Target_Torque);
-        }
-        break;
-        case(DM_Motor_Control_Method_MIT_OPENLOOP):
-        {
-            Out=Out;
-        }
-        break;
-        case(DM_Motor_Control_Method_MIT_POSITION):
-        {
-
-        }
-        break;
-        default:
-        {
-            Set_Out(0.0);
-        }
-        break;
+    case (DM_Motor_Control_Method_MIT_POSITION):
+    {
+        PID_Posture.Set_Target(__Target_Value);
+        PID_Posture.Set_Now(__Now_Value);
+        PID_Posture.TIM_Adjust_PeriodElapsedCallback();
+        Error_Compensation = PID_Posture.Get_Out();
     }
-    Output();//进入父类中进行输出
+    break;
+    default:
+    {
+        Error_Compensation = 0.0f;
+    }
+    break;
+    }
 }
 
 /**
@@ -141,12 +125,12 @@ void Class_HybridTrackLeg_Chassis::Init(float __Velocity_X_Max, float __Velocity
     // 斜坡函数加减速速度Y  控制周期1ms
     Slope_Velocity_Y.Init(0.005f, 0.01f);
     //  斜坡函数加减速角度
-    Slope_Position.Init(0.0007f,0.0014f);
+    Slope_Position.Init(0.0007f, 0.0014f);
     // 斜坡函数加减速角速度
     Slope_Omega.Init(0.05f, 0.05f);
 
     // imu初始化
-    //  BoardDM_BMI.Init();
+    BoardDM_BMI.Init();
     // 过热检测状态机初始化
     FSM_OverHeated_Detect.Chassis = this;
     FSM_OverHeated_Detect.Init(2, 0);
@@ -164,7 +148,8 @@ void Class_HybridTrackLeg_Chassis::Init(float __Velocity_X_Max, float __Velocity
 
     // 关节电机PID初始化
     // DM速度位置控制模式Kp、Ki参数需要用上位机调节
-
+    Motor_Leg[0].PID_Posture.Init(1.0f, 0.0f, 0.0f, 0.0f);
+    Motor_Leg[1].PID_Posture.Init(1.0f, 0.0f, 0.0f, 0.0f);
     // 关节电机ID初始化
     Motor_Joint[0].Init(&hfdcan2, DM_Motor_ID_0xA1, DM_Motor_Control_Method_POSITION_OMEGA, 0, PI, 20.94359f, 20.0f);
     Motor_Joint[1].Init(&hfdcan2, DM_Motor_ID_0xA2, DM_Motor_Control_Method_POSITION_OMEGA, 0, PI, 20.94359f, 20.0f);
@@ -273,221 +258,123 @@ void Class_HybridTrackLeg_Chassis::Speed_Resolution()
 }
 #endif
 
-
 /**
- * @brief 正向运动学：由主动杆角度 α 计算末端距离 AE
- * 
- * @param alpha 主动杆 AD 与水平方向夹角（弧度），有效范围 [0, π/2]
- * 
- * @return AE 距离（与杆长同单位），若输入导致几何非法则返回 -1.0f
- */
-float Class_HybridTrackLeg_Chassis::calc_AE_from_alpha(float alpha)
-{
-    // 1. 对角线 BD
-    float cos_bad = arm_cos_f32(PI/4.0f + alpha);
-    float l_bd_sq = Square(L2) + Square(L4) - 2.0f * L2 * L4 * cos_bad;
-    if (l_bd_sq < 0.0f) return -1.0f;
-    float l_bd = sqrtf(l_bd_sq);
-    if (l_bd < 1e-6f) return -1.0f;
-
-    // 2. 夹角 β
-    float cos_term = arm_cos_f32(PI/4.0f + alpha);
-
-    float numerator1 = Square(L1) + Square(L4) - 2.0f * L1 * L4 * cos_term + Square(L1) - Square(L4);
-    float arg1 = numerator1 / (2.0f * l_bd * L1);
-    if (arg1 > 1.0f) arg1 = 1.0f;
-    else if (arg1 < -1.0f) arg1 = -1.0f;
-
-    float numerator2 = Square(L1) + Square(L4) - 2.0f * L1 * L4 * cos_term + Square(L23) - Square(L3);
-    float arg2 = numerator2 / (2.0f * l_bd * L23);
-    if (arg2 > 1.0f) arg2 = 1.0f;
-    else if (arg2 < -1.0f) arg2 = -1.0f;
-
-    float beta = (float)PI - acosf(arg1) - acosf(arg2) - alpha;
-
-    // 3. AE 距离
-    float cos_ab = arm_cos_f32(alpha + beta);
-    float ae_sq = Square(L2) + Square(L1) - 2.0f * L2 * L1 * cos_ab;
-    if (ae_sq < 0.0f) return -1.0f;
-    return sqrtf(ae_sq);
-}
-
-/**
- * @brief 方程一残差函数：计算 f(AE) = 左式 - 右式
- * 
- * @param AE       待求解的末端距离（与杆长同单位）
- * @param delta_h  测距模块测得的竖直高度差（单位同杆长，≤200）
- * @param omega    输入角度（弧度），范围 [0, π/2]
- * 
- * @return 残差值（左 - 右），用于求根算法
- */
-float Class_HybridTrackLeg_Chassis::residual_AE_omega(float AE, float delta_h, float omega)
-{
-    // 左侧 = AE / sqrt(AE^2 + L^2)
-    float denom = sqrtf(AE*AE + Square(PARAM_L));
-    if (denom < 1e-6f) return 1e6f;
-    float left = AE / denom;
-
-    // 右侧 = sin( asin(delta_h/sqrtf(L^2+AE^2)) - omega )
-    float arcsin_arg = delta_h / sqrtf(Square(PARAM_L) + AE*AE);
-    // 数值稳定：参数必须 ≤ 1
-    if (arcsin_arg > 1.0f) arcsin_arg = 1.0f;
-    else if (arcsin_arg < -1.0f) arcsin_arg = -1.0f;
-
-    float right = arm_sin_f32(asinf(arcsin_arg) - omega);
-
-    return left - right;
-}
-
-/**
- * @brief 二分法求解 AE：给定 ω 和 Δh，解出对应的末端距离 AE
- * 
- * @param omega    输入角度（弧度）
- * @param delta_h  测距模块测得的竖直高度差
- * @param low      AE 搜索区间下界（>0）
- * @param high     AE 搜索区间上界
- * @param tol      收敛容差
- * 
- * @return 解出的 AE 值，若失败返回 -1.0f
- */
-float Class_HybridTrackLeg_Chassis::solve_AE_from_omega(float omega, float delta_h,
-                          float low, float high, float tol)
-{
-    if (low <= 0.0f || high <= low) return -1.0f;
-
-    float f_low = residual_AE_omega(low, delta_h, omega);
-    float f_high = residual_AE_omega(high, delta_h, omega);
-
-    // 若区间两端同号，说明根可能不在区间内，尝试简单扩大
-    if (f_low * f_high > 0.0f) {
-        // 可在此处增加自适应扩大逻辑，或直接返回错误
-        return -1.0f;
-    }
-
-    float mid;
-    for (int i = 0; i < 40; i++) {   // 40 次迭代足够单精度
-        mid = (low + high) * 0.5f;
-        float f_mid = residual_AE_omega(mid, delta_h, omega);
-        if (fabsf(f_mid) < tol) break;
-
-        if (f_low * f_mid <= 0.0f) {
-            high = mid;
-            f_high = f_mid;
-        } else {
-            low = mid;
-            f_low = f_mid;
-        }
-    }
-    return mid;
-}
-
-/**
- * @brief 反解残差函数：计算 g(α) = AE_target - calc_AE_from_alpha(α)
- * 
- * @param alpha      主动杆角度（弧度）
- * @param AE_target  期望的末端距离
- * 
- * @return 残差值（目标 AE - 当前 α 对应的 AE），用于求根
- */
-float Class_HybridTrackLeg_Chassis::residual_alpha_AE(float alpha, float AE_target)
-{
-    float ae = calc_AE_from_alpha(alpha);
-    if (ae < 0.0f) return 1e6f;   // 无效 α 返回大残差
-    return AE_target - ae;
-}
-
-/**
- * @brief 二分法求解 α：给定目标 AE，反解主动杆角度 α
- * 
- * @param AE_target  期望的末端距离
- * @param low        α 搜索区间下界（弧度）
- * @param high       α 搜索区间上界（弧度）
- * @param tol        收敛容差
- * 
- * @return 解出的 α 值（弧度），失败返回 -1.0f
- */
-float Class_HybridTrackLeg_Chassis::solve_alpha_from_AE(float AE_target,
-                          float low, float high, float tol)
-{
-    if (low >= high) return -1.0f;
-
-    float f_low = residual_alpha_AE(low, AE_target);
-    float f_high = residual_alpha_AE(high, AE_target);
-
-    if (f_low * f_high > 0.0f) {
-        return -1.0f;   // 根不在区间内
-    }
-
-    float mid;
-    for (int i = 0; i < 40; i++) {
-        mid = (low + high) * 0.5f;
-        float f_mid = residual_alpha_AE(mid, AE_target);
-        if (fabsf(f_mid) < tol) break;
-
-        if (f_low * f_mid <= 0.0f) {
-            high = mid;
-            f_high = f_mid;
-        } else {
-            low = mid;
-            f_low = f_mid;
-        }
-    }
-    return mid;
-}
-
-/**
- * @brief 主函数：由输入角 ω 和测距高度 Δh 计算主动杆角度 α
- * 
- * @param omega    输入角度（弧度），范围 [0, π/2]
- * @param delta_h  测距模块测得的竖直高度差（单位同杆长，≤200）
- * 
- * @return 对应的 α 值（弧度），失败返回 -1.0f
- */
-float Class_HybridTrackLeg_Chassis::calc_alpha_from_omega_dh(float omega, float delta_h)
-{
-    DWT_GetDeltaT(&cnt_num);
-    // 输入范围检查（可选）
-    if (omega < 0.0f || omega > 1.5708f) return -1.0f;
-    if (delta_h < 0.0f || delta_h > 200.0f) return -1.0f;
-
-    // 1. 由 ω 和 Δh 求解 AE
-    //    AE 搜索区间 [1.0, 500.0] 覆盖实际可能范围
-    float AE = solve_AE_from_omega(omega, delta_h, 1.0f, 500.0f, 1e-4f);
-    if (AE < 0.0f) return -1.0f;
-
-    // 2. 由 AE 求解 α
-    //    α 搜索区间 [0.0, π/2]
-    float alpha = solve_alpha_from_AE(AE, 0.0f, 1.5708f, 1e-4f);
-    dt_calc = DWT_GetDeltaT(&cnt_num);
-    return alpha;
-}
-
-/**
- * @brief 腿部运动学计算
- * 
- * @param __delta_h 竖直高度差，单位为毫米
- * @param __omega 车体倾斜角，单位为弧度
- * 
- * @return 车体倾斜角omega和关机电机转动的角度alpha之间的关系
- */
-float Class_HybridTrackLeg_Chassis::Leg_Kinematic_Computation(float __delta_h, float __omega)
-{
-    float alpha = calc_alpha_from_omega_dh(__omega, __delta_h) - alpha_offset;
-    return alpha;
-}
-
-/** 
  * @brief 角度转换为相对角度,根据DM板放置的位置改变,单位为弧度
  *
-*/
+ */
 void Class_HybridTrackLeg_Chassis::Transform_Angle_To_Relative()
 {
     Chassis_Pitch = BoardDM_BMI.Get_Rad_Roll();
-    Error_Pitch = Chassis_Pitch - Last_Chassis_Pitch;
-    Accumulated_Angle += Error_Pitch * K_INCR;
-    Last_Chassis_Pitch = Chassis_Pitch;
-    Error_Angle = Referance_Angle - Chassis_Pitch;
+}
 
+/**
+ * @brief 更新增量式位置累加器，限制单次步长及总行程
+ * @param pitch  当前车体俯仰角 (rad)
+ */
+void Class_HybridTrackLeg_Chassis::Update_LegPositionAccumulator(float pitch)
+{
+    float d_pitch = pitch - last_pitch_;
+    last_pitch_ = pitch;
+
+    float incr = K_INCR * d_pitch;
+
+    // 限制单周期位置增量（位置变化速率）
+    if (incr > MAX_ANGLE_INCR)
+        incr = MAX_ANGLE_INCR;
+    if (incr < -MAX_ANGLE_INCR)
+        incr = -MAX_ANGLE_INCR;
+
+    accumulated_angle_ += incr;
+
+    // 总行程限幅
+    if (accumulated_angle_ > MAX_ANGLE)
+        accumulated_angle_ = MAX_ANGLE;
+    if (accumulated_angle_ < -MAX_ANGLE)
+        accumulated_angle_ = -MAX_ANGLE;
+}
+
+/**
+ * @brief 对姿态PID输出的原始速度做斜坡与限幅处理
+ * @param raw_velocity  姿态PID输出（期望速度，rad/s）
+ * @return 规划后的速度指令 (rad/s)
+ */
+float Class_HybridTrackLeg_Chassis::Plan_LegVelocity(float raw_velocity)
+{
+    float vel_error = raw_velocity - last_velocity_target_;
+    float max_step = VELOCITY_SLEW * CONTROL_PERIOD;
+
+    if (vel_error > max_step)
+        vel_error = max_step;
+    if (vel_error < -max_step)
+        vel_error = -max_step;
+
+    float velocity_target = last_velocity_target_ + vel_error;
+    last_velocity_target_ = velocity_target;
+
+    // 速度幅值限幅
+    if (velocity_target > MAX_VELOCITY)
+        velocity_target = MAX_VELOCITY;
+    if (velocity_target < -MAX_VELOCITY)
+        velocity_target = -MAX_VELOCITY;
+
+    return velocity_target;
+}
+
+/**
+ * @brief 计算带斜坡的前馈力矩
+ * @param velocity_target  规划后的目标速度 (rad/s)
+ * @param error_pitch      当前角度误差 (rad)
+ */
+void Class_HybridTrackLeg_Chassis::Calc_LegFeedforwardTorque(float velocity_target, float error_pitch)
+{
+    // 根据工况设定目标力矩
+    bool need_high_torque = (fabsf(velocity_target) > TFF_THRESHOLD_V) &&
+                            (fabsf(error_pitch) > 0.02f);
+
+    if (need_high_torque) {
+        target_tff_ = TFF_AGGRESSIVE_LEVEL;   // 需要大力矩时设定目标值
+        // 方向与速度一致
+        if (velocity_target < 0) target_tff_ = -target_tff_;
+    } else {
+        // 维持期可以保持一个小力矩或者归零
+        target_tff_ = TFF_HOLD_LEVEL;
+        if (velocity_target < 0) target_tff_ = -target_tff_;
+    }
+
+    // 斜坡升降：让实际力矩以固定速率追踪目标
+    float max_step = TFF_RAMP_RATE * CONTROL_PERIOD;  // 单周期最大变化量
+    if (target_tff_ > tff_hold_) {
+        tff_hold_ += max_step;
+        if (tff_hold_ > target_tff_) tff_hold_ = target_tff_;
+    } else if (target_tff_ < tff_hold_) {
+        tff_hold_ -= max_step;
+        if (tff_hold_ < target_tff_) tff_hold_ = target_tff_;
+    }
+}
+
+/**
+ * @brief 向左右腿电机发送MIT指令
+ * @param velocity_target  规划后的速度指令
+ * @param kp_stance        MIT刚度系数
+ * @param kd_stance        MIT阻尼系数
+ */
+void Class_HybridTrackLeg_Chassis::Send_LegMITCommands(float velocity_target, float kp_stance, float kd_stance)
+{
+    // 左腿
+    Motor_Leg[0].Set_Target_Constants(
+        accumulated_angle_, // 目标角度
+        velocity_target,    // 目标速度
+        tff_hold_,          // 前馈力矩
+        kp_stance,
+        kd_stance);
+
+    // 右腿（取反，按实际机械对称性调整）
+    Motor_Leg[1].Set_Target_Constants(
+        -accumulated_angle_,
+        -velocity_target,
+        -tff_hold_,
+        kp_stance,
+        kd_stance);
 }
 
 /**
@@ -501,69 +388,80 @@ void Class_HybridTrackLeg_Chassis::Jointleg_Controller()
     Motor_Leg[1].Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
     switch (Pose_Control_Type)
     {
-        case (Pose_DISABLE): // 失能关节，通常防止过热
+    case Pose_DISABLE: // 失能关节，通常防止过热
+    {
+        for (int i = 0; i < 2; i++)
         {
-            //关节电机失能
-            Motor_Leg[0].Disable();
-            Motor_Leg[1].Disable();
-            //PID积分清零
-            Motor_Leg[0].PID_Angle.Set_Integral_Error(0.0f);
-            Motor_Leg[0].PID_Omega.Set_Integral_Error(0.0f);
-            Motor_Leg[1].PID_Angle.Set_Integral_Error(0.0f);
-            Motor_Leg[1].PID_Omega.Set_Integral_Error(0.0f);
-            //设定输出力矩清零
-            Motor_Leg[0].Set_Target_Torque(0.0f);
-            Motor_Leg[1].Set_Target_Torque(0.0f);
+            // 关节电机失能
+            Motor_Leg[i].Disable();
+            // PID积分清零
+            Motor_Leg[i].PID_Posture.Set_Integral_Error(0.0f);
         }
-        break;
-        case (Pose_ENABLE):     // 使能，上台阶使用，自动根据IMU反馈调整腿部姿态
+    }
+    break;
+    case Pose_ENABLE: // 使能，上台阶使用，自动根据IMU反馈调整腿部姿态
+    {
+        Referance_Angle = 0.0f;
+        Error_Pitch = Referance_Angle - Chassis_Pitch;
+
+        // 更新位置累加器（内部处理增量、限幅）
+        Update_LegPositionAccumulator(Chassis_Pitch);
+
+        // 
+        for (int i = 0; i < 2; i++)
         {
-            //设置关节电机控制方式为角度MIT模式
-            Motor_Leg[0].Set_DM_Motor_Control_Method(DM_Motor_Control_Method_MIT_POSITION);
-            Motor_Leg[1].Set_DM_Motor_Control_Method(DM_Motor_Control_Method_MIT_POSITION);
-            //设置车体倾斜角度目标角度为0，即使车体保持水平，腿部根据车体倾角度自动调整姿态
-            Referance_Angle = 0.0f;
-            // Motor_Leg[0].Set_Target_Angle(Motor_Leg[0].Target_Angle_Calc);
-            // Motor_Leg[1].Set_Target_Angle(Motor_Leg[1].Target_Angle_Calc);
-            Motor_Leg[1].Set_Target_Angle(0.32f);
+            Motor_Leg[i].Set_DM_Motor_Control_Method(DM_Motor_Control_Method_MIT_POSITION);
+            Motor_Leg[i].PID_Calculate(Referance_Angle, Chassis_Pitch);
         }
-        break;
-        case (Pose_STANDBY):    // 待机，下台阶前使用，保持腿部姿态为小角度定值
-        {
-            //设置关节电机控制方式为角度MIT模式
-            Motor_Leg[0].Set_DM_Motor_Control_Method(DM_Motor_Control_Method_MIT_POSITION);
-            Motor_Leg[1].Set_DM_Motor_Control_Method(DM_Motor_Control_Method_MIT_POSITION);
-            Referance_Angle = - PI * ( 20.0f / 180.0f);
-            // Motor_Leg[0].Set_Target_Angle(Motor_Leg[0].Target_Angle_Calc);
-            // Motor_Leg[1].Set_Target_Angle(Motor_Leg[1].Target_Angle_Calc);
-            Motor_Leg[1].Set_Target_Angle(0.0f);
-        }
-        break;
-        case (Pose_CONTRACT):   // 缩起，上台阶后使用，腿部收缩
-        {
-            //设置关节电机控制方式为角度MIT模式
-            Motor_Leg[0].Set_DM_Motor_Control_Method(DM_Motor_Control_Method_MIT_POSITION);
-            Motor_Leg[1].Set_DM_Motor_Control_Method(DM_Motor_Control_Method_MIT_POSITION);
-            Motor_Leg[0].Set_Target_Angle(Set_Leg_Angle[0] / 180.0f * PI);
-            Motor_Leg[1].Set_Target_Angle(-Set_Leg_Angle[0] / 180.0f * PI);
-        }
-        break;
+        float raw_velocity = Motor_Leg[0].Error_Compensation;
+
+        // 速度规划（斜坡+限幅）
+        float velocity_cmd = Plan_LegVelocity(raw_velocity);
+
+        // 计算前馈力矩
+        Calc_LegFeedforwardTorque(velocity_cmd, Error_Pitch);
+
+        // 发送MIT指令
+        Send_LegMITCommands(velocity_cmd, 0.0F, 0.0F);
+
+    }
+    break;
+    case Pose_STANDBY: // 待机，下台阶前使用，保持腿部姿态为小角度定值
+    {
+        // 设置关节电机控制方式为角度MIT模式
+        Motor_Leg[0].Set_DM_Motor_Control_Method(DM_Motor_Control_Method_MIT_POSITION);
+        Motor_Leg[1].Set_DM_Motor_Control_Method(DM_Motor_Control_Method_MIT_POSITION);
+        Referance_Angle = -PI * (20.0f / 180.0f);
+        // Motor_Leg[0].Set_Target_Angle(Motor_Leg[0].Target_Angle_Calc);
+        // Motor_Leg[1].Set_Target_Angle(Motor_Leg[1].Target_Angle_Calc);
+        Motor_Leg[1].Set_Target_Angle(0.0f);
+    }
+    break;
+    case Pose_CONTRACT: // 缩起，上台阶后使用，腿部收缩
+    {
+        // 设置关节电机控制方式为角度MIT模式
+        Motor_Leg[0].Set_DM_Motor_Control_Method(DM_Motor_Control_Method_MIT_POSITION);
+        Motor_Leg[1].Set_DM_Motor_Control_Method(DM_Motor_Control_Method_MIT_POSITION);
+        Motor_Leg[0].Set_Target_Angle(Set_Leg_Angle[0] / 180.0f * PI);
+        Motor_Leg[1].Set_Target_Angle(-Set_Leg_Angle[0] / 180.0f * PI);
+    }
+    break;
     }
 
 #endif
-#ifdef LOCKED_SWITCH                 // 自动伸缩腿，已注释，不过目前是开环，后期可做成闭环
+#ifdef LOCKED_SWITCH               // 自动伸缩腿，已注释，不过目前是开环，后期可做成闭环
     static uint16_t mod2s = 0;     // 2s重置计数器
     static uint8_t pose_state = 1; // 位姿控制状态 0-Enable 1-Standby
     Chassis_Pitch = BoardDM_BMI.Get_Angle_Pitch();
     Error_Pitch = Chassis_Pitch;
     Joint_Heat = Motor_Joint[1].Get_Now_Rotor_Temperature();
- 
+
     static uint16_t mod5 = 0;
-    mod5 ++;
-    if(mod5 = 5)
+    mod5++;
+    if (mod5 = 5)
     {
         Slope_Position.TIM_Calculate_PeriodElapsedCallback();
-        mod5 =0;
+        mod5 = 0;
     }
 
     switch (Pose_Control_Type)
@@ -615,15 +513,14 @@ void Class_HybridTrackLeg_Chassis::Jointleg_Controller()
 #endif
 
     for (int i = 0; i < 2; i++)
-    {  
-        #ifdef LOCKED_SWITCH
+    {
+#ifdef LOCKED_SWITCH
         Motor_Joint[i].TIM_Process_PeriodElapsedCallback();
-        #endif
-        #ifdef AUTO_SWITCH
-        Motor_Leg[i].TIM_Process_PeriodElapsedCallback();
-        #endif
+#endif
+#ifdef AUTO_SWITCH
+// Motor_Leg[i].TIM_Process_PeriodElapsedCallback();
+#endif
     }
-
 }
 
 /**
@@ -654,11 +551,10 @@ void Class_HybridTrackLeg_Chassis::Track_Controller()
     break;
     }
 
-    for (int i = 0 ; i < 2; i++)
+    for (int i = 0; i < 2; i++)
     {
         // Motor_Track[i].TIM_PID_PeriodElapsedCallback();
     }
-
 }
 
 /**
@@ -703,7 +599,6 @@ void Class_HybridTrackLeg_Chassis::Guider_Controller()
 void Class_HybridTrackLeg_Chassis::Switch_Pose()
 {
     Transform_Angle_To_Relative(); // 将IMU获取的车体倾角转换为相对角度，作为关节电机控制的输入
-    
 
     // 计算回调函数
     static uint8_t mod5 = 0;
@@ -712,12 +607,11 @@ void Class_HybridTrackLeg_Chassis::Switch_Pose()
     {
         mod5 = 0;
         Jointleg_Controller(); // 腿
-        Track_Controller();  // 履带
-        Guider_Controller(); // 导轮
+        Track_Controller();    // 履带
+        Guider_Controller();   // 导轮
     }
 }
 #endif
-
 
 #ifdef TRACK_LEG
 /**
@@ -746,10 +640,10 @@ void Class_HybridTrackLeg_Chassis::TIM_Calculate_PeriodElapsedCallback(Enum_Spri
 
 #ifdef POWER_CONTROL
     Power_Management.Max_Power = Supercap.Get_Chassis_Device_LimitPower();
-    
+
     Power_Limit.Power_Task(Power_Management);
 
-    for(int i = 0, j = 0; i < 4; i+=2, ++j)
+    for (int i = 0, j = 0; i < 4; i += 2, ++j)
     {
         Power_Management.Motor_Data[i].feedback_omega = Motor_Track[j].Get_Now_Omega_Radian() * M3508_REDUATION * RAD_TO_RPM;
         Power_Management.Motor_Data[i].feedback_torque = Motor_Track[j].Get_Now_Torque() * M3508_CMD_CURRENT_TO_TORQUE;
@@ -758,7 +652,6 @@ void Class_HybridTrackLeg_Chassis::TIM_Calculate_PeriodElapsedCallback(Enum_Spri
         Motor_Track[j].Reset_Out_And_Output(Power_Management.Motor_Data[i].output);
     }
 #endif
-
 }
 #endif
 

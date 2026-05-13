@@ -110,6 +110,11 @@ void Class_FSM_Heat_Detect::Reload_TIM_Status_PeriodElapsedCallback()
     {
         Heat = 0;
     }
+    // 发射间隔冷却
+    if (Shoot_Cooldown_Time > 0)
+    {
+        Shoot_Cooldown_Time--;
+    }
 
 }
 
@@ -683,7 +688,7 @@ void Class_Booster::TIM_Calculate_PeriodElapsedCallback()
     //卡弹处理
     FSM_Antijamming.Reload_TIM_Status_PeriodElapsedCallback();
     //弹速调整
-    //TIM_Adjust_Bullet_Velocity_PeriodElapsedCallback();
+    // TIM_Adjust_Bullet_Velocity_PeriodElapsedCallback();
 	// Output();
      kalman_update(&Kf_Omega,Motor_Driver.Get_Now_Omega_Radian());
     //PID输出

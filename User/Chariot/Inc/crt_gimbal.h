@@ -118,7 +118,6 @@ class Class_Gimbal_Yaw_Motor_DM4310 : public Class_DM_Motor_J4310
 public:
     //陀螺仪获取云台角速度
     Class_IMU *IMU;
-
     // 加速度计KF
     KalmanFilter Kf_Gyro_Yaw;
 

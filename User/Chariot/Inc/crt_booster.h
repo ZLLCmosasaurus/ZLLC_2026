@@ -84,6 +84,8 @@ public:
     Class_Booster *Booster;
 
     float Heat;
+    uint16_t Shoot_Cooldown_Time = 0;
+    uint16_t Shoot_Cooldown_Set = 150;  // ms
 
     void Reload_TIM_Status_PeriodElapsedCallback();
 };

@@ -184,6 +184,7 @@ public:
     inline void Set_Target_Encoder_Position(float __Target_Encoder_Position);
     inline void Set_Target_Omega_DEG(float __Target_Omega_DEG);
     inline void Set_Target_Torque(float __Target_Torque);
+    inline void Set_Target_Constants(float __Target_Angle, float __Target_Omega, float __Target_Torque, float __MIT_K_P, float __MIT_K_D);
     inline void Set_Out(float __Out);
     inline void Reset_Set_Out_And_Output(float __Out);
 	inline void Limit_Out();
@@ -518,6 +519,24 @@ void Class_DM_Motor_J4310::Set_Target_Omega_DEG(float __Target_Omega_DEG)
 void Class_DM_Motor_J4310::Set_Target_Torque(float __Target_Torque)
 {
     Target_Torque = __Target_Torque;
+}
+
+/**
+ * @brief 设定电机控制参数
+ * 
+ * @param __Target_Angle 目标角度 rad
+ * @param __Target_Omega 目标角速度 rad/s
+ * @param __Target_Torque 前馈力矩
+ * @param __MIT_K_P 位置环系数
+ * @param __MIT_K_D 速度环系数
+ */
+void Class_DM_Motor_J4310::Set_Target_Constants(float __Target_Angle, float __Target_Omega, float __Target_Torque, float __MIT_K_P, float __MIT_K_D)
+{
+    Target_Angle = __Target_Angle;
+    Target_Omega = __Target_Omega;
+    Target_Torque = __Target_Torque;
+    MIT_K_P = __MIT_K_P;
+    MIT_K_D = __MIT_K_D;
 }
 
 /**

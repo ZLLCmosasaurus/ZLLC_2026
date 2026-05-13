@@ -226,6 +226,7 @@ public:
         void CAN_Chassis_Rx_Gimbal_Callback_1();
         void CAN_Chassis_Tx_Gimbal_Callback_1();
         void Control_Chassis_Omega_TIM_PeriodElapsedCallback();
+        inline float Get_Chassis_Reference_Angle();
         inline float Get_Gimbal_Yaw_IMU_Angle();
         inline void Set_Gimbal_Yaw_Angle(float __Angle);
         inline void  Set_Gimbal_Pitch_Angle(float __Angle);
@@ -369,7 +370,7 @@ protected:
         float DR16_Pitch_Resolution = 0.003f * PI;
 
         //DR16鼠标云台yaw灵敏度系数, 不同鼠标不同参数
-        float DR16_Mouse_Yaw_Angle_Resolution = 57.8*4.0f;
+        float DR16_Mouse_Yaw_Angle_Resolution = 57.8*2.0f;
         //DR16鼠标云台pitch灵敏度系数, 不同鼠标不同参数
         float DR16_Mouse_Pitch_Angle_Resolution = 57.8f;
         
@@ -597,6 +598,10 @@ protected:
     float Class_Chariot::Get_Gimbal_Yaw_IMU_Angle()
     {
         return (Yaw_IMU_Angle);
+    }
+    float Class_Chariot::Get_Chassis_Reference_Angle()
+    {
+        return Reference_Angle;
     }
     void Class_Chariot::Set_Gimbal_Yaw_Angle(float __Angle)
     {

@@ -127,15 +127,16 @@ void Chassis_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
     {
     
     #ifdef TRACK_LEG
-        case(0xFB):
+        case(0x21):
         {
             chariot.Chassis.Motor_Joint[0].CAN_RxCpltCallback(CAN_RxMessage->Data);
+            // chariot.Chassis.Motor_Leg[0].CAN_RxCpltCallback(CAN_RxMessage->Data);
             break;
         }
         case(0x22):
         {
-            //chariot.Chassis.Motor_Joint[1].CAN_RxCpltCallback(CAN_RxMessage->Data);
-					  chariot.Chassis.Motor_Leg[1].CAN_RxCpltCallback(CAN_RxMessage->Data);
+            chariot.Chassis.Motor_Joint[1].CAN_RxCpltCallback(CAN_RxMessage->Data);
+		    // chariot.Chassis.Motor_Leg[1].CAN_RxCpltCallback(CAN_RxMessage->Data);
             break;
         }
         case(0x201):
@@ -460,7 +461,7 @@ void Task100us_TIM4_Callback()
     Referee_Sand_Cnt++;
     //Imu读取任务
     //chariot.Force_Control_Chassis.Boardc_BMI.TIM_Calculate_PeriodElapsedCallback();
-    // chariot.Chassis.BoardDM_BMI.TIM_Calculate_PeriodElapsedCallback();
+    chariot.Chassis.BoardDM_BMI.TIM_Calculate_PeriodElapsedCallback();
     #elif defined(GIMBAL)
     dt = DWT_GetDeltaT(&cnt_last);
         // 单给IMU消息开的定时器 ims
@@ -520,9 +521,9 @@ void Task1ms_TIM5_Callback()
         #ifdef CHASSIS
 
         #endif
-       // __disable_irq();
+
         chariot.TIM_Calculate_PeriodElapsedCallback();
-      //  __enable_irq();
+
         
     /****************************** 驱动层回调函数 1ms *****************************************/ 
         //统一打包发送
@@ -679,6 +680,7 @@ extern "C" void Task_Init()
 		JudgeReceiveData.Booster_bullet_num = chariot.Booster_bullet_num-chariot.Booster_bullet_num_before;
         JudgeReceiveData.MiniPC_Aim_Status = chariot.Aim_Status;      // 自瞄是否控制打弹
 		JudgeReceiveData.Minipc_Mode = chariot.MiniPC_Mode; // 上位机模式
+        JudgeReceiveData.Chassis_Gimbal_Diff = fabsf(chariot.Motor_Yaw_DM4310.Get_Now_Radian() - chariot.Get_Chassis_Reference_Angle());//更新底盘朝向
         if (chariot.Referee_UI_Refresh_Status == Referee_UI_Refresh_Status_ENABLE)
             Init_Cnt = 10;
     }

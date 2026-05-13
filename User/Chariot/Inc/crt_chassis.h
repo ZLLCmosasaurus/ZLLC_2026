@@ -80,9 +80,20 @@
 #define M2006_REDUCTION_RATIO 36.000000f // 
 #define M3508_REDUCTION_RATIO 19.000000f // 
 #define GM6020_ENCODER_ANGLE 8192.0f
-
 #define RAD_TO_8191 8191.0f / PI / 2.0f
-#define K_INCR  0.0f// 增量系数，通过实验标定(单位：rad / rad)
+
+#define K_INCR           0.8f     // 增量前馈系数，通过实验标定(单位：rad / rad)
+#define MAX_ANGLE_INCR   0.05f    // 单周期最大位置增量 (rad)
+#define MAX_ANGLE        0.6f     // 位置最大值 (rad)
+#define MAX_VELOCITY     0.6f     // 目标速度绝对值上限 (rad/s)
+#define VELOCITY_SLEW    2.0f    // 速度斜坡变化率限制 (rad/s^2)
+#define TFF_PEAK         2.5f     // 前馈力矩峰值 (Nm)
+#define TFF_DECAY        0.9f     // 力矩衰减系数 (每周期)
+#define TFF_THRESHOLD_V  0.05f     // 触发大扭矩的速度阈值 (rad/s)
+#define CONTROL_PERIOD   0.005f   // 控制周期
+#define TFF_RAMP_RATE   5.0f    // 力矩上升速率 (Nm/s)
+#define TFF_HOLD_LEVEL  4.0f    // 维持时的基础力矩（可选，抵消重力）
+#define TFF_AGGRESSIVE_LEVEL 10.0f  // 大力矩目标值
 #endif
 /* Exported types ------------------------------------------------------------*/
 class Class_HybridTrackLeg_Chassis;
@@ -163,13 +174,13 @@ class Class_DM_Motor_8009P : public Class_DM_Motor_J4310
 {
 public:
     Class_IMU *IMU;
+    Class_PID PID_Posture; // 姿态环
 
     void Disable();
-    void TIM_PID_PeriodElapsedCallback();
+    void PID_Calculate(float __Target_Value, float __Now_Value);
 
     float Target_Angle_Calc; // 目标角度，单位为弧度
-    float K_P;
-    float K_D;
+    float Error_Compensation; // 误差补偿
 };
 
 /**
@@ -253,14 +264,12 @@ public:
     inline void Set_Velocity_Y_Max(float __Velocity_Y_Max);
     inline void Set_Velocity_X_Max(float __Velocity_X_Max);
 
-    float calc_AE_from_alpha(float alpha);
-    float residual_AE_omega(float AE, float delta_h, float omega);
-    float calc_alpha_from_omega_dh(float omega, float delta_h);
-    float solve_AE_from_omega(float omega, float delta_h,float low, float high, float tol);
-    float residual_alpha_AE(float alpha, float AE_target);
-    float solve_alpha_from_AE(float AE_target,float low, float high, float tol);
 
     void TIM_Calculate_PeriodElapsedCallback(Enum_Sprint_Status __Sprint_Status);
+    void Update_LegPositionAccumulator(float pitch);
+    float Plan_LegVelocity(float raw_velocity);
+    void Calc_LegFeedforwardTorque(float velocity_target, float error_pitch);
+    void Send_LegMITCommands(float velocity_target, float kp_stance, float kd_stance);
 
 protected:
     //初始化相关常量
@@ -293,6 +302,11 @@ protected:
     // 参考角度，单位为弧度
     float Referance_Angle = 0.0f; 
 
+    float accumulated_angle_ = 0.0f;    // 累加位置偏置
+    float last_pitch_ = 0.0f;           // 上一周期俯仰角
+    float last_velocity_target_ = 0.0f; // 上一周期速度指令
+    float target_tff_ = 0.0f;      // 目标前馈力矩
+    float tff_hold_ = 0.0f;        // 经斜坡后的实际输出力矩
 
     //读变量
 
@@ -305,6 +319,8 @@ protected:
     float Accumulated_Angle = 0.0f;
     //姿态环角度差值
     float Error_Angle = 0.0f;
+
+
 
     //当前关节电机温度
     float Joint_Heat = 0.0f;
@@ -340,7 +356,7 @@ protected:
     //缩伸腿角度
     float Set_Leg_Angle[2] = {0.0f, -0.73f};
     //缩伸腿速度
-    float Set_Leg_Velocity[2] = {2.5f, -1.0f};
+    float Set_Leg_Velocity[2] = {2.5f, -0.6f};
 
     //内部函数
     void Transform_Angle_To_Relative();
@@ -349,7 +365,6 @@ protected:
     void Jointleg_Controller();
     void Track_Controller();
     void Guider_Controller();
-    float Leg_Kinematic_Computation(float __delta_h, float __omega);
 };
 /* Exported variables --------------------------------------------------------*/
 
