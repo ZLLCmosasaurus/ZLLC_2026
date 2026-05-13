@@ -220,8 +220,7 @@ void Class_Gimbal::Output()
 
             }
 
-            if (MiniPC->Get_mode() == 1 || MiniPC->Get_mode() == 2 ||
-                (MiniPC->Get_mode() == 0 && MiniPC->Get_Rx_Yaw_Angle() == 0.0f && MiniPC->Get_Rx_Pitch_Angle() == 0.0f))
+            if (MiniPC->Get_mode() == 1 || MiniPC->Get_mode() == 2 || MiniPC->Get_mode() == 3)
             { // 当进入巡航或者目标丢失时，进入巡航状态
                 Motor_Yaw.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
                 Motor_Pitch.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
@@ -229,7 +228,7 @@ void Class_Gimbal::Output()
                 float MiniPC_Target_Yaw = MiniPC->Get_Rx_Yaw_Angle();
                 float MiniPC_Target_Pitch = MiniPC->Get_Rx_Pitch_Angle();
 
-                if (MiniPC->Get_mode() == 0)
+                if (MiniPC->Get_mode() == 3)
                 {
                     Target_Yaw_Angle = pre_yaw_angle;
                     Target_Pitch_Angle = pre_pitch_angle;
@@ -257,7 +256,7 @@ void Class_Gimbal::Output()
                 Motor_Pitch.Set_Transform_Target_Vel(MiniPC->Get_pitch_vel() / 57.3f);
                 Motor_Pitch.Set_Transform_Target_Acc(MiniPC->Get_pitch_acc() / 57.3f);
 
-                if (MiniPC->Get_mode() == 0)
+                if (MiniPC->Get_mode() == 3)
                 {
                     last_mode_for_cruise = 1;
                 }
