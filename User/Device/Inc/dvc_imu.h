@@ -18,6 +18,7 @@
 //#include "dvc_boardc_ist8310.h"
 #include "alg_MahonyAHRS.h"
 #include "alg_pid.h"
+#include "dvc_lkmotor.h"
 
 //----------------------------------------------------------------------------------------------------
 
@@ -91,6 +92,8 @@ class Class_IMU
     float Get_Gyro_Yaw(void);
 
     Enum_IMU_Status Get_IMU_Status(void);
+
+    Class_LK_Motor *Motor_Main_Yaw;
 
     protected:
 

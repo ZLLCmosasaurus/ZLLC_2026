@@ -51,6 +51,7 @@ void Class_Gimbal::Init()
 {
     // imu初始化
     Boardc_BMI.Init();
+    Boardc_BMI.Motor_Main_Yaw = &Motor_Main_Yaw;
 
     External_IMU.Init(7.9999998e-05);
 

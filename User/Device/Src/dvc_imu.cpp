@@ -25,8 +25,9 @@ void Class_IMU::Init()
     // 初始化MahonyAHRS算法，并传入初始四元数
     IMU_MahonyAHRS.init(INS_Quat);
  
+    //能过校准就不用yaw_offset
     //EKF初始化                         第三个加速度参数加大，减小运动过程中的影响    过于不相信加速度导致静止到目标收敛慢，看起来在飘
-    IMU_QuaternionEKF_Init(10, 0.001, 10000000, 0.9996, 0.05, 1.20000004e-06f, &QEKF_INS);
+    IMU_QuaternionEKF_Init(10, 0.001, 10000000, 0.9996, 0.05, 0.0f, &QEKF_INS);
 
     INS.AccelLPF = 0.05f;
 
@@ -54,6 +55,10 @@ void Class_IMU::TIM_Calculate_PeriodElapsedCallback(void)
     INS.Gyro[0] = BMI088_Raw_Data.Gyro[0];
     INS.Gyro[1] = BMI088_Raw_Data.Gyro[1];
     INS.Gyro[2] = BMI088_Raw_Data.Gyro[2];
+
+    if(fabs(INS.Gyro[2]) < 0.03f && fabs(Motor_Main_Yaw->Get_Now_Omega_Radian()) < 0.03f){      //防止静止状态下的零飘
+        INS.Gyro[2] = 0.0f;
+    }
 
     // 核心函数,EKF更新四元数
     IMU_QuaternionEKF_Update(INS.Gyro[0], INS.Gyro[1], INS.Gyro[2], INS.Accel[0], INS.Accel[1], INS.Accel[2], INS_DWT_Dt, &QEKF_INS);

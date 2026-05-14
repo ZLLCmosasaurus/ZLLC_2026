@@ -38,7 +38,7 @@ void Class_Chariot::Init(float __DR16_Dead_Zone)
 
         Motor_Main_Yaw.Init(&hfdcan2, LK_Motor_ID_0x141, LK_Motor_Control_Method_ANGLE, MAIN_YAW_ENCODER_OFFSET);
 
-        PID_Chassis_Fllow.Init(15.0f, 0.0f, 0.1f, 0.0f, 8.0f, 8.0f);
+        PID_Chassis_Fllow.Init(15.0f, 0.0f, 0.5f, 0.0f, 8.0f, 8.0f);
 
         //底盘
         Chassis.IMU = &Boardc_BMI;
@@ -250,7 +250,7 @@ void Class_Chariot::CAN_Chassis_Tx_Gimbal_Callback()
 #ifdef CHASSIS    
 //控制类型字节
 uint8_t control_type;
-
+float test_vx =0.0f;
 void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback(uint8_t *Rx_Data)
 {   
     Gimbal_Alive_Flag++;
@@ -298,6 +298,7 @@ void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback(uint8_t *Rx_Data)
                 }
             }
 
+            test_vx = chassis_velocity_x;
             //设定底盘控制类型
             Chassis.Set_Chassis_Control_Type(chassis_control_type);
             //设定底盘目标速度

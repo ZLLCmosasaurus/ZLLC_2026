@@ -102,17 +102,17 @@ void Class_Tricycle_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max
     #ifdef AGV
     //舵向电机PID初始化
 
-    Motor_Steer[0].PID_Angle.Init(17.0f, 0.0f, 0.0f, 0.0f, 8.0f, 8.0f);
-    Motor_Steer[0].PID_Omega.Init(700.0f, 0.0f, 0.0f, 0.0f, 8000, Motor_Steer[0].Get_Output_Max());
+    Motor_Steer[0].PID_Angle.Init(20.0f, 0.0f, 0.0f, 0.0f, 8.0f, 8.0f);
+    Motor_Steer[0].PID_Omega.Init(1000.0f, 0.0f, 0.0f, 0.0f, 8000, Motor_Steer[0].Get_Output_Max());
     
-    Motor_Steer[1].PID_Angle.Init(17.f, 0.0f, 0.0f, 0.0f, 8.0f, 8.0f);
-    Motor_Steer[1].PID_Omega.Init(700.0f, 0.0f, 0.0f, 0.0f, 8000, Motor_Steer[1].Get_Output_Max());
+    Motor_Steer[1].PID_Angle.Init(20.f, 0.0f, 0.0f, 0.0f, 8.0f, 8.0f);
+    Motor_Steer[1].PID_Omega.Init(1000.0f, 0.0f, 0.0f, 0.0f, 8000, Motor_Steer[1].Get_Output_Max());
 
-    Motor_Steer[2].PID_Angle.Init(17.f, 0.0f, 0.0f, 0.0f, 8.0f, 8.0f);
-    Motor_Steer[2].PID_Omega.Init(700.0f, 0.0f, 0.0f, 0.0f, 8000, Motor_Steer[2].Get_Output_Max());
+    Motor_Steer[2].PID_Angle.Init(20.f, 0.0f, 0.0f, 0.0f, 8.0f, 8.0f);
+    Motor_Steer[2].PID_Omega.Init(1000.0f, 0.0f, 0.0f, 0.0f, 8000, Motor_Steer[2].Get_Output_Max());
 
-    Motor_Steer[3].PID_Angle.Init(17.f, 0.0f, 0.0f, 0.0f, 8.0f, 8.0f);
-    Motor_Steer[3].PID_Omega.Init(700.0f, 0.0f, 0.0f, 0.0f, 8000, Motor_Steer[3].Get_Output_Max());
+    Motor_Steer[3].PID_Angle.Init(20.f, 0.0f, 0.0f, 0.0f, 8.0f, 8.0f);
+    Motor_Steer[3].PID_Omega.Init(1000.0f, 0.0f, 0.0f, 0.0f, 8000, Motor_Steer[3].Get_Output_Max());
 
 
     //舵向电机ID初始化
@@ -144,7 +144,7 @@ void Class_Tricycle_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max
     PID_Velocity_Y.Init(50.0f, 0.0f, 0.0f, 0.0f, 150.0f, 500.0f, 0.002f);
 
     // 底盘角速度PID, 输出扭矩
-    PID_Omega.Init(3.0f, 0.0f, 0.0f, 0.0f, 10.0f, 10.0f, 0.002f);
+    PID_Omega.Init(3.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.002f);
 
     Kalman_Filter_Init(&Chassis_Speed_Kalman, 6, 0, 6);                               
 
@@ -481,6 +481,11 @@ void Class_Tricycle_Chassis::Chassis_Speed_Estimate()
     Chassis_To_Gimbal_Coordinate_Transform(Ins_Accel_X_b, Ins_Accel_Y_b);
     Chassis_To_Gimbal_Coordinate_Transform(tmp_Velocity_Vx, tmp_Velocity_Vy);
 
+    if(Chassis_Control_Type == Chassis_Control_Type_SPIN){
+        Ins_Accel_X_b = 0.0f;
+        Ins_Accel_Y_b = 0.0f;
+    }
+
     //注意数据单位
     Set_Chassis_Kalman_Measure(tmp_Velocity_Vx, tmp_Velocity_Vy, Ins_Accel_X_b, Ins_Accel_Y_b, tmp_Omega, IMU->Get_Gyro_Yaw());
     
@@ -544,7 +549,8 @@ void Class_Tricycle_Chassis::Stree_Angle_Resolution()
             temp_Target_Omega *= -1.0f;
         }
 
-        True_Target_Angle_Radian[i] = Normalize_Angle_Radian_PI_to_PI(delta_Angle + Motor_Steer[i].Get_Now_Zero_Offset_Radian()); // 归一化到 -PI --- PI
+        True_Target_Angle_Radian[i] = delta_Angle + Motor_Steer[i].Get_Now_Zero_Offset_Radian();
+        // True_Target_Angle_Radian[i] = Normalize_Angle_Radian_PI_to_PI(delta_Angle + Motor_Steer[i].Get_Now_Zero_Offset_Radian()); // 归一化到 -PI --- PI
         Motor_Steer[i].Set_Target_Radian(True_Target_Angle_Radian[i]);
         Motor_Steer[i].Set_Transform_Radian(Motor_Steer[i].Get_Now_Zero_Offset_Radian());
         Motor_Steer[i].TIM_PID_PeriodElapsedCallback();
@@ -576,15 +582,15 @@ void Class_Tricycle_Chassis::Force_Speed_Resolution()
     case (Chassis_Control_Type_FLLOW):
     case (Chassis_Control_Type_SPIN):
     {
-        PID_Velocity_X.Set_Target(Slope_Velocity_X.Get_Out());
+        PID_Velocity_X.Set_Target(Gimbal_Target_Velocity_X);
         PID_Velocity_X.Set_Now(Now_Velocity_X);
         PID_Velocity_X.TIM_Adjust_PeriodElapsedCallback();
 
-        PID_Velocity_Y.Set_Target(Slope_Velocity_Y.Get_Out());
+        PID_Velocity_Y.Set_Target(Gimbal_Target_Velocity_Y);
         PID_Velocity_Y.Set_Now(Now_Velocity_Y);
         PID_Velocity_Y.TIM_Adjust_PeriodElapsedCallback();
 
-        PID_Omega.Set_Target(Slope_Omega.Get_Out());
+        PID_Omega.Set_Target(Target_Omega);
         PID_Omega.Set_Now(Now_Omega);
         PID_Omega.TIM_Adjust_PeriodElapsedCallback();
 
@@ -632,7 +638,7 @@ void Class_Tricycle_Chassis::Force_Speed_Resolution()
             // }
 
 
-            Target_Wheel_Torque[i] = (Math_Abs(Target_Wheel_Torque[i]) > 0.25f) ? Target_Wheel_Torque[i] : 0;
+            // Target_Wheel_Torque[i] = (Math_Abs(Target_Wheel_Torque[i]) > 0.25f) ? Target_Wheel_Torque[i] : 0;
             
             Motor_Wheel[i].Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_TORQUE);
             Motor_Wheel[i].Set_Target_Torque(Target_Wheel_Torque[i]);
@@ -679,7 +685,7 @@ void Class_Tricycle_Chassis::TIM_Calculate_PeriodElapsedCallback()
     nb666=DWT_GetDeltaT(&nb);
 
     //速度解算
-    //Speed_Resolution();
+    // Speed_Resolution();
 
     Chassis_Speed_Estimate();
     Stree_Angle_Resolution();
