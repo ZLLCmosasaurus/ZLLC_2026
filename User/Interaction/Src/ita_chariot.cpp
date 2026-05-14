@@ -32,6 +32,7 @@ void Class_Chariot::Init(float __DR16_Dead_Zone)
     #ifdef CHASSIS
 
         Boardc_BMI.Init();
+        Boardc_BMI.Motor_Main_Yaw = &Motor_Main_Yaw;
 
         //裁判系统
         Referee.Init(&huart10);
