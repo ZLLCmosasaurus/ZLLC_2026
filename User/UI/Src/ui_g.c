@@ -7,7 +7,7 @@
 #include "ui_interface.h"
 #include "ui_g.h"
 
-#define TOTAL_FIGURE 37
+#define TOTAL_FIGURE 33
 #define TOTAL_STRING 9
 
 ui_interface_figure_t ui_g_now_figures[TOTAL_FIGURE];
@@ -16,10 +16,6 @@ ui_interface_string_t ui_g_now_strings[TOTAL_STRING];
 uint8_t ui_g_dirty_string[TOTAL_STRING];
 
 uint8_t ui_g_max_send_count[TOTAL_FIGURE + TOTAL_STRING] = {
-    1,
-    1,
-    1,
-    1,
     1,
     1,
     1,
@@ -71,7 +67,7 @@ ui_interface_string_t ui_g_last_strings[TOTAL_STRING];
 
 #define SCAN_AND_SEND() ui_scan_and_send(ui_g_now_figures, ui_g_dirty_figure, ui_g_now_strings, ui_g_dirty_string, TOTAL_FIGURE, TOTAL_STRING)
 
-void ui_init_g() {
+static void ui_setup_g(void) {
     ui_g_Lift_Rect_Uplift_RF->figure_type = 1;
     ui_g_Lift_Rect_Uplift_RF->operate_type = 1;
     ui_g_Lift_Rect_Uplift_RF->layer = 0;
@@ -290,38 +286,6 @@ void ui_init_g() {
     ui_g_Joint_Now_J5_Now->end_x = 1798;
     ui_g_Joint_Now_J5_Now->end_y = 405;
 
-    ui_g_Ungroup_NewNumber->figure_type = 6;
-    ui_g_Ungroup_NewNumber->operate_type = 1;
-    ui_g_Ungroup_NewNumber->layer = 0;
-    ui_g_Ungroup_NewNumber->color = 0;
-    ui_g_Ungroup_NewNumber->start_x = -748;
-    ui_g_Ungroup_NewNumber->start_y = 285;
-    ui_g_Ungroup_NewNumber->width = 2;
-    ui_g_Ungroup_NewNumber->font_size = 20;
-    ui_g_Ungroup_NewNumber->number = 12345;
-
-    ui_g_Ungroup_NewArc->figure_type = 4;
-    ui_g_Ungroup_NewArc->operate_type = 1;
-    ui_g_Ungroup_NewArc->layer = 0;
-    ui_g_Ungroup_NewArc->color = 0;
-    ui_g_Ungroup_NewArc->start_x = -477;
-    ui_g_Ungroup_NewArc->start_y = 222;
-    ui_g_Ungroup_NewArc->width = 1;
-    ui_g_Ungroup_NewArc->start_angle = 0;
-    ui_g_Ungroup_NewArc->end_angle = 90;
-    ui_g_Ungroup_NewArc->rx = 50;
-    ui_g_Ungroup_NewArc->ry = 50;
-
-    ui_g_Ungroup_NewEllipse->figure_type = 3;
-    ui_g_Ungroup_NewEllipse->operate_type = 1;
-    ui_g_Ungroup_NewEllipse->layer = 0;
-    ui_g_Ungroup_NewEllipse->color = 0;
-    ui_g_Ungroup_NewEllipse->start_x = -714;
-    ui_g_Ungroup_NewEllipse->start_y = 138;
-    ui_g_Ungroup_NewEllipse->width = 1;
-    ui_g_Ungroup_NewEllipse->rx = 50;
-    ui_g_Ungroup_NewEllipse->ry = 50;
-
     ui_g_Lift_Rect_Uplift_LF->figure_type = 1;
     ui_g_Lift_Rect_Uplift_LF->operate_type = 1;
     ui_g_Lift_Rect_Uplift_LF->layer = 0;
@@ -331,16 +295,6 @@ void ui_init_g() {
     ui_g_Lift_Rect_Uplift_LF->width = 3;
     ui_g_Lift_Rect_Uplift_LF->end_x = 262;
     ui_g_Lift_Rect_Uplift_LF->end_y = 395;
-
-    ui_g_Ungroup_NewFloat->figure_type = 5;
-    ui_g_Ungroup_NewFloat->operate_type = 1;
-    ui_g_Ungroup_NewFloat->layer = 0;
-    ui_g_Ungroup_NewFloat->color = 0;
-    ui_g_Ungroup_NewFloat->start_x = -688;
-    ui_g_Ungroup_NewFloat->start_y = 372;
-    ui_g_Ungroup_NewFloat->width = 2;
-    ui_g_Ungroup_NewFloat->font_size = 20;
-    ui_g_Ungroup_NewFloat->number = 12345;
 
     ui_g_RobotStatus_Now_Power->figure_type = 1;
     ui_g_RobotStatus_Now_Power->operate_type = 1;
@@ -560,6 +514,27 @@ void ui_init_g() {
         idx++;
     }
 
+}
+
+void ui_prepare_g(void) {
+    ui_setup_g();
+}
+
+void ui_sync_g(void) {
+#ifndef MANUAL_DIRTY
+    for (int i = 0; i < TOTAL_FIGURE; i++) {
+        ui_g_last_figures[i] = ui_g_now_figures[i];
+    }
+    for (int i = 0; i < TOTAL_STRING; i++) {
+        ui_g_last_strings[i] = ui_g_now_strings[i];
+    }
+#endif
+    memset(ui_g_dirty_figure, 0, sizeof(ui_g_dirty_figure));
+    memset(ui_g_dirty_string, 0, sizeof(ui_g_dirty_string));
+}
+
+void ui_init_g() {
+    ui_setup_g();
     SCAN_AND_SEND();
 
     for (int i = 0; i < TOTAL_FIGURE; i++) {
@@ -568,6 +543,8 @@ void ui_init_g() {
     for (int i = 0; i < TOTAL_STRING; i++) {
         ui_g_now_strings[i].operate_type = 2;
     }
+
+    ui_sync_g();
 }
 
 void ui_update_g() {

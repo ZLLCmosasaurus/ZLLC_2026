@@ -24,8 +24,14 @@
 
 #define RM_UI_TEXT_CAPACITY 30U
 
+#if defined(CHASSIS)
+#define RM_UI_TOTAL_FIGURES ((int)(sizeof(ui_g_dirty_figure) / sizeof(ui_g_dirty_figure[0])))
+#define RM_UI_TOTAL_STRINGS ((int)(sizeof(ui_g_dirty_string) / sizeof(ui_g_dirty_string[0])))
+#endif
+
 #if defined(GIMBAL)
 
+// 云台控制的远程更新UI定义
 static rm_ui_remote_state_t g_rm_ui_remote_state = {
     .speed_mode = RM_UI_SPEED_SLOW,
     .running_mode = RM_UI_RUNNING_WORKING,
@@ -41,7 +47,8 @@ static rm_ui_speed_mode_t rm_ui_sanitize_speed_mode(const rm_ui_speed_mode_t mod
 
 static rm_ui_running_mode_t rm_ui_sanitize_running_mode(const rm_ui_running_mode_t mode)
 {
-    switch (mode) {
+    switch (mode)
+    {
     case RM_UI_RUNNING_DISABLE:
     case RM_UI_RUNNING_WORKING:
     case RM_UI_RUNNING_MOVING:
@@ -91,7 +98,8 @@ void RM_UI_RemoteSetControllerType(const rm_ui_controller_type_t type)
 
 void RM_UI_RemoteGetState(rm_ui_remote_state_t *out)
 {
-    if (out == NULL) {
+    if (out == NULL)
+    {
         return;
     }
 
@@ -100,7 +108,8 @@ void RM_UI_RemoteGetState(rm_ui_remote_state_t *out)
 
 void RM_UI_RemotePackState(uint8_t data[RM_UI_REMOTE_STATE_CAN_DLC])
 {
-    if (data == NULL) {
+    if (data == NULL)
+    {
         return;
     }
 
@@ -116,12 +125,15 @@ void RM_UI_RemotePackState(uint8_t data[RM_UI_REMOTE_STATE_CAN_DLC])
 
 #if defined(CHASSIS)
 
-typedef struct {
+// UI数据定义
+typedef struct
+{
     float uplift_rf_percent;
     float uplift_lf_percent;
     float uplift_rb_percent;
     float uplift_lb_percent;
     float power_percent;
+    bool orientation_forehead;
     rm_ui_speed_mode_t speed_mode;
     rm_ui_running_mode_t running_mode;
     uint8_t fsm_stage;
@@ -139,7 +151,8 @@ static rm_ui_speed_mode_t rm_ui_sanitize_speed_mode(const rm_ui_speed_mode_t mod
 
 static rm_ui_running_mode_t rm_ui_sanitize_running_mode(const rm_ui_running_mode_t mode)
 {
-    switch (mode) {
+    switch (mode)
+    {
     case RM_UI_RUNNING_DISABLE:
     case RM_UI_RUNNING_WORKING:
     case RM_UI_RUNNING_MOVING:
@@ -169,10 +182,12 @@ static rm_ui_controller_type_t rm_ui_sanitize_controller_type(const rm_ui_contro
 
 static float rm_ui_clamp_percent_0_100(const float value)
 {
-    if (value < 0.0f) {
+    if (value < 0.0f)
+    {
         return 0.0f;
     }
-    if (value > 100.0f) {
+    if (value > 100.0f)
+    {
         return 100.0f;
     }
     return value;
@@ -185,7 +200,8 @@ static float rm_ui_clamp_min_zero(const float value)
 
 static int rm_ui_round_positive(const float value)
 {
-    if (value <= 0.0f) {
+    if (value <= 0.0f)
+    {
         return 0;
     }
     return (int)(value + 0.5f);
@@ -195,7 +211,8 @@ static void rm_ui_set_text(ui_interface_string_t *target, const char *text, cons
 {
     size_t text_length = 0U;
 
-    if (target == NULL || text == NULL) {
+    if (target == NULL || text == NULL)
+    {
         return;
     }
 
@@ -207,14 +224,43 @@ static void rm_ui_set_text(ui_interface_string_t *target, const char *text, cons
     target->str_length = (uint32_t)text_length;
 }
 
-static void rm_ui_clear_text(ui_interface_string_t *target)
+static void rm_ui_mark_static_dirty(void)
 {
-    if (target == NULL) {
-        return;
+    const int dynamic_figure_indices[] = {7, 27, 28, 29, 30, 31};
+    const int dynamic_string_indices[] = {0, 1, 2, 4, 6, 8};
+    size_t i = 0U;
+
+    for (i = 0U; i < (size_t)RM_UI_TOTAL_FIGURES; i++)
+    {
+        ui_g_dirty_figure[i] = 1U;
+    }
+    for (i = 0U; i < (size_t)RM_UI_TOTAL_STRINGS; i++)
+    {
+        ui_g_dirty_string[i] = 1U;
     }
 
-    memset(target->string, 0, sizeof(target->string));
-    target->str_length = 0U;
+    for (i = 0U; i < sizeof(dynamic_figure_indices) / sizeof(dynamic_figure_indices[0]); i++)
+    {
+        ui_g_dirty_figure[dynamic_figure_indices[i]] = 0U;
+    }
+    for (i = 0U; i < sizeof(dynamic_string_indices) / sizeof(dynamic_string_indices[0]); i++)
+    {
+        ui_g_dirty_string[dynamic_string_indices[i]] = 0U;
+    }
+}
+
+static void rm_ui_switch_all_to_modify(void)
+{
+    int i = 0;
+
+    for (i = 0; i < RM_UI_TOTAL_FIGURES; i++)
+    {
+        ui_g_now_figures[i].operate_type = 2U;
+    }
+    for (i = 0; i < RM_UI_TOTAL_STRINGS; i++)
+    {
+        ui_g_now_strings[i].operate_type = 2U;
+    }
 }
 
 static void rm_ui_apply_uplift(ui_interface_rect_t *target, const float percent)
@@ -223,7 +269,8 @@ static void rm_ui_apply_uplift(ui_interface_rect_t *target, const float percent)
     const float height_f = 10.0f + clamped_percent * 135.0f / 100.0f;
     const int height = rm_ui_round_positive(height_f);
 
-    if (target == NULL) {
+    if (target == NULL)
+    {
         return;
     }
 
@@ -238,7 +285,8 @@ static void rm_ui_apply_power(const float percent)
     const float width_f = 3.0f + clamped_percent * 677.0f / 100.0f;
     int end_x = 606 + rm_ui_round_positive(width_f);
 
-    if (end_x > 2047) {
+    if (end_x > 2047)
+    {
         end_x = 2047;
     }
 
@@ -255,7 +303,8 @@ static void rm_ui_apply_speed_mode(const rm_ui_speed_mode_t mode)
 
 static void rm_ui_apply_running_mode(const rm_ui_running_mode_t mode)
 {
-    switch (mode) {
+    switch (mode)
+    {
     case RM_UI_RUNNING_DISABLE:
         rm_ui_set_text(ui_g_RobotMode_RunningMode, "DISABLE", RM_UI_COLOR_RED);
         break;
@@ -278,6 +327,17 @@ static void rm_ui_apply_running_mode(const rm_ui_running_mode_t mode)
     }
 }
 
+static void rm_ui_apply_orientation(const bool forehead)
+{
+    if (forehead)
+    {
+        rm_ui_set_text(ui_g_RobotStatus_Orientation, "FOREHEAD", RM_UI_COLOR_GREEN);
+        return;
+    }
+
+    rm_ui_set_text(ui_g_RobotStatus_Orientation, "REARBACK", RM_UI_COLOR_ORANGE);
+}
+
 static void rm_ui_apply_fsm_stage(const uint8_t stage)
 {
     char text[RM_UI_TEXT_CAPACITY];
@@ -296,7 +356,8 @@ static void rm_ui_apply_fsm_stage(const uint8_t stage)
 
 static void rm_ui_apply_wheel_status(const rm_ui_wheel_status_t status)
 {
-    if (status == RM_UI_WHEEL_OFF) {
+    if (status == RM_UI_WHEEL_OFF)
+    {
         rm_ui_set_text(ui_g_RobotStatus_Wheel_Status, "OFF", RM_UI_COLOR_ORANGE);
         return;
     }
@@ -306,7 +367,8 @@ static void rm_ui_apply_wheel_status(const rm_ui_wheel_status_t status)
 
 static void rm_ui_apply_gripper_status(const rm_ui_gripper_status_t status)
 {
-    if (status == RM_UI_GRIPPER_OPEN) {
+    if (status == RM_UI_GRIPPER_OPEN)
+    {
         rm_ui_set_text(ui_g_RobotStatus_Gripper_Status, "OPEN", RM_UI_COLOR_GREEN);
         return;
     }
@@ -316,7 +378,8 @@ static void rm_ui_apply_gripper_status(const rm_ui_gripper_status_t status)
 
 static void rm_ui_apply_controller_type(const rm_ui_controller_type_t type)
 {
-    if (type == RM_UI_CONTROLLER_KEYBOARD) {
+    if (type == RM_UI_CONTROLLER_KEYBOARD)
+    {
         rm_ui_set_text(ui_g_RobotMode_ControllerType, "KEYBOARD", RM_UI_COLOR_GREEN);
         return;
     }
@@ -328,6 +391,7 @@ static void rm_ui_set_default_state(void)
 {
     memset(&g_rm_ui_state, 0, sizeof(g_rm_ui_state));
 
+    g_rm_ui_state.orientation_forehead = true;
     g_rm_ui_state.speed_mode = RM_UI_SPEED_SLOW;
     g_rm_ui_state.running_mode = RM_UI_RUNNING_WORKING;
     g_rm_ui_state.fsm_stage = 0U;
@@ -339,10 +403,14 @@ static void rm_ui_set_default_state(void)
 void RM_UI_Init(const uint16_t self_id)
 {
     ui_self_id = self_id;
-    ui_init_g();
+    ui_prepare_g();
 
     rm_ui_set_default_state();
-    rm_ui_clear_text(ui_g_RobotStatus_Orientation);
+    rm_ui_mark_static_dirty();
+    ui_scan_and_send(ui_g_now_figures, ui_g_dirty_figure, ui_g_now_strings, ui_g_dirty_string,
+                     RM_UI_TOTAL_FIGURES, RM_UI_TOTAL_STRINGS);
+    rm_ui_switch_all_to_modify();
+    ui_sync_g();
 }
 
 void RM_UI_Commit(void)
@@ -353,6 +421,7 @@ void RM_UI_Commit(void)
     rm_ui_apply_uplift(ui_g_RobotStatus_Now_LB, g_rm_ui_state.uplift_lb_percent);
 
     rm_ui_apply_power(g_rm_ui_state.power_percent);
+    rm_ui_apply_orientation(g_rm_ui_state.orientation_forehead);
     rm_ui_apply_speed_mode(g_rm_ui_state.speed_mode);
     rm_ui_apply_running_mode(g_rm_ui_state.running_mode);
     rm_ui_apply_fsm_stage(g_rm_ui_state.fsm_stage);
@@ -374,6 +443,11 @@ void RM_UI_SetUplift(const float rf_percent, const float lf_percent, const float
 void RM_UI_SetPower(const float power_percent)
 {
     g_rm_ui_state.power_percent = rm_ui_clamp_min_zero(power_percent);
+}
+
+void RM_UI_SetOrientation(const bool forehead)
+{
+    g_rm_ui_state.orientation_forehead = forehead;
 }
 
 void RM_UI_SetWheelStatus(const rm_ui_wheel_status_t status)
@@ -406,9 +480,81 @@ void RM_UI_SetControllerType(const rm_ui_controller_type_t type)
     g_rm_ui_state.controller_type = rm_ui_sanitize_controller_type(type);
 }
 
+static bool rm_ui_remote_state_is_valid(const rm_ui_remote_state_t *state)
+{
+    if (state == NULL)
+    {
+        return false;
+    }
+
+    if (state->speed_mode != RM_UI_SPEED_SLOW && state->speed_mode != RM_UI_SPEED_AXEL)
+    {
+        return false;
+    }
+
+    switch (state->running_mode)
+    {
+    case RM_UI_RUNNING_DISABLE:
+    case RM_UI_RUNNING_WORKING:
+    case RM_UI_RUNNING_MOVING:
+    case RM_UI_RUNNING_UPLIFT:
+    case RM_UI_RUNNING_DOWNLIFT:
+    case RM_UI_RUNNING_SAVELOAD:
+        break;
+    default:
+        return false;
+    }
+
+    if (state->fsm_stage > 9U)
+    {
+        return false;
+    }
+
+    if (state->gripper_status != RM_UI_GRIPPER_CLOSE && state->gripper_status != RM_UI_GRIPPER_OPEN)
+    {
+        return false;
+    }
+
+    if (state->controller_type != RM_UI_CONTROLLER_JOYSTICK &&
+        state->controller_type != RM_UI_CONTROLLER_KEYBOARD)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+bool RM_UI_RemoteUnpackState(const uint8_t data[RM_UI_REMOTE_STATE_CAN_DLC], rm_ui_remote_state_t *out)
+{
+    rm_ui_remote_state_t decoded_state;
+
+    // false
+    if (data == NULL || out == NULL)
+    {
+        return false;
+    }
+
+    decoded_state.speed_mode = (rm_ui_speed_mode_t)data[RM_UI_REMOTE_STATE_IDX_SPEED_MODE];
+    decoded_state.running_mode = (rm_ui_running_mode_t)data[RM_UI_REMOTE_STATE_IDX_RUNNING_MODE];
+    decoded_state.fsm_stage = data[RM_UI_REMOTE_STATE_IDX_FSM_STAGE];
+    decoded_state.gripper_status = (rm_ui_gripper_status_t)data[RM_UI_REMOTE_STATE_IDX_GRIPPER_STATUS];
+    decoded_state.controller_type = (rm_ui_controller_type_t)data[RM_UI_REMOTE_STATE_IDX_CONTROLLER_TYPE];
+
+    // false
+    if (!rm_ui_remote_state_is_valid(&decoded_state))
+    {
+        return false;
+    }
+
+    // true
+    *out = decoded_state;
+    return true;
+}
+
 void RM_UI_ApplyRemoteState(const rm_ui_remote_state_t *state)
 {
-    if (state == NULL) {
+    if (state == NULL)
+    {
         return;
     }
 

@@ -142,6 +142,12 @@ void Class_Jodell_Motor::TIM_UART_Tx_PeriodElapsedCallback()
         {
         case Jodell_Motor_Control_ENABLE:
         {
+            // 每次写入前检测是否堵转
+            if(is_locked)
+            {
+                Set_Target_Roll(Locked_Angle);
+            }
+
             write_addr = Gripper_rACT_Write_Register;
 
             write_nb = 8;
@@ -239,4 +245,35 @@ void Class_Jodell_Motor::Data_Process(uint16_t *data, int regs)
     Roll_Data.Now_Angle = ((float)(roll_turns_raw * 360 + roll_pos_raw) / 180.0f) * PI;
     Roll_Data.Now_Torque = ((float)roll_torque_raw / 255.0f) * MAX_TORQUE;
     Roll_Data.Now_Omega = ((float)roll_omega_raw / 255.0f) * MAX_OMEGA;
+
+    // 每次返回数据后堵转检测
+    Jodell_Safety_Check();
+}
+
+void Class_Jodell_Motor::Jodell_Safety_Check()
+{
+    float Now_Total_Angle = Roll_Data.Now_Absolute_Angle + Roll_Data.Now_Turns * 2*PI;
+    // 检测当前位置和目标位置以及扭矩值并计数
+    if(fabs(Now_Total_Angle - Target_Roll) >= 0.5f && Roll_Data.Now_Torque >= 1.0f)
+    {
+        Locked_cnt++;
+    }
+    else
+    {
+        Locked_cnt--;
+        if(Locked_cnt < 0)
+        {
+            Locked_cnt = 0;
+        }
+    }
+
+    if(Locked_cnt >= 25)
+    {
+        is_locked = true;
+        Locked_Angle = Now_Total_Angle;
+    }
+    else if(Locked_cnt == 0)
+    {
+        is_locked = false;
+    }
 }

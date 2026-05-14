@@ -581,7 +581,7 @@ protected:
     /*上台阶相关角度*/
     float ledder_prepare[4] = {22.0f, 22.0f, 20.0f, 20.0f};
 
-    float ledder_1_touch[4] = {18.0f, 18.0f, 17.5f, 17.5f};
+    float ledder_1_touch[4] = {18.0f, 18.0f, 17.0f, 17.0f};
     float ledder_1_uplift[4] = {0.0f, 0.0f, 1.5f, 1.5f};
     float ledder_1_over[4] = {22.0f, 22.0f, 20.0f, 20.0f};
     float ledder_2_touch[4] = {11.0f, 11.0f, 17.0f, 17.0f};

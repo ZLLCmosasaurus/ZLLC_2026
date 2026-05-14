@@ -36,7 +36,6 @@ public:
     Struct_Image_Keyborad_UART_Data Image_Keyborad_Data;
     // 数据解包函数
     void Custom_Controller_Data_Process(uint8_t *Rx_Data);
-    void Image_Keyboard_Data_Process(uint8_t *Rx_Data);
 
 private:
     // 自定义控制器数据解包缓冲区

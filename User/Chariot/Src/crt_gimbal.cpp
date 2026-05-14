@@ -41,6 +41,9 @@ void Class_Gimbal::Init()
     // 4340P MIT 参数
     J2_Yaw_4340P.Set_MIT_K_P(J2_Yaw_MIT_KP);
     J2_Yaw_4340P.Set_MIT_K_D(J2_Yaw_MIT_KD);
+    // 8009 MIT 参数
+    J1_Yaw_8009P.Set_MIT_K_P(J1_Yaw_MIT_KP);
+    J1_Yaw_8009P.Set_MIT_K_D(J1_Yaw_MIT_KD);
     // 速度规划器
     J1_Yaw_Planner.Init(&J1_Yaw_8009P, &Target_J1_Yaw_Radian, Target_J1_Yaw_Omega, 1.0f, 0.001f);
     J2_Yaw_Planner.Init(&J2_Yaw_4340P, &Target_J2_Yaw_Radian, Target_J2_Yaw_Omega, 1.0f, 0.001f);

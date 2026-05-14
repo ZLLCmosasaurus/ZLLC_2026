@@ -102,12 +102,21 @@ private:
     float Target_Torque = 1.5f;
     uint8_t Target_Gripper_Position = 0;
 
+    // 堵转检测相关变量
+    uint16_t Locked_cnt = 0;
+    bool is_locked = false;
+    // 堵转时的当前角度
+    float Locked_Angle;
+
     Jodell_Gripper_Rx_Data Gripper_Data;
     Jodell_Roll_Rx_Data Roll_Data;
 
     void Data_Process(uint16_t *data, int regs);
 
     void Modbus_Clear_Receive_Buffer();
+
+    // 检测堵转函数
+    void Jodell_Safety_Check();
 };
 
 inline uint8_t Class_Jodell_Motor::Get_Gripper_Position()

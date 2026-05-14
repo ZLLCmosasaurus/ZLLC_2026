@@ -317,6 +317,7 @@ public:
 
     void CAN_Gimbal_Rx_Chassis_Callback();
     void CAN_Gimbal_Tx_Chassis_Callback();
+    void CAN_Gimbal_Tx_Chassis_UI_Callback();
 
     void TIM_Control_Callback();
 
@@ -336,6 +337,8 @@ public:
     Enum_Referee_UI_Refresh_Status Referee_UI_Refresh_Status = Referee_UI_Refresh_Status_DISABLE;
     // 云台发送到底盘的数据帧结构体
     Gimbal_Tx_Chassis_Frame Rx_Frame;
+    // 云台发送到底盘的UI更新帧结构体
+    rm_ui_remote_state_t Rx_UI_State;
 
     void Judge_DR16_Control_Type();
     void Judge_VT13_Control_Type();
@@ -454,7 +457,7 @@ protected:
     // 单发连发标志位
     uint8_t Shoot_Flag = 0;
     // DR16控制数据来源
-    Enum_DR16_Control_Type DR16_Control_Type = DR16_Control_Type_REMOTE;
+    Enum_DR16_Control_Type DR16_Control_Type = DR16_Control_Type_NONE;
     Enum_VT13_Control_Type VT13_Control_Type = VT13_Control_Type_NONE;
     // 当前使用的遥控器
     Enum_Active_Controller Active_Controller = Controller_NONE;
@@ -481,6 +484,7 @@ protected:
     void Control_Chassis();
     void Control_Gimbal();
     void Control_Booster();
+    void UI_Remote_Update();
 };
 
 /* Exported variables --------------------------------------------------------*/

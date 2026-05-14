@@ -17,7 +17,7 @@ ui_5_frame_t _ui_5_frame;
 ui_7_frame_t _ui_7_frame;
 
 void print_message(const uint8_t *message, const int length) {
-    HAL_UART_Transmit(&huart10, message, length, 10);
+    HAL_UART_Transmit(&huart10, message, length, 15);
 }
 
 const unsigned char CRC8_TAB[256] = {

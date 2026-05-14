@@ -102,6 +102,16 @@ void Chassis_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
         chariot.Force_Chassis.Motor_Wheel[3].CAN_RxCpltCallback(CAN_RxMessage->Data);
     }
     break;
+    case (0xA1):
+    {
+        chariot.Chassis.Track_Motor[0].CAN_RxCpltCallback(CAN_RxMessage->Data);
+    }
+    break;
+    case (0xA2):
+    {
+        chariot.Chassis.Track_Motor[1].CAN_RxCpltCallback(CAN_RxMessage->Data);
+    }
+    break;
 #endif
 
 #ifdef AGV
@@ -347,8 +357,8 @@ void Gimbal_Device_CAN3_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
     switch (CAN_RxMessage->Header.Identifier)
     {
-    case (0x81):    // 自定义控制器A包
-    case (0x82):    // 自定义控制器B包
+    case (0x81): // 自定义控制器A包
+    case (0x82): // 自定义控制器B包
     case (0x188):
     case (0x199):
     case (0x178):
@@ -608,9 +618,9 @@ void Task1ms_TIM5_Callback()
     /****************************** 交互层回调函数 1ms *****************************************/
     if (start_flag == 1)
     {
-        
-    // 上电蜂鸣器
-    buzzer_taskScheduler(&buzzer);
+
+        // 上电蜂鸣器
+        buzzer_taskScheduler(&buzzer);
 #ifdef GIMBAL
 
 // ============ 电机测试模式：绕过遥控器检测 ============
@@ -673,8 +683,8 @@ void Task1ms_TIM5_Callback()
         if (mod100 == 100)
         {
 #ifdef CHASSIS
-            // 裁判系统UI发送
-            chariot.Referee.UART_Tx_Referee_UI();
+            // 裁判系统UI发送标志位置true
+            chariot.Referee_UI_Refresh_Status = Referee_UI_Refresh_Status_ENABLE;
 #endif
             mod100 = 0;
         }
@@ -735,8 +745,8 @@ extern "C" void Task_Init()
 
     // c板陀螺仪spi外设
     SPI_Init(&hspi2, Device_SPI2_Callback);
-// 磁力计iic外设
-// IIC_Init(&hi2c3, Ist8310_IIC3_Callback);    //达妙无磁力计
+    // 磁力计iic外设
+    // IIC_Init(&hi2c3, Ist8310_IIC3_Callback);    //达妙无磁力计
 
     // 图传舵机PWM输出
     HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
@@ -798,8 +808,12 @@ extern "C" void Task_Loop()
 #endif
 
 #ifdef CHASSIS
-    // UI更新
-    RM_UI_Commit();
+    if (chariot.Referee_UI_Refresh_Status == Referee_UI_Refresh_Status_ENABLE)
+    {
+        // UI更新
+        RM_UI_Commit();
+        chariot.Referee_UI_Refresh_Status = Referee_UI_Refresh_Status_DISABLE;
+    }
 #endif
 }
 

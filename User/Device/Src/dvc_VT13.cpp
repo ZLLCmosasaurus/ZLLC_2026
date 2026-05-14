@@ -82,43 +82,6 @@ void Class_VT13::VT13_UART_RxCpltCallback(uint8_t *Rx_Data)
       // 自定义控制器数据解包
       Custom_Controller.Custom_Controller_Data_Process(Rx_Data + FRAME_HEADER_LENGTH + CMD_ID_LENGTH);
     }
-    // 0x0304键鼠数据
-    else if ((cmd_id == 0x0304) && (data_length == KEYBOARD_DATA_LENGTH))
-    {
-      // 图传链路键鼠数据转换
-      Custom_Controller.Image_Keyboard_Data_Process(Rx_Data + FRAME_HEADER_LENGTH + CMD_ID_LENGTH);
-      // // 手动解包，同步给Now_Rx_Data
-      // Now_RX_Data.mouse_x = Custom_Controller.Image_Keyborad_Data.mouse_x;
-      // Now_RX_Data.mouse_y = Custom_Controller.Image_Keyborad_Data.mouse_y;
-      // Now_RX_Data.mouse_z = Custom_Controller.Image_Keyborad_Data.mouse_z;
-      // Now_RX_Data.mouse_left = (uint8_t)(Custom_Controller.Image_Keyborad_Data.left_button_down != 0 ? 1 : 0);
-      // Now_RX_Data.mouse_right = (uint8_t)(Custom_Controller.Image_Keyborad_Data.right_button_down != 0 ? 1 : 0);
-      // Now_RX_Data.mouse_middle = 0; // 图传键鼠包未包含中键，默认清零以防乱码
-      // Now_RX_Data.key = Custom_Controller.Image_Keyborad_Data.keyboard_value;
-
-      // // 复用 VT13 的计算逻辑刷新应用层调用的 VT13_Data
-      // VT13_Data.Mouse_X = Now_RX_Data.mouse_x / 32768.0f;
-      // VT13_Data.Mouse_Y = Now_RX_Data.mouse_y / 32768.0f;
-      // VT13_Data.Mouse_Z = Now_RX_Data.mouse_z / 32768.0f;
-
-      // Judge_Key(&VT13_Data.Mouse_Key_Left, Now_RX_Data.mouse_left, Pre_RX_Data.mouse_left);
-      // Judge_Key(&VT13_Data.Mouse_Key_Right, Now_RX_Data.mouse_right, Pre_RX_Data.mouse_right);
-      // Judge_Key(&VT13_Data.Mouse_Key_Middle, Now_RX_Data.mouse_middle, Pre_RX_Data.mouse_middle);
-
-      // for (int i = 0; i < 16; i++)
-      // {
-      //   Judge_Key(&VT13_Data.Keyboard_Key[i], ((Now_RX_Data.key) >> i) & 0x1, ((Pre_RX_Data.key) >> i) & 0x1);
-      // }
-
-      // // 4. 更新 Pre_RX_Data 中键鼠相关的数据，确保下一帧能够正确捕捉按下/松开事件（防连发、检测边沿）
-      // Pre_RX_Data.mouse_x = Now_RX_Data.mouse_x;
-      // Pre_RX_Data.mouse_y = Now_RX_Data.mouse_y;
-      // Pre_RX_Data.mouse_z = Now_RX_Data.mouse_z;
-      // Pre_RX_Data.mouse_left = Now_RX_Data.mouse_left;
-      // Pre_RX_Data.mouse_right = Now_RX_Data.mouse_right;
-      // Pre_RX_Data.mouse_middle = Now_RX_Data.mouse_middle;
-      // Pre_RX_Data.key = Now_RX_Data.key;
-    }
   }
   // VT13遥控器及键鼠数据解包
   else

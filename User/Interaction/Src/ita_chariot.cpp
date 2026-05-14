@@ -299,7 +299,11 @@ void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback(uint8_t *Rx_Data)
     case (0x95):
         // UI数据更新回传
         {
-            // memcpy(&CAN_Referee_Rx_Data, &CAN_Manage_Object->Rx_Buffer.Data, sizeof(Struct_CAN_Referee_Rx_Data_t));
+            if (RM_UI_RemoteUnpackState(Rx_Data, &Rx_UI_State) == 1U)
+            {
+                RM_UI_ApplyRemoteState(&Rx_UI_State);
+            }
+
             break;
         }
     }
@@ -421,6 +425,11 @@ void Class_Chariot::CAN_Gimbal_Tx_Chassis_Callback()
     memcpy(CAN3_Gimbal_Tx_Chassis_Data, &Tx_Frame, sizeof(Tx_Frame));
 }
 
+void Class_Chariot::CAN_Gimbal_Tx_Chassis_UI_Callback()
+{
+    RM_UI_RemotePackState(CAN3_Gimbal_Tx_Chassis_UI_Data);
+}
+
 #endif
 /**
  * @brief 底盘控制逻辑
@@ -442,6 +451,9 @@ void Class_Chariot::Control_Chassis()
     float move_left_x = left_x;
     float move_left_y = left_y;
     float move_right_x = right_x;
+
+    // 速度缩放因子
+    float Speed_Ratio = 1.0f;
 
     if (Active_Controller == Controller_DR16 && DR16_Control_Type == DR16_Control_Type_REMOTE)
     {
@@ -530,14 +542,23 @@ void Class_Chariot::Control_Chassis()
             move_right_x = 0.0f;
             break;
         case Keyboard_Control_Type_WORKING:
+            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL);
+            if (!Key_Is_Pressed(controller_key_shift))
+            {
+                Speed_Ratio = 0.25f;
+            }
+            else
+            {
+                Speed_Ratio = 0.5f;
+            }
+            break;
         case Keyboard_Control_Type_SAVE_LOAD:
             Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL);
             if (!Key_Is_Pressed(controller_key_shift))
             {
-                move_left_x *= 0.5f;
-                move_left_y *= 0.5f;
-                move_right_x *= 0.5f;
+                Speed_Ratio = 0.5f;
             }
+
             if (Key_Is_Pressed(controller_key_q))
             {
                 lift_select[0] = true;
@@ -553,10 +574,9 @@ void Class_Chariot::Control_Chassis()
             Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL);
             if (Key_Is_Pressed(controller_key_shift))
             {
-                move_left_x *= 0.5f;
-                move_left_y *= 0.5f;
-                move_right_x *= 0.5f;
+                Speed_Ratio = 0.5f;
             }
+
             break;
         case Keyboard_Control_Type_UPLIFT:
             Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SLOPE);
@@ -577,9 +597,7 @@ void Class_Chariot::Control_Chassis()
             Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL);
             if (!Key_Is_Pressed(controller_key_shift))
             {
-                move_left_x *= 0.5f;
-                move_left_y *= 0.5f;
-                move_right_x *= 0.5f;
+                Speed_Ratio = 0.5f;
             }
             if (Key_Is_Pressed(controller_key_q))
             {
@@ -621,9 +639,9 @@ void Class_Chariot::Control_Chassis()
         Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
     }
 
-    left_x = move_left_x;
-    left_y = move_left_y;
-    right_x = move_right_x;
+    left_x = move_left_x * Speed_Ratio;
+    left_y = move_left_y * Speed_Ratio;
+    right_x = move_right_x * Speed_Ratio;
 
     switch (Chassis.Get_Chassis_Control_Type())
     {
@@ -640,6 +658,7 @@ void Class_Chariot::Control_Chassis()
         break;
     }
 
+    // 赋值给底盘
     Chassis.Set_Target_Velocity_X(chassis_velocity_x);
     Chassis.Set_Target_Velocity_Y(chassis_velocity_y);
     Chassis.Set_Target_Omega(chassis_delta_radian);
@@ -652,6 +671,16 @@ void Class_Chariot::Control_Chassis()
     Chassis.Set_Downlift_Init(downlift_init);
     Chassis.Set_Uplift_FSM_Direction(uplift_fsm_dir);
     Chassis.Set_Wheel_Slave_Status(wheel_slave_status);
+
+    // UI状态更新
+    if (Speed_Ratio <= 0.5f)
+    {
+        RM_UI_RemoteSetSpeedMode(RM_UI_SPEED_SLOW);
+    }
+    else if (Speed_Ratio == 1.0f)
+    {
+        RM_UI_RemoteSetSpeedMode(RM_UI_SPEED_AXEL);
+    }
 }
 #elifdef CHASSIS_TEST
 void Class_Chariot::Chassis_Test_Control()
@@ -861,7 +890,7 @@ void Class_Chariot::Control_Chassis()
         if (Chassis.Get_Wheel_Slave_Status() == Wheel_Slave_ON)
         {
             // 机械安装方向相反，因此乘以一个负号
-            track_omega = -25.0f * (Force_Chassis.Get_Target_Velocity_X() / Chassis.Get_Velocity_X_Max());
+            track_omega = 25.0f * (Force_Chassis.Get_Target_Velocity_X() / Chassis.Get_Velocity_X_Max());
         }
         else
         {
@@ -1161,6 +1190,69 @@ void Class_Chariot::Control_Gimbal()
     Gimbal.Set_Target_Gripper_Position(tmp_gripper_position);
     Gimbal.Set_Target_VT03_Pitch_Angle(tmp_vt03_pitch);
     Gimbal.Set_Target_VT03_Yaw_Angle(tmp_vt03_yaw);
+}
+
+void Class_Chariot::UI_Remote_Update()
+{
+    // 遥控器类别更新（键鼠/摇杆）
+    if (DR16_Control_Type == DR16_Control_Type_REMOTE || VT13_Control_Type == VT13_Control_Type_REMOTE)
+    {
+        RM_UI_RemoteSetControllerType(RM_UI_CONTROLLER_JOYSTICK);
+    }
+    else if (DR16_Control_Type == DR16_Control_Type_KEYBOARD || VT13_Control_Type == VT13_Control_Type_KEYBOARD)
+    {
+        RM_UI_RemoteSetControllerType(RM_UI_CONTROLLER_KEYBOARD);
+    }
+
+    // 运行模式以及FSM_Stage更新
+    switch (Keyboard_Control_Type)
+    {
+    case (Keyboard_Control_Type_WORKING):
+    {
+        RM_UI_RemoteSetRunningMode(RM_UI_RUNNING_WORKING);
+        RM_UI_RemoteSetFSMStage(0);
+        break;
+    }
+    case (Keyboard_Control_Type_MOVING):
+    {
+        RM_UI_RemoteSetRunningMode(RM_UI_RUNNING_MOVING);
+        RM_UI_RemoteSetFSMStage(0);
+        break;
+    }
+    case (Keyboard_Control_Type_DOWNLIFT):
+    {
+        RM_UI_RemoteSetRunningMode(RM_UI_RUNNING_DOWNLIFT);
+        break;
+    }
+    case (Keyboard_Control_Type_UPLIFT):
+    {
+        RM_UI_RemoteSetRunningMode(RM_UI_RUNNING_DOWNLIFT);
+        break;
+    }
+    case (Keyboard_Control_Type_SAVE_LOAD):
+    {
+        RM_UI_RemoteSetRunningMode(RM_UI_RUNNING_SAVELOAD);
+        RM_UI_RemoteSetFSMStage(FSM_Save_Load.Get_Now_Status_Serial());
+        break;
+    }
+    case (Keyboard_Control_Type_DISABLE):
+    default:
+    {
+        RM_UI_RemoteSetRunningMode(RM_UI_RUNNING_DISABLE);
+        RM_UI_RemoteSetFSMStage(0);
+        break;
+    }
+    }
+
+    // 夹爪位置更新
+    if (Gimbal.Jodell_ERG150T.Get_Gripper_Position() == 255)
+    {
+        RM_UI_RemoteSetGripperStatus(RM_UI_GRIPPER_CLOSE);
+    }
+    else if (Gimbal.Jodell_ERG150T.Get_Gripper_Position() == 0)
+    {
+        RM_UI_RemoteSetGripperStatus(RM_UI_GRIPPER_OPEN);
+    }
 }
 #endif
 /**
@@ -1664,6 +1756,8 @@ void Class_Chariot::TIM_Control_Callback()
     // 底盘，云台，发射机构控制逻辑
     Control_Gimbal();
     Control_Chassis();
+    // UI更新
+    UI_Remote_Update();
 }
 #endif
 /**
@@ -2387,161 +2481,161 @@ void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load
         switch (Now_Status_Serial)
         {
         case (0):
-        // 等待操作手按下确认开始
-        {
-            Return_Init_Stage = 0;
-            Trajectory_Point_Index = 0;
-            Trajectory_Point_Tick = 0;
-            Trajectory_Forward = true;
-
-            if (step)
-            {
-                Active_Unit_Type = Selected_Unit_Type;
-                Set_Status(1);
-            }
-            break;
-        }
-        case (1):
-        // 机械臂移动到初始位置
-        {
-            Configure_Joint_Planner(true);
-            Hold_Init_Pose(current_unit);
-
-            bool finish_flag = false;
-            test_flag[0] = (fabs((Gimbal->J0_Pitch_4340.Get_Now_Angle_Rad()) - Gimbal->Get_Target_J0_Pitch_Radian()) <= 0.1f);
-            test_flag[1] = (fabs((Gimbal->J1_Yaw_8009P.Get_Now_Angle_Rad()) - Gimbal->Get_Target_J1_Yaw_Radian()) <= 0.1f);
-            test_flag[2] = (fabs((Gimbal->J2_Yaw_4340P.Get_Now_Angle_Rad()) - Gimbal->Get_Target_J2_Yaw_Radian()) <= 0.2f);
-            test_flag[3] = (fabs((Gimbal->J3_Roll_2325.Get_Now_Angle_Rad()) - Gimbal->J3_Roll_2325.Get_Target_Angle()) <= 0.1f);
-            test_flag[4] = (fabs(Gimbal->J4_Pitch_2325.Get_Now_Omega()) <= 0.1f);
-            //test_flag[4] = (fabs((Gimbal->J4_Pitch_2325.Get_Now_Angle() - PI + 0.52741f) - Gimbal->Get_Target_J4_Pitch_Radian_In_PI()) <= 0.1f);
-            test_flag[5] = (fabs(Gimbal->Jodell_ERG150T.Get_Now_Roll() - Gimbal->Get_Target_J5_Roll_Radian()) <= 0.1f);
-            finish_flag = test_flag[0] &&
-                          test_flag[1] &&
-                          test_flag[2] &&
-                          test_flag[3] &&
-                          test_flag[4] &&
-                          test_flag[5];
-
-            if (finish_flag)
-            {
-                Set_Status(2);
-            }
-            break;
-        }
-        case (2):
-        // J2移动到辅助位置
-        {
-            Configure_Joint_Planner(true);
-            Hold_Init_Pose(current_unit);
-            Gimbal->Set_Target_J2_Yaw_Radian(Get_Trajectory_Start_J2());
-
-            bool finish_flag = (fabs(Now_J2_Radian - Gimbal->Get_Target_J2_Yaw_Radian()) <= 0.002f);
-            if (finish_flag)
-            {
-                Set_Status(3);
-            }
-            break;
-        }
-        case (3):
-        // J1移动到辅助位置
-        {
-            Configure_Joint_Planner(true);
-            Hold_Init_Pose(current_unit);
-            Gimbal->Set_Target_J2_Yaw_Radian(Get_Trajectory_Start_J2());
-            Gimbal->Set_Target_J1_Yaw_Radian(Get_Trajectory_Start_J1());
-
-            bool finish_flag = (fabs(Now_J1_Radian - Gimbal->Get_Target_J1_Yaw_Radian()) <= 0.1f);
-            if (finish_flag)
-            {
-                Set_Status(4);
-            }
-            break;
-        }
-        case (4):
-        // 配置取矿预制轨迹
-        {
-            Configure_Joint_Planner(true);
-            Hold_Init_Pose(current_unit);
-            Prepare_Trajectory(true);
-            Set_Status(5);
-            break;
-        }
-        case (5):
-        // 同步移动到取矿位置，轨迹为直线
-        {
-            Configure_Joint_Planner(false);
-            Hold_Init_Pose(current_unit);
-            if (Run_Trajectory())
-            {
-                Set_Status(6);
-            }
-            break;
-        }
-        case (6):
-        // 等待操作手按下确认
-        {
-            Configure_Joint_Planner(false);
-            Hold_Init_Pose(current_unit);
-            Gimbal->Set_Target_J1_Yaw_Radian(Get_Trajectory_End_J1());
-            Gimbal->Set_Target_J2_Yaw_Radian(Get_Trajectory_End_J2());
-
-            if (step)
-            {
-                Set_Status(7);
-            }
-            break;
-        }
-        case (7):
-        // 配置反向轨迹
-        {
-            Configure_Joint_Planner(false);
-            Hold_Init_Pose(current_unit);
-            Prepare_Trajectory(false);
-            Set_Status(8);
-            break;
-        }
-        case (8):
-        // 移动回辅助位置
-        {
-            Configure_Joint_Planner(false);
-            Hold_Init_Pose(current_unit);
-            if (Run_Trajectory())
+            // 等待操作手按下确认开始
             {
                 Return_Init_Stage = 0;
-                Set_Status(9);
-            }
-            break;
-        }
-        case (9):
-        // 回归到初始位置
-        {
-            Configure_Joint_Planner(true);
-            Hold_Init_Pose(current_unit);
+                Trajectory_Point_Index = 0;
+                Trajectory_Point_Tick = 0;
+                Trajectory_Forward = true;
 
-            if (Return_Init_Stage == 0)
+                if (step)
+                {
+                    Active_Unit_Type = Selected_Unit_Type;
+                    Set_Status(1);
+                }
+                break;
+            }
+        case (1):
+            // 机械臂移动到初始位置
             {
-                Gimbal->Set_Target_J1_Yaw_Radian(current_unit.init_pos[1]);
+                Configure_Joint_Planner(true);
+                Hold_Init_Pose(current_unit);
+
+                bool finish_flag = false;
+                test_flag[0] = (fabs((Gimbal->J0_Pitch_4340.Get_Now_Angle_Rad()) - Gimbal->Get_Target_J0_Pitch_Radian()) <= 0.1f);
+                test_flag[1] = (fabs((Gimbal->J1_Yaw_8009P.Get_Now_Angle_Rad()) - Gimbal->Get_Target_J1_Yaw_Radian()) <= 0.1f);
+                test_flag[2] = (fabs((Gimbal->J2_Yaw_4340P.Get_Now_Angle_Rad()) - Gimbal->Get_Target_J2_Yaw_Radian()) <= 0.2f);
+                test_flag[3] = (fabs((Gimbal->J3_Roll_2325.Get_Now_Angle_Rad()) - Gimbal->J3_Roll_2325.Get_Target_Angle()) <= 0.1f);
+                test_flag[4] = (fabs(Gimbal->J4_Pitch_2325.Get_Now_Omega()) <= 0.1f);
+                // test_flag[4] = (fabs((Gimbal->J4_Pitch_2325.Get_Now_Angle() - PI + 0.52741f) - Gimbal->Get_Target_J4_Pitch_Radian_In_PI()) <= 0.1f);
+                test_flag[5] = (fabs(Gimbal->Jodell_ERG150T.Get_Now_Roll() - Gimbal->Get_Target_J5_Roll_Radian()) <= 0.1f);
+                finish_flag = test_flag[0] &&
+                              test_flag[1] &&
+                              test_flag[2] &&
+                              test_flag[3] &&
+                              test_flag[4] &&
+                              test_flag[5];
+
+                if (finish_flag)
+                {
+                    Set_Status(2);
+                }
+                break;
+            }
+        case (2):
+            // J2移动到辅助位置
+            {
+                Configure_Joint_Planner(true);
+                Hold_Init_Pose(current_unit);
                 Gimbal->Set_Target_J2_Yaw_Radian(Get_Trajectory_Start_J2());
 
-                bool finish_flag = (fabs(Now_J1_Radian - Gimbal->Get_Target_J1_Yaw_Radian()) <= 0.1f);
+                bool finish_flag = (fabs(Now_J2_Radian - Gimbal->Get_Target_J2_Yaw_Radian()) <= 0.002f);
                 if (finish_flag)
                 {
-                    Return_Init_Stage = 1;
+                    Set_Status(3);
                 }
+                break;
             }
-            else
+        case (3):
+            // J1移动到辅助位置
             {
-                Gimbal->Set_Target_J1_Yaw_Radian(current_unit.init_pos[1]);
-                Gimbal->Set_Target_J2_Yaw_Radian(current_unit.init_pos[2]);
+                Configure_Joint_Planner(true);
+                Hold_Init_Pose(current_unit);
+                Gimbal->Set_Target_J2_Yaw_Radian(Get_Trajectory_Start_J2());
+                Gimbal->Set_Target_J1_Yaw_Radian(Get_Trajectory_Start_J1());
 
-                bool finish_flag = (fabs(Now_J2_Radian - Gimbal->Get_Target_J2_Yaw_Radian()) <= 0.01f);
+                bool finish_flag = (fabs(Now_J1_Radian - Gimbal->Get_Target_J1_Yaw_Radian()) <= 0.005f);
                 if (finish_flag)
                 {
-                    Set_Status(0);
+                    Set_Status(4);
                 }
+                break;
             }
-            break;
-        }
+        case (4):
+            // 配置取矿预制轨迹
+            {
+                Configure_Joint_Planner(true);
+                Hold_Init_Pose(current_unit);
+                Prepare_Trajectory(true);
+                Set_Status(5);
+                break;
+            }
+        case (5):
+            // 同步移动到取矿位置，轨迹为直线
+            {
+                Configure_Joint_Planner(false);
+                Hold_Init_Pose(current_unit);
+                if (Run_Trajectory())
+                {
+                    Set_Status(6);
+                }
+                break;
+            }
+        case (6):
+            // 等待操作手按下确认
+            {
+                Configure_Joint_Planner(false);
+                Hold_Init_Pose(current_unit);
+                Gimbal->Set_Target_J1_Yaw_Radian(Get_Trajectory_End_J1());
+                Gimbal->Set_Target_J2_Yaw_Radian(Get_Trajectory_End_J2());
+
+                if (step)
+                {
+                    Set_Status(7);
+                }
+                break;
+            }
+        case (7):
+            // 配置反向轨迹
+            {
+                Configure_Joint_Planner(false);
+                Hold_Init_Pose(current_unit);
+                Prepare_Trajectory(false);
+                Set_Status(8);
+                break;
+            }
+        case (8):
+            // 移动回辅助位置
+            {
+                Configure_Joint_Planner(false);
+                Hold_Init_Pose(current_unit);
+                if (Run_Trajectory())
+                {
+                    Return_Init_Stage = 0;
+                    Set_Status(9);
+                }
+                break;
+            }
+        case (9):
+            // 回归到初始位置
+            {
+                Configure_Joint_Planner(true);
+                Hold_Init_Pose(current_unit);
+
+                if (Return_Init_Stage == 0)
+                {
+                    Gimbal->Set_Target_J1_Yaw_Radian(current_unit.init_pos[1]);
+                    Gimbal->Set_Target_J2_Yaw_Radian(Get_Trajectory_Start_J2());
+
+                    bool finish_flag = (fabs(Now_J1_Radian - Gimbal->Get_Target_J1_Yaw_Radian()) <= 0.01f);
+                    if (finish_flag)
+                    {
+                        Return_Init_Stage = 1;
+                    }
+                }
+                else
+                {
+                    Gimbal->Set_Target_J1_Yaw_Radian(current_unit.init_pos[1]);
+                    Gimbal->Set_Target_J2_Yaw_Radian(current_unit.init_pos[2]);
+
+                    bool finish_flag = (fabs(Now_J2_Radian - Gimbal->Get_Target_J2_Yaw_Radian()) <= 0.01f);
+                    if (finish_flag)
+                    {
+                        Set_Status(0);
+                    }
+                }
+                break;
+            }
         default:
         {
             Reset();
@@ -2551,7 +2645,6 @@ void Class_FSM_Save_Load::Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load
 
         return;
     }
-
 }
 #endif
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

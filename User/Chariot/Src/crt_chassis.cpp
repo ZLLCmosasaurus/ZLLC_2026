@@ -462,8 +462,8 @@ void Class_Mecanum_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max,
     Uplift_Motor[3].Init(&hfdcan2, DJI_Motor_ID_0x204, DJI_Motor_Control_Method_ANGLE);
 
     // 主动轮电机ID初始化
-    Track_Motor[0].Init(&hfdcan2, DM_Motor_ID_0xA1, DM_Motor_Control_Method_OMEGA);
-    Track_Motor[1].Init(&hfdcan2, DM_Motor_ID_0xA2, DM_Motor_Control_Method_OMEGA);
+    Track_Motor[0].Init(&hfdcan1, DM_Motor_ID_0xA1, DM_Motor_Control_Method_OMEGA);
+    Track_Motor[1].Init(&hfdcan1, DM_Motor_ID_0xA2, DM_Motor_Control_Method_OMEGA);
 
     // 激光测距模块初始化
     TOFSense.Init(&huart7, 0);
@@ -833,19 +833,6 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
     /*获取状态机运行方向枚举，用于控制状态机前进*/
     FSM_Direction = Chassis->Get_Uplift_FSM_Direction();
 
-    if (FSM_Direction == Uplift_FSM_FORWARD)
-    {
-        FORWARD_CNT++;
-        if (FORWARD_CNT >= 50)
-        {
-            TRIGGER_CNT++;
-        }
-    }
-    else if (FSM_Direction == Uplift_FSM_HOLD)
-    {
-        FORWARD_CNT = 0;
-    }
-
     // 获取当前抬升机构高度用于做增量赋值
     float target_rad[4] = {0.0f};
     for (int i = 0; i < 4; i++)
@@ -863,16 +850,13 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
         Chassis->Set_Target_Uplift_Radian(2, ledder_prepare[2]);
         Chassis->Set_Target_Uplift_Radian(3, ledder_prepare[3]);
 
-        if (TRIGGER_CNT > 1)
-            TRIGGER_CNT = 0;
-
         bool is_ready = true;
         for (int i = 0; i < 4; i++)
         {
             is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Omega_Radian()) <= 0.1f);
         }
 
-        if (is_ready && TRIGGER_CNT == 1)
+        if (is_ready && FSM_Direction == Uplift_FSM_FORWARD)
         {
             Set_Status(1);
         }
@@ -887,16 +871,13 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
         Chassis->Set_Target_Uplift_Radian(2, ledder_1_touch[2]);
         Chassis->Set_Target_Uplift_Radian(3, ledder_1_touch[3]);
 
-        if (TRIGGER_CNT > 2)
-            TRIGGER_CNT = 1;
-
         bool is_ready = true;
         for (int i = 0; i < 4; i++)
         {
             is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Omega_Radian()) <= 0.1f);
         }
 
-        if (is_ready && TRIGGER_CNT == 2)
+        if (is_ready && FSM_Direction == Uplift_FSM_FORWARD)
         {
             Set_Status(2);
         }
@@ -906,9 +887,6 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
 
     case (2): // 此状态抬升机构将整车抬起
     {
-        if (TRIGGER_CNT > 3)
-            TRIGGER_CNT = 2;
-
         for (int i = 0; i < 4; i++)
         {
             target_rad[i] -= PI * 0.01f;
@@ -923,7 +901,7 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
         }
 
         // 将车身送上台阶后使用遥控器切换到下一个状态
-        if (is_ready && TRIGGER_CNT == 3)
+        if (is_ready && FSM_Direction == Uplift_FSM_FORWARD)
         {
             Set_Status(3);
         }
@@ -933,9 +911,6 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
 
     case (3): // 此状态为登上第一个台阶后的抬升机构复位状态
     {
-        if (TRIGGER_CNT > 4)
-            TRIGGER_CNT = 3;
-
         Chassis->Set_Target_Uplift_Radian(0, ledder_1_over[0]);
         Chassis->Set_Target_Uplift_Radian(1, ledder_1_over[1]);
         Chassis->Set_Target_Uplift_Radian(2, ledder_1_over[2]);
@@ -947,7 +922,7 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
             is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Omega_Radian()) <= 0.1f);
         }
 
-        if (is_ready && TRIGGER_CNT == 4)
+        if (is_ready && FSM_Direction == Uplift_FSM_FORWARD)
         {
             Set_Status(4);
         }
@@ -957,9 +932,6 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
 
     case (4): // 次状态为抬升机构下降至第二个台阶触地位置
     {
-        if (TRIGGER_CNT > 5)
-            TRIGGER_CNT = 4;
-
         Chassis->Set_Target_Uplift_Radian(0, ledder_2_touch[0]);
         Chassis->Set_Target_Uplift_Radian(1, ledder_2_touch[1]);
         Chassis->Set_Target_Uplift_Radian(2, ledder_2_touch[2]);
@@ -971,7 +943,7 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
             is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Omega_Radian()) <= 0.1f);
         }
 
-        if (is_ready && TRIGGER_CNT == 5)
+        if (is_ready && FSM_Direction == Uplift_FSM_FORWARD)
         {
             Set_Status(5);
         }
@@ -981,9 +953,6 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
 
     case (5): // 此状态车身整体被抬起
     {
-        if (TRIGGER_CNT > 6)
-            TRIGGER_CNT = 5;
-
         for (int i = 0; i < 4; i++)
         {
             target_rad[i] -= PI * 0.01f;
@@ -997,7 +966,7 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
             is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Omega_Radian()) <= 0.05f);
         }
 
-        if (is_ready && TRIGGER_CNT == 6)
+        if (is_ready && FSM_Direction == Uplift_FSM_FORWARD)
         {
             Set_Status(6);
         }
@@ -1018,8 +987,11 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
             is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Omega_Radian()) <= 0.05f);
         }
 
-        TRIGGER_CNT = 0;
-
+        if(is_ready)
+        {
+            Set_Status(0);
+        }
+        
         break;
     }
     }

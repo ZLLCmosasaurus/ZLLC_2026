@@ -243,13 +243,13 @@ public:
 protected:
     /*roll轴校准相关变量*/
     bool roll_cali_status = false;   // 校准状态，初始为false
-    float roll_locked_torque = 4.2f; // 堵转力矩
+    float roll_locked_torque = 2.5f; // 堵转力矩
     float roll_offset = 0.0f;        // 存储校准后的偏差, rad
     float roll_range = 261.8f;
 
     /*Pitch轴校准相关变量*/
     bool pitch_cali_status = false;
-    float pitch_locked_torque = 3.5f;
+    float pitch_locked_torque = 2.5f;
     float pitch_offset = 0.0f;
     float pitch_range = 174.0f;
 
@@ -353,6 +353,8 @@ protected:
 
     float J1_Yaw_Min_Radian = -0.872f;
     float J1_Yaw_Max_Radian = 0.872f;
+    float J1_Yaw_MIT_KP = 100.0f;
+    float J1_Yaw_MIT_KD = 2.0f;
 
     float J2_Yaw_Min_Radian = -2.443f;
     float J2_Yaw_Max_Radian = 2.443f;

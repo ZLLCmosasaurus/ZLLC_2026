@@ -69,6 +69,7 @@ void RM_UI_Commit(void);
 
 void RM_UI_SetUplift(float rf_percent, float lf_percent, float rb_percent, float lb_percent);
 void RM_UI_SetPower(float power_percent);
+void RM_UI_SetOrientation(bool forehead);
 void RM_UI_SetWheelStatus(rm_ui_wheel_status_t status);
 
 void RM_UI_SetSpeedMode(rm_ui_speed_mode_t mode);
@@ -77,6 +78,11 @@ void RM_UI_SetFSMStage(uint8_t stage);
 void RM_UI_SetGripperStatus(rm_ui_gripper_status_t status);
 void RM_UI_SetControllerType(rm_ui_controller_type_t type);
 
+// CAN解包函数
+bool RM_UI_RemoteUnpackState(const uint8_t data[RM_UI_REMOTE_STATE_CAN_DLC], rm_ui_remote_state_t *out);
+// 辅助函数
+static bool rm_ui_remote_state_is_valid(const rm_ui_remote_state_t *state);
+// 应用赋值函数
 void RM_UI_ApplyRemoteState(const rm_ui_remote_state_t *state);
 #endif
 

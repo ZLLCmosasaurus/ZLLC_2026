@@ -9,14 +9,14 @@ void Class_Custom_Controller::Custom_Controller_Data_Process(uint8_t *Rx_Data)
     int i;
     for (i = 0; i < 15; i++)
     {
-        if (Data_Buffer[i] == 0xA5)
+        if (Data_Buffer[i] == 0xEB)
         {
             break;
         }
     }
 
     // 验证帧尾
-    bool flag = Data_Buffer[(i + 14) % 15] == 0x11;
+    bool flag = Data_Buffer[(i + 14) % 15] == 0x90;
 
     if (flag)
     {
@@ -31,10 +31,4 @@ void Class_Custom_Controller::Custom_Controller_Data_Process(uint8_t *Rx_Data)
 
         rx_frequence = DWT_GetDeltaT(&frequence_cnt);
     }
-}
-
-// 键鼠数据同步
-void Class_Custom_Controller::Image_Keyboard_Data_Process(uint8_t *Rx_Data)
-{
-    memcpy(&Image_Keyborad_Data, Rx_Data, KEYBOARD_DATA_LENGTH);
 }

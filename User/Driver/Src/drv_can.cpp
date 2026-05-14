@@ -66,21 +66,22 @@ uint8_t CAN3_0xxf7_Tx_Data[8];
 uint8_t CAN3_0xxf8_Tx_Data[8];
 
 uint8_t CAN_Supercap_Tx_Data[8];
-uint8_t CAN3_Chassis_Tx_Data_A[8];      // 底盘给云台发送缓冲区
-uint8_t CAN3_Chassis_Tx_Data_B[8];      // 底盘给云台发送缓冲区
-uint8_t CAN3_Chassis_Tx_Data_C[8];      // 底盘给云台发送缓冲区
-uint8_t CAN3_Chassis_Tx_Data_D[8];      // 底盘给云台发送缓冲区
-uint8_t CAN3_Chassis_Tx_Data_E[8];      // 底盘给云台发送缓冲区
-uint8_t CAN3_Chassis_Tx_Data_F[8];      // 底盘给云台发送缓冲区
-uint8_t CAN3_Chassis_Tx_Data_G[8];      // 底盘给云台发送缓冲区
-uint8_t CAN3_MiniPC_Tx_Data_A[8];       // 下位机发送缓冲区
-uint8_t CAN3_MiniPC_Tx_Data_B[8];       // 下位机发送缓冲区
-uint8_t CAN3_MiniPC_Tx_Data_C[8];       // 下位机发送缓冲区
-uint8_t CAN3_MiniPC_Tx_Data_D[8];       // 下位机发送缓冲区
-uint8_t CAN3_Gimbal_Tx_Chassis_Data[8]; // 云台给底盘发送缓冲区
-uint8_t CAN3_Sentry_CMD_Data[8];        // 云台给底盘发送缓冲区
-uint8_t CAN3_Controller_Tx_Data_A[8]; // 自定义控制器数据转发A包
-uint8_t CAN3_Controller_Tx_Data_B[8]; // 自定义控制器数据转发B包
+uint8_t CAN3_Chassis_Tx_Data_A[8];         // 底盘给云台发送缓冲区
+uint8_t CAN3_Chassis_Tx_Data_B[8];         // 底盘给云台发送缓冲区
+uint8_t CAN3_Chassis_Tx_Data_C[8];         // 底盘给云台发送缓冲区
+uint8_t CAN3_Chassis_Tx_Data_D[8];         // 底盘给云台发送缓冲区
+uint8_t CAN3_Chassis_Tx_Data_E[8];         // 底盘给云台发送缓冲区
+uint8_t CAN3_Chassis_Tx_Data_F[8];         // 底盘给云台发送缓冲区
+uint8_t CAN3_Chassis_Tx_Data_G[8];         // 底盘给云台发送缓冲区
+uint8_t CAN3_MiniPC_Tx_Data_A[8];          // 下位机发送缓冲区
+uint8_t CAN3_MiniPC_Tx_Data_B[8];          // 下位机发送缓冲区
+uint8_t CAN3_MiniPC_Tx_Data_C[8];          // 下位机发送缓冲区
+uint8_t CAN3_MiniPC_Tx_Data_D[8];          // 下位机发送缓冲区
+uint8_t CAN3_Gimbal_Tx_Chassis_Data[8];    // 云台给底盘发送缓冲区
+uint8_t CAN3_Gimbal_Tx_Chassis_UI_Data[8]; // 云台发送给底盘的UI更新数据
+uint8_t CAN3_Sentry_CMD_Data[8];           // 云台给底盘发送缓冲区
+uint8_t CAN3_Controller_Tx_Data_A[8];      // 自定义控制器数据转发A包
+uint8_t CAN3_Controller_Tx_Data_B[8];      // 自定义控制器数据转发B包
 
 /*********LK电机 控制缓冲区***********/
 uint8_t CAN1_0x141_Tx_Data[8];
@@ -377,6 +378,11 @@ void TIM_CAN_PeriodElapsedCallback()
     }
     if (mod20 == 20) // 50Hz
     {
+        // 与5ms底盘通信频率避开，防止CAN阻塞卡死
+        if (mod5 != 5)
+        {
+            CAN_Send_Data(&hfdcan3, 0x95, CAN3_Gimbal_Tx_Chassis_UI_Data, 8);
+        }
         mod20 = 0;
     }
 #endif
