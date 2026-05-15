@@ -18,22 +18,23 @@
 #define MINIPC_COMM_CAN
 #define BOOSTER_CAN hcan2
 #define YAW_FEEDBACK_IDENTIFIER 0x206
-#define Fretboard_GEARBOX_RATIO 2.5f*36.0f
+#define Fretboard_GEARBOX_RATIO 2.5f * 36.0f
 #define Heat_Detect_ENABLE
+
 // #define MINIPC_COMM_USB
 
 // #define IMAGE_VT12
 #define IMAGE_VT13
 #define USE_DR16
 
-//#define FSM_TEST_ALWAYS_ENABLE
+// #define FSM_TEST_ALWAYS_ENABLE
 
-//#define CHASSIS
+// #define CHASSIS
 #define GIMBAL
 
 #ifdef GIMBAL
 
-//#define BULLET_SPEED_PID
+// #define BULLET_SPEED_PID
 
 #endif
 

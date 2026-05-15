@@ -187,6 +187,7 @@ targets:
         - USE_HAL_DRIVER
         - STM32F407xx
       incList:
+        - .
         - ../Core/Inc
         - ../Drivers/STM32F4xx_HAL_Driver/Inc
         - ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy

@@ -66,6 +66,7 @@ class Class_IMU
     float Get_Angle_Roll(void);
     float Get_Angle_Pitch(void);
     float Get_Angle_Yaw(void);
+    float Get_Angle_Yaw_Total(void);
 
     float Get_Rad_Roll(void);
     float Get_Rad_Pitch(void);

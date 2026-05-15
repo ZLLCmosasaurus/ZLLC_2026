@@ -330,6 +330,8 @@ public:
 
     Class_MiniPC *MiniPC;
 
+    Class_Referee *Referee;
+
     /*后期yaw pitch这两个类要换成其父类，大疆电机类*/
 
     // yaw轴电机
@@ -361,9 +363,9 @@ protected:
 
     //常量
     // yaw轴最小值
-    float Min_Yaw_Angle = - 54.0f;
+    float Min_Yaw_Angle = - 180.0f;
     // yaw轴最大值
-    float Max_Yaw_Angle = 126.0f;
+    float Max_Yaw_Angle = 180.0f;
 
     //yaw总角度
     float Yaw_Total_Angle;

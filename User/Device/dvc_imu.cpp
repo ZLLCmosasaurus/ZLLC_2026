@@ -160,6 +160,11 @@ float Class_IMU::Get_Angle_Yaw(void)
     return (INS.Yaw);
 }
 
+float Class_IMU::Get_Angle_Yaw_Total(void)
+{
+    return (INS.YawTotalAngle);
+}
+
 float Class_IMU::Get_Accel_X(void)
 {
     return (INS.Accel[0]);
