@@ -100,7 +100,6 @@ void Class_Gimbal::Init()
  */
 float tmp_Target_Angle = 0.0f, tmp_Target_Pitch_Angle = 0.0f, test_c = 0;
 extern float Sin_Single;
-
 void Class_Gimbal::Output()
 {
     static uint32_t camera_switch_time = 0;

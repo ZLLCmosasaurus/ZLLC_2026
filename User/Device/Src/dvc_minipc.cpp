@@ -84,6 +84,9 @@ void Class_MiniPC::Data_Process(Enum_MiniPC_Data_Source Data_Source)
     //mode = Data_NUC_To_MCU.mode;
     Rx_Angle_Yaw = Data_NUC_To_MCU.yaw;
     Rx_Angle_Pitch = Data_NUC_To_MCU.pitch;
+
+    mode = Data_NUC_To_MCU.mode;
+
     Math_Constrain(&Rx_Angle_Pitch, -25.0f, 22.0f);
 
     if(mode == 2){
