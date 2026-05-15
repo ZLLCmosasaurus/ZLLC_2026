@@ -120,7 +120,6 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>DLGUARM</Key>
-          <Name>?</Name>
         </SetRegEntry>
         <SetRegEntry>
           <Number>0</Number>
@@ -475,7 +474,7 @@
       <GroupNumber>4</GroupNumber>
       <FileNumber>6</FileNumber>
       <FileType>8</FileType>
-      <tvExp>1</tvExp>
+      <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>..\User\Chariot\Src\crt_gimbal.cpp</PathWithFileName>

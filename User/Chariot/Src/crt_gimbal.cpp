@@ -203,7 +203,7 @@ void Class_Gimbal::Output()
             else if(camera_switch_status == 0){         //上位机可以控制大Yaw，正常状态
                 camera_switch_time ++;              //记录距离上一次全向感知执行完成的时间间隔
                 
-                if(MiniPC->Get_Rx_Target_Omega_Yaw_Main() < 0.01f){
+                if(fabs(MiniPC->Get_Rx_Target_Omega_Yaw_Main()) < 0.01f){
                     // 导航的控制
                     Motor_Main_Yaw.Set_LK_Motor_Control_Method(LK_Motor_Control_Method_ANGLE);
                     Target_Main_Yaw_Angle = pre_main_yaw_angle;
