@@ -772,7 +772,7 @@ struct Struct_Referee_Rx_Data_Event_Dart_Remaining_Time
     uint8_t Dart_Remaining_Time;
     uint8_t  Dart_Recent_Target : 3;
     uint16_t Dart_Info : 3;
-    uint16_t Dart_Target_Enum : 2;
+    uint16_t Dart_Target_Enum : 3;
     uint16_t Reserved : 8;
     uint16_t CRC_16;
 } __attribute__((packed));

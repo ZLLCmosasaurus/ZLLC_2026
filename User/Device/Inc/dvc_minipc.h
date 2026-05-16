@@ -270,7 +270,7 @@ struct Struct_MiniPC_Tx_Data
     uint16_t Self_Base_HP;         // 己方基地hp
     uint16_t Projectile_Allowance; // 允许发弹量
     uint16_t Remaining_Time;       // 比赛剩余时间
-
+    uint32_t free_respawn_ready;//0没复活，1复活了
     // 雷达站数据
     uint8_t Invincivle_State;  // 敌对方无敌状态
     uint16_t enemy_position_x; // 前两位高位为机器编号，后十四位为坐标值
@@ -282,7 +282,7 @@ struct Struct_MiniPC_Tx_Data
     uint8_t Dart_Target;       // 飞镖随机固定靶信息
 
     uint16_t crc16;
-    uint32_t free_respawn_ready;//0没复活，1复活了
+    
 } __attribute__((packed));
 
 // struct Struct_MiniPC_Aimmer_Tx_Data

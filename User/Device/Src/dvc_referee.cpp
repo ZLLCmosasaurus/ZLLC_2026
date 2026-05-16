@@ -212,6 +212,11 @@ void Class_Referee::Data_Process(uint16_t Length)
 
             break;
         }
+        case(Referee_Command_ID_EVENT_DART_REMAINING_TIME):{
+            memcpy(&Event_Dart_Remaining_Time, tmp_buffer->Data, sizeof(Struct_Referee_Rx_Data_Event_Dart_Remaining_Time));
+
+            break;
+        }
         case (Referee_Command_ID_ROBOT_POSITION):
         {
             memcpy(&Robot_Position, tmp_buffer->Data, sizeof(Struct_Referee_Rx_Data_Robot_Position));
