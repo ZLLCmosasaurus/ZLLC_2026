@@ -5,7 +5,9 @@
 #include "crt_chassis.h"
 #include "dvc_referee.h"
 
+#ifndef PI
 #define PI 3.14159f
+#endif
 #define DMA_FLAG_TCIF4 ((uint32_t)0x20000020)
 /*��Ļ����*/
 #define SCREEN_WIDTH 1080
@@ -18,7 +20,7 @@
 #define CRC_LEN 2		  // β��CRC16У��
 #define DRAWING_PACK 15	  // ��1��ͼ���ݰ�����
 
-#define REFEREE_DMA_TX_QUEUE_DEPTH 4
+#define REFEREE_DMA_TX_QUEUE_DEPTH 8
 #define REFEREE_DMA_MAX_PACKET_LEN SEND_MAX_SIZE
 
 typedef struct {

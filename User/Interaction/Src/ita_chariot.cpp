@@ -814,8 +814,9 @@ void Class_Chariot::Chassis_Test_Control()
         {
             Chassis.Set_Target_Uplift_Radian(i, target_uplift_rad[i]);
         }
+        }
     }
-    }
+
 }
 #endif
 
@@ -853,7 +854,6 @@ void Class_Chariot::Control_Chassis()
 
         if (Chassis.Get_Wheel_Slave_Status() == Wheel_Slave_ON)
         {
-            // 机械安装方向相反，因此乘以一个负号
             track_omega = 25.0f * (Force_Chassis.Get_Target_Velocity_X() / Chassis.Get_Velocity_X_Max());
         }
         else
@@ -934,7 +934,6 @@ void Class_Chariot::Control_Chassis()
         if (Chassis.Get_Backdoor_Jump())
         {
             Chassis.Ledder_FSM.Set_Status(3);
-            Chassis.Ledder_FSM.TRIGGER_CNT = 3;
         }
         // 台阶状态机执行函数
         Chassis.Ledder_FSM.Reload_TIM_Status_PeriodElapsedCallback();

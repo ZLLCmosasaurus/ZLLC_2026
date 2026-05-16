@@ -129,7 +129,7 @@ uint8_t Transmit_Pack[128];				   // 裁判系统发送帧
 uint8_t data_pack[DRAWING_PACK * 7] = {0}; // 数据段部分
 uint8_t DMAsendflag;
 
-#define REFEREE_DMA_TX_QUEUE_DEPTH 4
+#define REFEREE_DMA_TX_QUEUE_DEPTH 8
 #define REFEREE_DMA_MAX_PACKET_LEN SEND_MAX_SIZE
 
 static RefereeDMAPacket_t referee_dma_queue[REFEREE_DMA_TX_QUEUE_DEPTH];
@@ -528,12 +528,6 @@ void Send_toReferee(uint16_t cmd_id, uint16_t data_len)
 	}
 }
 
-void GraphUI_TxCpltCallback_Legacy(UART_HandleTypeDef *huart)
-{
-    if (huart == &huart10) {
-        GraphUI_TxCompleteInternal();
-    }
-}
 
 /**********************************************************************************************************
  *函 数 名: Deleta_Layer

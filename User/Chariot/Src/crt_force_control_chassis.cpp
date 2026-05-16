@@ -18,16 +18,16 @@ void Class_Chassis::Init()
 
     // 轮向电机ID初始化
     // 电机初始化
-    Motor_Wheel[0].Init(&hfdcan1, Motor_DJI_ID_0x201, Motor_DJI_Control_Method_CURRENT, 3591.f / 187.f, Motor_DJI_Power_Limit_Status_ENABLE);
+    // Motor_Wheel[0].Init(&hfdcan1, Motor_DJI_ID_0x201, Motor_DJI_Control_Method_CURRENT, 3591.f / 187.f, Motor_DJI_Power_Limit_Status_ENABLE);
     Motor_Wheel[0].PID_Omega.Init(0.0f, 0.0f, 0.0f, 0.0f, 20.0f, 20.0f);
     // 电机初始化
-    Motor_Wheel[1].Init(&hfdcan1, Motor_DJI_ID_0x202, Motor_DJI_Control_Method_CURRENT, 3591.f / 187.f, Motor_DJI_Power_Limit_Status_ENABLE);
+    // Motor_Wheel[1].Init(&hfdcan1, Motor_DJI_ID_0x202, Motor_DJI_Control_Method_CURRENT, 3591.f / 187.f, Motor_DJI_Power_Limit_Status_ENABLE);
     Motor_Wheel[1].PID_Omega.Init(0.0f, 0.0f, 0.0f, 0.0f, 20.0f, 20.0f);
     // 电机初始化
-    Motor_Wheel[2].Init(&hfdcan1, Motor_DJI_ID_0x203, Motor_DJI_Control_Method_CURRENT, 3591.f / 187.f, Motor_DJI_Power_Limit_Status_ENABLE);
+    // Motor_Wheel[2].Init(&hfdcan1, Motor_DJI_ID_0x203, Motor_DJI_Control_Method_CURRENT, 3591.f / 187.f, Motor_DJI_Power_Limit_Status_ENABLE);
     Motor_Wheel[2].PID_Omega.Init(0.0f, 0.0f, 0.0f, 0.0f, 20.0f, 20.0f);
     // 电机初始化
-    Motor_Wheel[3].Init(&hfdcan1, Motor_DJI_ID_0x204, Motor_DJI_Control_Method_CURRENT, 3591.f / 187.f, Motor_DJI_Power_Limit_Status_ENABLE);
+    // Motor_Wheel[3].Init(&hfdcan1, Motor_DJI_ID_0x204, Motor_DJI_Control_Method_CURRENT, 3591.f / 187.f, Motor_DJI_Power_Limit_Status_ENABLE);
     Motor_Wheel[3].PID_Omega.Init(0.0f, 0.0f, 0.0f, 0.0f, 20.0f, 20.0f);
 
     // 超级电容初始化
@@ -35,12 +35,6 @@ void Class_Chassis::Init()
 
     // imu初始化
     Boardc_BMI.Init();
-
-    // 低通滤波初始化
-    // 实际速度滤波
-    //  PID_Velocity_Filter[0].Init(-4.0f,4.0f,Filter_Fourier_Type_LOWPASS,10.0f,0.0f,500.0f,5);
-    //  PID_Velocity_Filter[1].Init(-4.0f,4.0f,Filter_Fourier_Type_LOWPASS,10.0f,0.0f,500.0f,5);
-    //  PID_Omega_Filter.Init(-20.0f,20.0f,Filter_Fourier_Type_LOWPASS,10.0f,0.0f,500.0f,15);
 
     // Spike滤波初始化
     init_filter(&Velocity_X_Spike, 5);

@@ -279,6 +279,7 @@ void Chassis_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 #endif
 
 #ifdef CHASSIS
+void PowerMeter_CAN3_Callback(uint8_t *Rx_Data);
 void Chassis_Device_CAN3_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
     switch (CAN_RxMessage->Header.Identifier)
@@ -291,6 +292,11 @@ void Chassis_Device_CAN3_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
     case (0x95):
     {
         chariot.CAN_Chassis_Rx_Gimbal_Callback(CAN_RxMessage->Data);
+        break;
+    }
+    case (0x123):
+    {
+        PowerMeter_CAN3_Callback(CAN_RxMessage->Data);
         break;
     }
     }
@@ -492,6 +498,19 @@ void SuperCAP_UART1_Callback(uint8_t *Buffer, uint16_t Length)
     memcpy(&tmp_power, &Buffer[6], sizeof(int16_t));
 
     chariot.Force_Chassis.Supercap.Set_Now_Power((float)tmp_power / 75.0f);
+}
+
+float PowerMeter_Voltage, PowerMeter_Current, PowerMeter_Power;
+void PowerMeter_CAN3_Callback(uint8_t *Rx_Data)
+{
+    uint16_t power_int = (Rx_Data[1] << 8) | Rx_Data[0];
+    PowerMeter_Power = (float)power_int / 100.0f;
+
+    uint16_t voltage_int = (Rx_Data[3] << 8) | Rx_Data[2];
+    PowerMeter_Voltage = (float)voltage_int / 100.0f;
+
+    uint16_t current_int = (Rx_Data[5] << 8) | Rx_Data[4];
+    PowerMeter_Current = (float)current_int / 100.0f;
 }
 
 void TOFSense_UART7_Callback(uint8_t *Buffer, uint16_t Length)
