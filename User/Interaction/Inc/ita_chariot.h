@@ -26,7 +26,7 @@
 #include "config.h"
 #include "alg_filter.h"
 #include "arm_model.h"
-#include "rm_ui_app.h"
+#include "dvc_GraphicsSendTask.h"
 
 /* Exported macros -----------------------------------------------------------*/
 class Class_Chariot;
@@ -108,6 +108,16 @@ enum Enum_Keyboard_Control_Type
     Keyboard_Control_Type_UPLIFT,   // 上台阶模式
     Keyboard_Control_Type_DOWNLIFT, // 下台阶模式
     Keyboard_Control_Type_SAVE_LOAD // 存取矿模式
+};
+
+/**
+ * @brief 整车朝向枚举类型
+ *
+ */
+enum Enum_Chariot_Orientation
+{
+    Chariot_Orientation_FOREHEAD = 0, // 朝前（机械臂所在方向）
+    Chariot_Orientation_REARBACK = 1   // 朝后
 };
 
 /**
@@ -338,7 +348,7 @@ public:
     // 云台发送到底盘的数据帧结构体
     Gimbal_Tx_Chassis_Frame Rx_Frame;
     // 云台发送到底盘的UI更新帧结构体
-    rm_ui_remote_state_t Rx_UI_State;
+    graph_ui_sync_t Rx_UI_State;
 
     void Judge_DR16_Control_Type();
     void Judge_VT13_Control_Type();
@@ -402,8 +412,11 @@ protected:
     float DR16_Mouse_VT03_Yaw_Angle_Resolution = 57.8f * 10.0f;
     // 鼠标控制VT03图传Pitch角度灵敏度系数
     float DR16_Mouse_VT03_Pitch_Angle_Resolution = 57.8f * 10.0f;
+
     // 键鼠控制模式下机器人工况模式
     Enum_Keyboard_Control_Type Keyboard_Control_Type = Keyboard_Control_Type_DISABLE;
+    // 图传以及底盘掉头方向
+    Enum_Chariot_Orientation Chariot_Orientation = Chariot_Orientation_FOREHEAD;
     /*存取矿状态机数据来源*/
     Enum_Save_Load_Type Save_Load_Unit = SAVE_LOAD_UNIT_1;
     bool Save_Load_Confirm_Request = false;
@@ -474,7 +487,7 @@ protected:
     void Controller_Data_Update();
     void Create_Controller_Snapshot();
     void Judge_Keyboard_Mode();
-    void Judge_Gimbal_Control_Type();
+    void Judge_Chariot_Control_Type();
 
     // void Judge_DR16_Control_Type();
 

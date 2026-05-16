@@ -7,8 +7,16 @@
 #include <stdio.h>
 #include "ui_interface.h"
 
+#define UI_TX_ENTER_CRITICAL(primask) do { (primask) = __get_PRIMASK(); __disable_irq(); } while (0)
+#define UI_TX_EXIT_CRITICAL(primask) __set_PRIMASK(primask)
+
 uint8_t seq = 0;
 int ui_self_id = 1;
+
+typedef struct {
+    uint8_t data[UI_TX_MAX_PACKET_LEN];
+    uint16_t len;
+} ui_tx_packet_t;
 
 ui_string_frame_t _ui_string_frame;
 ui_1_frame_t _ui_1_frame;
@@ -16,8 +24,103 @@ ui_2_frame_t _ui_2_frame;
 ui_5_frame_t _ui_5_frame;
 ui_7_frame_t _ui_7_frame;
 
+static ui_tx_packet_t ui_tx_queue[UI_TX_QUEUE_DEPTH];
+static volatile uint8_t ui_tx_head = 0;
+static volatile uint8_t ui_tx_tail = 0;
+static volatile uint8_t ui_tx_count = 0;
+volatile uint8_t ui_tx_dma_busy = 0;
+
+static uint8_t ui_tx_queue_full(void) {
+    return ui_tx_count >= UI_TX_QUEUE_DEPTH;
+}
+
+static uint8_t ui_tx_queue_empty(void) {
+    return ui_tx_count == 0;
+}
+
+static void ui_tx_queue_pop(void) {
+    if (ui_tx_queue_empty()) {
+        return;
+    }
+    ui_tx_head = (uint8_t)((ui_tx_head + 1U) % UI_TX_QUEUE_DEPTH);
+    ui_tx_count--;
+}
+
 void print_message(const uint8_t *message, const int length) {
-    HAL_UART_Transmit(&huart10, message, length, 15);
+    for (int i = 0; i < length; i++) {
+        printf("%02x ", message[i]);
+    }
+    printf("\n\n");
+}
+
+void ui_tx_enqueue_message(const uint8_t *message, const int length) {
+    uint32_t primask = 0U;
+
+    if (message == NULL || length <= 0 || length > UI_TX_MAX_PACKET_LEN) {
+        return;
+    }
+
+    UI_TX_ENTER_CRITICAL(primask);
+    if (ui_tx_queue_full()) {
+        UI_TX_EXIT_CRITICAL(primask);
+        return;
+    }
+
+    memcpy(ui_tx_queue[ui_tx_tail].data, message, (size_t)length);
+    ui_tx_queue[ui_tx_tail].len = (uint16_t)length;
+    ui_tx_tail = (uint8_t)((ui_tx_tail + 1U) % UI_TX_QUEUE_DEPTH);
+    ui_tx_count++;
+    UI_TX_EXIT_CRITICAL(primask);
+}
+
+void ui_tx_service(void) {
+    uint32_t primask = 0U;
+    const uint8_t *tx_data = NULL;
+    uint16_t tx_len = 0U;
+    uint8_t should_start = 0U;
+
+    UI_TX_ENTER_CRITICAL(primask);
+    if (!ui_tx_dma_busy && !ui_tx_queue_empty()) {
+        ui_tx_dma_busy = 1U;
+        tx_data = ui_tx_queue[ui_tx_head].data;
+        tx_len = ui_tx_queue[ui_tx_head].len;
+        should_start = 1U;
+    }
+    UI_TX_EXIT_CRITICAL(primask);
+
+    if (!should_start) {
+        return;
+    }
+
+    if (SEND_MESSAGE(tx_data, tx_len) != HAL_OK) {
+        UI_TX_ENTER_CRITICAL(primask);
+        ui_tx_dma_busy = 0U;
+        UI_TX_EXIT_CRITICAL(primask);
+    }
+}
+
+int ui_tx_queue_count(void) {
+    uint32_t primask = 0U;
+    int count = 0;
+
+    UI_TX_ENTER_CRITICAL(primask);
+    count = (int)ui_tx_count;
+    UI_TX_EXIT_CRITICAL(primask);
+
+    return count;
+}
+
+void ui_tx_on_dma_complete(void) {
+    uint32_t primask = 0U;
+
+    if (ui_tx_dma_busy == 0U) {
+        return;
+    }
+
+    UI_TX_ENTER_CRITICAL(primask);
+    ui_tx_dma_busy = 0U;
+    ui_tx_queue_pop();
+    UI_TX_EXIT_CRITICAL(primask);
 }
 
 const unsigned char CRC8_TAB[256] = {
@@ -149,7 +252,7 @@ void ui_delete_layer(const uint8_t delete_type, const uint8_t layer) {
     ui_delete_frame.delete_type = delete_type;
     ui_delete_frame.layer = layer;
     ui_proc_delete_frame(&ui_delete_frame);
-    SEND_MESSAGE((uint8_t *) &ui_delete_frame, sizeof(ui_delete_frame));
+    ui_tx_enqueue_message((uint8_t *) &ui_delete_frame, (int)sizeof(ui_delete_frame));
 }
 
 void ui_scan_and_send(const ui_interface_figure_t *ui_now_figures, uint8_t *ui_dirty_figure,
@@ -200,16 +303,16 @@ void ui_scan_and_send(const ui_interface_figure_t *ui_now_figures, uint8_t *ui_d
                     }
                     if (pack_size == 7) {
                         ui_proc_7_frame(&_ui_7_frame);
-                        SEND_MESSAGE((uint8_t *) &_ui_7_frame, sizeof(_ui_7_frame));
+                        ui_tx_enqueue_message((uint8_t *) &_ui_7_frame, (int)sizeof(_ui_7_frame));
                     } else if (pack_size == 5) {
                         ui_proc_5_frame(&_ui_5_frame);
-                        SEND_MESSAGE((uint8_t *) &_ui_5_frame, sizeof(_ui_5_frame));
+                        ui_tx_enqueue_message((uint8_t *) &_ui_5_frame, (int)sizeof(_ui_5_frame));
                     } else if (pack_size == 2) {
                         ui_proc_2_frame(&_ui_2_frame);
-                        SEND_MESSAGE((uint8_t *) &_ui_2_frame, sizeof(_ui_2_frame));
+                        ui_tx_enqueue_message((uint8_t *) &_ui_2_frame, (int)sizeof(_ui_2_frame));
                     } else {
                         ui_proc_1_frame(&_ui_1_frame);
-                        SEND_MESSAGE((uint8_t *) &_ui_1_frame, sizeof(_ui_1_frame));
+                        ui_tx_enqueue_message((uint8_t *) &_ui_1_frame, (int)sizeof(_ui_1_frame));
                     }
                 }
                 now_cap++;
@@ -222,7 +325,7 @@ void ui_scan_and_send(const ui_interface_figure_t *ui_now_figures, uint8_t *ui_d
             if (ui_dirty_string[i] > 0) {
                 _ui_string_frame.option = ui_now_strings[i];
                 ui_proc_string_frame(&_ui_string_frame);
-                SEND_MESSAGE((uint8_t *) &_ui_string_frame, sizeof(_ui_string_frame));
+                ui_tx_enqueue_message((uint8_t *) &_ui_string_frame, (int)sizeof(_ui_string_frame));
                 ui_dirty_string[i]--;
             }
         }

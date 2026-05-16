@@ -683,8 +683,7 @@ void Task1ms_TIM5_Callback()
         if (mod100 == 100)
         {
 #ifdef CHASSIS
-            // 裁判系统UI发送标志位置true
-            chariot.Referee_UI_Refresh_Status = Referee_UI_Refresh_Status_ENABLE;
+            GraphicSendtask();
 #endif
             mod100 = 0;
         }
@@ -729,7 +728,7 @@ extern "C" void Task_Init()
     SPI_Init(&hspi2, Device_SPI2_Callback);
 
     // UI任务初始化
-    RM_UI_Init(2);
+    GraphUI_Init(2);
 #ifdef POWER_LIMIT
 
 #endif
@@ -808,12 +807,18 @@ extern "C" void Task_Loop()
 #endif
 
 #ifdef CHASSIS
-    if (chariot.Referee_UI_Refresh_Status == Referee_UI_Refresh_Status_ENABLE)
+#endif
+}
+
+extern "C" void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+{
+#ifdef CHASSIS
+    if (huart == &huart10)
     {
-        // UI更新
-        RM_UI_Commit();
-        chariot.Referee_UI_Refresh_Status = Referee_UI_Refresh_Status_DISABLE;
+        GraphUI_OnTxComplete();
     }
+#else
+    (void)huart;
 #endif
 }
 
