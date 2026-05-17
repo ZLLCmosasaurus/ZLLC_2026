@@ -199,7 +199,8 @@ extern Referee_Rx_B_t CAN3_Chassis_Rx_Data_B;
 void Class_Booster::Output()
 {
     Now_Angle = Motor_Driver.Get_Now_Radian();
-
+    static float last_shot_time = 0.0f;
+   
     //控制拨弹轮
     switch (Booster_Control_Type)
     {
@@ -241,6 +242,7 @@ void Class_Booster::Output()
             }
       
             shoot_time = 0;
+         
         }
         break;
         case (Booster_Control_Type_SINGLE):
@@ -251,18 +253,20 @@ void Class_Booster::Output()
             Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
 
             dttt = DWT_GetDeltaT(&single_t);
-            
-            if(Referee->Get_Referee_Status() == Referee_Status_ENABLE){
-                if(Heat+2*Heat_Consumption-Cooling_Value*dttt<=Heat_Max){
-                    Driver_Angle = Now_Angle + 2.0f * PI / 9.0f;
-                }
-                else{
-                    Driver_Angle = Now_Angle;
-                }
-            }
+              
+           
+                if(Heat + 4*Heat_Consumption - Cooling_Value*dttt <= Heat_Max)
+        {
+             
+            Driver_Angle = Now_Angle + 2.0f * PI / 9.0f;
+              
+        }
             else{
-                Driver_Angle = Now_Angle + 2.0f * PI / 9.0f;
+                Driver_Angle = Now_Angle ;
             }
+            // }}else{
+            //     Driver_Angle = Now_Angle ;
+            // }
 
             // Driver_Angle -= 2.0f * PI / 8.0f;
             Motor_Driver.Set_Target_Radian(Driver_Angle);

@@ -469,15 +469,19 @@ float Dt_ad;
 
 void Task1ms_TIM4_Callback()
 {
-//    static uint16_t count = 0;
-//    count++;
-//    if(count>=1000)
-//    {
-//       uint8_t current_mode=chariot.MiniPC.Get_mode();
-//       if(current_mode==) 
-//        chariot.MiniPC.Set_mode(a);
-//        count = 0;
-//    }
+//   static uint16_t count = 0;
+//   count++;
+//   if(count>=90)
+//   {
+//      uint8_t current_mode=chariot.MiniPC.Get_mode();
+//      if(current_mode==1) 
+//      {
+//       chariot.MiniPC.Set_mode(2);}
+//       else if(current_mode==2)       {
+//        chariot.MiniPC.Set_mode(1);
+//       }
+//       count = 0;
+//   }
     #ifdef CHASSIS
 
     chariot.Boardc_BMI.TIM_Calculate_PeriodElapsedCallback();
@@ -512,15 +516,15 @@ void Task1ms_TIM4_Callback()
         // }
         #elif defined(USE_FS_i6X)
          if(chariot.Referee.Get_Game_Stage() == Referee_Game_Status_Stage_BATTLE && chariot.FS_i6X.Get_FS_Status() == FS_Status_DISABLE && chariot.Referee.Get_Referee_Status() == Referee_Status_ENABLE){                               //比赛开始状态
-            // chariot.FS_i6X.Set_Switch_0(FS_Switch_Status_DOWN);                  //保险 强制上位机
-            // chariot.FS_i6X.Set_Switch_2(FS_Switch_Status_DOWN);                 //强制上位机自动打弹
-            // chariot.TIM_Control_Callback();                                         //里面上位机离线的相关处理了
-            chariot.FSM_Alive_Control_Fs_i6x.Reload_TIM_Status_PeriodElapsedCallback();    //遥控器离线失能保护
+             chariot.FS_i6X.Set_Switch_0(FS_Switch_Status_DOWN);                  //保险 强制上位机
+             chariot.FS_i6X.Set_Switch_2(FS_Switch_Status_DOWN);                 //强制上位机自动打弹
+             chariot.TIM_Control_Callback();                                         //里面上位机离线的相关处理了
+            // chariot.FSM_Alive_Control_Fs_i6x.Reload_TIM_Status_PeriodElapsedCallback();    //遥控器离线失能保护
             
-            if(chariot.FS_i6X.Get_FS_Status() == FS_Status_ENABLE && 
-                chariot.Gimbal.External_IMU.Get_IMU_Status() == IMU_Status_ENABLE){               //如果遥控器不在线也跑，就会和FSM抢状态，车子不能正确失能了
-                chariot.TIM_Control_Callback();
-            }
+            // if(chariot.FS_i6X.Get_FS_Status() == FS_Status_ENABLE && 
+            //     chariot.Gimbal.External_IMU.Get_IMU_Status() == IMU_Status_ENABLE){               //如果遥控器不在线也跑，就会和FSM抢状态，车子不能正确失能了
+            //     chariot.TIM_Control_Callback();
+            // }
         }
         else{      
                                                                           //非比赛状态/遥控器在线

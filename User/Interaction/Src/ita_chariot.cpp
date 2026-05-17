@@ -889,7 +889,8 @@ void Class_Chariot::Control_Booster()
    
    // static uint8_t booster_sign = 0;
     static float  single_time;
-    static float burst_start_time;
+   
+     static float last_shot_time = 0.0f;
     volatile int FS_Left1_Switch_Status = FS_i6X.Get_Switch_0();
 
     if(FS_Left1_Switch_Status == FS_Switch_Status_DOWN){         //上位机模式
@@ -910,19 +911,20 @@ void Class_Chariot::Control_Booster()
                     break;
                 }
 
-                if(MiniPC.Get_mode() == 2 && MiniPC.MiniPC_Fire_Updata_Flag == 1)
-                { // 后边两个判断似乎不需要
+                if(MiniPC.Get_mode()==2){
+                    float now = DWT_GetTimeline_s();  
+                    if((now - last_shot_time) > 0.15f)
+                    {
 
                     Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
-                        
-                    MiniPC.MiniPC_Fire_Updata_Flag = 0;
-                   
-                } // 打完后会自动切到停火
-                else
-                {
+                    last_shot_time = now;
+            
+                }
+                    //Shoot_Flag = 1;
+                }
+                else{
                     Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
                 }
-
                 break;
             }
             case (FS_Switch_Status_MIDDLE)://右1中开火
@@ -971,8 +973,9 @@ void Class_Chariot::Control_Booster()
             }
             else if (switch_state == FS_Switch_Status_DOWN && Shoot_Flag == 0) // lian发
     {
-                Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
-                Shoot_Flag = 1;
+                 Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                 Shoot_Flag = 1;
+                
             }
            
        
