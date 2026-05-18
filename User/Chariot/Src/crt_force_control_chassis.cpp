@@ -47,6 +47,7 @@ void Class_Chassis::Init()
     Slope_Velocity_Y.Init(0.005f, 0.01f);
     // 斜坡函数加减速角速度
     Slope_Omega.Init(0.05f, 0.05f);
+    Power_Limit.Set_K3(0.0f);
 }
 
 // #define Control_Type_Oemga
@@ -270,8 +271,11 @@ void Class_Chassis::Output_To_Motor()
     }
 
     // 进行功率限制
-    Power_Management.Max_Power = 120.0f;
+    Power_Management.Max_Power = Power_Limit_Max;
     Power_Limit.Power_Task(Power_Management);
+    Wheel_Factor = Power_Management.Scale_Conffient;
+    Now_Wheel_Motor_Power = Power_Management.Scaled_Total_Power;
+    Now_Motor_Power = Now_Wheel_Motor_Power;
 
     for (int i = 0; i < 4; i++)
     {

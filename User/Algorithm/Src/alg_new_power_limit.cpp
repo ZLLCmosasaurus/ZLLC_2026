@@ -110,6 +110,7 @@ void Class_New_Power_Limit::Power_Task(Struct_Power_Management &power_management
 {
     float tmp_motmotor_predic_power = 0.0f;
     float tmp_mot_needScaled_power = 0.f;
+    float tmp_scaled_total_power = 0.0f;
 
     for (int i = 0; i < 4; i++)
     {
@@ -162,6 +163,10 @@ void Class_New_Power_Limit::Power_Task(Struct_Power_Management &power_management
         for (int j = 0; j < 4; j++)
         {
             power_management.Motor_Data[j].output = power_management.Motor_Data[j].pid_output;
+            if (power_management.Motor_Data[j].theoretical_power > 0.0f)
+            {
+                tmp_scaled_total_power += power_management.Motor_Data[j].theoretical_power;
+            }
         }
     }
     else
@@ -184,8 +189,11 @@ void Class_New_Power_Limit::Power_Task(Struct_Power_Management &power_management
                                 power_management.Motor_Data[i].torque,
                                 i) *
                 MOT_TORQUE_TO_CMD_CURRENT;
+            tmp_scaled_total_power += power_management.Motor_Data[i].scaled_power;
         }
     }
+
+    power_management.Scaled_Total_Power = tmp_scaled_total_power + power_pid_out;
 
     for (int i = 0; i < 4; i++)
     {

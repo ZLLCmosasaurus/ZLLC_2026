@@ -331,6 +331,7 @@ public:
     inline float Get_Target_VT03_Pitch_Angle();
     inline float Get_Target_VT03_Yaw_Angle();
     inline void Set_Target_VT03_Pitch_Angle(float __Target_VT03_Pitch_Angle);
+    inline void Set_VT03_Yaw_PWM(uint16_t __PWM);
     inline void Set_Target_VT03_Yaw_Angle(float __Target_VT03_Yaw_Angle);
     inline void Set_Planner_Enable(Enum_Gimbal_Joint joint, bool enable);
     inline void Set_Planner_Mode(Enum_Gimbal_Joint joint, Enum_Joint_Planner_Mode mode);
@@ -373,13 +374,9 @@ protected:
     // Pitch轴零点，定义为中间位置
     float J4_Pitch_Zero_Position_Radian = (J4_Pitch_Min_Radian + J4_Pitch_Max_Radian) / 2.0f;
 
-    // 校准测试相关
-    bool enable_roll = false;
-    bool enable_pitch = false;
-
     // 图传舵机控制变量
     uint16_t VT03_Pitch_Servo_PWM = 1300;
-    uint16_t VT03_Yaw_Servo_PWM = 2500;
+    uint16_t VT03_Yaw_Servo_PWM = 1800; // 默认与底盘同向（正前方）
     // 内部变量
 
     // 读变量
@@ -421,7 +418,9 @@ protected:
 
     /*图传相关角度*/
     float Target_VT03_Pitch_Angle = 0;
-    float Target_VT03_Yaw_Angle = 0;
+    float Max_VT03_Yaw_Angle = 180.0f;
+    float Min_VT03_Yaw_Angle = -90.0f;
+    float Target_VT03_Yaw_Angle = 0.0f;
 
     // 建模解算测试用
     float model_angle[6] = {0.0f, 0.0f, 2.0f, 0.0f, 0.5f, 0.0f};
@@ -923,6 +922,11 @@ float Class_Gimbal::Get_Target_VT03_Yaw_Angle()
     return Target_VT03_Yaw_Angle;
 }
 
+void Class_Gimbal::Set_VT03_Yaw_PWM(uint16_t __PWM)
+{
+    VT03_Yaw_Servo_PWM = __PWM;
+}
+
 void Class_Gimbal::Set_Target_VT03_Pitch_Angle(float __Target_VT03_Pitch_Angle)
 {
     Target_VT03_Pitch_Angle = __Target_VT03_Pitch_Angle;
@@ -931,6 +935,15 @@ void Class_Gimbal::Set_Target_VT03_Pitch_Angle(float __Target_VT03_Pitch_Angle)
 void Class_Gimbal::Set_Target_VT03_Yaw_Angle(float __Target_VT03_Yaw_Angle)
 {
     Target_VT03_Yaw_Angle = __Target_VT03_Yaw_Angle;
+    Math_Constrain(&Target_VT03_Yaw_Angle, Min_VT03_Yaw_Angle, Max_VT03_Yaw_Angle);
+
+    // 映射关系
+    uint16_t Target_VT03_Yaw_PWM;
+    if (Target_VT03_Yaw_Angle <= -90.0f) Target_VT03_Yaw_PWM = 2300;
+    if (Target_VT03_Yaw_Angle >= 180.0f) Target_VT03_Yaw_PWM = 800;
+
+    Target_VT03_Yaw_PWM = (uint16_t)(1800.0f - (50.0f / 9.0f) * Target_VT03_Yaw_Angle + 0.5f);
+    Set_VT03_Yaw_PWM(Target_VT03_Yaw_PWM);
 }
 
 #endif

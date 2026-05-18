@@ -661,6 +661,10 @@ public:
     inline float Get_Target_Omega();
     inline float Get_Delta_Radian();
     inline float Get_Target_Track_Omega();
+    inline float Get_Track_Request_Power();
+    inline float Get_Track_Allocated_Power();
+    inline float Get_Track_Power_Scale();
+    inline float Get_Slope_Track_Power_Limit();
     inline float Get_Target_Uplift_Radian(uint8_t index);
 
     inline Enum_Supercap_Mode Get_Supercap_Mode();
@@ -681,6 +685,9 @@ public:
     inline void Set_Now_Velocity_Y(float __Now_Velocity_Y);
     inline void Set_Now_Omega(float __Now_Omega);
     inline void Set_Target_Track_Omega(float __Target_Track_Omega);
+    inline void Set_Track_Allocated_Power(float __Track_Allocated_Power);
+    inline void Set_Track_Power_Scale(float __Track_Power_Scale);
+    inline void Set_Slope_Track_Power_Limit(float __Slope_Track_Power_Limit);
     inline void Set_Target_Uplift_Radian(uint8_t index, float __Target_Uplift_Radian);
     inline void Set_Supercap_Mode(Enum_Supercap_Mode __Supercap_Mode);
     inline void Set_DR16_Right_Uplift_Status(Enum_Chassis_DR16_Right_Uplift_Status __DR16_Right_Uplift_Status);
@@ -696,6 +703,8 @@ public:
     inline void Set_Velocity_X_Max(float __Velocity_X_Max);
 
     void TIM_Calculate_PeriodElapsedCallback(Enum_Sprint_Status __Sprint_Status);
+    float Calculate_Track_Request_Power();
+    void Apply_Track_Power_Limit();
 
     // 着地时的角度，相对于Min_Radian
     float Downlift_Touch_Radian[4] = {9.0f, 9.0f, 19.5f, 19.5f};
@@ -734,6 +743,10 @@ protected:
     float Target_Motor_Omega[4];
     // 履带电机目标角速度，rad/s，两边保持一致
     float Target_Track_Omega;
+    float Track_Request_Power = 0.0f;
+    float Track_Allocated_Power = 0.0f;
+    float Track_Power_Scale = 1.0f;
+    float Slope_Track_Power_Limit = 60.0f;
     // 传给抬升电机的实际目标角度
     float Target_Uplift_Motor_Radian[4];
     // 用于和Uplift_Min_Radian相加得到电机目标角度的值，也就是加offset之前的目标角度，主要用于遥控器逻辑，初始在最高点，设为最小值和最大值之间的差值，此时赋给电机的角度应为0.0f
@@ -879,6 +892,26 @@ float Class_Mecanum_Chassis::Get_Delta_Radian()
 float Class_Mecanum_Chassis::Get_Target_Track_Omega()
 {
     return (Target_Track_Omega);
+}
+
+float Class_Mecanum_Chassis::Get_Track_Request_Power()
+{
+    return (Track_Request_Power);
+}
+
+float Class_Mecanum_Chassis::Get_Track_Allocated_Power()
+{
+    return (Track_Allocated_Power);
+}
+
+float Class_Mecanum_Chassis::Get_Track_Power_Scale()
+{
+    return (Track_Power_Scale);
+}
+
+float Class_Mecanum_Chassis::Get_Slope_Track_Power_Limit()
+{
+    return (Slope_Track_Power_Limit);
 }
 
 /**
@@ -1037,6 +1070,21 @@ void Class_Mecanum_Chassis::Set_Delta_Radian(float __Delta_Radian)
 void Class_Mecanum_Chassis::Set_Target_Track_Omega(float __Target_Track_Omega)
 {
     Target_Track_Omega = __Target_Track_Omega;
+}
+
+void Class_Mecanum_Chassis::Set_Track_Allocated_Power(float __Track_Allocated_Power)
+{
+    Track_Allocated_Power = __Track_Allocated_Power;
+}
+
+void Class_Mecanum_Chassis::Set_Track_Power_Scale(float __Track_Power_Scale)
+{
+    Track_Power_Scale = __Track_Power_Scale;
+}
+
+void Class_Mecanum_Chassis::Set_Slope_Track_Power_Limit(float __Slope_Track_Power_Limit)
+{
+    Slope_Track_Power_Limit = __Slope_Track_Power_Limit;
 }
 
 /**

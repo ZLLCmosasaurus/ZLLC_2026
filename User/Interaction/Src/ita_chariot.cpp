@@ -456,6 +456,8 @@ void Class_Chariot::Control_Chassis()
 
     // 速度缩放因子
     float Speed_Ratio = 1.0f;
+    // 调头方向
+    float Orientation = 1.0f;
 
     // 遥控器中和底盘相关的键位
     if (Active_Controller == Controller_DR16 && DR16_Control_Type == DR16_Control_Type_REMOTE)
@@ -603,9 +605,19 @@ void Class_Chariot::Control_Chassis()
         }
     }
 
-    left_x = move_left_x * Speed_Ratio;
-    left_y = move_left_y * Speed_Ratio;
-    right_x = move_right_x * Speed_Ratio;
+    // 调头方向设置
+    if(Chariot_Orientation == Chariot_Orientation_FOREHEAD)
+    {
+        Orientation = 1.0f;
+    }
+    else if(Chariot_Orientation == Chariot_Orientation_REARBACK)
+    {
+        Orientation = -1.0f;
+    }
+
+    left_x = move_left_x * Speed_Ratio * Orientation;
+    left_y = move_left_y * Speed_Ratio * Orientation;
+    right_x = move_right_x * Speed_Ratio * Orientation;
 
     switch (Chassis.Get_Chassis_Control_Type())
     {
@@ -823,6 +835,15 @@ void Class_Chariot::Chassis_Test_Control()
 #ifdef CHASSIS
 bool low_height_flag = false;
 static uint8_t flag_count = 0;
+static const float Chassis_Total_Power_Limit = 120.0f;
+static const float Chassis_Static_Power = 5.4135330792f;
+static const float Chassis_Dynamic_Power_Budget = Chassis_Total_Power_Limit - Chassis_Static_Power;
+
+float Clamp_Non_Negative(float value)
+{
+    return (value > 0.0f) ? value : 0.0f;
+}
+
 void Class_Chariot::Control_Chassis()
 {
     // 底盘坐标系速度目标值 float
@@ -1217,6 +1238,10 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
         Chassis.Uplift_Motor[1].Set_Out(0.0f);
         Chassis.Uplift_Motor[2].Set_Out(0.0f);
 
+        Chassis.Set_Target_Track_Omega(0.0f);
+        Chassis.Set_Track_Allocated_Power(0.0f);
+        Chassis.Set_Track_Power_Scale(0.0f);
+        Chassis.Calculate_Track_Request_Power();
         Chassis.Track_Motor[0].Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
         Chassis.Track_Motor[1].Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
     }
@@ -1224,14 +1249,44 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
     {
         // 原底盘的定时器回调，主要用于获取当前功率以及抬升机构和履带类的PID计算
         Chassis.TIM_Calculate_PeriodElapsedCallback(Sprint_Status);
+        Chassis.Calculate_Track_Request_Power();
+        Chassis.Apply_Track_Power_Limit();
 
         static uint8_t ms_cnt = 0;
         ms_cnt++;
         if (ms_cnt % 2 == 0)
         // 力控底盘定时器回调，轮组电机的PID
         {
+            const float track_request_power = Chassis.Get_Track_Request_Power();
+            float track_allocated_power = 0.0f;
+
+            if (Chassis.Get_Chassis_Control_Type() == Chassis_Control_Type_SLOPE)
+            {
+                track_allocated_power = track_request_power;
+                Math_Constrain(&track_allocated_power, 0.0f, Chassis.Get_Slope_Track_Power_Limit());
+                Math_Constrain(&track_allocated_power, 0.0f, Chassis_Dynamic_Power_Budget);
+                Force_Chassis.Set_Power_Limit_Max(Chassis_Dynamic_Power_Budget - track_allocated_power);
+            }
+            else
+            {
+                Force_Chassis.Set_Power_Limit_Max(Chassis_Dynamic_Power_Budget);
+            }
+
             Force_Chassis.TIM_2ms_Resolution_PeriodElapsedCallback();
             Force_Chassis.TIM_2ms_Control_PeriodElapsedCallback();
+
+            if (Chassis.Get_Chassis_Control_Type() != Chassis_Control_Type_SLOPE)
+            {
+                track_allocated_power =
+                    Clamp_Non_Negative(Chassis_Dynamic_Power_Budget - Force_Chassis.Get_Now_Wheel_Motor_Power());
+                if (track_allocated_power > track_request_power)
+                {
+                    track_allocated_power = track_request_power;
+                }
+            }
+
+            Chassis.Set_Track_Allocated_Power(track_allocated_power);
+            Chassis.Apply_Track_Power_Limit();
             ms_cnt = 0;
         }
     }
@@ -1242,14 +1297,44 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
     if (Get_Gimbal_Status() == DR16_Status_ENABLE || Referee.Get_Game_Stage() == Referee_Game_Status_Stage_BATTLE)
     {
         Chassis.TIM_Calculate_PeriodElapsedCallback(Sprint_Status);
+        Chassis.Calculate_Track_Request_Power();
+        Chassis.Apply_Track_Power_Limit();
 
         static uint8_t ms_cnt = 0;
         ms_cnt++;
         if (ms_cnt % 2 == 0)
         // 力控底盘定时器回调，轮组电机的PID
         {
+            const float track_request_power = Chassis.Get_Track_Request_Power();
+            float track_allocated_power = 0.0f;
+
+            if (Chassis.Get_Chassis_Control_Type() == Chassis_Control_Type_SLOPE)
+            {
+                track_allocated_power = track_request_power;
+                Math_Constrain(&track_allocated_power, 0.0f, Chassis.Get_Slope_Track_Power_Limit());
+                Math_Constrain(&track_allocated_power, 0.0f, Chassis_Dynamic_Power_Budget);
+                Force_Chassis.Set_Power_Limit_Max(Chassis_Dynamic_Power_Budget - track_allocated_power);
+            }
+            else
+            {
+                Force_Chassis.Set_Power_Limit_Max(Chassis_Dynamic_Power_Budget);
+            }
+
             Force_Chassis.TIM_2ms_Resolution_PeriodElapsedCallback();
             Force_Chassis.TIM_2ms_Control_PeriodElapsedCallback();
+
+            if (Chassis.Get_Chassis_Control_Type() != Chassis_Control_Type_SLOPE)
+            {
+                track_allocated_power =
+                    Clamp_Non_Negative(Chassis_Dynamic_Power_Budget - Force_Chassis.Get_Now_Wheel_Motor_Power());
+                if (track_allocated_power > track_request_power)
+                {
+                    track_allocated_power = track_request_power;
+                }
+            }
+
+            Chassis.Set_Track_Allocated_Power(track_allocated_power);
+            Chassis.Apply_Track_Power_Limit();
             ms_cnt = 0;
         }
     }
@@ -1266,6 +1351,10 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
         Chassis.Uplift_Motor[2].Set_Out(0.0f);
         Chassis.Uplift_Motor[3].Set_Out(0.0f);
 
+        Chassis.Set_Target_Track_Omega(0.0f);
+        Chassis.Set_Track_Allocated_Power(0.0f);
+        Chassis.Set_Track_Power_Scale(0.0f);
+        Chassis.Calculate_Track_Request_Power();
         Chassis.Track_Motor[0].Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
         Chassis.Track_Motor[1].Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
     }
@@ -1637,6 +1726,15 @@ void Class_Chariot::Controller_Data_Update()
         {
             VT03_Yaw_Control_Type = VT03_Yaw_Control_Type_MANUAL;
             Chariot_Orientation = (Chariot_Orientation == Chariot_Orientation_FOREHEAD ? Chariot_Orientation_REARBACK : Chariot_Orientation_FOREHEAD);
+            
+            if(Chariot_Orientation == Chariot_Orientation_REARBACK)
+            {
+                Gimbal.Set_Target_VT03_Yaw_Angle(180.0f);
+            }
+            else if(Chariot_Orientation == Chariot_Orientation_FOREHEAD)
+            {
+                Gimbal.Set_Target_VT03_Yaw_Angle(0.0f);
+            }
         }
     }
     // DR16 拨杆控制

@@ -20,14 +20,35 @@
 #include "crt_chassis.h"
 
 /* Private macros ------------------------------------------------------------*/
+static const float Track_Power_Coeff_Const = 2.5f;
+static const float Track_Power_Coeff_WT = 0.7317408511f;
+static const float Track_Power_Coeff_W = 0.4075054775f;
+static const float Track_Power_Coeff_T = 2.1119834840f;
+static const float Track_Power_Coeff_W2 = -0.0077502320f;
+static const float Track_Power_Coeff_T2 = 2.0285629411f;
+static const float Track_Power_Epsilon = 1.0e-4f;
 
 /* Private types -------------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
 
 /* Private function declarations ---------------------------------------------*/
+static float Clamp_01(float value);
 
 /* Function prototypes -------------------------------------------------------*/
+
+static float Clamp_01(float value)
+{
+    if (value < 0.0f)
+    {
+        return 0.0f;
+    }
+    if (value > 1.0f)
+    {
+        return 1.0f;
+    }
+    return value;
+}
 
 /**
  * @brief 底盘初始化
@@ -612,30 +633,82 @@ void Class_Mecanum_Chassis::Output()
     }
 }
 
+float Class_Mecanum_Chassis::Calculate_Track_Request_Power()
+{
+    Track_Request_Power = 0.0f;
+
+    if (Chassis_Control_Type == Chassis_Control_Type_DISABLE ||
+        Wheel_Slave_Status == Wheel_Slave_OFF ||
+        fabsf(Target_Track_Omega) < Track_Power_Epsilon)
+    {
+        Track_Allocated_Power = 0.0f;
+        Track_Power_Scale = 0.0f;
+        return (Track_Request_Power);
+    }
+
+    const float omega = fabsf(Target_Track_Omega);
+
+    for (uint8_t i = 0; i < 2; i++)
+    {
+        const float torque = Track_Motor[i].Get_Now_Torque();
+        const float torque_abs = fabsf(torque);
+        float power =
+            Track_Power_Coeff_Const +
+            Track_Power_Coeff_WT * (omega * torque) +
+            Track_Power_Coeff_W * omega +
+            Track_Power_Coeff_T * torque_abs +
+            Track_Power_Coeff_W2 * omega * omega +
+            Track_Power_Coeff_T2 * torque * torque;
+
+        if (power > 0.0f)
+        {
+            Track_Request_Power += power;
+        }
+    }
+
+    if (Track_Request_Power <= 0.0f)
+    {
+        Track_Allocated_Power = 0.0f;
+    }
+
+    return (Track_Request_Power);
+}
+
+void Class_Mecanum_Chassis::Apply_Track_Power_Limit()
+{
+    float scaled_target_omega = 0.0f;
+
+    if (Chassis_Control_Type != Chassis_Control_Type_DISABLE &&
+        Wheel_Slave_Status == Wheel_Slave_ON &&
+        fabsf(Target_Track_Omega) >= Track_Power_Epsilon)
+    {
+        if (Track_Request_Power > Track_Power_Epsilon)
+        {
+            Track_Power_Scale = Clamp_01(Track_Allocated_Power / Track_Request_Power);
+        }
+        else
+        {
+            Track_Power_Scale = 1.0f;
+        }
+
+        scaled_target_omega = Target_Track_Omega * Track_Power_Scale;
+    }
+    else
+    {
+        Track_Allocated_Power = 0.0f;
+        Track_Power_Scale = 0.0f;
+    }
+
+    Track_Motor[0].Set_Target_Omega(-scaled_target_omega);
+    Track_Motor[1].Set_Target_Omega(scaled_target_omega);
+}
+
 /**
  * @brief TIM定时器中断计算回调函数
  *
  */
 void Class_Mecanum_Chassis::TIM_Calculate_PeriodElapsedCallback(Enum_Sprint_Status __Sprint_Status)
 {
-    // 斜坡函数计算用于速度解算初始值获取
-    // Slope_Velocity_X.Set_Target(Target_Velocity_X);
-    // Slope_Velocity_X.TIM_Calculate_PeriodElapsedCallback();
-
-    // Slope_Velocity_Y.Set_Target(Target_Velocity_Y);
-    // Slope_Velocity_Y.TIM_Calculate_PeriodElapsedCallback();
-
-    // Slope_Omega.Set_Target(Target_Omega);
-    // Slope_Omega.TIM_Calculate_PeriodElapsedCallback();
-
-    // // 速度解算
-    // Speed_Resolution();
-    // // 电机PID计算
-    // for (int i = 0; i < 4; i++)
-    // {
-    //     Mecanum_Wheels[i].TIM_PID_PeriodElapsedCallback();
-    // }
-
     // 将角度赋值给底盘中的电机，以及PID计算
     Output();
 
@@ -644,22 +717,6 @@ void Class_Mecanum_Chassis::TIM_Calculate_PeriodElapsedCallback(Enum_Sprint_Stat
     Supercap.Set_Supercap_Mode(Get_Supercap_Mode());
     Supercap.TIM_Supercap_PeriodElapsedCallback();
 
-#if POWER_CONTROL == 1
-    /*************************功率限制策略*******************************/
-    // Power_Limit_Update();
-    Power_Limit.Set_Motor(Mecanum_Wheels); // 添加四个电机的控制电流和当前转速
-    Power_Limit.Set_Power_Limit(Referee->Get_Chassis_Power_Max());
-    if (Referee->Get_Game_Stage() == Referee_Game_Status_Stage_BATTLE)
-    {
-        if (Supercap.Get_Consuming_Power() <= 200.f)
-        {
-            Power_Limit.Set_Power_Limit(Referee->Get_Chassis_Power_Max() / 3.0f);
-            Supercap.Set_Limit_Power(Referee->Get_Chassis_Power_Max() / 3.0f);
-        }
-    }
-    Power_Limit.Set_Chassis_Buffer(Referee->Get_Chassis_Energy_Buffer());
-    Power_Limit.TIM_Adjust_PeriodElapsedCallback(Mecanum_Wheels);
-#endif
 }
 
 /**
@@ -1030,7 +1087,8 @@ void Class_FSM_Off_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
 
     switch (Now_Status_Serial)
     {
-    case (0): // 下台阶准备状态，此状态下四个抬升全部触地，从第二个台阶下到第一个台阶时开启
+    case (0):
+    // 准备状态，前边抬升抬至接地位置，后边抬升将整车微微抬起
     {
         Chassis->Set_Target_Uplift_Radian(0, ledder_prepare[0]);
         Chassis->Set_Target_Uplift_Radian(1, ledder_prepare[1]);
@@ -1053,6 +1111,7 @@ void Class_FSM_Off_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
     }
 
     case (1):
+    // 自动下落状态，读取激光测距的距离，检测到大于阈值则自动下放后两个抬升
     {
         Chassis->Set_Target_Uplift_Radian(0, ledder_touch[0]);
         Chassis->Set_Target_Uplift_Radian(1, ledder_touch[1]);
@@ -1077,6 +1136,7 @@ void Class_FSM_Off_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
     }
 
     case (2):
+    // 抬升自动收起状态，读取小轮子的速度，抬升速度跟随小轮子速度，实现自动边下边抬
     {
         for (int i = 0; i < 4; i++)
         {
