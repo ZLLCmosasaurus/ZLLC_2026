@@ -236,6 +236,7 @@ void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback(uint8_t *Rx_Data)
     bool backdoor_status;
     // 下台阶初始化开关
     bool downlift_status;
+    bool lift_calibrate_status;
 
     switch (CAN_Manage_Object->Rx_Buffer.Header.Identifier)
     {
@@ -280,6 +281,7 @@ void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback(uint8_t *Rx_Data)
         wheels_slave_status = (Enum_Wheel_Slave_Status)Rx_Frame.status.wheel_slave_ctrl;
         backdoor_status = (bool)Rx_Frame.status.backdoor_jump;
         downlift_status = (bool)Rx_Frame.status.downlift_init;
+        lift_calibrate_status = (bool)((Rx_Data[7] >> 6) & 0x01);
 
         // 设定底盘控制类型
         Chassis.Set_Chassis_Control_Type(chassis_control_type);
@@ -301,6 +303,11 @@ void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback(uint8_t *Rx_Data)
         Chassis.Set_Wheel_Slave_Status(wheels_slave_status);
         Chassis.Set_Backdoor_Jump(backdoor_status);
         Chassis.Set_Downlift_Init(downlift_status);
+        if (lift_calibrate_status && !Chassis.Get_Lift_Calibrate_Status())
+        {
+            Chassis.Request_Lift_Recalibration();
+        }
+        Chassis.Set_Lift_Calibrate_Status(lift_calibrate_status);
 
         Control_Chassis();
 
@@ -437,8 +444,9 @@ void Class_Chariot::CAN_Gimbal_Tx_Chassis_Callback()
     Tx_Frame.status.chassis_contorl_mode = Chassis.Get_Chassis_Control_Type(); // 4/8
     Tx_Frame.status.uplift_fsm_direction = Chassis.Get_Uplift_FSM_Direction(); // 5/8
     Tx_Frame.status.wheel_slave_ctrl = Chassis.Get_Wheel_Slave_Status();       // 6/8
-    Tx_Frame.status.reserved = 0;
+    Tx_Frame.status.lift_calibrate = (Lift_Calibrate_Request ? 1 : 0);
     Tx_Frame.status.yaw_data_is_radian = yaw_data_is_radian ? 1 : 0;
+    Lift_Calibrate_Request = false;
 
     // 装入CAN发送缓冲区
     memcpy(CAN3_Gimbal_Tx_Chassis_Data, &Tx_Frame, sizeof(Tx_Frame));
@@ -552,12 +560,12 @@ void Class_Chariot::Control_Chassis()
                 Speed_Ratio = 0.5f;
             }
 
-            if (Key_Is_Pressed(controller_key_q))
+            if (Key_Is_Pressed(controller_key_q) && !Key_Is_Pressed(controller_key_shift))
             {
                 lift_select[0] = true;
                 lift_drc[0] = Lift_Direction_UP;
             }
-            else if (Key_Is_Pressed(controller_key_e))
+            else if (Key_Is_Pressed(controller_key_e) && !Key_Is_Pressed(controller_key_shift))
             {
                 lift_select[0] = true;
                 lift_drc[0] = Lift_Direction_DOWN;
@@ -589,28 +597,28 @@ void Class_Chariot::Control_Chassis()
             {
                 Speed_Ratio = 0.5f;
             }
-            if (Key_Is_Pressed(controller_key_q))
+            if (Key_Is_Pressed(controller_key_q) && !Key_Is_Pressed(controller_key_shift))
             {
                 lift_select[0] = true;
                 lift_select[1] = true;
                 lift_drc[0] = Lift_Direction_UP;
                 lift_drc[1] = Lift_Direction_UP;
             }
-            else if (Key_Is_Pressed(controller_key_e))
+            else if (Key_Is_Pressed(controller_key_e) && !Key_Is_Pressed(controller_key_shift))
             {
                 lift_select[0] = true;
                 lift_select[1] = true;
                 lift_drc[0] = Lift_Direction_DOWN;
                 lift_drc[1] = Lift_Direction_DOWN;
             }
-            if (Key_Is_Pressed(controller_key_f))
+            if (Key_Is_Pressed(controller_key_f) && !Key_Is_Pressed(controller_key_shift))
             {
                 lift_select[2] = true;
                 lift_select[3] = true;
                 lift_drc[2] = Lift_Direction_UP;
                 lift_drc[3] = Lift_Direction_UP;
             }
-            else if (Key_Is_Pressed(controller_key_g))
+            else if (Key_Is_Pressed(controller_key_g) && !Key_Is_Pressed(controller_key_shift))
             {
                 lift_select[2] = true;
                 lift_select[3] = true;
@@ -1522,7 +1530,11 @@ void Class_Chariot::Judge_Keyboard_Mode()
 {
     const bool shift_active = Key_Is_Shift_Active(controller_key_shift);
 
-    if (Key_Is_Trig_Pressed_Free(controller_key_r) && shift_active)
+    if (Key_Is_Trig_Pressed_Free(controller_key_q) && shift_active)
+    {
+        Lift_Calibrate_Request = true;
+    }
+    else if (Key_Is_Trig_Pressed_Free(controller_key_r) && shift_active)
     {
         GraphUI_RemoteRequestFullRefresh();
     }

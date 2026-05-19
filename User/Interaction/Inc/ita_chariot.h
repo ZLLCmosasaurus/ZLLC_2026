@@ -412,6 +412,7 @@ protected:
     /*存取矿状态机数据来源*/
     Enum_Save_Load_Type Save_Load_Unit = SAVE_LOAD_UNIT_1;
     bool Save_Load_Confirm_Request = false;
+    bool Lift_Calibrate_Request = false;
     float controller_right_y = 0.0f;
     float controller_mouse_x = 0.0f;
     float controller_mouse_y = 0.0f;

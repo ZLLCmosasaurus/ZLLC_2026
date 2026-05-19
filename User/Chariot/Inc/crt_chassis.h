@@ -543,6 +543,7 @@ class Class_FSM_Calibration_Chassis : public Class_FSM
 public:
     Class_Mecanum_Chassis *Chassis;
     void Reload_TIM_Status_PeriodElapsedCallback();
+    void Request_Recalibration();
 
     /*电机校准执行函数*/
     bool Motor_Calibration(Class_DJI_Motor_C620 *Motor, uint8_t index, float locked_torque, uint16_t &locked_cnt);
@@ -675,6 +676,7 @@ public:
     inline bool Get_Backdoor_Jump();
     inline bool Get_Downlift_Init();
     inline Enum_Wheel_Slave_Status Get_Wheel_Slave_Status();
+    inline bool Get_Lift_Calibrate_Status();
 
     inline void Set_Chassis_Control_Type(Enum_Chassis_Control_Type __Chassis_Control_Type);
     inline void Set_Target_Velocity_X(float __Target_Velocity_X);
@@ -691,7 +693,7 @@ public:
     inline void Set_Target_Uplift_Radian(uint8_t index, float __Target_Uplift_Radian);
     inline void Set_Supercap_Mode(Enum_Supercap_Mode __Supercap_Mode);
     inline void Set_DR16_Right_Uplift_Status(Enum_Chassis_DR16_Right_Uplift_Status __DR16_Right_Uplift_Status);
-    
+    inline void Set_Lift_Calibrate_Status(bool flag);
     inline void Set_Lift_Direction(uint8_t index, Enum_Lift_Direction direction);
     inline void Set_Lift_Select(bool select_1, bool select_2, bool select_3, bool select_4);
     inline void Set_Wheel_Slave_Status(Enum_Wheel_Slave_Status __Wheel_Slave_Status);
@@ -702,6 +704,7 @@ public:
     inline void Set_Velocity_Y_Max(float __Velocity_Y_Max);
     inline void Set_Velocity_X_Max(float __Velocity_X_Max);
 
+    void Request_Lift_Recalibration();
     void TIM_Calculate_PeriodElapsedCallback(Enum_Sprint_Status __Sprint_Status);
     float Calculate_Track_Request_Power();
     void Apply_Track_Power_Limit();
@@ -775,6 +778,7 @@ protected:
     // 小轮子从动状态枚举
     Enum_Wheel_Slave_Status Wheel_Slave_Status = Wheel_Slave_OFF;
     // 抬升控制相关
+    bool Lift_Calibrate = false;
     // 抬升选择
     bool Lift_Select[4] = {false};
     // 抬升方向
@@ -1017,6 +1021,11 @@ inline Enum_Wheel_Slave_Status Class_Mecanum_Chassis::Get_Wheel_Slave_Status()
     return Wheel_Slave_Status;
 }
 
+inline bool Class_Mecanum_Chassis::Get_Lift_Calibrate_Status()
+{
+    return Lift_Calibrate;
+}
+
 /**
  * @brief 设定底盘控制方法
  *
@@ -1080,6 +1089,11 @@ void Class_Mecanum_Chassis::Set_Track_Allocated_Power(float __Track_Allocated_Po
 void Class_Mecanum_Chassis::Set_Track_Power_Scale(float __Track_Power_Scale)
 {
     Track_Power_Scale = __Track_Power_Scale;
+}
+
+inline void Class_Mecanum_Chassis::Set_Lift_Calibrate_Status(bool flag)
+{
+    Lift_Calibrate = flag;
 }
 
 void Class_Mecanum_Chassis::Set_Slope_Track_Power_Limit(float __Slope_Track_Power_Limit)

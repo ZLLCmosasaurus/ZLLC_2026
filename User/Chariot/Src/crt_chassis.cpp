@@ -494,6 +494,7 @@ void Class_Mecanum_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max,
 
     // 状态机传指针
     Calibration_FSM.Chassis = this;
+    Calibration_FSM.Init(2, 0);
     Ledder_FSM.Chassis = this;
 }
 
@@ -804,6 +805,24 @@ bool Class_FSM_Calibration_Chassis::Motor_Calibration(Class_DJI_Motor_C620 *Moto
         locked_cnt = 0;
     }
     return false;
+}
+
+void Class_FSM_Calibration_Chassis::Request_Recalibration()
+{
+    Set_Status(0);
+    uplift_cali = false;
+
+    for (uint8_t i = 0; i < 4; i++)
+    {
+        uplift_offset[i] = 0.0f;
+        uplift_cali_status[i] = false;
+        uplift_locked_cnt[i] = 0;
+    }
+}
+
+void Class_Mecanum_Chassis::Request_Lift_Recalibration()
+{
+    Calibration_FSM.Request_Recalibration();
 }
 
 Enum_DR16_Switch_Status Class_FSM_Ledder::Judge_DR16_Switch_Status(Enum_DR16_Switch_Status Now_Status, Enum_DR16_Switch_Status Pre_Status)
