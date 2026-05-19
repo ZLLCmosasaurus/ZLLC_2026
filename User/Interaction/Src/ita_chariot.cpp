@@ -418,6 +418,7 @@ void Class_Chariot::CAN_Gimbal_Tx_Chassis_Callback()
     tmp_chassis_velocity_y = Math_Float_To_Int(chassis_velocity_y, -4.f, 4.f, -450, 450);
     Tx_Frame.y_velocity = tmp_chassis_velocity_y;
 
+    // 底盘Yaw角速度/角度数据
     if (!yaw_data_is_radian)
     {
         Math_Constrain(&chassis_yaw, -4.0f, 4.0f);
