@@ -253,7 +253,7 @@ void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback(uint8_t *Rx_Data)
         chassis_velocity_y = -Math_Int_To_Float(Rx_Frame.y_velocity, -450, 450, -4.f, 4.f);
         if (Rx_Frame.status.yaw_data_is_radian)
         {
-            chassis_delta_radian = -Math_Int_To_Float(Rx_Frame.yaw_data, -200, 200, -1.f, 1.f);
+        chassis_delta_radian = -Math_Int_To_Float(Rx_Frame.yaw_data, -200, 200, -1.f, 1.f);
         }
         else
         {
@@ -1277,6 +1277,7 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
             const float track_request_power = Chassis.Get_Track_Request_Power();
             float track_allocated_power = 0.0f;
 
+            // 上台阶模式下优先给2325分配功率，轮组使用剩余功率
             if (Chassis.Get_Chassis_Control_Type() == Chassis_Control_Type_SLOPE)
             {
                 track_allocated_power = track_request_power;
@@ -1285,6 +1286,7 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
                 Force_Chassis.Set_Power_Limit_Max(Chassis_Dynamic_Power_Budget - track_allocated_power);
             }
             else
+            // 正常运动模式轮组优先使用功率
             {
                 Force_Chassis.Set_Power_Limit_Max(Chassis_Dynamic_Power_Budget);
             }
