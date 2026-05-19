@@ -254,7 +254,7 @@ void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback(uint8_t *Rx_Data)
         chassis_velocity_y = -Math_Int_To_Float(Rx_Frame.y_velocity, -450, 450, -4.f, 4.f);
         if (Rx_Frame.status.yaw_data_is_radian)
         {
-        chassis_delta_radian = -Math_Int_To_Float(Rx_Frame.yaw_data, -200, 200, -1.f, 1.f);
+            chassis_delta_radian = -Math_Int_To_Float(Rx_Frame.yaw_data, -200, 200, -1.f, 1.f);
         }
         else
         {
@@ -424,8 +424,8 @@ void Class_Chariot::CAN_Gimbal_Tx_Chassis_Callback()
         Math_Constrain(&chassis_yaw, -4.0f, 4.0f);
     }
     tmp_chassis_radian = yaw_data_is_radian
-                              ? -Math_Float_To_Int(chassis_yaw, -1.f, 1.f, -200, 200)
-                              : -Math_Float_To_Int(chassis_yaw, -4.f, 4.f, -200, 200);
+                             ? -Math_Float_To_Int(chassis_yaw, -1.f, 1.f, -200, 200)
+                             : -Math_Float_To_Int(chassis_yaw, -4.f, 4.f, -200, 200);
     Tx_Frame.yaw_data = tmp_chassis_radian;
 
     // 抬升控制打包
@@ -546,17 +546,12 @@ void Class_Chariot::Control_Chassis()
             move_right_x = 0.0f;
             break;
         case Keyboard_Control_Type_WORKING:
+        case Keyboard_Control_Type_SAVE_LOAD:
             if (!Key_Is_Pressed(controller_key_shift))
             {
                 Speed_Ratio = 0.25f;
             }
             else
-            {
-                Speed_Ratio = 0.5f;
-            }
-            break;
-        case Keyboard_Control_Type_SAVE_LOAD:
-            if (!Key_Is_Pressed(controller_key_shift))
             {
                 Speed_Ratio = 0.5f;
             }
@@ -584,7 +579,7 @@ void Class_Chariot::Control_Chassis()
             {
                 wheel_slave_status = (wheel_slave_status == Wheel_Slave_OFF) ? Wheel_Slave_ON : Wheel_Slave_OFF;
             }
-            if (Key_Is_Pressed(controller_key_r))
+            if (Key_Is_Pressed(controller_key_r) && Key_Is_Shift_Active(controller_key_shift))
             {
                 backdoor_status = true;
             }
@@ -635,18 +630,18 @@ void Class_Chariot::Control_Chassis()
     }
 
     // 调头方向设置
-    if(Chariot_Orientation == Chariot_Orientation_FOREHEAD)
+    if (Chariot_Orientation == Chariot_Orientation_FOREHEAD)
     {
         Orientation = 1.0f;
     }
-    else if(Chariot_Orientation == Chariot_Orientation_REARBACK)
+    else if (Chariot_Orientation == Chariot_Orientation_REARBACK)
     {
         Orientation = -1.0f;
     }
 
     left_x = move_left_x * Speed_Ratio * Orientation;
     left_y = move_left_y * Speed_Ratio * Orientation;
-    right_x = move_right_x * Speed_Ratio * Orientation;
+    right_x = move_right_x * Speed_Ratio;
 
     switch (Chassis.Get_Chassis_Control_Type())
     {
@@ -859,9 +854,8 @@ void Class_Chariot::Chassis_Test_Control()
         {
             Chassis.Set_Target_Uplift_Radian(i, target_uplift_rad[i]);
         }
-        }
     }
-
+    }
 }
 #endif
 
@@ -1531,42 +1525,31 @@ void Class_Chariot::Judge_Keyboard_Mode()
 {
     const bool shift_active = Key_Is_Shift_Active(controller_key_shift);
 
-    if (Key_Is_Trig_Pressed_Free(controller_key_q) && shift_active)
+    if (Key_Is_Trig_Pressed_Free(controller_key_z) && shift_active)
     {
-        Lift_Calibrate_Request = true;
+        Keyboard_Control_Type = Keyboard_Control_Type_SAVE_LOAD;
+        Save_Load_Unit = SAVE_LOAD_UNIT_1;
     }
-    else if (Key_Is_Trig_Pressed_Free(controller_key_r) && shift_active)
+    else if (Key_Is_Trig_Pressed_Free(controller_key_x) && shift_active)
     {
-        GraphUI_RemoteRequestFullRefresh();
+        Keyboard_Control_Type = Keyboard_Control_Type_SAVE_LOAD;
+        Save_Load_Unit = SAVE_LOAD_UNIT_2;
     }
-    else
+    else if (Key_Is_Trig_Pressed_Free(controller_key_z) && !shift_active)
     {
-        if (Key_Is_Trig_Pressed_Free(controller_key_z) && shift_active)
-        {
-            Keyboard_Control_Type = Keyboard_Control_Type_SAVE_LOAD;
-            Save_Load_Unit = SAVE_LOAD_UNIT_1;
-        }
-        else if (Key_Is_Trig_Pressed_Free(controller_key_x) && shift_active)
-        {
-            Keyboard_Control_Type = Keyboard_Control_Type_SAVE_LOAD;
-            Save_Load_Unit = SAVE_LOAD_UNIT_2;
-        }
-        else if (Key_Is_Trig_Pressed_Free(controller_key_z) && !shift_active)
-        {
-            Keyboard_Control_Type = Keyboard_Control_Type_WORKING;
-        }
-        else if (Key_Is_Trig_Pressed_Free(controller_key_x) && !shift_active)
-        {
-            Keyboard_Control_Type = Keyboard_Control_Type_MOVING;
-        }
-        else if (Key_Is_Trig_Pressed_Free(controller_key_c) && !shift_active)
-        {
-            Keyboard_Control_Type = Keyboard_Control_Type_UPLIFT;
-        }
-        else if (Key_Is_Trig_Pressed_Free(controller_key_v) && !shift_active)
-        {
-            Keyboard_Control_Type = Keyboard_Control_Type_DOWNLIFT;
-        }
+        Keyboard_Control_Type = Keyboard_Control_Type_WORKING;
+    }
+    else if (Key_Is_Trig_Pressed_Free(controller_key_x) && !shift_active)
+    {
+        Keyboard_Control_Type = Keyboard_Control_Type_MOVING;
+    }
+    else if (Key_Is_Trig_Pressed_Free(controller_key_c) && !shift_active)
+    {
+        Keyboard_Control_Type = Keyboard_Control_Type_UPLIFT;
+    }
+    else if (Key_Is_Trig_Pressed_Free(controller_key_v) && !shift_active)
+    {
+        Keyboard_Control_Type = Keyboard_Control_Type_DOWNLIFT;
     }
 }
 
@@ -1696,7 +1679,7 @@ void Class_Chariot::Controller_Data_Update()
     if ((Active_Controller == Controller_DR16 && DR16_Control_Type == DR16_Control_Type_KEYBOARD) ||
         (Active_Controller == Controller_VT13 && VT13_Control_Type == VT13_Control_Type_KEYBOARD))
     {
-        // 键盘控制模式判断
+        // 控制模式判断
         Judge_Keyboard_Mode();
 
         // 一键调头与随动模式判断
@@ -1710,15 +1693,26 @@ void Class_Chariot::Controller_Data_Update()
         {
             VT03_Yaw_Control_Type = VT03_Yaw_Control_Type_MANUAL;
             Chariot_Orientation = (Chariot_Orientation == Chariot_Orientation_FOREHEAD ? Chariot_Orientation_REARBACK : Chariot_Orientation_FOREHEAD);
-            
-            if(Chariot_Orientation == Chariot_Orientation_REARBACK)
+
+            if (Chariot_Orientation == Chariot_Orientation_REARBACK)
             {
                 Gimbal.Set_Target_VT03_Yaw_Angle(180.0f);
             }
-            else if(Chariot_Orientation == Chariot_Orientation_FOREHEAD)
+            else if (Chariot_Orientation == Chariot_Orientation_FOREHEAD)
             {
                 Gimbal.Set_Target_VT03_Yaw_Angle(0.0f);
             }
+        }
+
+        // Shift+Q 底盘重新校准
+        if (Key_Is_Trig_Pressed_Free(controller_key_q) && Key_Is_Shift_Active(controller_key_shift))
+        {
+            Lift_Calibrate_Request = true;
+        }
+        // 按下R键刷新UI
+        else if (Key_Is_Trig_Pressed_Free(controller_key_r) && !Key_Is_Shift_Active(controller_key_shift))
+        {
+            GraphUI_RemoteRequestFullRefresh();
         }
     }
     // DR16 拨杆控制

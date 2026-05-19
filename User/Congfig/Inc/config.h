@@ -17,8 +17,8 @@
 /* Exported macros -----------------------------------------------------------*/
 
 //底盘或云台状态
-#define CHASSIS
-//#define GIMBAL
+//#define CHASSIS
+#define GIMBAL
 
 //调试或比赛状态
 #define DEBUG
