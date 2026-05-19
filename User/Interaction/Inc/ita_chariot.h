@@ -120,6 +120,12 @@ enum Enum_Chariot_Orientation
     Chariot_Orientation_REARBACK = 1   // 朝后
 };
 
+enum Enum_VT03_Yaw_Control_Type
+{
+    VT03_Yaw_Control_Type_MANUAL = 0,
+    VT03_Yaw_Control_Type_FOLLOW
+};
+
 /**
  * @brief 存取矿数据来源类型
  *
@@ -278,22 +284,6 @@ public:
 
     // 存取矿状态机
     Class_FSM_Save_Load FSM_Save_Load;
-
-#elifdef CHASSIS_TEST
-    Class_DR16 DR16;
-    float DR16_Dead_Zone = 0.3f;
-    void Chassis_Test_Control();
-    // 遥控器离线保护控制状态机
-    Class_FSM_Alive_Control FSM_Alive_Control;
-    friend class Class_FSM_Alive_Control;
-
-    Enum_Chassis_Control_Type Pre_Chassis_Control_Type = Chassis_Control_Type_DISABLE;
-    Enum_Chassis_Control_Type__ Pre_Chassis_Control_Type__ = Chassis_Control_Type_DISABLE__;
-    inline Enum_Chassis_Control_Type Get_Pre_Chassis_Control_Type();
-    inline Enum_Chassis_Control_Type__ Get_Pre_Chassis_Control_Type__();
-    inline void Set_Pre_Chassis_Control_Type(Enum_Chassis_Control_Type __Chassis_Control_Type);
-    inline void Set_Pre_Chassis_Control_Type__(Enum_Chassis_Control_Type__ __Chassis_Control_Type);
-
 #endif
 
     void Init(float __DR16_Dead_Zone = 0);
@@ -417,6 +407,7 @@ protected:
     Enum_Keyboard_Control_Type Keyboard_Control_Type = Keyboard_Control_Type_DISABLE;
     // 图传以及底盘掉头方向
     Enum_Chariot_Orientation Chariot_Orientation = Chariot_Orientation_FOREHEAD;
+    Enum_VT03_Yaw_Control_Type VT03_Yaw_Control_Type = VT03_Yaw_Control_Type_MANUAL;
     /*存取矿状态机数据来源*/
     Enum_Save_Load_Type Save_Load_Unit = SAVE_LOAD_UNIT_1;
     bool Save_Load_Confirm_Request = false;

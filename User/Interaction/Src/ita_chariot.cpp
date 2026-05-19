@@ -1063,8 +1063,16 @@ void Class_Chariot::Control_Gimbal()
     if (Keyboard_Control_Type != Keyboard_Control_Type_SAVE_LOAD &&
         Key_Is_Pressed(controller_mouse_right_key))
     {
-        tmp_vt03_yaw += controller_mouse_x;
+        if (VT03_Yaw_Control_Type == VT03_Yaw_Control_Type_MANUAL)
+        {
+            tmp_vt03_yaw += controller_mouse_x;
+        }
         tmp_vt03_pitch += controller_mouse_y;
+    }
+
+    if (VT03_Yaw_Control_Type == VT03_Yaw_Control_Type_FOLLOW)
+    {
+        tmp_vt03_yaw = Gimbal.J1_Yaw_8009P.Get_Now_Angle_Rad() * 180.0f / PI + 30.0f;
     }
 
     if (Keyboard_Control_Type != Keyboard_Control_Type_SAVE_LOAD)
@@ -1618,9 +1626,16 @@ void Class_Chariot::Controller_Data_Update()
         // 键盘控制模式判断
         Judge_Keyboard_Mode();
 
-        // 一键调头判断
-        if (Key_Is_Trig_Pressed_Free(controller_key_b))
+        // 一键调头与随动模式判断
+        if (Key_Is_Trig_Pressed_Free(controller_key_b) && Key_Is_Shift_Active(controller_key_shift))
         {
+            VT03_Yaw_Control_Type = (VT03_Yaw_Control_Type == VT03_Yaw_Control_Type_MANUAL)
+                                        ? VT03_Yaw_Control_Type_FOLLOW
+                                        : VT03_Yaw_Control_Type_MANUAL;
+        }
+        else if (Key_Is_Trig_Pressed_Free(controller_key_b))
+        {
+            VT03_Yaw_Control_Type = VT03_Yaw_Control_Type_MANUAL;
             Chariot_Orientation = (Chariot_Orientation == Chariot_Orientation_FOREHEAD ? Chariot_Orientation_REARBACK : Chariot_Orientation_FOREHEAD);
         }
     }
