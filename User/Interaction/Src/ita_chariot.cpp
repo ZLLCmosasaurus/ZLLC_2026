@@ -221,7 +221,8 @@ void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback(uint8_t *Rx_Data)
     // 底盘坐标系的目标速度
     float chassis_velocity_x, chassis_velocity_y;
     // 目标角速度
-    float chassis_delta_radian;
+    float chassis_delta_radian = 0.0f;
+    float chassis_omega = 0.0f;
     // 底盘控制类型
     Enum_Chassis_Control_Type chassis_control_type;
     // 抬升控制相关
@@ -250,7 +251,14 @@ void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback(uint8_t *Rx_Data)
 #else
         chassis_velocity_x = -Math_Int_To_Float(Rx_Frame.x_velocity, -450, 450, -4.f, 4.f);
         chassis_velocity_y = -Math_Int_To_Float(Rx_Frame.y_velocity, -450, 450, -4.f, 4.f);
-        chassis_delta_radian = -Math_Int_To_Float(Rx_Frame.yaw_data, -200, 200, -1.f, 1.f);
+        if (Rx_Frame.status.yaw_data_is_radian)
+        {
+            chassis_delta_radian = -Math_Int_To_Float(Rx_Frame.yaw_data, -200, 200, -1.f, 1.f);
+        }
+        else
+        {
+            chassis_omega = -Math_Int_To_Float(Rx_Frame.yaw_data, -200, 200, -4.f, 4.f);
+        }
 #endif
 
         for (uint8_t i = 0; i < 4; ++i)
@@ -282,6 +290,8 @@ void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback(uint8_t *Rx_Data)
         Chassis.Set_Target_Velocity_X(-chassis_velocity_x);
 #endif
         Chassis.Set_Delta_Radian(chassis_delta_radian); // 目标角度增量
+        Force_Chassis.Set_Yaw_Radian_Control_Enable(Rx_Frame.status.yaw_data_is_radian);
+        Chassis.Set_Target_Omega(Rx_Frame.status.yaw_data_is_radian ? 0.0f : chassis_omega);
         Chassis.Set_Uplift_FSM_Direction(uplift_fsm_drc);
         Chassis.Set_Lift_Select(lift_select[0], lift_select[1], lift_select[2], lift_select[3]);
         for (uint8_t i = 0; i < 4; i++)
@@ -375,7 +385,8 @@ void Class_Chariot::CAN_Gimbal_Tx_Chassis_Callback()
     // 底盘控制类型
     Enum_Chassis_Control_Type chassis_control_type;
     // 底盘坐标系速度目标值 float
-    float chassis_velocity_x = 0, chassis_velocity_y = 0, chassis_radian = 0;
+    float chassis_velocity_x = 0, chassis_velocity_y = 0, chassis_yaw = 0;
+    bool yaw_data_is_radian = (Keyboard_Control_Type == Keyboard_Control_Type_MOVING);
     // 抬升控制选择
     bool uplift_select[4];
     // 抬升方向设置
@@ -385,7 +396,7 @@ void Class_Chariot::CAN_Gimbal_Tx_Chassis_Callback()
     MiniPC_Status = MiniPC.Get_MiniPC_Status();
     chassis_velocity_x = Chassis.Get_Target_Velocity_X();
     chassis_velocity_y = Chassis.Get_Target_Velocity_Y();
-    chassis_radian = Chassis.Get_Target_Omega();
+    chassis_yaw = Chassis.Get_Target_Omega();
     chassis_control_type = Chassis.Get_Chassis_Control_Type();
     for (uint8_t i = 0; i < 4; i++)
     {
@@ -400,7 +411,13 @@ void Class_Chariot::CAN_Gimbal_Tx_Chassis_Callback()
     tmp_chassis_velocity_y = Math_Float_To_Int(chassis_velocity_y, -4.f, 4.f, -450, 450);
     Tx_Frame.y_velocity = tmp_chassis_velocity_y;
 
-    tmp_chassis_radian = -Math_Float_To_Int(chassis_radian, -1.f, 1.f, -200, 200);
+    if (!yaw_data_is_radian)
+    {
+        Math_Constrain(&chassis_yaw, -4.0f, 4.0f);
+    }
+    tmp_chassis_radian = yaw_data_is_radian
+                              ? -Math_Float_To_Int(chassis_yaw, -1.f, 1.f, -200, 200)
+                              : -Math_Float_To_Int(chassis_yaw, -4.f, 4.f, -200, 200);
     Tx_Frame.yaw_data = tmp_chassis_radian;
 
     // 抬升控制打包
@@ -420,6 +437,8 @@ void Class_Chariot::CAN_Gimbal_Tx_Chassis_Callback()
     Tx_Frame.status.chassis_contorl_mode = Chassis.Get_Chassis_Control_Type(); // 4/8
     Tx_Frame.status.uplift_fsm_direction = Chassis.Get_Uplift_FSM_Direction(); // 5/8
     Tx_Frame.status.wheel_slave_ctrl = Chassis.Get_Wheel_Slave_Status();       // 6/8
+    Tx_Frame.status.reserved = 0;
+    Tx_Frame.status.yaw_data_is_radian = yaw_data_is_radian ? 1 : 0;
 
     // 装入CAN发送缓冲区
     memcpy(CAN3_Gimbal_Tx_Chassis_Data, &Tx_Frame, sizeof(Tx_Frame));
@@ -443,6 +462,7 @@ void Class_Chariot::Control_Chassis()
     float chassis_velocity_x = 0.0f;
     float chassis_velocity_y = 0.0f;
     float chassis_delta_radian = 0.0f;
+    bool yaw_data_is_radian = (Keyboard_Control_Type == Keyboard_Control_Type_MOVING);
     bool lift_select[4] = {false, false, false, false};
     Enum_Lift_Direction lift_drc[4] = {Lift_Direction_HOLD, Lift_Direction_HOLD, Lift_Direction_HOLD, Lift_Direction_HOLD};
     Enum_Wheel_Slave_Status wheel_slave_status = Chassis.Get_Wheel_Slave_Status();
@@ -631,6 +651,10 @@ void Class_Chariot::Control_Chassis()
         chassis_velocity_x = left_y * sqrt(1.0f - left_y * left_y / 2.0f) * Chassis.Get_Velocity_X_Max();
         chassis_velocity_y = -left_x * sqrt(1.0f - left_x * left_x / 2.0f) * Chassis.Get_Velocity_Y_Max();
         chassis_delta_radian = -right_x * sqrt(1.0f - right_x * right_x / 2.0f) * 0.01f;
+        if (!yaw_data_is_radian)
+        {
+            chassis_delta_radian *= 300.0f;
+        }
         break;
     }
 
@@ -848,7 +872,8 @@ void Class_Chariot::Control_Chassis()
 {
     // 底盘坐标系速度目标值 float
     float chassis_velocity_x = 0.0f, chassis_velocity_y = 0.0f;
-    float chassis_radian = Force_Chassis.Get_Target_Radian();
+    float chassis_yaw = Force_Chassis.Get_Yaw_Radian_Control_Enable() ? Force_Chassis.Get_Target_Radian()
+                                                                      : Force_Chassis.Get_Target_Omega();
     float track_omega = 0.0f;
     float target_uplift_rad[4] = {0.0f};
 
@@ -894,11 +919,10 @@ void Class_Chariot::Control_Chassis()
     { // 失能
         chassis_velocity_x = 0;
         chassis_velocity_y = 0;
-#ifdef RADIAN_CONTROL
-        chassis_radian = chassis_radian;
-#elifdef OMEGA_CONTROL
-        chassis_radian = 0;
-#endif
+        if (!Force_Chassis.Get_Yaw_Radian_Control_Enable())
+        {
+            chassis_yaw = 0.0f;
+        }
 
         break;
     }
@@ -906,34 +930,43 @@ void Class_Chariot::Control_Chassis()
     {
         chassis_velocity_x = Chassis.Get_Target_Velocity_X();
         chassis_velocity_y = Chassis.Get_Target_Velocity_Y();
-#ifdef RADIAN_CONTROL
-        chassis_radian += Chassis.Get_Delta_Radian();
-#elifdef OMEGA_CONTROL
-        chassis_radian = Chassis.Get_Delta_Radian() * 300.0f;
-#endif
+        if (Force_Chassis.Get_Yaw_Radian_Control_Enable())
+        {
+            chassis_yaw += Chassis.Get_Delta_Radian();
+        }
+        else
+        {
+            chassis_yaw = Chassis.Get_Target_Omega();
+        }
 
         break;
     }
     }
-#ifdef RADIAN_CONTROL
-    if (chassis_radian > PI)
-        chassis_radian -= 2 * PI;
-    if (chassis_radian < -PI)
-        chassis_radian += 2 * PI;
-#elifdef OMEGA_CONTROL
-    if (chassis_radian > 4.0f)
-        chassis_radian = 4.0f;
-    if (chassis_radian < -4.0f)
-        chassis_radian = -4.0f;
-#endif
+    if (Force_Chassis.Get_Yaw_Radian_Control_Enable())
+    {
+        if (chassis_yaw > PI)
+            chassis_yaw -= 2 * PI;
+        if (chassis_yaw < -PI)
+            chassis_yaw += 2 * PI;
+    }
+    else
+    {
+        if (chassis_yaw > 4.0f)
+            chassis_yaw = 4.0f;
+        if (chassis_yaw < -4.0f)
+            chassis_yaw = -4.0f;
+    }
 
     Force_Chassis.Set_Target_Velocity_X(chassis_velocity_x);
     Force_Chassis.Set_Target_Velocity_Y(chassis_velocity_y); // 前x左y正
-#ifdef RADIAN_CONTROL
-    Force_Chassis.Set_Target_Radian(chassis_radian);
-#elifdef OMEGA_CONTROL
-    Force_Chassis.Set_Target_Omega(chassis_radian);
-#endif
+    if (Force_Chassis.Get_Yaw_Radian_Control_Enable())
+    {
+        Force_Chassis.Set_Target_Radian(chassis_yaw);
+    }
+    else
+    {
+        Force_Chassis.Set_Target_Omega(chassis_yaw);
+    }
 
     Chassis.Set_Target_Track_Omega(track_omega);
 
@@ -1223,81 +1256,17 @@ void Class_Chariot::Control_Booster()
 void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
 {
 #ifdef CHASSIS
-
-#ifdef CHASSIS_TEST // 底盘测试用
-    if (DR16.Get_DR16_Status() == DR16_Status_DISABLE)
-    // 遥控器关闭，所有电机输出置0
-    {
-        for (int i = 0; i < 4; i++)
-        {
-            // Chassis.Mecanum_Wheels[i].Set_Out(0.0f);
-            Force_Chassis.Motor_Wheel[i].Set_Target_Current(0.0f);
-        }
-
-        Chassis.Uplift_Motor[0].Set_Out(0.0f);
-        Chassis.Uplift_Motor[1].Set_Out(0.0f);
-        Chassis.Uplift_Motor[2].Set_Out(0.0f);
-
-        Chassis.Set_Target_Track_Omega(0.0f);
-        Chassis.Set_Track_Allocated_Power(0.0f);
-        Chassis.Set_Track_Power_Scale(0.0f);
-        Chassis.Calculate_Track_Request_Power();
-        Chassis.Track_Motor[0].Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
-        Chassis.Track_Motor[1].Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
-    }
-    else
-    {
-        // 原底盘的定时器回调，主要用于获取当前功率以及抬升机构和履带类的PID计算
-        Chassis.TIM_Calculate_PeriodElapsedCallback(Sprint_Status);
-        Chassis.Calculate_Track_Request_Power();
-        Chassis.Apply_Track_Power_Limit();
-
-        static uint8_t ms_cnt = 0;
-        ms_cnt++;
-        if (ms_cnt % 2 == 0)
-        // 力控底盘定时器回调，轮组电机的PID
-        {
-            const float track_request_power = Chassis.Get_Track_Request_Power();
-            float track_allocated_power = 0.0f;
-
-            if (Chassis.Get_Chassis_Control_Type() == Chassis_Control_Type_SLOPE)
-            {
-                track_allocated_power = track_request_power;
-                Math_Constrain(&track_allocated_power, 0.0f, Chassis.Get_Slope_Track_Power_Limit());
-                Math_Constrain(&track_allocated_power, 0.0f, Chassis_Dynamic_Power_Budget);
-                Force_Chassis.Set_Power_Limit_Max(Chassis_Dynamic_Power_Budget - track_allocated_power);
-            }
-            else
-            {
-                Force_Chassis.Set_Power_Limit_Max(Chassis_Dynamic_Power_Budget);
-            }
-
-            Force_Chassis.TIM_2ms_Resolution_PeriodElapsedCallback();
-            Force_Chassis.TIM_2ms_Control_PeriodElapsedCallback();
-
-            if (Chassis.Get_Chassis_Control_Type() != Chassis_Control_Type_SLOPE)
-            {
-                track_allocated_power =
-                    Clamp_Non_Negative(Chassis_Dynamic_Power_Budget - Force_Chassis.Get_Now_Wheel_Motor_Power());
-                if (track_allocated_power > track_request_power)
-                {
-                    track_allocated_power = track_request_power;
-                }
-            }
-
-            Chassis.Set_Track_Allocated_Power(track_allocated_power);
-            Chassis.Apply_Track_Power_Limit();
-            ms_cnt = 0;
-        }
-    }
-#else // 底盘给云台发消息
+    // 底盘给云台发消息
     CAN_Chassis_Tx_Gimbal_Callback();
 
     // 云台，随动掉线保护
     if (Get_Gimbal_Status() == DR16_Status_ENABLE || Referee.Get_Game_Stage() == Referee_Game_Status_Stage_BATTLE)
     {
+        // 抬升3508PID输出与小轮子2325目标速度值设置
         Chassis.TIM_Calculate_PeriodElapsedCallback(Sprint_Status);
+        // 计算2325小轮子估计功率值
         Chassis.Calculate_Track_Request_Power();
+        // 收缩功率
         Chassis.Apply_Track_Power_Limit();
 
         static uint8_t ms_cnt = 0;
@@ -1361,7 +1330,7 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
 // DWT_SysTimeUpdate();
 #endif
 
-#elif defined(GIMBAL)
+#if defined(GIMBAL)
 
     // 各个模块的分别解算
 

@@ -17,13 +17,8 @@
 /* Exported macros -----------------------------------------------------------*/
 
 //底盘或云台状态
-//#define CHASSIS
-#define GIMBAL
-
-#ifdef CHASSIS
-//#define RADIAN_CONTROL
-#define OMEGA_CONTROL
-#endif
+#define CHASSIS
+//#define GIMBAL
 
 //调试或比赛状态
 #define DEBUG

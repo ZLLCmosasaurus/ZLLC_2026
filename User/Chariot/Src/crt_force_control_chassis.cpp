@@ -69,7 +69,10 @@ void Class_Chassis::TIM_2ms_Resolution_PeriodElapsedCallback()
 {
     Self_Resolution();
 
-    PID_Radian_Output();
+    if (Yaw_Radian_Control_Enable)
+    {
+        PID_Radian_Output();
+    }
 
     // PID_Velocity_Filter[0].Set_Now(Now_Velocity_X);
     // PID_Velocity_Filter[0].TIM_Adjust_PeriodElapsedCallback();
@@ -368,7 +371,5 @@ void Class_Chassis::PID_Radian_Output()
     
     PID_Radian.TIM_Adjust_PeriodElapsedCallback();
 
-    #ifdef RADIAN_CONTROL
     Set_Target_Omega(PID_Radian.Get_Out());
-    #endif
 }

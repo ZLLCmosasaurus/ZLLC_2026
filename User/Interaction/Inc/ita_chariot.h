@@ -232,7 +232,8 @@ struct OtherStatus
     uint8_t backdoor_jump : 1;        // 3位：150mm台阶后门跳转开关
     uint8_t downlift_init : 1;        // 4位：下台阶初始抬升高度跳转
     uint8_t wheel_slave_ctrl : 1;     // 5位：小轮子从动开关
-    uint8_t reserved : 2;             // 6-7位：保留
+    uint8_t reserved : 1;             // 6位：保留
+    uint8_t yaw_data_is_radian : 1;   // 7位：0=Yaw角速度，1=Yaw角度增量
 } __attribute__((packed));
 
 // 完整的协议数据结构
