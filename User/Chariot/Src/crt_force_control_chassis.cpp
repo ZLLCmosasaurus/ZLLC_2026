@@ -57,6 +57,24 @@ void xvEstimateKF_Update(KalmanFilter_t *EstimateKF ,float acc,float vel)
     }
 }
 
+// 根据位姿控制类型和电机索引，判断该电机是否应参与运动（并占用功率预算）
+static inline bool IsMotorActiveForPose(Enum_Pose_Control_Type__ pose_type, int motor_index)
+{
+    // 偶数索引（0,2）：履带电机，始终参与运动
+    if (motor_index % 2 == 0) return true;
+
+    // 奇数索引：轮毂电机，根据位姿类型决定
+    int wheel_idx = (motor_index - 1) / 2;  // 映射：0-左上,1-左下,2-右下,3-右上
+    switch (pose_type) {
+        case Pose_ENABLE__:   // 只使用履带 + 后面两个轮子（左下、右下）
+            return (wheel_idx == 1 || wheel_idx == 2);
+        case Pose_STANDBY__:  // 只使用履带 + 前面两个轮子（左上、右上）
+            return (wheel_idx == 0 || wheel_idx == 3);
+        default:              // Pose_DISABLE__ 或其他情况：所有电机都参与
+            return true;
+    }
+}
+
 void Class_Chassis::Init()
 {
 
@@ -98,11 +116,11 @@ void Class_Chassis::Init()
     Motor_Wheel[3].PID_Omega.Init(1.0f, 0.0f, 0.0f, 0.0f, 20.0f, 20.0f);
     #endif
     // 履带驱动电机初始化
-    Motor_Track[0].Init(&hfdcan2, DJI_Motor_ID_0x201);
-    Motor_Track[0].PID_Omega.Init(1500.0f, 50.0f, 0.0f, 0.0f, Motor_Track[0].Get_Output_Max(), Motor_Track[0].Get_Output_Max());
+    Motor_Track[0].Init(&hfdcan2, Motor_DJI_ID_0x201);
+    Motor_Track[0].PID_Omega.Init(1.5f, 0.0f, 0.0f, 0.0f, 20.0f, 20.0f);
     // 履带驱动电机初始化
-    Motor_Track[1].Init(&hfdcan2, DJI_Motor_ID_0x202);
-    Motor_Track[1].PID_Omega.Init(1250.0f, 50.0f, 0.0f, 0.0f, Motor_Track[1].Get_Output_Max(), Motor_Track[1].Get_Output_Max()); 
+    Motor_Track[1].Init(&hfdcan2, Motor_DJI_ID_0x202);
+    Motor_Track[1].PID_Omega.Init(1.5f, 0.0f, 0.0f, 0.0f, 20.0f, 20.0f); 
    
     
     // 超级电容初始化
@@ -150,7 +168,7 @@ void Class_Chassis::TIM_100ms_Alive_PeriodElapsedCallback()
     }
     for (int j = 0; j < 2; j++)
     {
-        Motor_Track[j].TIM_Alive_PeriodElapsedCallback();
+        Motor_Track[j].TIM_100ms_Alive_PeriodElapsedCallback();
     }
 }
 /**
@@ -401,17 +419,17 @@ void Class_Chassis::Output_To_Motor()
         {
             for (int j = 0; j < 2; j++)
             {
-                Motor_Track[j].Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OPENLOOP);
-                Motor_Track[j].Set_Target_Torque(0.0f);
+                Motor_Track[j].Set_Control_Method(Motor_DJI_Control_Method_CURRENT);
+                Motor_Track[j].Set_Target_Current(0.0f);
             }
             break;
         }
         case Track_On__:
         {
-            Motor_Track[0].Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
-            Motor_Track[1].Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
-            Motor_Track[0].Set_Target_Omega_Radian(-Target_Track_Omega);
-            Motor_Track[1].Set_Target_Omega_Radian(Target_Track_Omega);
+            Motor_Track[0].Set_Control_Method(Motor_DJI_Control_Method_OMEGA);
+            Motor_Track[1].Set_Control_Method(Motor_DJI_Control_Method_OMEGA);
+            Motor_Track[0].Set_Target_Omega(-Target_Track_Omega);
+            Motor_Track[1].Set_Target_Omega(Target_Track_Omega);
             break;
         }
     }
@@ -423,13 +441,30 @@ void Class_Chassis::Output_To_Motor()
 
     for (int j = 0; j < 2; j++)
     {
-        Motor_Track[j].TIM_PID_PeriodElapsedCallback();
+        Motor_Track[j].TIM_Calculate_PeriodElapsedCallback();
     }
 
     Power_Management.Max_Power = Supercap.Get_Chassis_Device_LimitPower();
-    // Power_Management.Max_Power = 120.0f;
+    //Power_Management.Max_Power = 120.0f;
+    
+    for (int i = 0; i < 8; i++)
+    {
+        bool active = IsMotorActiveForPose(Pose_Control_Type, i);
+        if (!active)
+        {
+            // 非活跃电机：临时将 pid_output 和 torque 置零，让功率算法认为它们不消耗功率
+            Power_Management.Motor_Data[i].pid_output = 0;
+            Power_Management.Motor_Data[i].torque = 0;
+        }
+    }
     
     Power_Limit.Power_Task(Power_Management);
+
+    for (int i = 0; i < 8; i++)
+    {
+        if (!IsMotorActiveForPose(Pose_Control_Type, i))
+            Power_Management.Motor_Data[i].output = 0;
+    }
 
     for (int i = 1, j = 0; i < 8; i+=2, ++j)
     {
@@ -438,7 +473,7 @@ void Class_Chassis::Output_To_Motor()
 
     for(int i = 0, j = 0; i < 4; i+=2, ++j)
     {
-        Motor_Track[j].Reset_Out_And_Output(Power_Management.Motor_Data[i].output);
+        // Motor_Track[j].Reset_Set_Out_And_Output(Power_Management.Motor_Data[i].output);
     }
 }
 
@@ -513,10 +548,10 @@ void Class_Chassis::Self_Resolution()
     }
     for(int i = 0, j = 0; i < 4; i+=2, ++j)
     {
-        Power_Management.Motor_Data[i].feedback_omega = Motor_Track[j].Get_Now_Omega_Radian() * M3508_REDUATION * RAD_TO_RPM;
-        Power_Management.Motor_Data[i].feedback_torque = Motor_Track[j].Get_Now_Torque() * M3508_CMD_CURRENT_TO_TORQUE;
-        Power_Management.Motor_Data[i].pid_output = Motor_Track[j].Get_Out();
-        Power_Management.Motor_Data[i].torque = Motor_Track[j].Get_Out() * M3508_CMD_CURRENT_TO_TORQUE;
+        Power_Management.Motor_Data[i].feedback_omega = Motor_Track[j].Get_Now_Omega() * M3508_REDUATION * RAD_TO_RPM;
+        Power_Management.Motor_Data[i].feedback_torque = Motor_Track[j].Get_Now_Current() * 16384.0f / 20.0f * M3508_CMD_CURRENT_TO_TORQUE;
+        Power_Management.Motor_Data[i].pid_output = Motor_Track[j].Get_Target_Current() * 16384.0f / 20.0f;
+        Power_Management.Motor_Data[i].torque = Motor_Track[j].Get_Target_Current() * 16384.0f / 20.0f * M3508_CMD_CURRENT_TO_TORQUE;
     }
     #ifdef  filter_complementary
     //互补滤波-计算车体速度

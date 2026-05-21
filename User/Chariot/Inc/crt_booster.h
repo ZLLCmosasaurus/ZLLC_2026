@@ -84,8 +84,6 @@ public:
     Class_Booster *Booster;
 
     float Heat;
-    uint16_t Shoot_Cooldown_Time = 0;
-    uint16_t Shoot_Cooldown_Set = 150;  // ms
 
     void Reload_TIM_Status_PeriodElapsedCallback();
 };
@@ -121,7 +119,6 @@ class Class_Booster
 public:
     uint8_t Cmd_if_Fire = 0;
     uint8_t Shoot_Flag = 0; //0关闭 1开启 测试发射机构
-    float Speed;
     //热量检测有限自动机
     Class_FSM_Heat_Detect FSM_Heat_Detect;
     friend class Class_FSM_Heat_Detect;
@@ -177,10 +174,10 @@ protected:
     //初始化相关常量
 
     //常量
-    uint16_t Heat_Max = 400;
+    //热量上限值，从裁判系统读取，否则默认为200
+    uint16_t Heat_Max = 200;
     //热量冷却值,从裁判系统读取，否则默认为24
     uint16_t Cooling_Value = 24;
-    float Heat_Consumption = 10.f;
     //拨弹盘堵转扭矩阈值, 超出被认为卡弹
     uint16_t Driver_Torque_Threshold = 10000;
     //摩擦轮单次判定发弹阈值, 超出被认为发射子弹

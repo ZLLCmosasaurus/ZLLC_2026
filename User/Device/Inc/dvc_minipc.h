@@ -277,6 +277,7 @@ struct Pack_rx_t
     float lidar_lob_x;
     float lidar_lob_y;
     float lidar_lob_z;
+    uint16_t lob_time;
     uint8_t lidar_lob_stability;
     uint16_t crc16;
 #endif
@@ -434,6 +435,11 @@ protected:
     uint8_t alive;
     uint8_t Lidar_if_Lob;           // 是否启用部署 1-启用自瞄 2-启用雷达
     uint8_t Lidar_Lob_Stability;    // 部署命中可信度
+
+    bool radar_locked = false;           // 是否已在本次雷达模式下锁定
+    uint16_t last_lob_time = 0;     // 上一次处理的包序号
+    float locked_yaw = 0.0f;             // 锁定的目标 yaw 角
+    float locked_pitch = 0.0f;           // 锁定的目标 pitch 角
 
     const float g = 9.72472f;       // 重力加速度
     const float bullet_v = 15.85f;   // 子弹速度

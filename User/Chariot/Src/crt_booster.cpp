@@ -69,12 +69,10 @@ void Class_FSM_Heat_Detect::Reload_TIM_Status_PeriodElapsedCallback()
     {
         if (Last_Friction_Control_Type == Friction_Control_Type_DISABLE && Booster->Friction_Control_Type == Friction_Control_Type_ENABLE)
         {
-            //Heat += 100.0f;
             Set_Status(0);
         }
         else if(Last_Friction_Control_Type == Friction_Control_Type_ENABLE && Booster->Friction_Control_Type == Friction_Control_Type_DISABLE)
         {
-            //Heat += 100.0f;
             Set_Status(0);
         }
         else
@@ -109,11 +107,6 @@ void Class_FSM_Heat_Detect::Reload_TIM_Status_PeriodElapsedCallback()
     else
     {
         Heat = 0;
-    }
-    // 发射间隔冷却
-    if (Shoot_Cooldown_Time > 0)
-    {
-        Shoot_Cooldown_Time--;
     }
 
 }
@@ -297,8 +290,6 @@ void Class_Booster::Init()
 
 	Motor_Driver.PID_Angle.Init(10.0f, 0.1f, 0.0f, 0.0f, 0.0f,0.0f);
     Motor_Driver.PID_Omega.Init(1000.0f, 13.0f, 0.0f, 0.0f, 12288.0f,  12288.0f);
-    // Motor_Driver.PID_Angle.Init(3.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.001f, 0.5f, PID_D_First_DISABLE);
-    // Motor_Driver.PID_Omega.Init(800.0f, 1.5f, 0.0f, 0.0f, 12288.0f, 12288.0f, 0.3f, 1.5f, 0.0f, 0.001f, 0.0f, PID_D_First_ENABLE);
     Motor_Driver.Init(&hfdcan3, DJI_Motor_ID_0x203, DJI_Motor_Control_Method_OMEGA, 50.895f);
     kalman_init(&Kf_Omega,0.0f);
     //注意初始化ID 此版本6020为电流环版本 可能会有ID冲突
@@ -703,8 +694,11 @@ void Class_Booster::TIM_Calculate_PeriodElapsedCallback()
         Fric[i].TIM_PID_PeriodElapsedCallback();
     }
     #endif
-
-    Cmd_if_Fire = Get_Shoot_Cmd(FSM_Heat_Detect.Heat,100);
+    if(Referee->Referee_Status == Referee_Status_ENABLE)
+    {
+        Heat_Max = Referee->Get_Booster_42mm_Heat_Max();
+    }
+    Cmd_if_Fire = Get_Shoot_Cmd(FSM_Heat_Detect.Heat,Heat_Max);
     
 
 }

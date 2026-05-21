@@ -354,7 +354,7 @@ protected:
     //当前角速度
     float Now_Omega = 0.0f;
     //缩伸腿角度
-    float Set_Leg_Angle[2] = {0.0f, -0.73f};
+    float Set_Leg_Angle[2] = {0.0f, -0.67f};
     //缩伸腿速度
     float Set_Leg_Velocity[2] = {2.5f, -0.6f};
 

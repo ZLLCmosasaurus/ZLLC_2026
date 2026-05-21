@@ -125,7 +125,7 @@ void Class_HybridTrackLeg_Chassis::Init(float __Velocity_X_Max, float __Velocity
     // 斜坡函数加减速速度Y  控制周期1ms
     Slope_Velocity_Y.Init(0.005f, 0.01f);
     //  斜坡函数加减速角度
-    Slope_Position.Init(0.0007f, 0.0014f);
+    Slope_Position.Init(0.0014f, 0.0028f);
     // 斜坡函数加减速角速度
     Slope_Omega.Init(0.05f, 0.05f);
 
@@ -331,24 +331,34 @@ void Class_HybridTrackLeg_Chassis::Calc_LegFeedforwardTorque(float velocity_targ
     bool need_high_torque = (fabsf(velocity_target) > TFF_THRESHOLD_V) &&
                             (fabsf(error_pitch) > 0.02f);
 
-    if (need_high_torque) {
-        target_tff_ = TFF_AGGRESSIVE_LEVEL;   // 需要大力矩时设定目标值
+    if (need_high_torque)
+    {
+        target_tff_ = TFF_AGGRESSIVE_LEVEL; // 需要大力矩时设定目标值
         // 方向与速度一致
-        if (velocity_target < 0) target_tff_ = -target_tff_;
-    } else {
+        if (velocity_target < 0)
+            target_tff_ = -target_tff_;
+    }
+    else
+    {
         // 维持期可以保持一个小力矩或者归零
         target_tff_ = TFF_HOLD_LEVEL;
-        if (velocity_target < 0) target_tff_ = -target_tff_;
+        if (velocity_target < 0)
+            target_tff_ = -target_tff_;
     }
 
     // 斜坡升降：让实际力矩以固定速率追踪目标
-    float max_step = TFF_RAMP_RATE * CONTROL_PERIOD;  // 单周期最大变化量
-    if (target_tff_ > tff_hold_) {
+    float max_step = TFF_RAMP_RATE * CONTROL_PERIOD; // 单周期最大变化量
+    if (target_tff_ > tff_hold_)
+    {
         tff_hold_ += max_step;
-        if (tff_hold_ > target_tff_) tff_hold_ = target_tff_;
-    } else if (target_tff_ < tff_hold_) {
+        if (tff_hold_ > target_tff_)
+            tff_hold_ = target_tff_;
+    }
+    else if (target_tff_ < tff_hold_)
+    {
         tff_hold_ -= max_step;
-        if (tff_hold_ < target_tff_) tff_hold_ = target_tff_;
+        if (tff_hold_ < target_tff_)
+            tff_hold_ = target_tff_;
     }
 }
 
@@ -407,7 +417,7 @@ void Class_HybridTrackLeg_Chassis::Jointleg_Controller()
         // 更新位置累加器（内部处理增量、限幅）
         Update_LegPositionAccumulator(Chassis_Pitch);
 
-        // 
+        //
         for (int i = 0; i < 2; i++)
         {
             Motor_Leg[i].Set_DM_Motor_Control_Method(DM_Motor_Control_Method_MIT_POSITION);
@@ -423,7 +433,6 @@ void Class_HybridTrackLeg_Chassis::Jointleg_Controller()
 
         // 发送MIT指令
         Send_LegMITCommands(velocity_cmd, 0.0F, 0.0F);
-
     }
     break;
     case Pose_STANDBY: // 待机，下台阶前使用，保持腿部姿态为小角度定值
@@ -456,17 +465,11 @@ void Class_HybridTrackLeg_Chassis::Jointleg_Controller()
     Error_Pitch = Chassis_Pitch;
     Joint_Heat = Motor_Joint[1].Get_Now_Rotor_Temperature();
 
-    static uint16_t mod5 = 0;
-    mod5++;
-    if (mod5 = 5)
-    {
-        Slope_Position.TIM_Calculate_PeriodElapsedCallback();
-        mod5 = 0;
-    }
+    Slope_Position.TIM_Calculate_PeriodElapsedCallback();
 
     switch (Pose_Control_Type)
     {
-    case (Pose_DISABLE): // 失能
+    case Pose_DISABLE: // 失能
     {
         Motor_Joint[0].Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
         Motor_Joint[1].Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
@@ -479,7 +482,7 @@ void Class_HybridTrackLeg_Chassis::Jointleg_Controller()
 
         break;
     }
-    case (Pose_STANDBY): // 待机
+    case Pose_STANDBY: // 待机
     {
         // 启动控制方式
         Motor_Joint[0].Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
@@ -494,7 +497,7 @@ void Class_HybridTrackLeg_Chassis::Jointleg_Controller()
         Motor_Joint[1].Set_Target_Omega(-Set_Leg_Velocity[0]);
         break;
     }
-    case (Pose_ENABLE): // 使能
+    case Pose_ENABLE: // 使能
     {
         // 启动控制方式
         Motor_Joint[0].Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
@@ -511,16 +514,6 @@ void Class_HybridTrackLeg_Chassis::Jointleg_Controller()
     }
     }
 #endif
-
-    for (int i = 0; i < 2; i++)
-    {
-#ifdef LOCKED_SWITCH
-        Motor_Joint[i].TIM_Process_PeriodElapsedCallback();
-#endif
-#ifdef AUTO_SWITCH
-// Motor_Leg[i].TIM_Process_PeriodElapsedCallback();
-#endif
-    }
 }
 
 /**
@@ -601,14 +594,20 @@ void Class_HybridTrackLeg_Chassis::Switch_Pose()
     Transform_Angle_To_Relative(); // 将IMU获取的车体倾角转换为相对角度，作为关节电机控制的输入
 
     // 计算回调函数
+
     static uint8_t mod5 = 0;
     mod5++;
+    if (Pose_Control_Type != Pose_DISABLE)
+    {
+        if (mod5 == 1)
+            Motor_Joint[0].TIM_Process_PeriodElapsedCallback();
+        else if (mod5 == 2)
+            Motor_Joint[1].TIM_Process_PeriodElapsedCallback();
+    }
     if (mod5 == 5)
     {
         mod5 = 0;
         Jointleg_Controller(); // 腿
-        Track_Controller();    // 履带
-        Guider_Controller();   // 导轮
     }
 }
 #endif

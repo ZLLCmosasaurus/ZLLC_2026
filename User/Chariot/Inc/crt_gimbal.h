@@ -182,6 +182,8 @@ public:
     //陀螺仪获取云台角速度
     Class_IMU* IMU;
 
+    
+
 
     inline float Get_True_Rad_Pitch();
     inline float Get_True_Gyro_Pitch();
@@ -293,6 +295,7 @@ public:
     //陀螺仪获取云台角速度
     Class_IMU *IMU;
     // Class_DM_IMU *IMU;
+    KalmanFilter Kf_Gyro_Pitch;
 
     inline float Get_True_Rad_Pitch();
     inline float Get_True_Gyro_Pitch();
@@ -405,8 +408,8 @@ protected:
     float Yaw_Half_Turns;
 
     // pitch轴最小值
-    float Min_Pitch_Angle = -20.0f;
-    float Min_Pitch_Angle_Radian = - PI *(20.0/180.0);
+    float Min_Pitch_Angle = -15.0f;
+    float Min_Pitch_Angle_Radian = - PI *(15.0/180.0);
     // pitch轴最大值
     float Max_Pitch_Angle = 40.0f ; //
     float Max_Pitch_Angle_Radian = PI *(40.0/180.0);

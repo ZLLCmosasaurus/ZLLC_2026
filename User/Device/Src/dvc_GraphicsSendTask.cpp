@@ -55,6 +55,67 @@ short lastBigFrictSpeed;
 uint8_t Transmit_Pack[128];				   // 裁判系统发送帧
 uint8_t data_pack[DRAWING_PACK * 7] = {0}; // 数据段部分
 uint8_t DMAsendflag;
+
+#define REFEREE_DMA_TX_QUEUE_DEPTH 40
+#define REFEREE_DMA_MAX_PACKET_LEN SEND_MAX_SIZE
+
+static RefereeDMAPacket_t referee_dma_queue[REFEREE_DMA_TX_QUEUE_DEPTH];
+static uint8_t referee_dma_head = 0;
+static uint8_t referee_dma_tail = 0;
+uint8_t referee_dma_count = 0;
+volatile uint8_t referee_dma_busy = 0;
+
+static inline uint8_t Referee_DMA_QueueFull(void)
+{
+	return referee_dma_count >= REFEREE_DMA_TX_QUEUE_DEPTH;
+}
+
+static inline uint8_t Referee_DMA_QueueEmpty(void)
+{
+	return referee_dma_count == 0;
+}
+
+static void Referee_DMA_Dequeue(void)
+{
+	if (Referee_DMA_QueueEmpty())
+	{
+		return;
+	}
+	referee_dma_head = (referee_dma_head + 1) % REFEREE_DMA_TX_QUEUE_DEPTH;
+	referee_dma_count--;
+}
+
+static void Referee_DMA_StartNext(void)
+{
+	if (referee_dma_busy || Referee_DMA_QueueEmpty())
+	{
+		return;
+	}
+
+	uint16_t len = referee_dma_queue[referee_dma_head].len;
+	if (HAL_UART_Transmit_DMA(&huart10, referee_dma_queue[referee_dma_head].data, len) == HAL_OK)
+	{
+		referee_dma_busy = 1;
+	}
+}
+
+void Referee_DMA_EnqueuePacket(const uint8_t *data, uint16_t len)
+{
+	if (len == 0 || len > REFEREE_DMA_MAX_PACKET_LEN)
+	{
+		return;
+	}
+
+	// if (Referee_DMA_QueueFull()) {
+	//     return;
+	// }
+
+	memcpy(referee_dma_queue[referee_dma_tail].data, data, len);
+	referee_dma_queue[referee_dma_tail].len = len;
+	referee_dma_tail = (referee_dma_tail + 1) % REFEREE_DMA_TX_QUEUE_DEPTH;
+	referee_dma_count++;
+	Referee_DMA_StartNext();
+}
 /**********************************************************************************************************
  *函 数 名: Send_UIPack
  *功能说明: 发送自定义UI数据包（数据段头部和数据）
@@ -105,21 +166,34 @@ void Send_toReferee(uint16_t cmd_id, uint16_t data_len)
 
 	// 对于状态变化类消息，增加发送次数为3次，提高可靠性
 	uint8_t send_cnt = (cmd_id == Drawing_Char_ID) ? 3 : 1;
+	// uint8_t send_cnt = 3;
 	while (send_cnt)
 	{
 		send_cnt--;
-		// 将超时时间从5ms增加到50ms，提高通信稳定性
-		HAL_UART_Transmit(&huart10, (uint8_t *)Transmit_Pack, Frame_Length, 50);
-		DMAsendflag = 1;
-
-		// 添加短暂延时，避免连续发送导致丢包
-		if (send_cnt > 0)
-		{
-			for (volatile uint16_t i = 0; i < 1000; i++)
-				; // 简单延时
-		}
+		Referee_DMA_EnqueuePacket(Transmit_Pack, Frame_Length);
 	}
 }
+uint32_t lastcnt;
+float dtw;
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+	void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+	{
+		if (huart == &huart10)
+		{
+			dtw = 1.0f / DWT_GetDeltaT(&lastcnt);
+			// referee_dma_busy = 0;
+			// Referee_DMA_Dequeue();
+			// Referee_DMA_StartNext();
+		}
+	}
+
+#ifdef __cplusplus
+}
+#endif
 
 /**********************************************************************************************************
  *函 数 名: Deleta_Layer
@@ -310,27 +384,33 @@ graphic_data_struct_t *Arc_Draw(uint8_t layer, int Op_Type, uint16_t startx, uin
  *形    参: 无
  *返 回 值: 无
  **********************************************************************************************************/
+
 void Lanelines_Init(void)
 {
 	static uint8_t LaneLineName1[] = "LL1";
 	static uint8_t LaneLineName2[] = "LL2";
+	static uint8_t optype;
 	graphic_data_struct_t *P_graphic_data;
+
+	// 确定操作类型
+	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
+
 	// 第一条车道线
-	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.41, SCREEN_WIDTH * 0.45, SCREEN_LENGTH * 0.31, 0, 4, Orange, LaneLineName1);
+	P_graphic_data = Line_Draw(1, optype, SCREEN_LENGTH * 0.41, SCREEN_WIDTH * 0.3, SCREEN_LENGTH * 0.25, 0, 4, Orange, LaneLineName1);
 	memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
 	// 第二条车道线
-	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.59, SCREEN_WIDTH * 0.45, SCREEN_LENGTH * 0.69, 0, 4, Orange, LaneLineName2);
+	P_graphic_data = Line_Draw(1, optype, SCREEN_LENGTH * 0.59, SCREEN_WIDTH * 0.3, SCREEN_LENGTH * 0.75, 0, 4, Orange, LaneLineName2);
 	memcpy(&data_pack[DRAWING_PACK], (uint8_t *)P_graphic_data, DRAWING_PACK);
+
 	Send_UIPack(Drawing_Graphic2_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK * 2); // 发送两个图形
 }
-
 /**********************************************************************************************************
  *函 数 名: Shootlines_Init
  *功能说明: 枪口初始化
  *形    参: 无
  *返 回 值: 无
  **********************************************************************************************************/
-void ShootLines_Init(void)
+void ShootLines_Init_1(void)
 {
 	static uint8_t ShootLineName1[] = "SL1";
 	static uint8_t ShootLineName2[] = "SL2";
@@ -341,310 +421,481 @@ void ShootLines_Init(void)
 	static uint8_t ShootLineName7[] = "SL7";
 	graphic_data_struct_t *P_graphic_data;
 
-	float x_bias = 0;
-	float y_bias = 0;
-	// 横向线条
-	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 - 40 + x_bias, SCREEN_WIDTH * 0.5 - 72 + y_bias, SCREEN_LENGTH * 0.5 + 40 + x_bias, SCREEN_WIDTH * 0.5 - 72 + y_bias, 1, Green, ShootLineName3);
+	uint16_t x_bias = 0;
+	uint16_t y_bias = 0;
+	// 左侧纵向虚线
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 - 135 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 - 135 + x_bias, SCREEN_WIDTH * 0.5 - 10 + y_bias, 1, White, ShootLineName1);
 	memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
 
-	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 - 30 + x_bias, SCREEN_WIDTH * 0.5 - 92 + y_bias, SCREEN_LENGTH * 0.5 + 30 + x_bias, SCREEN_WIDTH * 0.5 - 92 + y_bias, 1, Green, ShootLineName1);
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 - 120 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 - 120 + x_bias, SCREEN_WIDTH * 0.5 - 10 + y_bias, 1, White, ShootLineName2);
 	memcpy(&data_pack[DRAWING_PACK], (uint8_t *)P_graphic_data, DRAWING_PACK);
 
-	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 - 20 + x_bias, SCREEN_WIDTH * 0.5 - 112 + y_bias, SCREEN_LENGTH * 0.5 + 20 + x_bias, SCREEN_WIDTH * 0.5 - 112 + y_bias, 1, Green, ShootLineName4);
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 - 105 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 - 105 + x_bias, SCREEN_WIDTH * 0.5 - 10 + y_bias, 1, White, ShootLineName3);
 	memcpy(&data_pack[DRAWING_PACK * 2], (uint8_t *)P_graphic_data, DRAWING_PACK);
 
-	// 纵向线条
-	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 + x_bias, SCREEN_WIDTH * 0.5 - 40 + y_bias, SCREEN_LENGTH * 0.5 + x_bias, SCREEN_WIDTH * 0.5 - 112 + y_bias, 1, Green, ShootLineName2);
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 - 90 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 - 90 + x_bias, SCREEN_WIDTH * 0.5 - 10 + y_bias, 1, White, ShootLineName4);
 	memcpy(&data_pack[DRAWING_PACK * 3], (uint8_t *)P_graphic_data, DRAWING_PACK);
 
-	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 - 10 + x_bias, SCREEN_WIDTH * 0.5 - 132 + y_bias, SCREEN_LENGTH * 0.5 + 10 + x_bias, SCREEN_WIDTH * 0.5 - 132 + y_bias, 1, Green, ShootLineName5);
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 - 75 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 - 75 + x_bias, SCREEN_WIDTH * 0.5 - 10 + y_bias, 1, White, ShootLineName5);
 	memcpy(&data_pack[DRAWING_PACK * 4], (uint8_t *)P_graphic_data, DRAWING_PACK);
 
-	Send_UIPack(Drawing_Graphic5_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK * 5); // 发送五个图形
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 - 60 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 - 60 + x_bias, SCREEN_WIDTH * 0.5 - 10 + y_bias, 1, White, ShootLineName6);
+	memcpy(&data_pack[DRAWING_PACK * 5], (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 - 45 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 - 45 + x_bias, SCREEN_WIDTH * 0.5 - 10 + y_bias, 1, White, ShootLineName7);
+	memcpy(&data_pack[DRAWING_PACK * 6], (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+	Send_UIPack(Drawing_Graphic7_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK * 7); // 发送七个图形
+}
+void ShootLines_Init_2(void)
+{
+	static uint8_t ShootLineName1[] = "SL8";
+	static uint8_t ShootLineName2[] = "SL9";
+	static uint8_t ShootLineName3[] = "SL0";
+	static uint8_t ShootLineName4[] = "SLA";
+	static uint8_t ShootLineName5[] = "SLB";
+	static uint8_t ShootLineName6[] = "SLC";
+	static uint8_t ShootLineName7[] = "SLD";
+	graphic_data_struct_t *P_graphic_data;
+
+	uint16_t x_bias = 0;
+	uint16_t y_bias = 0;
+	// 右侧纵向虚线
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 + 135 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 + 135 + x_bias, SCREEN_WIDTH * 0.5 - 10 + y_bias, 1, White, ShootLineName1);
+	memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 + 120 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 + 120 + x_bias, SCREEN_WIDTH * 0.5 - 10 + y_bias, 1, White, ShootLineName2);
+	memcpy(&data_pack[DRAWING_PACK], (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 + 105 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 + 105 + x_bias, SCREEN_WIDTH * 0.5 - 10 + y_bias, 1, White, ShootLineName3);
+	memcpy(&data_pack[DRAWING_PACK * 2], (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 + 90 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 + 90 + x_bias, SCREEN_WIDTH * 0.5 - 10 + y_bias, 1, White, ShootLineName4);
+	memcpy(&data_pack[DRAWING_PACK * 3], (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 + 75 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 + 75 + x_bias, SCREEN_WIDTH * 0.5 - 10 + y_bias, 1, White, ShootLineName5);
+	memcpy(&data_pack[DRAWING_PACK * 4], (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 + 60 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 + 60 + x_bias, SCREEN_WIDTH * 0.5 - 10 + y_bias, 1, White, ShootLineName6);
+	memcpy(&data_pack[DRAWING_PACK * 5], (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 + 45 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 + 45 + x_bias, SCREEN_WIDTH * 0.5 - 10 + y_bias, 1, White, ShootLineName7);
+	memcpy(&data_pack[DRAWING_PACK * 6], (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+	Send_UIPack(Drawing_Graphic7_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK * 7); // 发送七个图形
+}
+void ShootLines_Init_3(void)
+{
+	static uint8_t ShootLineName1[] = "S31";
+	static uint8_t ShootLineName2[] = "S32";
+	static uint8_t ShootLineName3[] = "S33";
+	static uint8_t ShootLineName4[] = "S34";
+	static uint8_t ShootLineName5[] = "S35";
+	static uint8_t ShootLineName6[] = "S36";
+	static uint8_t ShootLineName7[] = "S37";
+	graphic_data_struct_t *P_graphic_data;
+
+	uint16_t x_bias = 0;
+	uint16_t y_bias = 0;
+
+	// 外侧轮廓瞄准线
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 - 150 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 - 150 + x_bias, SCREEN_WIDTH * 0.5 - 20 + y_bias, 1, White, ShootLineName1);
+	memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 + 150 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 + 150 + x_bias, SCREEN_WIDTH * 0.5 - 20 + y_bias, 1, White, ShootLineName2);
+	memcpy(&data_pack[DRAWING_PACK], (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 - 150 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 - 190 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, 1, White, ShootLineName3);
+	memcpy(&data_pack[DRAWING_PACK * 2], (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 + 150 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 + 190 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, 1, White, ShootLineName4);
+	memcpy(&data_pack[DRAWING_PACK * 3], (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 + x_bias, SCREEN_WIDTH * 0.5 + 60 + y_bias, SCREEN_LENGTH * 0.5 + x_bias, SCREEN_WIDTH * 0.5 + 95 + y_bias, 1, White, ShootLineName5);
+	memcpy(&data_pack[DRAWING_PACK * 4], (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 + x_bias, SCREEN_WIDTH * 0.5 - 50 + y_bias, SCREEN_LENGTH * 0.5 + x_bias, SCREEN_WIDTH * 0.5 - 210 + y_bias, 1, White, ShootLineName6);
+	memcpy(&data_pack[DRAWING_PACK * 5], (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 + x_bias, SCREEN_WIDTH * 0.5 - 50 + y_bias, SCREEN_LENGTH * 0.5 + x_bias, SCREEN_WIDTH * 0.5 - 210 + y_bias, 1, White, ShootLineName7);
+	memcpy(&data_pack[DRAWING_PACK * 6], (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+	Send_UIPack(Drawing_Graphic7_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK * 7); // 发送七个图形
+}
+void ShootLines_Init_4(void)
+{
+	static uint8_t ShootLineName1[] = "S37";
+	static uint8_t ShootLineName2[] = "S38";
+	static uint8_t ShootLineName3[] = "S39";
+	static uint8_t ShootLineName4[] = "S3A";
+	static uint8_t ShootLineName5[] = "S3B";
+	graphic_data_struct_t *P_graphic_data;
+
+	uint16_t x_bias = 0;
+	uint16_t y_bias = 0;
+
+	// 内侧轮廓瞄准线
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 - 19 + x_bias, SCREEN_WIDTH * 0.5 - 82 + y_bias, SCREEN_LENGTH * 0.5 + 20 + x_bias, SCREEN_WIDTH * 0.5 - 82 + y_bias, 1, White, ShootLineName1);
+	memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 - 39 + x_bias, SCREEN_WIDTH * 0.5 - 114 + y_bias, SCREEN_LENGTH * 0.5 + 40 + x_bias, SCREEN_WIDTH * 0.5 - 114 + y_bias, 1, White, ShootLineName2);
+	memcpy(&data_pack[DRAWING_PACK], (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 - 59 + x_bias, SCREEN_WIDTH * 0.5 - 146 + y_bias, SCREEN_LENGTH * 0.5 + 60 + x_bias, SCREEN_WIDTH * 0.5 - 146 + y_bias, 1, White, ShootLineName3);
+	memcpy(&data_pack[DRAWING_PACK * 2], (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 - 79 + x_bias, SCREEN_WIDTH * 0.5 - 178 + y_bias, SCREEN_LENGTH * 0.5 + 80 + x_bias, SCREEN_WIDTH * 0.5 - 178 + y_bias, 1, White, ShootLineName4);
+	memcpy(&data_pack[DRAWING_PACK * 3], (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+	Send_UIPack(Drawing_Graphic5_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK * 4); // 发送四个图形
+}
+/**********************************************************************************************************
+ *函 数 名: Pitch_Line_Init
+ *功能说明: Pitch角度刻度线
+ *形    参: 无
+ *返 回 值: 无
+ **********************************************************************************************************/
+void Pitch_Line_Init_1(void)
+{
+	static uint8_t PitchLineName1[] = "PL1";
+	static uint8_t PitchLineName2[] = "PL2";
+	static uint8_t PitchLineName3[] = "PL3";
+	static uint8_t PitchLineName4[] = "PL4";
+	static uint8_t PitchLineName5[] = "PL5";
+	static uint8_t PitchLineName6[] = "PL6";
+	static uint8_t PitchLineName7[] = "PL7";
+	graphic_data_struct_t *P_graphic_data;
+
+	uint16_t x_bias = 0;
+	uint16_t y_bias = 0;
+
+	// Pitch角度刻度线
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 + 350 + x_bias, SCREEN_WIDTH * 0.5 + 62 + y_bias, SCREEN_LENGTH * 0.5 + 365 + x_bias, SCREEN_WIDTH * 0.5 + 64 + y_bias, 1, White, PitchLineName1);
+	memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 + 327 + x_bias, SCREEN_WIDTH * 0.5 + 119 + y_bias, SCREEN_LENGTH * 0.5 + 355 + x_bias, SCREEN_WIDTH * 0.5 + 129 + y_bias, 1, White, PitchLineName2);
+	memcpy(&data_pack[DRAWING_PACK], (uint8_t *)P_graphic_data, DRAWING_PACK); // 40
+
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 + 308 + x_bias, SCREEN_WIDTH * 0.5 + 178 + y_bias, SCREEN_LENGTH * 0.5 + 321 + x_bias, SCREEN_WIDTH * 0.5 + 185 + y_bias, 1, White, PitchLineName3);
+	memcpy(&data_pack[DRAWING_PACK * 2], (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 + 267 + x_bias, SCREEN_WIDTH * 0.5 + 224 + y_bias, SCREEN_LENGTH * 0.5 + 290 + x_bias, SCREEN_WIDTH * 0.5 + 243 + y_bias, 1, White, PitchLineName4);
+	memcpy(&data_pack[DRAWING_PACK * 3], (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 + 348 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 + 378 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, 1, White, PitchLineName5);
+	memcpy(&data_pack[DRAWING_PACK * 4], (uint8_t *)P_graphic_data, DRAWING_PACK); // 0
+
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 + 350 + x_bias, SCREEN_WIDTH * 0.5 - 62 + y_bias, SCREEN_LENGTH * 0.5 + 365 + x_bias, SCREEN_WIDTH * 0.5 - 64 + y_bias, 1, White, PitchLineName6);
+	memcpy(&data_pack[DRAWING_PACK * 5], (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 + 327 + x_bias, SCREEN_WIDTH * 0.5 - 119 + y_bias, SCREEN_LENGTH * 0.5 + 355 + x_bias, SCREEN_WIDTH * 0.5 - 129 + y_bias, 1, White, PitchLineName7);
+	memcpy(&data_pack[DRAWING_PACK * 6], (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+	Send_UIPack(Drawing_Graphic7_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK * 7); // 发送七个图形
+}
+void Pitch_Line_Init_2(void)
+{
+	static uint8_t PitchLineName1[] = "PL8";
+	static uint8_t PitchLineName2[] = "PL9";
+	graphic_data_struct_t *P_graphic_data;
+
+	uint16_t x_bias = 0;
+	uint16_t y_bias = 0;
+
+	// Pitch角度刻度线
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 + 308 + x_bias, SCREEN_WIDTH * 0.5 - 178 + y_bias, SCREEN_LENGTH * 0.5 + 321 + x_bias, SCREEN_WIDTH * 0.5 - 185 + y_bias, 1, White, PitchLineName1);
+	memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 + 267 + x_bias, SCREEN_WIDTH * 0.5 - 224 + y_bias, SCREEN_LENGTH * 0.5 + 290 + x_bias, SCREEN_WIDTH * 0.5 - 243 + y_bias, 1, White, PitchLineName2);
+	memcpy(&data_pack[DRAWING_PACK], (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+	Send_UIPack(Drawing_Graphic2_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK * 2); // 发送两个图形
+}
+void Pitch_Line_Init_3(void)
+{
+	static uint8_t PitchLineName1[] = "PLA";
+	static uint8_t PitchLineName2[] = "PLB";
+	static uint8_t PitchLineName3[] = "PLC";
+	static uint8_t PitchLineName4[] = "PLD";
+	static uint8_t PitchLineName5[] = "PLE";
+
+	static uint8_t ZERO[] = "0";
+	static uint8_t MINUS20[] = "-20";
+	static uint8_t MINUS40[] = "-40";
+	static uint8_t PLUS20[] = "+20";
+	static uint8_t PLUS40[] = "+40";
+
+	Char_Draw(1, Op_Add, 1286, 545, 13, sizeof(ZERO), 1, White, PitchLineName1, ZERO);
+
+	Char_Draw(1, Op_Add, 1260, 662, 13, sizeof(PLUS20), 1, White, PitchLineName2, PLUS20);
+
+	Char_Draw(1, Op_Add, 1197, 763, 13, sizeof(PLUS40), 1, White, PitchLineName3, PLUS40);
+
+	Char_Draw(1, Op_Add, 1260, 424, 13, sizeof(MINUS20), 1, White, PitchLineName4, MINUS20);
+
+	Char_Draw(1, Op_Add, 1197, 325, 13, sizeof(MINUS40), 1, White, PitchLineName5, MINUS40);
 }
 
 /**********************************************************************************************************
- *函 数 名: CarPosture_Change
- *功能说明: 车体姿态绘制
- *形    参: theta: 云台底盘夹角(rad)，Init_Cnt: 初始化标志
+ *函 数 名: GIMLine_Init
+ *功能说明: 云台线初始化
+ *形    参: 无
  *返 回 值: 无
  **********************************************************************************************************/
-uint16_t RectCenterX = SCREEN_LENGTH * 0.5; // 修改为屏幕正中心
-uint16_t RectCenterY = SCREEN_WIDTH * 0.5;	// 修改为屏幕正中心
-uint16_t startX, startY, endX, endY;
-float angle;
-float angle1;
-
-/**
- * @brief 绘制车体位置
- *
- * @param theta 云台底盘夹角（rad）
- * @param Init_Cnt 初始化标志
- */
-void CarPosture_Change(float theta, uint8_t Init_Cnt)
+void GIMLine_Init(void)
 {
-	static uint8_t CarPostureName[] = "cpt";
+	static uint8_t GIMLineName1[] = "GL1";
+	static uint8_t GIMLineName2[] = "GL2";
+	static uint8_t GIMLineName3[] = "GL3";
+	static uint8_t GIMLineName4[] = "GL4";
+	graphic_data_struct_t *P_graphic_data;
+
+	uint16_t x_bias = 0;
+	uint16_t y_bias = 0;
+
+	uint8_t N[] = "N";
+	uint8_t M[] = "M";
+	uint8_t F[] = "F";
+
+	P_graphic_data = Arc_Draw(1, Op_Add, 960, 540, 170, 190, 300, 260, 10, White, GIMLineName1);
+	memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
+	Send_UIPack(Drawing_Graphic1_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK);
+
+	Char_Draw(1, Op_Add, 886, 270, 20, sizeof(N), 2, White, GIMLineName2, N);
+
+	Char_Draw(1, Op_Add, 952, 261, 20, sizeof(M), 2, White, GIMLineName3, M);
+
+	Char_Draw(1, Op_Add, 1021, 270, 20, sizeof(F), 2, White, GIMLineName4, F);
+}
+/**********************************************************************************************************
+ *函 数 名: SCapLine_Init
+ *功能说明: 超级电容初始化
+ *形    参: 无
+ *返 回 值: 无
+ **********************************************************************************************************/
+void SCapLine_Init(void)
+{
+	static uint8_t PitchLineName1[] = "PLF";
+	static uint8_t PitchLineName2[] = "PLG";
+	static uint8_t PitchLineName3[] = "PLH";
+	static uint8_t PitchLineName4[] = "PLI";
+	graphic_data_struct_t *P_graphic_data;
+
+	static uint8_t E[] = "E";
+	static uint8_t F[] = "F";
+
+	uint16_t x_bias = 0;
+	uint16_t y_bias = 0;
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 - 347 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 - 377 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, 1, White, PitchLineName1);
+	memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 - 266 + x_bias, SCREEN_WIDTH * 0.5 + 224 + y_bias, SCREEN_LENGTH * 0.5 - 289 + x_bias, SCREEN_WIDTH * 0.5 + 243 + y_bias, 1, White, PitchLineName2);
+	memcpy(&data_pack[DRAWING_PACK], (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+	Send_UIPack(Drawing_Graphic2_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK * 2); // 发送两个图形
+
+	Char_Draw(1, Op_Add, 629, 551, 20, sizeof(E), 2, White, PitchLineName3, E);
+
+	Char_Draw(1, Op_Add, 701, 758, 20, sizeof(F), 2, White, PitchLineName4, F);
+}
+
+/**********************************************************************************************************
+ *函 数 名: SCapLine_Change
+ *功能说明: 超级电容容量
+ *形    参: 无
+ *返 回 值: 无
+ **********************************************************************************************************/
+void SCapLine_Change(void)
+{
+	static uint8_t PitchLineName1[] = "PLJ";
+	graphic_data_struct_t *P_graphic_data;
+
+	uint16_t x_bias = 0;
+	uint16_t y_bias = 0;
+
+	P_graphic_data = Arc_Draw(0, Op_Add, 960, 540, 180, 225, 357, 357, 30, Green, PitchLineName1);
+	memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+	// 发送图形数据
+	Send_UIPack(Drawing_Graphic1_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK);
+}
+/**********************************************************************************************************
+ *函 数 名: ChassisLine_Change
+ *功能说明: 底盘方向
+ *形    参: 无
+ *返 回 值: 无
+ **********************************************************************************************************/
+uint16_t xxx = 632;
+uint16_t yyy = 184;
+void ChassisLine_Change(float theta, uint8_t Init_Cnt)
+{
+	static uint8_t ChassisLineName[] = "CLC";
 	static uint8_t optype;
 	uint16_t start_angle;
 	uint16_t end_angle;
 
-	uint16_t angle = 15;
+	graphic_data_struct_t *P_graphic_data;
 
-	// 将弧度转换为角度
-	float angle_deg = theta * 180.0f / 3.14159f;
+	theta = (int16_t)theta % 360;
+	theta = theta - Reference_Angle__;
 
 	// 计算圆弧的起始和终止角度
 	// 随着夹角变化，圆弧整体旋转
 
-	start_angle = (uint16_t)(345 + angle_deg) % 360;
-	end_angle = (uint16_t)(15 + angle_deg) % 360;
+	start_angle = (uint16_t)(345 + theta) % 360;
+	end_angle = (uint16_t)(15 + theta) % 360;
 
 	// 圆弧半径
-	uint32_t radius = 100;
+	uint32_t radius = 83;
 
 	// 确定操作类型
 	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
 
-	// uint8_t indicatorColor = (JudgeReceiveData.Minipc_Status > 0) ? Green : Orange;
-	uint8_t indicatorColor = Cyan;
-	// 绘制圆弧
-	graphic_data_struct_t *P_graphic_data;
-	P_graphic_data = Arc_Draw(1, optype, RectCenterX, RectCenterY, start_angle, end_angle, radius, radius, 10, indicatorColor, CarPostureName);
+	uint16_t x_bias = 0;
+	uint16_t y_bias = 0;
+
+	uint8_t indicatorColor;
+	switch (JudgeReceiveData.Chassis_Control_Type)
+	{
+	case 0: // Chassis_Control_Type_DISABLE
+		P_graphic_data = Arc_Draw(0, optype, SCREEN_LENGTH * 0.5 + 632 + x_bias, SCREEN_WIDTH * 0.5 + 184 + y_bias, 0, 360, radius, radius, 15, Black, ChassisLineName);
+		break;
+	case 1: // Chassis_Control_Type_FOLLOW
+		P_graphic_data = Arc_Draw(0, optype, SCREEN_LENGTH * 0.5 + 632 + x_bias, SCREEN_WIDTH * 0.5 + 184 + y_bias, start_angle, end_angle, radius, radius, 15, Green, ChassisLineName);
+		break;
+	case 2: // Chassis_Control_Type_SPIN
+		P_graphic_data = Arc_Draw(0, optype, SCREEN_LENGTH * 0.5 + 632 + x_bias, SCREEN_WIDTH * 0.5 + 184 + y_bias, 0, 360, radius, radius, 15, Orange, ChassisLineName);
+		break;
+	case 3: // Chassis_Control_Type_DRIVE
+		P_graphic_data = Arc_Draw(0, optype, SCREEN_LENGTH * 0.5 + 632 + x_bias, SCREEN_WIDTH * 0.5 + 184 + y_bias, 0, 360, radius, radius, 15, Cyan, ChassisLineName);
+		break;
+	default:
+		P_graphic_data = Arc_Draw(0, optype, SCREEN_LENGTH * 0.5 + 632 + x_bias, SCREEN_WIDTH * 0.5 + 184 + y_bias, 0, 360, radius, radius, 15, Black, ChassisLineName);
+		break;
+	}
+
 	memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
 
 	// 发送图形数据
 	Send_UIPack(Drawing_Graphic1_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK);
 }
 
-void FrictSpeed_Draw(uint16_t omega_left, uint16_t omega_right, uint8_t Init_Cnt)
+/**********************************************************************************************************
+ *函 数 名: BoostLine_Change
+ *功能说明: 摩擦轮状态
+ *形    参: 无
+ *返 回 值: 无
+ **********************************************************************************************************/
+void BoostLine_Change(void)
 {
-	static uint8_t FricSpeedValueName_left[] = "fsl";  // 数值的独立名称
-	static uint8_t FricSpeedValueName_right[] = "fsr"; // 数值的独立名称
-	static uint16_t last_omega_left = 0;			   // 添加静态变量记录上次的值
-	static uint16_t last_omega_right = 0;
-	uint8_t optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
-
-	// 处理低转速情况，当转速低于阈值时认为已停止
-	if (omega_left < 200)
-		omega_left = 0;
-	if (omega_right < 200)
-		omega_right = 0;
-
-	// 恢复条件更新逻辑，确保数值变化时才更新显示
-	if (abs((int)last_omega_left - (int)omega_left) > 10 ||
-		abs((int)last_omega_right - (int)omega_right) > 10 ||
-		(last_omega_left > 0 && omega_left == 0) ||
-		(last_omega_left == 0 && omega_left > 0) ||
-		(last_omega_right > 0 && omega_right == 0) ||
-		(last_omega_right == 0 && omega_right > 0) ||
-		Init_Cnt > 0)
-	{
-		// 将整数转换为字符串
-		uint8_t speed_str_left[8];
-		snprintf((char *)speed_str_left, sizeof(speed_str_left), "%d", omega_left);
-		uint8_t speed_str_right[8];
-		snprintf((char *)speed_str_right, sizeof(speed_str_right), "%d", omega_right);
-
-		// 动态更新数值
-		if (omega_left < 600)
-		{
-			Char_Draw(0, optype,
-					  0.9 * SCREEN_LENGTH, 0.35 * SCREEN_WIDTH, // 数值位置 (X, Y)
-					  20, strlen((char *)speed_str_left), 2,
-					  Green, FricSpeedValueName_left, speed_str_left);
-		}
-		else
-		{
-			Char_Draw(0, optype,
-					  0.9 * SCREEN_LENGTH, 0.35 * SCREEN_WIDTH, // 数值位置 (X, Y)
-					  20, strlen((char *)speed_str_left), 2,
-					  Orange, FricSpeedValueName_left, speed_str_left);
-		}
-
-		// if (omega_right < 600)
-		// {
-		// 	Char_Draw(0, optype, 0.933 * SCREEN_LENGTH, 0.35 * SCREEN_WIDTH, 20, strlen((char *)speed_str_right), 2, Green, FricSpeedValueName_right, speed_str_right);
-		// }
-		// else
-		// {
-		// 	Char_Draw(0, optype, 0.933 * SCREEN_LENGTH, 0.35 * SCREEN_WIDTH, 20, strlen((char *)speed_str_right), 2, Orange, FricSpeedValueName_right, speed_str_right);
-		// }
-
-		// 更新记录的值
-		last_omega_left = omega_left;
-		last_omega_right = omega_right;
-	}
-}
-void BulletNum_Draw(uint16_t bullet_num, uint8_t Init_Cnt)
-{
-	static uint8_t BulletNumName[] = "bun"; // 数值的独立名称
-	static uint16_t last_bullet_num = 0;
-	uint8_t optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
-
-	// 恢复条件更新逻辑，确保数值变化时才更新显示
-	if (bullet_num != last_bullet_num || Init_Cnt > 0)
-	{
-		// 将整数转换为字符串
-		uint8_t num_str[8];
-		snprintf((char *)num_str, sizeof(num_str), "%d", bullet_num);
-
-		Char_Draw(0, optype,
-				  0.9 * SCREEN_LENGTH, 0.60 * SCREEN_WIDTH, // 数值位置 (X, Y)
-				  20, strlen((char *)num_str), 2,
-				  Green, BulletNumName, num_str);
-	}
-
-	// 更新记录的值
-	last_bullet_num = bullet_num;
-}
-/*�������ݵ�������*/
-void CapDraw(float CapVolt, uint8_t Init_Flag)
-{
-	static float Length;
-	static uint8_t CapName1[] = "Out";
-	static uint8_t CapName2[] = "In";
-
+	static uint8_t BoostLineName1[] = "BL2";
+	static uint8_t BoostLineName2[] = "BL3";
+	static uint8_t BoostLineName3[] = "BL4";
+	static uint8_t optype;
 	graphic_data_struct_t *P_graphic_data;
-	if (Init_Flag)
+
+	uint16_t x_bias = 0;
+	uint16_t y_bias = 0;
+
+	// 确定操作类型
+	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
+
+	switch (JudgeReceiveData.Fric_Status)
 	{
-		P_graphic_data = Rectangle_Draw(0, Op_Add, 0.3495 * SCREEN_LENGTH, 0.1125 * SCREEN_WIDTH, 0.651 * SCREEN_LENGTH, 0.1385 * SCREEN_WIDTH, 5, Cyan, CapName1);
+	case 0: // Booster_Control_Type_DISABLE
+		P_graphic_data = Line_Draw(0, optype, 1593, 726, 1593, 659, 6, Green, BoostLineName1);
 		memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
 
-		P_graphic_data = Line_Draw(0, Op_Add, 0.35 * SCREEN_LENGTH, 0.125 * SCREEN_WIDTH, 0.65 * SCREEN_LENGTH, 0.125 * SCREEN_WIDTH, 27, Green, CapName2);
+		P_graphic_data = Line_Draw(0, optype, 1592, 724, 1534, 759, 6, Green, BoostLineName2);
 		memcpy(&data_pack[DRAWING_PACK], (uint8_t *)P_graphic_data, DRAWING_PACK);
 
-		Send_UIPack(Drawing_Graphic2_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK * 2);
-	}
-	else
-	{
-		Length = CapVolt * (0.3 * SCREEN_LENGTH);
-		P_graphic_data = Line_Draw(0, Op_Change, 0.35 * SCREEN_LENGTH, 0.125 * SCREEN_WIDTH, 0.35 * SCREEN_LENGTH + Length, 0.125 * SCREEN_WIDTH, 27, Green, CapName2);
+		P_graphic_data = Line_Draw(0, optype, 1593, 724, 1651, 759, 6, Green, BoostLineName3);
+		memcpy(&data_pack[DRAWING_PACK * 2], (uint8_t *)P_graphic_data, DRAWING_PACK);
+		// 发送图形数据
+		Send_UIPack(Drawing_Graphic5_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK * 3);
+		break;
+	case 1: // Booster_Control_Type_ENABLE
+		P_graphic_data = Line_Draw(0, optype, 1593, 726, 1593, 659, 6, Orange, BoostLineName1);
 		memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
-		Send_UIPack(Drawing_Graphic1_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK);
-	}
-}
 
-/*字符变化发送*/
-void ChassisChange(uint8_t Init_Flag)
-{
+		P_graphic_data = Line_Draw(0, optype, 1592, 724, 1534, 759, 6, Orange, BoostLineName2);
+		memcpy(&data_pack[DRAWING_PACK], (uint8_t *)P_graphic_data, DRAWING_PACK);
 
-	uint8_t SPIN[] = "SPIN";
-	uint8_t FOLLOW[] = "FOLLOW";
-	uint8_t Chassis_Off[] = "OFF";
-
-	static uint8_t optype;
-	/*底盘状态改变*/
-	static uint8_t ChassisChangeName[] = "cha";
-	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
-	switch (JudgeReceiveData.Chassis_Control_Type)
-	{
-	case 0:
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.40 * SCREEN_WIDTH, 20, sizeof(Chassis_Off), 2, Pink, ChassisChangeName, Chassis_Off);
+		P_graphic_data = Line_Draw(0, optype, 1593, 724, 1651, 759, 6, Orange, BoostLineName3);
+		memcpy(&data_pack[DRAWING_PACK * 2], (uint8_t *)P_graphic_data, DRAWING_PACK);
+		// 发送图形数据
+		Send_UIPack(Drawing_Graphic5_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK * 3);
 		break;
-	case 1:
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.40 * SCREEN_WIDTH, 20, sizeof(FOLLOW), 2, Green, ChassisChangeName, FOLLOW);
-		break;
-	case 2:
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.40 * SCREEN_WIDTH, 20, sizeof(SPIN), 2, Orange, ChassisChangeName, SPIN);
+	default:
+		P_graphic_data = Line_Draw(0, optype, 1593, 726, 1593, 659, 6, Black, BoostLineName1);
+		memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+		P_graphic_data = Line_Draw(0, optype, 1592, 724, 1534, 759, 6, Black, BoostLineName2);
+		memcpy(&data_pack[DRAWING_PACK], (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+		P_graphic_data = Line_Draw(0, optype, 1593, 724, 1651, 759, 6, Black, BoostLineName3);
+		memcpy(&data_pack[DRAWING_PACK * 2], (uint8_t *)P_graphic_data, DRAWING_PACK);
+		// 发送图形数据
+		Send_UIPack(Drawing_Graphic5_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK * 3);
 		break;
 	}
 }
 
 /**********************************************************************************************************
- *�� �� ��: Char_Init
- *����˵��: �ַ����ݳ�ʼ��
- *��    ��: ��
- *�� �� ֵ: ��
+ *函 数 名: GIMLine_Change
+ *功能说明: 云台线初始化
+ *形    参: 无
+ *返 回 值: 无
  **********************************************************************************************************/
-void Char_Init(void)
+void GIMLine_Change(uint8_t Init_Cnt)
 {
-	static uint8_t PitchName[] = "pit";
-	static uint8_t GimbalName[] = "gim";
-	static uint8_t FrictionName[] = "fri";
-	static uint8_t AutoName[] = "aim";
-	static uint8_t CapStaticName[] = "cpt";
-	static uint8_t FireName[] = "frm";
-	static uint8_t FricSpeedName[] = "fsp";
-	static uint8_t GimbalStatusLabelName[] = "gsl"; // 云台状态标签名称
-	static uint8_t BoosterModeLabelName[] = "bml";	// 发射机构模式标签名称
-	static uint8_t MiniPCModeLabelName[] = "mpl";	// MiniPC模式标签名称
-	static uint8_t BulletNumName[] = "bnu";			// 弹丸已发射数量
-	static uint8_t AntispinType[] = "ant";
-	/*              FIREMODE字符*/
-	uint8_t fire_char[] = "CHASSIS :";
-	Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.40 * SCREEN_WIDTH, 20, sizeof(fire_char), 2, Yellow, FireName, fire_char);
-
-	// /*              CAP字符*/
-	// uint8_t cap_char[] = "CAP :      %";
-	// Char_Draw(0, Op_Add, 0.40 * SCREEN_LENGTH, 0.1 * SCREEN_WIDTH, 30, sizeof(cap_char), 2, Yellow, CapStaticName, cap_char);
-
-	uint8_t fric_speed_label[] = "OMEGA :";
-	Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.35 * SCREEN_WIDTH, 20, sizeof(fric_speed_label), 2, Yellow, FricSpeedName, fric_speed_label);
-
-	// uint8_t bullet_num_label[] = "BULLET :";
-	// Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.60 * SCREEN_WIDTH, 20, sizeof(bullet_num_label), 2, Yellow, BulletNumName, bullet_num_label);
-
-	// uint8_t antispintype_label[] = "Antispin :";
-	// Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.65 * SCREEN_WIDTH, 20, sizeof(antispintype_label), 2, Yellow, BulletNumName, antispintype_label);
-	/*              MINIPC MODE字符*/
-	uint8_t minipc_mode_label[] = "MINIPC :";
-	Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.55 * SCREEN_WIDTH, 20, sizeof(minipc_mode_label), 2, Yellow, MiniPCModeLabelName, minipc_mode_label);
-
-	// /*              BOOSTER MODE字符*/
-	// uint8_t booster_mode_label[] = "BOOSTER:";
-	// Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.50 * SCREEN_WIDTH, 20, sizeof(booster_mode_label), 2, Yellow, BoosterModeLabelName, booster_mode_label);
-
-	// /*              GIMBAL状态标签            */
-	// uint8_t gimbal_status_label[] = "GIMBAL :";
-	// Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.45 * SCREEN_WIDTH, 20, sizeof(gimbal_status_label), 2, Yellow, GimbalStatusLabelName, gimbal_status_label);
-}
-
-void MiniPC_Aim_Change(uint8_t Init_Cnt)
-{
-	/*自瞄获取状态*/
-	static uint8_t Auto_Aim_ChangeName[] = "Aim";
+	static uint8_t GIMLineName1[] = "GL5";
 	static uint8_t optype;
 	graphic_data_struct_t *P_graphic_data;
 
+	uint16_t x_bias = 0;
+	uint16_t y_bias = 0;
+
 	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
 
-	switch (JudgeReceiveData.Minipc_Status)
+	switch (JudgeReceiveData.Gimbal_Control_Type)
 	{
-	case 1:
-		P_graphic_data = Rectangle_Draw(0, optype, 0.3495 * SCREEN_LENGTH, 0.25 * SCREEN_WIDTH, 0.651 * SCREEN_LENGTH, 0.75 * SCREEN_WIDTH, 5, Green, Auto_Aim_ChangeName);
-		memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
+	case 1: // Gimbal_Control_Type_NORMAL
+		P_graphic_data = Arc_Draw(0, optype, 960, 540, 170, 176, 300, 260, 10, Green, GIMLineName1);
 		break;
-	case 0:
-		P_graphic_data = Rectangle_Draw(0, optype, 0.3495 * SCREEN_LENGTH, 0.25 * SCREEN_WIDTH, 0.651 * SCREEN_LENGTH, 0.75 * SCREEN_WIDTH, 5, Pink, Auto_Aim_ChangeName);
-		memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
+	case 2: // Gimbal_Control_Type_MINIPC
+		P_graphic_data = Arc_Draw(0, optype, 960, 540, 176, 184, 300, 260, 10, Green, GIMLineName1);
+		break;
+	case 3: // Gimbal_Control_Type_FOLD
+		P_graphic_data = Arc_Draw(0, optype, 960, 540, 184, 190, 300, 260, 10, Green, GIMLineName1);
+		break;
+	default:
+		P_graphic_data = Arc_Draw(0, optype, 960, 540, 170, 190, 300, 260, 10, Black, GIMLineName1);
 		break;
 	}
+
+	memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
 	Send_UIPack(Drawing_Graphic1_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK);
 }
 
 /**********************************************************************************************************
- *函 数 名: PitchUI_Change
- *功能说明: Pitch角度显示（圆弧方式）
- *形    参: Pitch角度，初始化标志
+ *函 数 名: GIMLine_Change
+ *功能说明: 云台线初始化
+ *形    参: 无
  *返 回 值: 无
  **********************************************************************************************************/
 void PitchUI_Change(float Pitch, uint8_t Init_Cnt)
 {
-	static uint8_t PitchBackgroundName[] = "PBG"; // Pitch背景圆弧名称
-	static uint8_t PitchIndicatorName[] = "PIN";  // Pitch指示器圆弧名称
+	// static uint8_t PitchBackgroundName[] = "PBG"; // Pitch背景圆弧名称
+	static uint8_t PitchIndicatorName[] = "PIN"; // Pitch指示器圆弧名称
 	static uint8_t optype;
+	graphic_data_struct_t *P_graphic_data;
 
-	// 圆弧位置和大小参数
-	uint16_t centerX = 0.6 * SCREEN_LENGTH;
-	uint16_t centerY = 0.5 * SCREEN_WIDTH;
-	uint16_t radiusX = 200; // X轴半径
-	uint16_t radiusY = 300; // Y轴半径（大于X轴半径，形成竖直方向的椭圆）
-
-	float pitchMin = -23.0f;
+	float pitchMin = -40.0f;
 	float pitchMax = 40.0f;
 
-	uint16_t bgStartAngle = 30;
-	uint16_t bgEndAngle = 150;
+	uint16_t bgStartAngle = 40;
+	uint16_t bgEndAngle = 140;
 
 	// 计算当前Pitch对应的角度位置
 	float pitchRatio = (Pitch - pitchMin) / (pitchMax - pitchMin);		 // 归一化到0-1范围
@@ -652,227 +903,103 @@ void PitchUI_Change(float Pitch, uint8_t Init_Cnt)
 
 	// 计算指示器圆弧的角度范围（短弧，宽度为10度）
 	uint16_t indicatorAngle = bgStartAngle + (uint16_t)(pitchRatio * (bgEndAngle - bgStartAngle));
-	uint16_t indicatorStartAngle = indicatorAngle - 5;
-	uint16_t indicatorEndAngle = indicatorAngle + 5;
+	uint16_t indicatorStartAngle = indicatorAngle - 1;
+	uint16_t indicatorEndAngle = indicatorAngle + 1;
 
 	// 确定操作类型
 	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
 
-	graphic_data_struct_t *P_graphic_data;
-
-	// if (optype == Op_Add)
-	// {
-	// 	// 绘制背景圆弧（细线）
-	// 	P_graphic_data = Arc_Draw(1, optype, centerX, centerY, bgStartAngle, bgEndAngle, radiusX, radiusY, 4, Yellow, PitchBackgroundName);
-	// 	memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
-	// 	Send_UIPack(Drawing_Graphic1_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK);
-	// }
-
-	// 绘制指示器圆弧（粗线）
-	uint8_t indicatorColor = (Pitch > 0) ? Green : Orange;
-	P_graphic_data = Arc_Draw(1, optype, centerX, centerY, indicatorStartAngle, indicatorEndAngle, radiusX, radiusY, 12, indicatorColor, PitchIndicatorName);
+	P_graphic_data = Arc_Draw(0, optype, 960, 540, indicatorStartAngle, indicatorEndAngle, 375, 375, 36, Red_Blue, PitchIndicatorName);
 	memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
 	Send_UIPack(Drawing_Graphic1_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK);
 }
 
-// 原来的PitchUI_Change函数注释掉
-/*
-void PitchUI_Change(float Pitch, uint8_t Init_Cnt)
+/**********************************************************************************************************
+ *函 数 名: Scap_Change
+ *功能说明: 超电容量百分比
+ *形    参: 无
+ *返 回 值: 无
+ **********************************************************************************************************/
+uint16_t ababa = 0;
+void Scap_Change(float Scap_Percentage, uint8_t Init_Cnt)
 {
-	static uint8_t PitchName[] = "Pit";
+	static uint8_t ScapLineName[] = "SCP";
 	static uint8_t optype;
-
-	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
-
 	graphic_data_struct_t *P_graphic_data;
 
-	if (Pitch > 0)
-	{
-		P_graphic_data = FloatData_Draw(0, optype, 0.90 * SCREEN_LENGTH, 0.6 * SCREEN_WIDTH, Pitch, 20, 4, 2, Green, PitchName);
-		memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
-	}
-	else
-	{
-		P_graphic_data = FloatData_Draw(0, optype, 0.90 * SCREEN_LENGTH, 0.6 * SCREEN_WIDTH, Pitch, 20, 4, 2, Orange, PitchName);
-		memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
-	}
+	uint16_t x_bias = 0;
+	uint16_t y_bias = 0;
 
+	// 圆弧半径
+	uint32_t radius = 300;
+
+	// 计算圆弧的起始和终止角度
+	uint16_t startAngle = 270;
+	uint16_t endAngle = (uint16_t)(startAngle + (Scap_Percentage / 100.0f) * 40); // 根据百分比计算结束角度
+	ababa = endAngle;
+
+	// 确定操作类型
+	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
+
+	P_graphic_data = Arc_Draw(0, optype, SCREEN_LENGTH * 0.5 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, startAngle, endAngle, 360, 360, 10, Green, ScapLineName);
+	memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+	// 发送图形数据
 	Send_UIPack(Drawing_Graphic1_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK);
 }
-*/
 
 /**********************************************************************************************************
- *函 数 名: CapUI_Change
- *功能说明: ���ݵ�������
- *形    参: ��
- *返 回 值: ��
+ *函 数 名: PitchValue_Change
+ *功能说明: 显示Pitch角度数值（使用浮点图形）
+ *形    参: pitch       当前俯仰角（度）
+ *          Init_Cnt    初始化标志（0：正常更新，非0：强制以添加模式绘制）
+ *返 回 值: 无
  **********************************************************************************************************/
-void CapUI_Change(float CapVolt, uint8_t Init_Cnt)
+void PitchValue_Change(float pitch, uint8_t Init_Cnt)
 {
-	static uint8_t CapName[] = "cpv";
+	static uint8_t PitchValueName[] = "PVA";
 	static uint8_t optype;
-
-	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
-
 	graphic_data_struct_t *P_graphic_data;
-	P_graphic_data = FloatData_Draw(0, optype, 0.42 * SCREEN_LENGTH + 100, 0.1 * SCREEN_WIDTH, CapVolt * 100, 30, 4, 2, Orange, CapName);
+
+	if (pitch > 90.0f)
+		pitch = 90.0f;
+	if (pitch < -90.0f)
+		pitch = -90.0f;
+
+	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
+
+	// 字体大小20，颜色青色(Cyan)
+	P_graphic_data = FloatData_Draw(0, optype, 1593, 550, pitch, 20, 1, 1, Cyan, PitchValueName);
 	memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
-	Send_UIPack(Drawing_Graphic1_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK); // ���ַ�
+	Send_UIPack(Drawing_Graphic1_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK);
 }
 
 /**********************************************************************************************************
- *函 数 名: RadarDoubleDamage_Draw
- *功能说明: 显示雷达双倍易伤状态
- *形    参: 初始化标志
+ *函 数 名: YawValue_Change
+ *功能说明: 显示Yaw角度数值（使用浮点图形）
+ *形    参: yaw         当前偏航角（度）
+ *          Init_Cnt    初始化标志（0：正常更新，非0：强制以添加模式绘制）
  *返 回 值: 无
  **********************************************************************************************************/
-void RadarDoubleDamage_Draw(uint8_t Init_Cnt)
+void YawValue_Change(float yaw, uint8_t Init_Cnt)
 {
-	static uint8_t RadarDamageChangeName[] = "rdd";
+	static uint8_t YawValueName[] = "YVA";
 	static uint8_t optype;
-	static uint8_t READY2[] = "READY2";
-	static uint8_t READY1[] = "READY1";
-	static uint8_t EMPTY[] = "     ";
+	graphic_data_struct_t *P_graphic_data;
+
+	if (yaw > 180.0f)
+		yaw = 180.0f;
+	if (yaw < -180.0f)
+		yaw = -180.0f;
 
 	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
 
-	switch (JudgeReceiveData.Radar_Double_Damage_Flag)
-	{
-	case 1:
-		Char_Draw(0, optype, 0.5 * SCREEN_LENGTH, 0.7 * SCREEN_WIDTH, 30, sizeof(READY1), 3, Green, RadarDamageChangeName, READY1);
-		break;
-	case 2:
-		Char_Draw(0, optype, 0.5 * SCREEN_LENGTH, 0.7 * SCREEN_WIDTH, 30, sizeof(READY2), 3, Green, RadarDamageChangeName, READY2);
-		break;
-	default:
-		break;
-	}
+	// 字体大小20，颜色青色(Cyan)
+	P_graphic_data = FloatData_Draw(0, optype, 1593, 600, yaw, 20, 1, 1, Pink, YawValueName);
+	memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
+	Send_UIPack(Drawing_Graphic1_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK);
 }
 
-/**********************************************************************************************************
- *函 数 名: GimbalStatus_Draw
- *功能说明: 显示云台状态
- *形    参: 初始化标志
- *返 回 值: 无
- **********************************************************************************************************/
-void GimbalStatus_Draw(uint8_t Init_Cnt)
-{
-	static uint8_t GimbalStatusName[] = "gst";
-	static uint8_t optype;
-	static uint8_t DISABLE[] = "DISABLE";
-	static uint8_t NORMAL[] = "NORMAL ";
-	static uint8_t MINIPC[] = "MINIPC ";
-
-	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
-
-	switch (JudgeReceiveData.Gimbal_Control_Type)
-	{
-	case 0: // Gimbal_Control_Type_DISABLE
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.45 * SCREEN_WIDTH, 20, sizeof(DISABLE), 2, Pink, GimbalStatusName, DISABLE);
-		break;
-	case 1: // Gimbal_Control_Type_NORMAL
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.45 * SCREEN_WIDTH, 20, sizeof(NORMAL), 2, Green, GimbalStatusName, NORMAL);
-		break;
-	case 2: // Gimbal_Control_Type_MINIPC
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.45 * SCREEN_WIDTH, 20, sizeof(MINIPC), 2, Orange, GimbalStatusName, MINIPC);
-		break;
-	default:
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.45 * SCREEN_WIDTH, 20, sizeof(DISABLE), 2, Pink, GimbalStatusName, DISABLE);
-		break;
-	}
-}
-
-/**********************************************************************************************************
- *函 数 名: BoosterMode_Draw
- *功能说明: 显示发射机构用户控制类型
- *形    参: 初始化标志
- *返 回 值: 无
- **********************************************************************************************************/
-void BoosterMode_Draw(uint8_t Init_Cnt)
-{
-	static uint8_t BoosterModeStatusName[] = "bms";
-	static uint8_t optype;
-	static uint8_t SINGLE[] = "SINGLE";
-	static uint8_t MULTI[] = "MULTI ";
-
-	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
-
-	switch (JudgeReceiveData.Booster_User_Control_Type)
-	{
-	case 0: // Booster_User_Control_Type_SINGLE
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.50 * SCREEN_WIDTH, 20, sizeof(SINGLE), 2, Green, BoosterModeStatusName, SINGLE);
-		break;
-	case 1: // Booster_User_Control_Type_MULTI
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.50 * SCREEN_WIDTH, 20, sizeof(MULTI), 2, Orange, BoosterModeStatusName, MULTI);
-		break;
-	default:
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.50 * SCREEN_WIDTH, 20, sizeof(SINGLE), 2, Green, BoosterModeStatusName, SINGLE);
-		break;
-	}
-}
-
-/**********************************************************************************************************
- *函 数 名: MiniPCMode_Draw
- *功能说明: 显示MiniPC模式UI显示
- *形    参: 初始化标志
- *返 回 值: 无
- **********************************************************************************************************/
-void MiniPCMode_Draw(uint8_t Init_Cnt)
-{
-	static uint8_t MiniPCModeStatusName[] = "mpm";
-	static uint8_t optype;
-	static uint8_t ARMOR[] = "ARMOR  ";
-	static uint8_t WINDMILL[] = "WINDMILL";
-	static uint8_t DISABLE[] = "DISABLE";
-	static uint8_t RADAR[] = "RADAR  ";
-	static uint8_t AIMER[] = "AIMER  ";
-
-	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
-
-	switch (JudgeReceiveData.Minipc_Mode)
-	{
-	case 0: // MiniPC_Mode_DISABLE
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.55 * SCREEN_WIDTH, 20, sizeof(DISABLE), 2, Orange, MiniPCModeStatusName, DISABLE);
-		break;
-	case 1: // MiniPC_Mode_AIMER
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.55 * SCREEN_WIDTH, 20, sizeof(AIMER), 2, Green, MiniPCModeStatusName, AIMER);
-		break;
-	case 2: // MiniPC_Mode_RADAR
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.55 * SCREEN_WIDTH, 20, sizeof(RADAR), 2, Green, MiniPCModeStatusName, RADAR);
-		break;
-	default:
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.55 * SCREEN_WIDTH, 20, sizeof(DISABLE), 2, Orange, MiniPCModeStatusName, DISABLE);
-		break;
-	}
-}
-/**********************************************************************************************************
- *函 数 名: Antispin_Draw
- *功能说明: 显示是否开启反小陀螺UI显示
- *形    参: 初始化标志
- *返 回 值: 无
- **********************************************************************************************************/
-void Antispin_Draw(uint8_t Init_Cnt)
-{
-	static uint8_t AntispinTypeName[] = "atn";
-	static uint8_t optype;
-	static uint8_t On[] = "ON  ";
-	static uint8_t Off[] = "OFF";
-
-	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
-
-	switch (JudgeReceiveData.Minipc_Mode)
-	{
-	case 0: // MiniPC_Mode_ARMOR
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.65 * SCREEN_WIDTH, 20, sizeof(Off), 2, Green, AntispinTypeName, Off);
-		break;
-	case 1: // MiniPC_Mode_WINDMILL
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.65 * SCREEN_WIDTH, 20, sizeof(On), 2, Orange, AntispinTypeName, On);
-		break;
-	default:
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.65 * SCREEN_WIDTH, 20, sizeof(On), 2, Green, AntispinTypeName, On);
-		break;
-	}
-}
 /**********************************************************************************************************
  *函 数 名: GraphicSendtask
  *功能说明: ͼ�η�������
@@ -886,6 +1013,8 @@ static uint32_t ui_update_counter = 0;
 // 添加状态变化标志
 static uint8_t status_changed = 0;
 
+uint32_t last_update_time_value = 0; // 上次数值更新时间
+
 // 添加UI更新状态枚举
 typedef enum
 {
@@ -894,40 +1023,60 @@ typedef enum
 	UI_STATE_VALUE_UPDATE	// 数值更新状态
 } UI_Update_State_t;
 
+uint16_t ssm = 0;
+UI_Update_State_t ui_state = UI_STATE_IDLE; // UI更新状态
 void GraphicSendtask(void)
 {
-	static UI_Update_State_t ui_state = UI_STATE_IDLE; // UI更新状态
-	static uint8_t status_update_retry = 0;			   // 状态更新重试次数
-	static uint8_t last_status_type = 0;			   // 上次变化的状态类型
-	static uint32_t last_update_time = 0;			   // 上次更新时间
-	static uint32_t current_time = 0;				   // 当前时间
+	// static UI_Update_State_t ui_state = UI_STATE_IDLE; // UI更新状态
+	static uint8_t status_update_retry = 0; // 状态更新重试次数
+	static uint8_t last_status_type = 0;	// 上次变化的状态类型
+	static uint32_t last_update_time = 0;	// 上次更新时间
+	static uint32_t current_time = 0;		// 当前时间
 
-	// 获取当前时间（假设有HAL_GetTick函数）
-	current_time = HAL_GetTick();
+	// 获取当前时间
+	current_time = DWT_GetTimeline_ms();
 
+	if (huart10.hdmatx->State == HAL_DMA_STATE_READY)
+	{
+		referee_dma_busy = 0;
+		Referee_DMA_Dequeue();
+		Referee_DMA_StartNext();
+	}
 	// 初始化阶段发送所有UI元素
 	if (Init_Cnt > 0)
 	{
-		ChassisChange(Init_Cnt);
-		PitchUI_Change(JudgeReceiveData.Pitch_Angle, Init_Cnt);
-		CarPosture_Change(JudgeReceiveData.Chassis_Gimbal_Diff, Init_Cnt); // 直接传入弧度值
-		CapDraw(JudgeReceiveData.Supercap_Voltage, Init_Cnt);
-		MiniPC_Aim_Change(Init_Cnt);
-		FrictSpeed_Draw(JudgeReceiveData.booster_fric_omega_left, JudgeReceiveData.booster_fric_omega_right, Init_Cnt);
-		CapUI_Change(JudgeReceiveData.Supercap_Voltage, Init_Cnt);
-		MiniPCMode_Draw(Init_Cnt);
-		// BulletNum_Draw(JudgeReceiveData.Booster_bullet_num, Init_Cnt);
-		// Antispin_Draw(Init_Cnt);
-		// BoosterMode_Draw(Init_Cnt);
-		// GimbalStatus_Draw(Init_Cnt);
-		// RadarDoubleDamage_Draw(Init_Cnt);
-		
-
 		Init_Cnt--;
+		if (Init_Cnt == 254)
+		{
+			referee_dma_busy = 0;
+			referee_dma_count = 0;
+		}
 
-		Char_Init();	   // 字符
-		ShootLines_Init(); // 枪口线
-		Lanelines_Init();  // 车道线
+		if (Init_Cnt % 2 == 0)
+		{
+			Pitch_Line_Init_1(); // Pitch线
+			Pitch_Line_Init_2();
+			Pitch_Line_Init_3();
+			SCapLine_Init();  // 超电容线
+			Lanelines_Init(); // 车道线
+			GIMLine_Init();	  // 云台线
+		}
+		else
+		{
+			ShootLines_Init_1(); // 枪口线
+			ShootLines_Init_2();
+			ShootLines_Init_3();
+			ShootLines_Init_4();
+		}
+
+		ChassisLine_Change(0, Init_Cnt); // 底盘方向线
+		BoostLine_Change();
+		PitchUI_Change(0, Init_Cnt);
+		GIMLine_Change(Init_Cnt);
+		Scap_Change(100, Init_Cnt);
+
+		PitchValue_Change(JudgeReceiveData.Pitch_Angle, 1);
+		YawValue_Change(JudgeReceiveData.Yaw_Angle, 1);
 
 		// 初始化完成后，保存当前数据作为比较基准
 		memcpy(&Last_JudgeReceiveData, &JudgeReceiveData, sizeof(JudgeReceive_t));
@@ -940,9 +1089,10 @@ void GraphicSendtask(void)
 	{
 	case UI_STATE_IDLE:
 		// 检查是否有状态变化
-		if (Last_JudgeReceiveData.Chassis_Control_Type != JudgeReceiveData.Chassis_Control_Type)
+		if (Last_JudgeReceiveData.Fric_Status != JudgeReceiveData.Fric_Status)
 		{
-			// 底盘控制类型变化
+			ssm++;
+			// 摩擦轮状态变化
 			ui_state = UI_STATE_STATUS_UPDATE;
 			last_status_type = 1;
 			status_update_retry = 0;
@@ -950,9 +1100,9 @@ void GraphicSendtask(void)
 			break;
 		}
 
-		if (Last_JudgeReceiveData.Minipc_Status != JudgeReceiveData.Minipc_Status)
+		if (Last_JudgeReceiveData.Gimbal_Control_Type != JudgeReceiveData.Gimbal_Control_Type)
 		{
-			// MiniPC状态变化
+			// 云台用户控制类型变化
 			ui_state = UI_STATE_STATUS_UPDATE;
 			last_status_type = 2;
 			status_update_retry = 0;
@@ -960,9 +1110,9 @@ void GraphicSendtask(void)
 			break;
 		}
 
-		if (Last_JudgeReceiveData.Booster_User_Control_Type != JudgeReceiveData.Booster_User_Control_Type)
+		if (Last_JudgeReceiveData.Chassis_Control_Type != JudgeReceiveData.Chassis_Control_Type)
 		{
-			// 发射机构用户控制类型变化
+			// 底盘控制类型变化
 			ui_state = UI_STATE_STATUS_UPDATE;
 			last_status_type = 3;
 			status_update_retry = 0;
@@ -970,53 +1120,6 @@ void GraphicSendtask(void)
 			break;
 		}
 
-		if (Last_JudgeReceiveData.Gimbal_Control_Type != JudgeReceiveData.Gimbal_Control_Type)
-		{
-			// 云台控制类型变化
-			ui_state = UI_STATE_STATUS_UPDATE;
-			last_status_type = 4;
-			status_update_retry = 0;
-			last_update_time = current_time;
-			break;
-		}
-
-		if (Last_JudgeReceiveData.Radar_Double_Damage_Flag != JudgeReceiveData.Radar_Double_Damage_Flag)
-		{
-			// 雷达双倍易伤状态变化
-			ui_state = UI_STATE_STATUS_UPDATE;
-			last_status_type = 5;
-			status_update_retry = 0;
-			last_update_time = current_time;
-			break;
-		}
-
-		if (Last_JudgeReceiveData.Minipc_Mode != JudgeReceiveData.Minipc_Mode)
-		{
-
-			ui_state = UI_STATE_STATUS_UPDATE;
-			last_status_type = 6;
-			status_update_retry = 0;
-			last_update_time = current_time;
-			break;
-		}
-		if (Last_JudgeReceiveData.Antispin_Type != JudgeReceiveData.Antispin_Type)
-		{
-
-			ui_state = UI_STATE_STATUS_UPDATE;
-			last_status_type = 7;
-			status_update_retry = 0;
-			last_update_time = current_time;
-			break;
-		}
-		if (Last_JudgeReceiveData.Booster_bullet_num != JudgeReceiveData.Booster_bullet_num)
-		{
-
-			ui_state = UI_STATE_STATUS_UPDATE;
-			last_status_type = 8;
-			status_update_retry = 0;
-			last_update_time = current_time;
-			break;
-		}
 		// 如果没有状态变化，且距离上次数值更新已经过去足够时间，则进入数值更新状态
 		if (current_time - last_update_time > 10) // 10ms更新一次数值
 		{
@@ -1024,42 +1127,21 @@ void GraphicSendtask(void)
 			last_update_time = current_time;
 		}
 		break;
-
 	case UI_STATE_STATUS_UPDATE:
 		// 根据状态类型发送对应的状态更新
 		switch (last_status_type)
 		{
-		case 1: // 底盘控制类型
-			ChassisChange(0);
-			Last_JudgeReceiveData.Chassis_Control_Type = JudgeReceiveData.Chassis_Control_Type;
+		case 1: // 摩擦轮状态
+			BoostLine_Change();
+			Last_JudgeReceiveData.Fric_Status = JudgeReceiveData.Fric_Status;
 			break;
-		case 2: // MiniPC状态
-			MiniPC_Aim_Change(0);
-			Last_JudgeReceiveData.Minipc_Status = JudgeReceiveData.Minipc_Status;
-			break;
-		case 3: // 发射机构用户控制类型
-			BoosterMode_Draw(0);
-			Last_JudgeReceiveData.Booster_User_Control_Type = JudgeReceiveData.Booster_User_Control_Type;
-			break;
-		case 4: // 云台控制类型
-			GimbalStatus_Draw(0);
+		case 2: // 云台控制类型
+			GIMLine_Change(0);
 			Last_JudgeReceiveData.Gimbal_Control_Type = JudgeReceiveData.Gimbal_Control_Type;
 			break;
-		case 5: // 雷达双倍易伤状态
-			RadarDoubleDamage_Draw(0);
-			Last_JudgeReceiveData.Radar_Double_Damage_Flag = JudgeReceiveData.Radar_Double_Damage_Flag;
-			break;
-		case 6: // MiniPC模式
-			MiniPCMode_Draw(0);
-			Last_JudgeReceiveData.Minipc_Mode = JudgeReceiveData.Minipc_Mode;
-			break;
-		case 7:
-			Antispin_Draw(0);
-			Last_JudgeReceiveData.Antispin_Type = JudgeReceiveData.Antispin_Type;
-			break;
-		case 8:
-			BulletNum_Draw(JudgeReceiveData.Booster_bullet_num, 0);
-			Last_JudgeReceiveData.Booster_bullet_num = JudgeReceiveData.Booster_bullet_num;
+		case 3: // 底盘控制类型
+			Lanelines_Init();
+			Last_JudgeReceiveData.Chassis_Control_Type = JudgeReceiveData.Chassis_Control_Type;
 			break;
 		}
 
@@ -1067,7 +1149,7 @@ void GraphicSendtask(void)
 		status_update_retry++;
 
 		// 如果重试次数达到上限或者已经成功发送，则回到空闲状态
-		if (status_update_retry >= 5)
+		if (status_update_retry >= 10)
 		{
 			ui_state = UI_STATE_IDLE;
 			last_update_time = current_time;
@@ -1080,44 +1162,34 @@ void GraphicSendtask(void)
 		break;
 
 	case UI_STATE_VALUE_UPDATE:
-		// 只更新一个数值，避免占用太多通信资源
-		static uint8_t value_update_index = 0;
-
-		switch (value_update_index)
+		// 更新所有数值，提高发送频率
+		// 更新Pitch角度
+		if (fabs(Last_JudgeReceiveData.Pitch_Angle - JudgeReceiveData.Pitch_Angle) > 0.01f)
 		{
-		case 0: // 更新Pitch角度
-			if (fabs(Last_JudgeReceiveData.Pitch_Angle - JudgeReceiveData.Pitch_Angle) > 0.01f)
-			{
-				PitchUI_Change(JudgeReceiveData.Pitch_Angle, 0);
-				Last_JudgeReceiveData.Pitch_Angle = JudgeReceiveData.Pitch_Angle;
-			}
-			break;
-
-		case 1: // 更新超级电容电压
-			if (fabs(Last_JudgeReceiveData.Supercap_Voltage - JudgeReceiveData.Supercap_Voltage) >= 0.01f)
-			{
-				CapDraw(JudgeReceiveData.Supercap_Voltage, 0);
-				CapUI_Change(JudgeReceiveData.Supercap_Voltage, 0);
-				Last_JudgeReceiveData.Supercap_Voltage = JudgeReceiveData.Supercap_Voltage;
-			}
-			break;
-
-		case 2: // 更新摩擦轮转速
-			FrictSpeed_Draw(JudgeReceiveData.booster_fric_omega_left, JudgeReceiveData.booster_fric_omega_right, 0);
-			break;
-
-		case 3: // 更新云台底盘夹角与自瞄状态
-			if (fabs(Last_JudgeReceiveData.Chassis_Gimbal_Diff - JudgeReceiveData.Chassis_Gimbal_Diff) >= PI / 180.0)
-			{
-				CarPosture_Change(JudgeReceiveData.Chassis_Gimbal_Diff, 0); // 直接传入弧度值
-				Last_JudgeReceiveData.Chassis_Gimbal_Diff = JudgeReceiveData.Chassis_Gimbal_Diff;
-				Last_JudgeReceiveData.Minipc_Status = JudgeReceiveData.Minipc_Status;
-			}
-			break;
+			// PitchUI_Change(JudgeReceiveData.Pitch_Angle, 0);
+			// Last_JudgeReceiveData.Pitch_Angle = JudgeReceiveData.Pitch_Angle;
 		}
 
-		// 更新索引，循环遍历所有数值
-		value_update_index = (value_update_index + 1) % 4;
+		// 更新超级电容电压
+		if (fabs(Last_JudgeReceiveData.Supercap_Voltage - JudgeReceiveData.Supercap_Voltage) >= 2.0f)
+		{
+			Scap_Change(JudgeReceiveData.Supercap_Voltage, 0);
+			Last_JudgeReceiveData.Supercap_Voltage = JudgeReceiveData.Supercap_Voltage;
+		}
+
+		if (fabs(Last_JudgeReceiveData.Pitch_Angle - JudgeReceiveData.Pitch_Angle) > 0.01f)
+		{
+			PitchValue_Change(JudgeReceiveData.Pitch_Angle, 0);
+			Last_JudgeReceiveData.Pitch_Angle = JudgeReceiveData.Pitch_Angle;
+		}
+		if (fabs(Last_JudgeReceiveData.Yaw_Angle - JudgeReceiveData.Yaw_Angle) > 0.01f)
+		{
+			YawValue_Change(JudgeReceiveData.Yaw_Angle, 0);
+			Last_JudgeReceiveData.Yaw_Angle = JudgeReceiveData.Yaw_Angle;
+		}
+
+		// 底盘角度及控制类型
+		ChassisLine_Change(JudgeReceiveData.Chassis_Gimbal_Diff, 0);
 
 		// 回到空闲状态
 		ui_state = UI_STATE_IDLE;

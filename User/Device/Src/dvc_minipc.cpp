@@ -57,9 +57,8 @@ void Class_MiniPC::Init(FDCAN_HandleTypeDef *hcan)
     CAN_Manage_Object = &CAN2_Manage_Object;
     CAN_Tx_Data_B = CAN2_MiniPc_Tx_Data;
   }
-  else if(hcan->Instance == FDCAN3)
+  else if (hcan->Instance == FDCAN3)
   {
-
   }
 }
 
@@ -73,15 +72,41 @@ void Class_MiniPC::Data_Process()
 #ifdef MINIPC_COMM_USB
   memcpy(&Pack_Rx, (Pack_rx_t *)USB_Manage_Object->Rx_Buffer, USB_Manage_Object->Rx_Buffer_Length);
   static float tmp_yaw, tmp_pitch;
-  static float tmp_x,tmp_y,tmp_z;
-  Convert_Radar_to_GunCoordinate(Pack_Rx.lidar_lob_x, Pack_Rx.lidar_lob_y, Pack_Rx.lidar_lob_z, &tmp_x, &tmp_y, &tmp_z);
-  Distance = calc_distance(tmp_x, tmp_y, tmp_z);
-  if(Lidar_if_Lob == 2)
+  static float tmp_x, tmp_y, tmp_z;
+  if (Lidar_if_Lob == 2)
   {
-    Rx_Angle_Yaw = calc_yaw(tmp_x, tmp_y, 0.0f);
-    Rx_Angle_Pitch = Calc_Pitch_Compensated(tmp_x, tmp_y, tmp_z, tmp_x, tmp_y, tmp_z);
+    // 检测包序号是否变化（新计算完成）
+    bool is_new_packet = (Pack_Rx.lob_time != last_lob_time);
+    if (is_new_packet)
+    {
+      last_lob_time = Pack_Rx.lob_time;
+
+      // 只在首次进入雷达模式或用户主动重置锁定时才更新目标
+      if (!radar_locked)
+      {
+        Convert_Radar_to_GunCoordinate(Pack_Rx.lidar_lob_x, Pack_Rx.lidar_lob_y, Pack_Rx.lidar_lob_z,
+                                       &tmp_x, &tmp_y, &tmp_z);
+        Distance = calc_distance(tmp_x, tmp_y, tmp_z);
+        locked_yaw = calc_yaw(tmp_x, tmp_y, 0.0f);
+        locked_pitch = Calc_Pitch_Compensated(tmp_x, tmp_y, tmp_z, tmp_x, tmp_y, tmp_z);
+        radar_locked = true;
+      }
+    }
+    // 始终使用锁定的角度
+    Rx_Angle_Yaw = locked_yaw;
+    Rx_Angle_Pitch = -locked_pitch;
   }
-  if(Lidar_if_Lob == 1)
+  else
+  {
+		// 非雷达模式时，清除锁定，以便下次重新进入
+		if (radar_locked) 
+			{
+        radar_locked = false;
+        Rx_Angle_Yaw   = IMU->Get_Angle_Yaw();
+        Rx_Angle_Pitch = -IMU->Get_Angle_Pitch();
+			}
+  }
+  if (Lidar_if_Lob == 1)
   {
     Mode = Pack_Rx.mode;
     Rx_Angle_Pitch = -Pack_Rx.target_pitch;
@@ -90,10 +115,9 @@ void Class_MiniPC::Data_Process()
     Rx_Angle_Yaw = Pack_Rx.target_yaw;
     Rx_Gyro_Yaw = Pack_Rx.target_yaw_vel;
     Rx_Acc_Yaw = Pack_Rx.target_yaw_acc;
-    
   }
   Math_Constrain(&Rx_Angle_Pitch, -20.0f, 40.0f);
-  Math_Constrain(&Rx_Angle_Yaw,-180.0f,180.0f);
+  Math_Constrain(&Rx_Angle_Yaw, -180.0f, 180.0f);
   memset(USB_Manage_Object->Rx_Buffer, 0, USB_Manage_Object->Rx_Buffer_Length);
 #endif
 
@@ -105,10 +129,10 @@ void Class_MiniPC::Data_Process()
   float target_y = Pack_Rx.target_y / 1000.0f;
 
   Fire = Pack_Rx.Fire;
-  
-  //Self_aim(target_x, target_y, target_z + camera_distance, &tmp_yaw, &tmp_pitch, &Distance);
-  Rx_Angle_Pitch = target_y;//tmp_pitch;
-  Rx_Angle_Yaw = target_x;//tmp_yaw;
+
+  // Self_aim(target_x, target_y, target_z + camera_distance, &tmp_yaw, &tmp_pitch, &Distance);
+  Rx_Angle_Pitch = target_y; // tmp_pitch;
+  Rx_Angle_Yaw = target_x;   // tmp_yaw;
   alive = Pack_Rx.alive;
   Math_Constrain(&Rx_Angle_Pitch, -20.0f, 35.0f);
 
@@ -129,16 +153,18 @@ void Class_MiniPC::Output()
 
   Pack_Tx.header = Frame_Header;
   // 根据referee判断红蓝方
-  if (Referee->Get_ID() >= 101)   Pack_Tx.detect_color = 101;
-  else  Pack_Tx.detect_color = 0;
+  if (Referee->Get_ID() >= 101)
+    Pack_Tx.detect_color = 101;
+  else
+    Pack_Tx.detect_color = 0;
   Pack_Tx.target_id = 0x08;
   // Pack_Tx.pitch = Tx_Angle_Pitch; // 2024.5.7 未知原因添加负号，使得下位机发送数据不满足右手螺旋定则，但是上位机意外可以跑通
   // Pack_Tx.roll = Tx_Angle_Roll;
   // Pack_Tx.yaw = Tx_Angle_Yaw;
-  Pack_Tx.x = static_cast<int16_t>(Tx_Quaternion.x * 10000.0f);   // 原 qy → 新 qx
-  Pack_Tx.y = static_cast<int16_t>(Tx_Quaternion.y * 10000.0f);   // 原 qx → 新 qy
-  Pack_Tx.z = static_cast<int16_t>(Tx_Quaternion.z * 10000.0f);   // 原 qw → 新 qz (注意符号)
-  Pack_Tx.w = static_cast<int16_t>(Tx_Quaternion.w * 10000.0f);   // 原 qz → 新 qw
+  Pack_Tx.x = static_cast<int16_t>(Tx_Quaternion.x * 10000.0f); // 原 qy → 新 qx
+  Pack_Tx.y = static_cast<int16_t>(Tx_Quaternion.y * 10000.0f); // 原 qx → 新 qy
+  Pack_Tx.z = static_cast<int16_t>(Tx_Quaternion.z * 10000.0f); // 原 qw → 新 qz (注意符号)
+  Pack_Tx.w = static_cast<int16_t>(Tx_Quaternion.w * 10000.0f); // 原 qz → 新 qw
   Pack_Tx.yaw_vel = Tx_Gyro_Yaw;
   Pack_Tx.pitch_vel = Tx_Gyro_Pitch;
   Pack_Tx.bullet_speed = Tx_Bullet_Speed;
@@ -156,10 +182,10 @@ void Class_MiniPC::Output()
   Pack_Tx_CAN_B.game_stage = (Enum_MiniPC_Game_Stage)Referee->Get_Game_Stage();
   Pack_Tx_CAN_B.target_type = Get_MiniPC_Type();
 
-  Pack_Tx_CAN_A.Roll = Tx_Angle_Roll*100.0f;
-  Pack_Tx_CAN_A.Yaw = Tx_Angle_Yaw*100.0f;
-  Pack_Tx_CAN_A.Pitch = 1.0f * Tx_Angle_Pitch*100.0f;
-  //Pack_Tx_CAN_A.Gyro_Yaw = Tx_Angle_Gyro_Yaw * 100.0f;
+  Pack_Tx_CAN_A.Roll = Tx_Angle_Roll * 100.0f;
+  Pack_Tx_CAN_A.Yaw = Tx_Angle_Yaw * 100.0f;
+  Pack_Tx_CAN_A.Pitch = 1.0f * Tx_Angle_Pitch * 100.0f;
+  // Pack_Tx_CAN_A.Gyro_Yaw = Tx_Angle_Gyro_Yaw * 100.0f;
   memcpy(CAN_Tx_Data_A, &Pack_Tx_CAN_A, sizeof(Pack_tx_can_t_A));
   memcpy(CAN_Tx_Data_B, &Pack_Tx_CAN_B, sizeof(Pack_tx_can_t_B));
 
@@ -316,9 +342,9 @@ float Class_MiniPC::calc_distance(float x, float y, float z)
  * @return 计算得到的俯仰角（以角度制表示）
  */
 float dist;
-float Class_MiniPC::calc_pitch(float x, float y, float z,uint8_t mode)
+float Class_MiniPC::calc_pitch(float x, float y, float z, uint8_t mode)
 {
-  #ifdef OLD
+#ifdef OLD
   // 根据 x、y 分量计算的平面投影的模长和 z 分量计算的反正切值，得到弧度制的俯仰角
   float pitch = atan2f(z, sqrtf(x * x + y * y));
   // 使用重力加速度模型迭代更新俯仰角
@@ -346,18 +372,14 @@ float Class_MiniPC::calc_pitch(float x, float y, float z,uint8_t mode)
     }
     // 根据 dz 和向量的欧几里德距离计算新的俯仰角的变化量，进行迭代更新
     pitch += asinf(dz / calc_distance(x, y, z));
-	
-	
-	
   }
   dist = sqrtf(x * x + y * y);
 
   // 将弧度制的俯仰角转换为角度制
   pitch = (pitch * 180 / PI); // 向上为负，向下为正
 
-
   return pitch;
-  #endif
+#endif
   float tmp_g = 0.0f;
   switch (mode)
   {
@@ -373,31 +395,30 @@ float Class_MiniPC::calc_pitch(float x, float y, float z,uint8_t mode)
   break;
   }
   const float a_d = 0.0595f; // 改为pitch旋转中心到摩擦轮的距离
-    float d = calc_distance(x, y, z);
-    if (d < a_d)
-    {
-        // return 当前pitch，因为无解1
-		// return dmIMU->Get_DMIMU_Pitch();
-      return IMU->Get_Angle_Pitch();
-		
-    }
+  float d = calc_distance(x, y, z);
+  if (d < a_d)
+  {
+    // return 当前pitch，因为无解1
+    // return dmIMU->Get_DMIMU_Pitch();
+    return IMU->Get_Angle_Pitch();
+  }
 
-    float v0 =
-        Referee->Get_Referee_Status() == Referee_Status_ENABLE &&
-                Referee->Get_Shoot_Speed()
-            ? Referee->Get_Shoot_Speed()
-            : bullet_v;
-    
-    // 初始估值一定偏小一点点
-    float t = (d - a_d) / v0;
-    const float t1 = 2.0f * a_d * v0, t2 = v0 * v0 - z * g;
-    
-    // 牛顿迭代法，可省略，最好两次
-    t -= (d * d - a_d * a_d + t * (-t1 + t * (-t2 + 0.25f * g * g * t * t))) / (-t1 + t * (-2.0f * t2 + g * g * t * t));
-    t -= (d * d - a_d * a_d + t * (-t1 + t * (-t2 + 0.25f * g * g * t * t))) / (-t1 + t * (-2.0f * t2 + g * g * t * t));
-    
-    // pitch向下为正，加负号
-    return 180.0f * atanf((z + 0.5 * g * t * t) / sqrtf(x * x + y * y)) / PI;
+  float v0 =
+      Referee->Get_Referee_Status() == Referee_Status_ENABLE &&
+              Referee->Get_Shoot_Speed()
+          ? Referee->Get_Shoot_Speed()
+          : bullet_v;
+
+  // 初始估值一定偏小一点点
+  float t = (d - a_d) / v0;
+  const float t1 = 2.0f * a_d * v0, t2 = v0 * v0 - z * g;
+
+  // 牛顿迭代法，可省略，最好两次
+  t -= (d * d - a_d * a_d + t * (-t1 + t * (-t2 + 0.25f * g * g * t * t))) / (-t1 + t * (-2.0f * t2 + g * g * t * t));
+  t -= (d * d - a_d * a_d + t * (-t1 + t * (-t2 + 0.25f * g * g * t * t))) / (-t1 + t * (-2.0f * t2 + g * g * t * t));
+
+  // pitch向下为正，加负号
+  return 180.0f * atanf((z + 0.5 * g * t * t) / sqrtf(x * x + y * y)) / PI;
 }
 /**
  * 计算计算yaw，pitch
@@ -412,27 +433,30 @@ void Class_MiniPC::Self_aim(float x, float y, float z, float *yaw, float *pitch,
 {
 
   *yaw = calc_yaw(x, y, z);
-  *pitch = calc_pitch(x, y, z,0);
+  *pitch = calc_pitch(x, y, z, 0);
   *distance = calc_distance(x, y, z);
 }
 
 void Class_MiniPC::Auto_aim_Add_Roll(float x, float y, float z, float *yaw, float *pitch, float *distance)
 {
   float Now_Angle_Roll = Tx_Angle_Roll;
-  if (fabs(Now_Angle_Roll) > 0.001f) {
-        // 将点从视觉坐标系转换到云台坐标系
-        float x_rotated = x;
-        float y_rotated = y * cosf(Now_Angle_Roll) + z * sinf(Now_Angle_Roll);//符合右手定则 x轴指向
-        float z_rotated = - y * sinf(Now_Angle_Roll) + z * cosf(Now_Angle_Roll);
-        *yaw = calc_yaw(x_rotated, y_rotated, z_rotated);
-        *pitch = calc_pitch(x_rotated, y_rotated, z_rotated,1);
-        *distance = calc_distance(x_rotated, y_rotated, z_rotated);
-    } else {
-        // 没有roll角度，使用原始坐标
-        *yaw = calc_yaw(x, y, z);
-        *pitch = calc_pitch(x, y, z,0);
-        *distance = calc_distance(x, y, z);
-    }
+  if (fabs(Now_Angle_Roll) > 0.001f)
+  {
+    // 将点从视觉坐标系转换到云台坐标系
+    float x_rotated = x;
+    float y_rotated = y * cosf(Now_Angle_Roll) + z * sinf(Now_Angle_Roll); // 符合右手定则 x轴指向
+    float z_rotated = -y * sinf(Now_Angle_Roll) + z * cosf(Now_Angle_Roll);
+    *yaw = calc_yaw(x_rotated, y_rotated, z_rotated);
+    *pitch = calc_pitch(x_rotated, y_rotated, z_rotated, 1);
+    *distance = calc_distance(x_rotated, y_rotated, z_rotated);
+  }
+  else
+  {
+    // 没有roll角度，使用原始坐标
+    *yaw = calc_yaw(x, y, z);
+    *pitch = calc_pitch(x, y, z, 0);
+    *distance = calc_distance(x, y, z);
+  }
 }
 float Class_MiniPC::meanFilter(float input)
 {
@@ -458,25 +482,37 @@ float Class_MiniPC::meanFilter(float input)
 
 /**
  * @brief 将雷达坐标系转换为枪口坐标系
- * 
- * @param radar_x 
- * @param radar_y 
- * @param radar_z 
- * @param gun_x 
- * @param gun_y 
- * @param gun_z 
+ *
+ * @param radar_x
+ * @param radar_y
+ * @param radar_z
+ * @param gun_x
+ * @param gun_y
+ * @param gun_z
  */
-void Class_MiniPC::Convert_Radar_to_GunCoordinate(float radar_x, float radar_y, float radar_z, float *gun_x, float *gun_y, float *gun_z)
+void Class_MiniPC::Convert_Radar_to_GunCoordinate(float radar_x, float radar_y, float radar_z,
+                                                  float *gun_x, float *gun_y, float *gun_z)
 {
-    
-    // 雷达坐标系的原点在雷达中心，x轴指向前方，y轴指向左侧，z轴指向上方
-    // 枪口坐标系的原点在外极摩擦轮中心，
-    const float Length_a = 0.13759f; //外级摩擦轮中心到雷达投影点的水平距离
-    const float Length_b = 0.025f; // 雷达到雷达投影点的垂直距离
+  // 固定平移（雷达坐标系下）
+  const float t_x = 0.13759f;
+  const float t_y = -0.11821f; // 注意符号：需根据实际安装方向确定正负
+  const float t_z = 0.025f;
 
-    *gun_x = radar_x - Length_a * cosf(-Tx_Angle_Pitch) * cosf(Tx_Angle_Yaw);
-    *gun_y = radar_y - Length_a * cosf(-Tx_Angle_Pitch) * sinf(Tx_Angle_Yaw);
-    *gun_z = radar_z - Length_a * sinf(-Tx_Angle_Pitch) - Length_b;
+  // 当前云台 pitch（角度制 → 弧度）
+  float pitch_rad = -Tx_Angle_Pitch * PI / 180.0f; // Tx_Angle_Pitch 来自 IMU
+
+  // 平移
+  float px = radar_x - t_x;
+  float py = radar_y - t_y;
+  float pz = radar_z - t_z;
+
+  // 绕 Y 轴旋转（角度 = -pitch_rad）
+  float c = cosf(pitch_rad);
+  float s = sinf(pitch_rad);
+
+  *gun_x = px * c - pz * s;
+  *gun_y = py; // Y 坐标不变（绕 Y 轴旋转）
+  *gun_z = px * s + pz * c;
 }
 
 /**
@@ -487,7 +523,7 @@ void Class_MiniPC::Convert_Radar_to_GunCoordinate(float radar_x, float radar_y, 
  * @param drag_coefficient 阻力系数（默认值：0.47，对应光滑球体亚音速）
  * @return 空气阻力（单位：N）
  */
-float calculate_sphere_drag_force(float velocity,float diameter)
+float calculate_sphere_drag_force(float velocity, float diameter)
 {
   const float air_density = 1.225f;
   const float drag_coefficient = 0.47f;
@@ -506,60 +542,64 @@ float calculate_sphere_drag_force(float velocity,float diameter)
 
 /**
  * @brief 迭代重力-空气阻力补偿计算俯仰角
- * 
- * @param x 
- * @param y 
- * @param z 
- * @param init_x 
- * @param init_y 
- * @param init_z 
- * @return float 
+ *
+ * @param x
+ * @param y
+ * @param z
+ * @param init_x
+ * @param init_y
+ * @param init_z
+ * @return float
  */
-float Class_MiniPC::Calc_Pitch_Compensated(float x, float y, float z,float init_x,float init_y,float init_z) 
+float Class_MiniPC::Calc_Pitch_Compensated(float x, float y, float z, float init_x, float init_y, float init_z)
 {
-    const float diameter = 0.042f;
-    float k = calculate_sphere_drag_force(bullet_v,diameter);    // 空气阻力系数
-    float epsilon = 0.01f;          // 收敛阈值
+  const float diameter = 0.042f;
+  float k = calculate_sphere_drag_force(bullet_v, diameter); // 空气阻力系数
+  float epsilon = 0.01f;                                     // 收敛阈值
 
-    // 初始俯仰角计算（基于几何投影）
-    float pitch = atan2f(z, sqrtf(x * x + y * y));
+  // 初始俯仰角计算（基于几何投影）
+  float pitch = atan2f(z, sqrtf(x * x + y * y));
 
-    // 迭代补偿重力和空气阻力影响
-    for (int i = 0; i < 20; ++i) {
-        float target_rho = sqrtf(x * x + y * y); // 水平投影距离
-        float cos_pitch = cosf(pitch);
-        
-        // 处理无效的cos值
-        if (fabsf(cos_pitch) < 1e-6f) break;
+  // 迭代补偿重力和空气阻力影响
+  for (int i = 0; i < 20; ++i)
+  {
+    float target_rho = sqrtf(x * x + y * y); // 水平投影距离
+    float cos_pitch = cosf(pitch);
 
-        // 计算弹丸飞行时间（考虑水平方向阻力）
-        float t_numerator = target_rho * k;
-        float t_denominator = bullet_v * cos_pitch;
-        if (t_numerator >= t_denominator) break; // 弹道不可达
-        
-        float fly_time = (-logf(1 - t_numerator / t_denominator)) / k;
+    // 处理无效的cos值
+    if (fabsf(cos_pitch) < 1e-6f)
+      break;
 
-        // 计算z轴实际位移（含阻力模型）
-        float sin_pitch = sinf(pitch);
-        float exp_term = expf(-k * fly_time);
-        float real_z = 
-            (bullet_v * sin_pitch + g / k) * (1 - exp_term) / k - 
-            (g * fly_time) / k;
+    // 计算弹丸飞行时间（考虑水平方向阻力）
+    float t_numerator = target_rho * k;
+    float t_denominator = bullet_v * cos_pitch;
+    if (t_numerator >= t_denominator)
+      break; // 弹道不可达
 
-        // 计算高度误差并调整俯仰角
-        float dz = z - real_z;
-        if (fabsf(dz) < epsilon) break;
+    float fly_time = (-logf(1 - t_numerator / t_denominator)) / k;
 
-        // 安全计算角度修正量（限制在asin有效范围）
-        float distance = sqrtf(x*x + y*y + z*z);
-        float clamped_dz = fmaxf(fminf(dz, distance), -distance);
-        float delta_pitch = asinf(clamped_dz / distance);
-        
-        pitch += delta_pitch;
-    }
+    // 计算z轴实际位移（含阻力模型）
+    float sin_pitch = sinf(pitch);
+    float exp_term = expf(-k * fly_time);
+    float real_z =
+        (bullet_v * sin_pitch + g / k) * (1 - exp_term) / k -
+        (g * fly_time) / k;
 
-    // 转换为角度制并符合坐标系定义
-    return -(pitch * 180.0f / PI);
+    // 计算高度误差并调整俯仰角
+    float dz = z - real_z;
+    if (fabsf(dz) < epsilon)
+      break;
+
+    // 安全计算角度修正量（限制在asin有效范围）
+    float distance = sqrtf(x * x + y * y + z * z);
+    float clamped_dz = fmaxf(fminf(dz, distance), -distance);
+    float delta_pitch = asinf(clamped_dz / distance);
+
+    pitch += delta_pitch;
+  }
+
+  // 转换为角度制并符合坐标系定义
+  return -(pitch * 180.0f / PI);
 }
 
 /************************ copyright(c) ustc-robowalker **************************/
@@ -574,15 +614,14 @@ uint32_t last_cnt3 = 0;
 void Class_MiniPC::CAN_RxCpltCallback(uint8_t *rx_data)
 {
 #ifdef MINIPC_COMM_CAN
-    // 滑动窗口, 判断迷你主机是否在线
-    Flag += 1;
-    
-    // 直接将接收到的数据复制到结构体
-    memcpy(&Pack_Rx, rx_data, sizeof(Pack_Rx));
-    
-    Dt3 = DWT_GetDeltaT(&last_cnt3);
-    // 处理数据
-    Data_Process();
+  // 滑动窗口, 判断迷你主机是否在线
+  Flag += 1;
+
+  // 直接将接收到的数据复制到结构体
+  memcpy(&Pack_Rx, rx_data, sizeof(Pack_Rx));
+
+  Dt3 = DWT_GetDeltaT(&last_cnt3);
+  // 处理数据
+  Data_Process();
 #endif
 }
-

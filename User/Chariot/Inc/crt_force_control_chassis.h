@@ -26,6 +26,18 @@ enum Enum_Track_Control_Type__: uint8_t
     Track_On__,
 };
 
+/**
+ * @brief 位姿控制类型
+ * 
+ */
+enum Enum_Pose_Control_Type__ : uint8_t
+{
+    Pose_DISABLE__ = 0,
+    Pose_STANDBY__,
+    Pose_ENABLE__,
+    Pose_CONTRACT__,
+};
+
 struct Struct_Chassis_INS_Data
 {
     
@@ -53,7 +65,7 @@ public:
     Class_Motor_DJI_C620 Motor_Wheel[4];
 
     //履带驱动电机
-    Class_DJI_Motor_C620 Motor_Track[2];
+    Class_Motor_DJI_C620 Motor_Track[2];
     
     //功率管理
     Class_New_Power_Limit Power_Limit;
@@ -119,6 +131,8 @@ public:
 
     inline Enum_Track_Control_Type__ Get_Track_Control_Type();
 
+    inline Enum_Pose_Control_Type__ Get_Pose_Control_Type();
+
     inline float Get_Target_Velocity_X();
 
     inline float Get_Target_Velocity_Y();
@@ -130,6 +144,8 @@ public:
     inline void Set_Chassis_Control_Type(Enum_Chassis_Control_Type__ __Chassis_Control_Type);
 
     inline void Set_Track_Control_Type(Enum_Track_Control_Type__ __Track_Control_Type);
+
+    inline void Set_Pose_Control_Type(Enum_Pose_Control_Type__ __Pose_Control_Type);
 
     inline void Set_Target_Velocity_X(float __Target_Velocity_X);
 
@@ -209,7 +225,7 @@ protected:
     // 底盘控制方法
     Enum_Chassis_Control_Type__ Chassis_Control_Type = Chassis_Control_Type_DISABLE__;
     Enum_Track_Control_Type__ Track_Control_Type = Track_Off__;
-
+    Enum_Pose_Control_Type__ Pose_Control_Type = Pose_DISABLE__;
     // 目标速度X
     float Target_Velocity_X = 0.0f;
     // 目标速度Y
@@ -416,6 +432,16 @@ inline Enum_Track_Control_Type__ Class_Chassis::Get_Track_Control_Type()
 }
 
 /**
+ * @brief 获取位姿控制方法
+ * 
+ * @return Enum_Pose_Control_Type__ 位姿控制方法
+ */
+inline Enum_Pose_Control_Type__ Class_Chassis::Get_Pose_Control_Type()
+{
+    return (Pose_Control_Type);
+}
+
+/**
  * @brief 获取目标速度X
  *
  * @return float 目标速度X
@@ -473,6 +499,16 @@ inline void Class_Chassis::Set_Chassis_Control_Type(Enum_Chassis_Control_Type__ 
 inline void Class_Chassis::Set_Track_Control_Type(Enum_Track_Control_Type__ __Track_Control_Type)
 {
     Track_Control_Type = __Track_Control_Type;
+}
+
+/**
+ * @brief 设定位姿控制方法
+ * 
+ * @param __Pose_Control_Type 位姿控制方法
+ */
+inline void Class_Chassis::Set_Pose_Control_Type(Enum_Pose_Control_Type__ __Pose_Control_Type)
+{
+    Pose_Control_Type = __Pose_Control_Type;
 }
 
 /**
