@@ -97,3 +97,21 @@ void DWT_Delay(float Delay)
     {
     }
 }
+
+void DWT_Delay_ms(float Delay){
+    uint32_t tickstart = DWT->CYCCNT;
+    float wait = Delay;
+
+    while ((DWT->CYCCNT - tickstart) < wait * (float)CPU_FREQ_Hz_ms)
+    {
+    }
+}
+
+void DWT_Delay_us(float Delay){
+    uint32_t tickstart = DWT->CYCCNT;
+    float wait = Delay;
+
+    while ((DWT->CYCCNT - tickstart) < wait * (float)CPU_FREQ_Hz_us)
+    {
+    }
+}

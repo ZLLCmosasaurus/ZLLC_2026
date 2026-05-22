@@ -104,10 +104,17 @@ public:
     //拨弹盘电机
     Class_DJI_Motor_C610 Motor_Driver;
 
-    //摩擦轮电机左
-    Class_DJI_Motor_C620 Motor_Friction_Left;
-    //摩擦轮电机右
-    Class_DJI_Motor_C620 Motor_Friction_Right;
+    // //摩擦轮电机左
+    // Class_DJI_Motor_C620 Motor_Friction_Left;
+    // //摩擦轮电机右
+    // Class_DJI_Motor_C620 Motor_Friction_Right;
+
+    // 摩擦轮电机左
+    Class_DJI_Motor_C610 Motor_Friction_Left;
+    // 摩擦轮电机右
+    Class_DJI_Motor_C610 Motor_Friction_Right;
+    // 摩擦轮电机下
+    Class_DJI_Motor_C610 Motor_Friction_Down;
 
     void Init();
 
@@ -166,7 +173,7 @@ protected:
     Enum_Friction_Control_Type Friction_Control_Type = Friction_Control_Type_DISABLE;
     Enum_Booster_Type Booster_Type;
     //摩擦轮角速度
-    float Friction_Omega = 705.0f;
+    float Friction_Omega = 1050.0f;
     //拨弹盘实际的目标速度, 一圈八发子弹
     float Driver_Omega = -2.0f * PI * 2;
     //拨弹轮目标绝对角度 加圈数

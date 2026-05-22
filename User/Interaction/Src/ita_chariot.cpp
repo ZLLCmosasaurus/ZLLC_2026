@@ -346,7 +346,7 @@ void Class_Chariot::MiniPC_Data_Updata()
     //注意，因为上电时刻的小头imu不一定是与大yaw正对的，会影响到自瞄，这样执行角度的时候直接减去大Yaw的IMU就可以了
     MiniPC.Set_Gimbal_Now_Yaw_Angle(Gimbal.Boardc_BMI.Get_Angle_Yaw() + Gimbal.Motor_Yaw.Get_Zero_Offset_Angle());
     MiniPC.Set_Gimbal_Now_Roll_Angle(Gimbal.External_IMU.Get_Angle_Roll());
-    MiniPC.Set_Gimbal_Now_Pitch_Angle(Gimbal.External_IMU.Get_Angle_Pitch());
+    MiniPC.Set_Gimbal_Now_Pitch_Angle(-Gimbal.External_IMU.Get_Angle_Pitch());
     MiniPC.Set_Gimbal_Now_Relative_Angle(Gimbal.Motor_Main_Yaw.Get_Now_Angle() - Reference_Angle * 57.3f);
     MiniPC.Set_Gimbal_Now_Main_Yaw_Angle(Gimbal.Boardc_BMI.Get_Angle_Yaw());
 }
@@ -1148,6 +1148,7 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
             Gimbal.Motor_Main_Yaw.TIM_Alive_PeriodElapsedCallback();
 
             Booster.Motor_Driver.TIM_Alive_PeriodElapsedCallback();
+            Booster.Motor_Friction_Down.TIM_Alive_PeriodElapsedCallback();
             Booster.Motor_Friction_Left.TIM_Alive_PeriodElapsedCallback();
             Booster.Motor_Friction_Right.TIM_Alive_PeriodElapsedCallback();
 

@@ -103,7 +103,7 @@
         <bEvRecOn>1</bEvRecOn>
         <bSchkAxf>0</bSchkAxf>
         <bTchkAxf>0</bTchkAxf>
-        <nTsel>6</nTsel>
+        <nTsel>4</nTsel>
         <sDll></sDll>
         <sDllPa></sDllPa>
         <sDlgDll></sDlgDll>
@@ -120,7 +120,6 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>DLGUARM</Key>
-          <Name>潆M</Name>
         </SetRegEntry>
         <SetRegEntry>
           <Number>0</Number>
@@ -319,6 +318,11 @@
           <count>33</count>
           <WinNumber>1</WinNumber>
           <ItemText>Buffer</ItemText>
+        </Ww>
+        <Ww>
+          <count>34</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>CAN1_0xxf2_Tx_Data</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>

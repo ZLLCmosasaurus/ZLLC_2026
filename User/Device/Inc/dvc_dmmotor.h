@@ -39,14 +39,14 @@ enum Enum_DM_Motor_Status
 enum Enum_DM_Motor_ID : uint8_t
 {
     DM_Motor_ID_UNDEFINED = 0,
-    DM_Motor_ID_0xA1,
-    DM_Motor_ID_0xA2,
-    DM_Motor_ID_0xA3,
-    DM_Motor_ID_0xA4,
-    DM_Motor_ID_0xA5,
-    DM_Motor_ID_0xA6,
-    DM_Motor_ID_0xA7,
-    DM_Motor_ID_0xA8,
+    DM_Motor_ID_0x01,
+    DM_Motor_ID_0x02,
+    DM_Motor_ID_0x03,
+    DM_Motor_ID_0x04,
+    DM_Motor_ID_0x05,
+    DM_Motor_ID_0x06,
+    DM_Motor_ID_0x07,
+    DM_Motor_ID_0x08,
 };
 
 /**

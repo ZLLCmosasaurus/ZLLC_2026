@@ -249,8 +249,8 @@ public:
     Class_DJI_Motor_GM6020 Motor_Yaw;
 
     // pitch轴电机
-    // Class_DM_Motor_J4310 Motor_Pitch;
-    Class_DJI_Motor_GM6020 Motor_Pitch;
+    Class_DM_Motor_J4310 Motor_Pitch;
+    // Class_DJI_Motor_GM6020 Motor_Pitch;
     Class_LESO Motor_Pitch_LESO;
 
     Class_Filter_Kalman External_IMU_Gyro_Yaw;

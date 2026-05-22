@@ -227,9 +227,14 @@ void Gimbal_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
             chariot.Booster.Motor_Friction_Left.CAN_RxCpltCallback(CAN_RxMessage->Data);
             break;
         }
-        case(0x203):
+        case(0x202):
         {
             chariot.Booster.Motor_Friction_Right.CAN_RxCpltCallback(CAN_RxMessage->Data);
+            break;
+        }
+        case(0x203):
+        {
+            chariot.Booster.Motor_Friction_Down.CAN_RxCpltCallback(CAN_RxMessage->Data);
             break;
         }
         case(0x205):
@@ -238,13 +243,13 @@ void Gimbal_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
             chariot.Gimbal.Motor_Yaw.CAN_RxCpltCallback(CAN_RxMessage->Data);
             break;
         }
-        case(0x206):
-        {
-            Y_Dt = DWT_GetDeltaT(&Y_CNTT);
-            chariot.Gimbal.Motor_Pitch.CAN_RxCpltCallback(CAN_RxMessage->Data);
-            break;
-        }
-        case(0xA1):
+        // case(0x206):
+        // {
+        //     Y_Dt = DWT_GetDeltaT(&Y_CNTT);
+        //     chariot.Gimbal.Motor_Pitch.CAN_RxCpltCallback(CAN_RxMessage->Data);
+        //     break;
+        // }
+        case(0x02):
         {
             Dt = DWT_GetDeltaT(&CNTTT);
             chariot.Gimbal.Motor_Pitch.CAN_RxCpltCallback(CAN_RxMessage->Data);
@@ -547,7 +552,7 @@ void Task1ms_TIM4_Callback()
             chariot.Gimbal.External_IMU.TIM_Calculate_PeriodElapsedCallback();
         }
 
-        // chariot.Gimbal.Motor_Pitch.TIM_Process_PeriodElapsedCallback();                 //为了和普通发送分开，避免仲裁
+        chariot.Gimbal.Motor_Pitch.TIM_Process_PeriodElapsedCallback();                 //为了和普通发送分开，避免仲裁
 
         //生成正弦信号测试
         Single_Time ++;

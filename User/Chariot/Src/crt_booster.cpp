@@ -180,13 +180,17 @@ void Class_Booster::Init()
     Motor_Driver.PID_Omega.Init(1600.0f, 0.0f, 0.0f, 0.0f, Motor_Driver.Get_Output_Max(), Motor_Driver.Get_Output_Max());
     Motor_Driver.Init(&hfdcan2, DJI_Motor_ID_0x202, DJI_Motor_Control_Method_OMEGA, 36.0f * 2.5f);
 
-    //摩擦轮电机左
-    Motor_Friction_Left.PID_Omega.Init(80.0f, 0.0f, 0.f, 0.0f, 2000.0f, Motor_Friction_Left.Get_Output_Max());
+    // 摩擦轮电机左
+    Motor_Friction_Left.PID_Omega.Init(80.0f, 0.0f, 0.0f, 0.0f, 3000.0f, Motor_Friction_Left.Get_Output_Max());
     Motor_Friction_Left.Init(&hfdcan1, DJI_Motor_ID_0x201, DJI_Motor_Control_Method_OMEGA, 1.0f);
-    
-    //摩擦轮电机右
-    Motor_Friction_Right.PID_Omega.Init(80.0f, 0.0f, 0.f, 0.0f, 2000.0f, Motor_Friction_Right.Get_Output_Max());
-    Motor_Friction_Right.Init(&hfdcan1, DJI_Motor_ID_0x203, DJI_Motor_Control_Method_OMEGA, 1.0f);
+
+    // 摩擦轮电机右
+    Motor_Friction_Right.PID_Omega.Init(80.0f, 0.0f, 0.0f, 0.0f, 3000.0f, Motor_Friction_Right.Get_Output_Max());
+    Motor_Friction_Right.Init(&hfdcan1, DJI_Motor_ID_0x202, DJI_Motor_Control_Method_OMEGA, 1.0f);
+
+    // 摩擦轮电机下
+    Motor_Friction_Down.PID_Omega.Init(80.0f, 0.0f, 0.0f, 0.0f, 3000.0f, Motor_Friction_Down.Get_Output_Max());
+    Motor_Friction_Down.Init(&hfdcan1, DJI_Motor_ID_0x203, DJI_Motor_Control_Method_OMEGA, 1.0f);
 }
 
 /**
@@ -210,6 +214,7 @@ void Class_Booster::Output()
             Motor_Driver.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OPENLOOP);
             // Motor_Friction_Left.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OPENLOOP);
             // Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OPENLOOP);
+            Motor_Friction_Down.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
             Motor_Friction_Left.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
             Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
 
@@ -220,10 +225,12 @@ void Class_Booster::Output()
             Motor_Driver.PID_Omega.Set_Integral_Error(0.0f);
             Motor_Friction_Left.PID_Angle.Set_Integral_Error(0.0f);
             Motor_Friction_Right.PID_Angle.Set_Integral_Error(0.0f);
+            Motor_Friction_Down.PID_Angle.Set_Integral_Error(0.0f);
 
             Motor_Driver.Set_Target_Torque(0.0f);
             Motor_Friction_Left.Set_Target_Torque(0.0f);
             Motor_Friction_Right.Set_Target_Torque(0.0f);
+            Motor_Friction_Down.Set_Target_Torque(0.0f);
             
         
             shoot_time = 0;
@@ -251,6 +258,7 @@ void Class_Booster::Output()
             Motor_Driver.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
             Motor_Friction_Left.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
             Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
+            Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
 
             dttt = DWT_GetDeltaT(&single_t);
               
@@ -277,6 +285,7 @@ void Class_Booster::Output()
             Motor_Driver.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
             Motor_Friction_Left.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
             Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
+            Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
 
             Driver_Angle = Now_Angle + 2.0f * PI / 9.0f * 5.0f; //五连发5
             // Driver_Angle -= 2.0f * PI / 8.0f * 5.0f; //五连发
@@ -294,6 +303,7 @@ void Class_Booster::Output()
             // 连发模式
             Motor_Driver.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
             Motor_Friction_Left.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
+            Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
             Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
 
             // 根据冷却计算拨弹盘默认速度, 此速度下与冷却均衡
@@ -372,12 +382,14 @@ void Class_Booster::Output()
     if(Friction_Control_Type != Friction_Control_Type_DISABLE)
     {
         Motor_Friction_Left.Set_Target_Omega_Radian(Friction_Omega);
-        Motor_Friction_Right.Set_Target_Omega_Radian(-Friction_Omega);
+        Motor_Friction_Right.Set_Target_Omega_Radian(Friction_Omega);
+        Motor_Friction_Down.Set_Target_Omega_Radian(Friction_Omega);
     }
     else
     {
         Motor_Friction_Left.Set_Target_Omega_Radian(0.0f);
         Motor_Friction_Right.Set_Target_Omega_Radian(0.0f);
+        Motor_Friction_Down.Set_Target_Omega_Radian(0.0f);
     }
 }
 
@@ -411,6 +423,7 @@ void Class_Booster::TIM_Calculate_PeriodElapsedCallback()
     Motor_Driver.TIM_PID_PeriodElapsedCallback();
     Motor_Friction_Left.TIM_PID_PeriodElapsedCallback();
     Motor_Friction_Right.TIM_PID_PeriodElapsedCallback();
+    Motor_Friction_Down.TIM_PID_PeriodElapsedCallback();
 }
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/
