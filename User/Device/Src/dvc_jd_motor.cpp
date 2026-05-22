@@ -256,21 +256,26 @@ void Class_Jodell_Motor::Jodell_Safety_Check()
     // 检测当前位置和目标位置以及扭矩值并计数
     if(fabs(Now_Total_Angle - Target_Roll) >= 0.5f && Roll_Data.Now_Torque >= 1.0f)
     {
-        Locked_cnt++;
+        if(Locked_cnt < 25)
+        {
+            Locked_cnt++;
+        }
     }
     else
     {
-        Locked_cnt--;
-        if(Locked_cnt < 0)
+        if(Locked_cnt > 0)
         {
-            Locked_cnt = 0;
+            Locked_cnt--;
         }
     }
 
     if(Locked_cnt >= 25)
     {
-        is_locked = true;
-        Locked_Angle = Now_Total_Angle;
+        if(!is_locked)
+        {
+            is_locked = true;
+            Locked_Angle = Now_Total_Angle;
+        }
     }
     else if(Locked_cnt == 0)
     {

@@ -136,6 +136,7 @@ void Class_Chariot::Init(float __DR16_Dead_Zone)
     Chassis.Init(2.0f, 2.0f, 4.0f);
     // 力控底盘
     Force_Chassis.Init();
+    Chassis.Ledder_FSM.Force_Chassis = &Force_Chassis;
 
     // 超电
     Chassis.Supercap.Referee = &Referee;
@@ -236,6 +237,7 @@ void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback(uint8_t *Rx_Data)
     bool backdoor_status;
     // 下台阶初始化开关
     bool downlift_status;
+    // 重新校准标志位
     bool lift_calibrate_status;
 
     switch (CAN_Manage_Object->Rx_Buffer.Header.Identifier)
@@ -252,12 +254,16 @@ void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback(uint8_t *Rx_Data)
 #else
         chassis_velocity_x = -Math_Int_To_Float(Rx_Frame.x_velocity, -450, 450, -4.f, 4.f);
         chassis_velocity_y = -Math_Int_To_Float(Rx_Frame.y_velocity, -450, 450, -4.f, 4.f);
+        // 判断角度控制or角速度控制
         if (Rx_Frame.status.yaw_data_is_radian)
         {
+            // 角度控制模式
             chassis_delta_radian = -Math_Int_To_Float(Rx_Frame.yaw_data, -200, 200, -1.f, 1.f);
+            chassis_delta_radian *= 1.75f; // 手动调整灵敏度
         }
         else
         {
+            // 角速度控制模式
             chassis_omega = -Math_Int_To_Float(Rx_Frame.yaw_data, -200, 200, -4.f, 4.f);
         }
 #endif
@@ -903,7 +909,7 @@ void Class_Chariot::Control_Chassis()
 
         if (Chassis.Get_Wheel_Slave_Status() == Wheel_Slave_ON)
         {
-            track_omega = 25.0f * (Force_Chassis.Get_Target_Velocity_X() / Chassis.Get_Velocity_X_Max());
+            track_omega = 15.0f * (Force_Chassis.Get_Target_Velocity_X() / Chassis.Get_Velocity_X_Max());
         }
         else
         {
@@ -1316,7 +1322,6 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
     {
         for (int i = 0; i < 4; i++)
         {
-            // Chassis.Mecanum_Wheels[i].Set_Out(0.0f);
             Force_Chassis.Motor_Wheel[i].Set_Target_Current(0.0f);
         }
 
@@ -1852,7 +1857,6 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
         // 力控底盘中轮组电机的存活检测以及底盘类中抬升电机的存活检测
         for (int i = 0; i < 4; i++)
         {
-            // Chassis.Mecanum_Wheels[i].TIM_Alive_PeriodElapsedCallback();
             Force_Chassis.Motor_Wheel[i].TIM_100ms_Alive_PeriodElapsedCallback();
         }
 
@@ -2132,7 +2136,6 @@ void Class_FSM_Alive_Control::Reload_TIM_Status_PeriodElapsedCallback()
         // 转移为 在线状态
         if (Chariot->DR16.Get_DR16_Status() == DR16_Status_ENABLE)
         {
-            buzzer_setTask(&buzzer, BUZZER_DJI_STARTUP_PRIORITY);
             Status[Now_Status_Serial].Time = 0;
             Set_Status(2);
         }
@@ -2328,7 +2331,6 @@ void Class_FSM_Alive_Control_VT13::Reload_TIM_Status_PeriodElapsedCallback()
         // 转移为 在线状态
         if (Chariot->VT13.Get_VT13_Status() == VT13_Status_ENABLE)
         {
-            buzzer_setTask(&buzzer, BUZZER_DJI_STARTUP_PRIORITY);
             Status[Now_Status_Serial].Time = 0;
             Set_Status(2);
         }
@@ -2374,7 +2376,6 @@ void Class_FSM_Alive_Control_VT13::Reload_TIM_Status_PeriodElapsedCallback()
         // 转移为 刚离线状态
         if (Chariot->VT13.Get_VT13_Status() == VT13_Status_DISABLE)
         {
-            buzzer_setTask(&buzzer, BUZZER_FORCE_STOP_PRIORITY);
             Status[Now_Status_Serial].Time = 0;
             Set_Status(3);
         }

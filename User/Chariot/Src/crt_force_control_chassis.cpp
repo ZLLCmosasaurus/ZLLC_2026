@@ -18,16 +18,16 @@ void Class_Chassis::Init()
 
     // 轮向电机ID初始化
     // 电机初始化
-    // Motor_Wheel[0].Init(&hfdcan1, Motor_DJI_ID_0x201, Motor_DJI_Control_Method_CURRENT, 3591.f / 187.f, Motor_DJI_Power_Limit_Status_ENABLE);
+    Motor_Wheel[0].Init(&hfdcan1, Motor_DJI_ID_0x201, Motor_DJI_Control_Method_CURRENT, 3591.f / 187.f, Motor_DJI_Power_Limit_Status_ENABLE);
     Motor_Wheel[0].PID_Omega.Init(0.0f, 0.0f, 0.0f, 0.0f, 20.0f, 20.0f);
     // 电机初始化
-    // Motor_Wheel[1].Init(&hfdcan1, Motor_DJI_ID_0x202, Motor_DJI_Control_Method_CURRENT, 3591.f / 187.f, Motor_DJI_Power_Limit_Status_ENABLE);
+    Motor_Wheel[1].Init(&hfdcan1, Motor_DJI_ID_0x202, Motor_DJI_Control_Method_CURRENT, 3591.f / 187.f, Motor_DJI_Power_Limit_Status_ENABLE);
     Motor_Wheel[1].PID_Omega.Init(0.0f, 0.0f, 0.0f, 0.0f, 20.0f, 20.0f);
     // 电机初始化
-    // Motor_Wheel[2].Init(&hfdcan1, Motor_DJI_ID_0x203, Motor_DJI_Control_Method_CURRENT, 3591.f / 187.f, Motor_DJI_Power_Limit_Status_ENABLE);
+    Motor_Wheel[2].Init(&hfdcan1, Motor_DJI_ID_0x203, Motor_DJI_Control_Method_CURRENT, 3591.f / 187.f, Motor_DJI_Power_Limit_Status_ENABLE);
     Motor_Wheel[2].PID_Omega.Init(0.0f, 0.0f, 0.0f, 0.0f, 20.0f, 20.0f);
     // 电机初始化
-    // Motor_Wheel[3].Init(&hfdcan1, Motor_DJI_ID_0x204, Motor_DJI_Control_Method_CURRENT, 3591.f / 187.f, Motor_DJI_Power_Limit_Status_ENABLE);
+    Motor_Wheel[3].Init(&hfdcan1, Motor_DJI_ID_0x204, Motor_DJI_Control_Method_CURRENT, 3591.f / 187.f, Motor_DJI_Power_Limit_Status_ENABLE);
     Motor_Wheel[3].PID_Omega.Init(0.0f, 0.0f, 0.0f, 0.0f, 20.0f, 20.0f);
 
     // 超级电容初始化
@@ -67,6 +67,9 @@ void Class_Chassis::TIM_100ms_Alive_PeriodElapsedCallback()
  */
 void Class_Chassis::TIM_2ms_Resolution_PeriodElapsedCallback()
 {
+    Angle_Pitch = Boardc_BMI.Get_Rad_Pitch();
+    Angle_Roll = Boardc_BMI.Get_Rad_Roll();
+
     Self_Resolution();
 
     if (Yaw_Radian_Control_Enable)
@@ -245,7 +248,6 @@ void Class_Chassis::Output_To_Motor()
     case (Chassis_Control_Type_NORMAL__):
     {
 #ifdef Control_Type_Current
-        // 全向模型
         for (int i = 0; i < 4; i++)
         {
             Motor_Wheel[i].Set_Control_Method(Motor_DJI_Control_Method_CURRENT);
@@ -293,16 +295,12 @@ void Class_Chassis::Output_To_Motor()
 void Class_Chassis::Self_Resolution()
 // 正运动学解算
 {
-    // static float last_X = 0.0f;
-    // static float last_Y = 0.0f;
-    // static float last_Omega = 0.0f;
-    // 根据电机编码器与陀螺仪计算速度和角度
-
     Now_Velocity_X = 0.0f;
     Now_Velocity_Y = 0.0f;
     Now_Omega = 0.0f;
 
     // 轮线速度的计算方式 v = Ω * r，根据正运动学测得得结果，1和2号的轮子转向反了，这里取负
+
     float wheel_vel0 = Motor_Wheel[0].Get_Now_Omega() * Wheel_Radius;
     float wheel_vel1 = -Motor_Wheel[1].Get_Now_Omega() * Wheel_Radius;
     float wheel_vel2 = -Motor_Wheel[2].Get_Now_Omega() * Wheel_Radius;
@@ -330,17 +328,6 @@ void Class_Chassis::Self_Resolution()
     Now_Velocity_X *= 0.25f;
     Now_Velocity_Y *= 0.25f;
     Now_Omega = (-wheel_vel[0] + wheel_vel[1] + wheel_vel[2] - wheel_vel[3]) / (4.0f * (half_l + half_w));
-
-    // bool flag = (fabs(Now_Velocity_X - last_X) >= 1.0f) || (fabs(Now_Velocity_Y - last_Y)) || (fabs(Now_Omega - last_Omega));
-
-    // if(flag)
-    // {
-
-    // }
-
-    // last_X = Now_Velocity_X;
-    // last_Y = Now_Velocity_Y;
-    // last_Omega = Now_Omega;
 
     for (int i = 0; i < 4; i++) // 数据传递处理
     {

@@ -85,7 +85,7 @@ static graph_ui_sync_t g_graph_ui_remote_state = {
     0U
 };
 
-static uint16_t g_graph_ui_self_id = 1U;
+static uint16_t g_graph_ui_self_id = 0U;
 
 static void GraphUI_SendFigureGroupA(uint8_t op_type);
 static void GraphUI_SendFigureGroupB(uint8_t op_type);

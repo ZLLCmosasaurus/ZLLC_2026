@@ -538,6 +538,7 @@ void Class_Tricycle_Chassis::Set_Supercap_Mode(Enum_Supercap_Mode __Supercap_Mod
 }
 
 class Class_Mecanum_Chassis;
+class Class_Chassis;
 class Class_FSM_Calibration_Chassis : public Class_FSM
 {
 public:
@@ -565,6 +566,7 @@ class Class_FSM_Ledder : public Class_FSM
 {
 public:
     Class_Mecanum_Chassis *Chassis;
+    Class_Chassis *Force_Chassis = nullptr;
     
     Enum_Uplift_FSM_Direction FSM_Direction = Uplift_FSM_HOLD;
 
@@ -576,18 +578,51 @@ public:
     uint8_t TRIGGER_CNT = 0;
     uint16_t FORWARD_CNT = 0;
 
+    void Init_Attitude_Control();
     void Reload_TIM_Status_PeriodElapsedCallback();
 
 protected:
+    void Reset_Attitude_Control();
+    bool Get_Attitude_Feedback(float *pitch, float *roll);
+    void Apply_Attitude_Control(const float *base_target,
+                                const float *lower_limit,
+                                const float *upper_limit,
+                                bool unilateral_pitch_limit,
+                                float pitch_target_rad,
+                                float window_limit_rad = 0.0f);
     /*上台阶相关角度*/
     float ledder_prepare[4] = {22.0f, 22.0f, 20.0f, 20.0f};
 
-    float ledder_1_touch[4] = {18.0f, 18.0f, 17.0f, 17.0f};
-    float ledder_1_uplift[4] = {0.0f, 0.0f, 1.5f, 1.5f};
+    float ledder_1_touch[4] = {18.0f, 18.0f, 15.0f, 15.0f};
+    float ledder_1_uplift[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     float ledder_1_over[4] = {22.0f, 22.0f, 20.0f, 20.0f};
     float ledder_2_touch[4] = {11.0f, 11.0f, 17.0f, 17.0f};
     float ledder_2_uplift[4] = {0.0f, 0.0f, 2.5f, 2.5f};
     float ledder_2_over[4] = {22.0f, 22.0f, 20.0f, 20.0f};
+    float Base_Uplift_Target[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+
+    // 抬升机构触地状态判断相关变量
+    float Touched_Torque;
+
+    Class_PID Pitch_PID;
+    Class_PID Roll_PID;
+
+    // Index map:
+    // 0 - right front, 1 - left front, 2 - left rear, 3 - right rear
+    // Sign convention:
+    // Pitch > 0: front side goes down.
+    // Roll > 0: right side goes up.
+    // TODO: replace with the final commissioning value if a different pitch is required.
+    float Pitch_Offset = 0.0f;
+    float Init_Pitch_Target_Base_Rad = -(5.0f / 180.0f) * PI;
+    float Init_Pitch_Target_Rad = -(5.0f / 180.0f) * PI;
+    float Init_Attitude_Window_Rad = 0.8f;
+    float Init_Attitude_Out_Max = 0.8f;
+    float Lift_Attitude_Out_Max = 1.0f;
+    float Attitude_Dead_Zone_Rad = 0.0087f;
+
+    float Pitch_Mix[4] = {1.0f, 1.0f, -1.0f, -1.0f};
+    float Roll_Mix[4] = {-1.0f, 1.0f, 1.0f, -1.0f};
 
     Enum_DR16_Switch_Status Judge_DR16_Switch_Status(Enum_DR16_Switch_Status Now_Status, Enum_DR16_Switch_Status Pre_Status);
 };
@@ -1163,9 +1198,9 @@ void Class_Mecanum_Chassis::Set_Target_Uplift_Radian(uint8_t index, float __Targ
         return;
 
     Target_Uplift_Radian[index] = __Target_Radian;
-    Target_Uplift_Motor_Radian[index] = Uplift_Min_Radian[index] + Target_Uplift_Radian[index];
-
     Math_Constrain(Target_Uplift_Radian + index, 0.0f, Uplift_Max_Radian[index] - Uplift_Min_Radian[index]);
+
+    Target_Uplift_Motor_Radian[index] = Uplift_Min_Radian[index] + Target_Uplift_Radian[index];
     Math_Constrain(Target_Uplift_Motor_Radian + index, Uplift_Min_Radian[index], Uplift_Max_Radian[index]);
 }
 

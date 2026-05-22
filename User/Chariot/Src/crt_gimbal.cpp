@@ -326,6 +326,7 @@ void Class_FSM_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
             if (finish_flag)
             {
                 Gimbal->arm_init = true;
+                buzzer_setTask(&buzzer, BUZZER_DJI_STARTUP_PRIORITY);
                 Set_Status(3);
             }
 

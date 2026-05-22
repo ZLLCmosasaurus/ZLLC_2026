@@ -747,7 +747,7 @@ extern "C" void Task_Init()
     SPI_Init(&hspi2, Device_SPI2_Callback);
 
     // UI任务初始化
-    GraphUI_Init(2);
+    GraphUI_Init(0);
 #ifdef POWER_LIMIT
 
 #endif

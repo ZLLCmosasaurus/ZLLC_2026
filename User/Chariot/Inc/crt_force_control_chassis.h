@@ -194,7 +194,7 @@ protected:
     // 写变量
 
     // 功率限制上限
-    float Power_Limit_Max = 60.0f;
+    float Power_Limit_Max = 120.0f;
 
     // 读写变量
 

@@ -18,14 +18,15 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "crt_chassis.h"
+#include "crt_force_control_chassis.h"
 
 /* Private macros ------------------------------------------------------------*/
-static const float Track_Power_Coeff_Const = 2.5f;
-static const float Track_Power_Coeff_WT = 0.7317408511f;
-static const float Track_Power_Coeff_W = 0.4075054775f;
-static const float Track_Power_Coeff_T = 2.1119834840f;
-static const float Track_Power_Coeff_W2 = -0.0077502320f;
-static const float Track_Power_Coeff_T2 = 2.0285629411f;
+static const float Track_Power_Coeff_Const = 3.4040814309f;
+static const float Track_Power_Coeff_WT = 0.2114601540f;
+static const float Track_Power_Coeff_W = 0.8573425912f;
+static const float Track_Power_Coeff_T = 13.1888453732f;
+static const float Track_Power_Coeff_W2 = -0.0191624255f;
+static const float Track_Power_Coeff_T2 = 0.8841232799f;
 static const float Track_Power_Epsilon = 1.0e-4f;
 
 /* Private types -------------------------------------------------------------*/
@@ -496,6 +497,7 @@ void Class_Mecanum_Chassis::Init(float __Velocity_X_Max, float __Velocity_Y_Max,
     Calibration_FSM.Chassis = this;
     Calibration_FSM.Init(2, 0);
     Ledder_FSM.Chassis = this;
+    Ledder_FSM.Init_Attitude_Control();
 }
 
 void Class_Mecanum_Chassis::Speed_Resolution()
@@ -901,6 +903,110 @@ Enum_DR16_Switch_Status Class_FSM_Ledder::Judge_DR16_Switch_Status(Enum_DR16_Swi
     return Switch_Status;
 }
 
+void Class_FSM_Ledder::Init_Attitude_Control()
+{
+    Pitch_PID.Init(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, Lift_Attitude_Out_Max);
+    Roll_PID.Init(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, Lift_Attitude_Out_Max);
+}
+
+void Class_FSM_Ledder::Reset_Attitude_Control()
+{
+    Pitch_PID.Set_Integral_Error(0.0f);
+    Roll_PID.Set_Integral_Error(0.0f);
+    Pitch_PID.Set_Target(0.0f);
+    Pitch_PID.Set_Now(0.0f);
+    Roll_PID.Set_Target(0.0f);
+    Roll_PID.Set_Now(0.0f);
+}
+
+bool Class_FSM_Ledder::Get_Attitude_Feedback(float *pitch, float *roll)
+{
+    if (Force_Chassis == nullptr)
+    {
+        return false;
+    }
+
+    if (Force_Chassis->Boardc_BMI.Get_IMU_Status() != IMU_Status_ENABLE)
+    {
+        return false;
+    }
+
+    *pitch = Force_Chassis->Get_Angle_Pitch();
+    *roll = Force_Chassis->Get_Angle_Roll();
+    return true;
+}
+
+void Class_FSM_Ledder::Apply_Attitude_Control(const float *base_target,
+                                              const float *lower_limit,
+                                              const float *upper_limit,
+                                              bool unilateral_pitch_limit,
+                                              float pitch_target_rad,
+                                              float window_limit_rad)
+{
+    float pitch = 0.0f;
+    float roll = 0.0f;
+
+    if (!Get_Attitude_Feedback(&pitch, &roll))
+    {
+        Reset_Attitude_Control();
+        for (int i = 0; i < 4; i++)
+        {
+            float target = base_target[i];
+            Math_Constrain(&target, lower_limit[i], upper_limit[i]);
+            Chassis->Set_Target_Uplift_Radian(i, target);
+        }
+        return;
+    }
+
+    float pitch_out = 0.0f;
+
+    if (unilateral_pitch_limit)
+    {
+        if (pitch > 0.0f)
+        {
+            Pitch_PID.Set_Out_Max(Lift_Attitude_Out_Max);
+            Pitch_PID.Set_Target(0.0f);
+            Pitch_PID.Set_Now(pitch);
+            Pitch_PID.TIM_Adjust_PeriodElapsedCallback();
+            pitch_out = Pitch_PID.Get_Out();
+        }
+        else
+        {
+            Pitch_PID.Set_Integral_Error(0.0f);
+            Pitch_PID.Set_Target(pitch);
+            Pitch_PID.Set_Now(pitch);
+        }
+    }
+    else
+    {
+        Pitch_PID.Set_Out_Max(Init_Attitude_Out_Max);
+        Pitch_PID.Set_Target(pitch_target_rad);
+        Pitch_PID.Set_Now(pitch);
+        Pitch_PID.TIM_Adjust_PeriodElapsedCallback();
+        pitch_out = Pitch_PID.Get_Out();
+    }
+
+    Roll_PID.Set_Out_Max(unilateral_pitch_limit ? Lift_Attitude_Out_Max : Init_Attitude_Out_Max);
+    Roll_PID.Set_Target(0.0f);
+    Roll_PID.Set_Now(roll);
+    Roll_PID.TIM_Adjust_PeriodElapsedCallback();
+
+    for (int i = 0; i < 4; i++)
+    {
+        float target = base_target[i] + Pitch_Mix[i] * pitch_out + Roll_Mix[i] * Roll_PID.Get_Out();
+
+        if (window_limit_rad > 0.0f)
+        {
+            float local_lower = base_target[i] - window_limit_rad;
+            float local_upper = base_target[i] + window_limit_rad;
+            Math_Constrain(&target, local_lower, local_upper);
+        }
+
+        Math_Constrain(&target, lower_limit[i], upper_limit[i]);
+        Chassis->Set_Target_Uplift_Radian(i, target);
+    }
+}
+
 /* 上台阶状态机 */
 void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
 {
@@ -930,6 +1036,7 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
         for (int i = 0; i < 4; i++)
         {
             is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Omega_Radian()) <= 0.1f);
+            is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Radian() - Chassis->Uplift_Motor[i].Get_Target_Radian()) <= 0.5f);
         }
 
         if (is_ready && FSM_Direction == Uplift_FSM_FORWARD)
@@ -951,6 +1058,7 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
         for (int i = 0; i < 4; i++)
         {
             is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Omega_Radian()) <= 0.1f);
+            is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Radian() - Chassis->Uplift_Motor[i].Get_Target_Radian()) <= 0.5f);
         }
 
         if (is_ready && FSM_Direction == Uplift_FSM_FORWARD)
@@ -974,6 +1082,7 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
         for (int i = 0; i < 4; i++)
         {
             is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Omega_Radian()) <= 0.1f);
+            is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Radian() - Chassis->Uplift_Motor[i].Get_Target_Radian()) <= 0.5f);
         }
 
         // 将车身送上台阶后使用遥控器切换到下一个状态
@@ -996,6 +1105,7 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
         for (int i = 0; i < 4; i++)
         {
             is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Omega_Radian()) <= 0.1f);
+            is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Radian() - Chassis->Uplift_Motor[i].Get_Target_Radian()) <= 0.5f);
         }
 
         if (is_ready && FSM_Direction == Uplift_FSM_FORWARD)
@@ -1017,6 +1127,7 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
         for (int i = 0; i < 4; i++)
         {
             is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Omega_Radian()) <= 0.1f);
+            is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Radian() - Chassis->Uplift_Motor[i].Get_Target_Radian()) <= 0.5f);
         }
 
         if (is_ready && FSM_Direction == Uplift_FSM_FORWARD)
@@ -1040,6 +1151,7 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
         for (int i = 0; i < 4; i++)
         {
             is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Omega_Radian()) <= 0.05f);
+            is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Radian() - Chassis->Uplift_Motor[i].Get_Target_Radian()) <= 0.5f);
         }
 
         if (is_ready && FSM_Direction == Uplift_FSM_FORWARD)
@@ -1061,6 +1173,7 @@ void Class_FSM_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
         for (int i = 0; i < 4; i++)
         {
             is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Omega_Radian()) <= 0.05f);
+            is_ready = is_ready && (fabs(Chassis->Uplift_Motor[i].Get_Now_Radian() - Chassis->Uplift_Motor[i].Get_Target_Radian()) <= 0.5f);
         }
 
         if(is_ready)
@@ -1176,4 +1289,5 @@ void Class_FSM_Off_Ledder::Reload_TIM_Status_PeriodElapsedCallback()
     }
     }
 }
+
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/
