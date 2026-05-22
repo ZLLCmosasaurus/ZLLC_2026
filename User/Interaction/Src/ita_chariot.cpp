@@ -508,10 +508,34 @@ void Class_Chariot::Control_Chassis()
             {
                 wheel_slave_status = Wheel_Slave_OFF;
             }
+            if (controller_right_y >= 0.85f)
+            {
+                lift_select[0] = true;
+                lift_drc[0] = Lift_Direction_UP;
+            }
+            else if (controller_right_y <= -0.85f)
+            {
+                lift_select[0] = true;
+                lift_drc[0] = Lift_Direction_DOWN;
+            }
         }
     }
     else if (Active_Controller == Controller_VT13 && VT13_Control_Type == VT13_Control_Type_REMOTE)
     {
+        switch (Keyboard_Control_Type)
+        {
+        case Keyboard_Control_Type_WORKING:
+            if (controller_right_y >= 0.85f)
+            {
+                lift_select[0] = true;
+                lift_drc[0] = Lift_Direction_UP;
+            }
+            else if (controller_right_y <= -0.85f)
+            {
+                lift_select[0] = true;
+                lift_drc[0] = Lift_Direction_DOWN;
+            }
+        }
     }
     // 键盘和底盘相关的键位
     else if ((Active_Controller == Controller_DR16 && DR16_Control_Type == DR16_Control_Type_KEYBOARD) ||
