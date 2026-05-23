@@ -453,7 +453,6 @@ void Class_Chariot::CAN_Gimbal_Tx_Chassis_Callback()
     Tx_Frame.status.wheel_slave_ctrl = Chassis.Get_Wheel_Slave_Status();       // 6/8
     Tx_Frame.status.lift_calibrate = (Lift_Calibrate_Request ? 1 : 0);
     Tx_Frame.status.yaw_data_is_radian = yaw_data_is_radian ? 1 : 0;
-    Lift_Calibrate_Request = false;
 
     // 装入CAN发送缓冲区
     memcpy(CAN3_Gimbal_Tx_Chassis_Data, &Tx_Frame, sizeof(Tx_Frame));
@@ -518,12 +517,13 @@ void Class_Chariot::Control_Chassis()
                 lift_select[0] = true;
                 lift_drc[0] = Lift_Direction_DOWN;
             }
-        } 
+        }
     }
     else if (Active_Controller == Controller_VT13 && VT13_Control_Type == VT13_Control_Type_REMOTE)
     {
         switch (Keyboard_Control_Type)
         {
+        case Keyboard_Control_Type_SAVE_LOAD:
         case Keyboard_Control_Type_WORKING:
             if (controller_right_y >= 0.85f)
             {
@@ -659,6 +659,10 @@ void Class_Chariot::Control_Chassis()
         if (Key_Is_Trig_Pressed_Free(controller_key_q) && Key_Is_Shift_Active(controller_key_shift))
         {
             Lift_Calibrate_Request = true;
+        }
+        else
+        {
+            Lift_Calibrate_Request = false;
         }
     }
 
@@ -1104,6 +1108,7 @@ void Class_Chariot::Control_Gimbal()
     {
 
     case Keyboard_Control_Type_WORKING:
+    {
         if (Active_Controller == Controller_DR16)
         {
             Load_Custom_Controller_Targets(Offline_Custom_Controller.Custom_Controller_Data,
@@ -1127,18 +1132,20 @@ void Class_Chariot::Control_Gimbal()
                                            tmp_gripper_position);
         }
         break;
+    }
 
     case Keyboard_Control_Type_SAVE_LOAD:
     {
-        if (Key_Is_Trig_Pressed_Free(controller_mouse_right_key))
-        {
-            Save_Load_Confirm_Request = true;
-        }
-
-        if (Key_Is_Trig_Pressed_Free(controller_mouse_left_key))
-        {
-            tmp_gripper_position = (tmp_gripper_position > 0) ? 0 : 255;
-        }
+        Load_Custom_Controller_Targets(VT13.Custom_Controller.Custom_Controller_Data,
+                                       tmp_j0_pitch_radian,
+                                       tmp_j1_yaw_radian,
+                                       tmp_j2_yaw_radian,
+                                       tmp_j3_roll_radian,
+                                       tmp_j4_pitch_radian,
+                                       tmp_j5_roll_radian,
+                                       tmp_gripper_position);
+        // J0保持水平，本质SCARA
+        tmp_j0_pitch_radian = 0.0f;
         break;
     }
 
@@ -1562,6 +1569,7 @@ void Class_Chariot::Judge_Keyboard_Mode()
         Keyboard_Control_Type = Keyboard_Control_Type_SAVE_LOAD;
         Save_Load_Unit = SAVE_LOAD_UNIT_1;
         Chassis.Set_Wheel_Slave_Status(Wheel_Slave_OFF);
+        Gimbal.Set_Target_VT03_Yaw_Angle(90.0f);
     }
     else if (Key_Is_Trig_Pressed_Free(controller_key_x) && shift_active)
     {
@@ -1587,7 +1595,7 @@ void Class_Chariot::Judge_Keyboard_Mode()
     else if (Key_Is_Trig_Pressed_Free(controller_key_v) && !shift_active)
     {
         Keyboard_Control_Type = Keyboard_Control_Type_DOWNLIFT;
-        Chassis.Set_Wheel_Slave_Status(Wheel_Slave_OFF);
+        Chassis.Set_Wheel_Slave_Status(Wheel_Slave_ON);
     }
 }
 
@@ -1792,9 +1800,9 @@ void Class_Chariot::Controller_Data_Update()
         }
         }
     }
-    else
+    else if (Active_Controller == Controller_NONE)
     {
-        Keyboard_Control_Type = Keyboard_Control_Type_DISABLE;
+        buzzer_setTask(&buzzer, BUZZER_DEVICE_OFFLINE_PRIORITY);
     }
 }
 
