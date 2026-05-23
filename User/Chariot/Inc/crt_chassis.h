@@ -814,6 +814,7 @@ protected:
     // 小轮子从动状态枚举
     Enum_Wheel_Slave_Status Wheel_Slave_Status = Wheel_Slave_OFF;
     // 抬升控制相关
+    // 抬升重新校准
     bool Lift_Calibrate = false;
     // 抬升选择
     bool Lift_Select[4] = {false};

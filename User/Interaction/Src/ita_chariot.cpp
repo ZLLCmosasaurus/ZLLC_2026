@@ -518,7 +518,7 @@ void Class_Chariot::Control_Chassis()
                 lift_select[0] = true;
                 lift_drc[0] = Lift_Direction_DOWN;
             }
-        }
+        } 
     }
     else if (Active_Controller == Controller_VT13 && VT13_Control_Type == VT13_Control_Type_REMOTE)
     {
@@ -602,13 +602,8 @@ void Class_Chariot::Control_Chassis()
             {
                 Speed_Ratio = 0.5f;
             }
-
             break;
         case Keyboard_Control_Type_UPLIFT:
-            if (Key_Is_Trig_Pressed_Free(controller_key_ctrl))
-            {
-                wheel_slave_status = (wheel_slave_status == Wheel_Slave_OFF) ? Wheel_Slave_ON : Wheel_Slave_OFF;
-            }
             if (Key_Is_Pressed(controller_key_r) && Key_Is_Shift_Active(controller_key_shift))
             {
                 backdoor_status = true;
@@ -651,11 +646,19 @@ void Class_Chariot::Control_Chassis()
                 lift_drc[2] = Lift_Direction_DOWN;
                 lift_drc[3] = Lift_Direction_DOWN;
             }
-            if (Key_Is_Trig_Pressed_Free(controller_key_ctrl))
-            {
-                wheel_slave_status = (wheel_slave_status == Wheel_Slave_OFF) ? Wheel_Slave_ON : Wheel_Slave_OFF;
-            }
             break;
+        }
+
+        // 小轮子状态切换
+        if (Key_Is_Trig_Pressed_Free(controller_key_ctrl))
+        {
+            wheel_slave_status = (wheel_slave_status == Wheel_Slave_OFF) ? Wheel_Slave_ON : Wheel_Slave_OFF;
+        }
+
+        // Shift+Q 底盘重新校准
+        if (Key_Is_Trig_Pressed_Free(controller_key_q) && Key_Is_Shift_Active(controller_key_shift))
+        {
+            Lift_Calibrate_Request = true;
         }
     }
 
@@ -1558,27 +1561,33 @@ void Class_Chariot::Judge_Keyboard_Mode()
     {
         Keyboard_Control_Type = Keyboard_Control_Type_SAVE_LOAD;
         Save_Load_Unit = SAVE_LOAD_UNIT_1;
+        Chassis.Set_Wheel_Slave_Status(Wheel_Slave_OFF);
     }
     else if (Key_Is_Trig_Pressed_Free(controller_key_x) && shift_active)
     {
         Keyboard_Control_Type = Keyboard_Control_Type_SAVE_LOAD;
         Save_Load_Unit = SAVE_LOAD_UNIT_2;
+        Chassis.Set_Wheel_Slave_Status(Wheel_Slave_OFF);
     }
     else if (Key_Is_Trig_Pressed_Free(controller_key_z) && !shift_active)
     {
         Keyboard_Control_Type = Keyboard_Control_Type_WORKING;
+        Chassis.Set_Wheel_Slave_Status(Wheel_Slave_OFF);
     }
     else if (Key_Is_Trig_Pressed_Free(controller_key_x) && !shift_active)
     {
         Keyboard_Control_Type = Keyboard_Control_Type_MOVING;
+        Chassis.Set_Wheel_Slave_Status(Wheel_Slave_OFF);
     }
     else if (Key_Is_Trig_Pressed_Free(controller_key_c) && !shift_active)
     {
         Keyboard_Control_Type = Keyboard_Control_Type_UPLIFT;
+        Chassis.Set_Wheel_Slave_Status(Wheel_Slave_ON);
     }
     else if (Key_Is_Trig_Pressed_Free(controller_key_v) && !shift_active)
     {
         Keyboard_Control_Type = Keyboard_Control_Type_DOWNLIFT;
+        Chassis.Set_Wheel_Slave_Status(Wheel_Slave_OFF);
     }
 }
 
@@ -1733,11 +1742,6 @@ void Class_Chariot::Controller_Data_Update()
             }
         }
 
-        // Shift+Q 底盘重新校准
-        if (Key_Is_Trig_Pressed_Free(controller_key_q) && Key_Is_Shift_Active(controller_key_shift))
-        {
-            Lift_Calibrate_Request = true;
-        }
         // 按下R键刷新UI
         else if (Key_Is_Trig_Pressed_Free(controller_key_r) && !Key_Is_Shift_Active(controller_key_shift))
         {

@@ -643,6 +643,7 @@ float Class_Mecanum_Chassis::Calculate_Track_Request_Power()
     {
         Track_Allocated_Power = 0.0f;
         Track_Power_Scale = 0.0f;
+        Track_Request_Power += 8.6f; // 小轮子不开时手动分配静态功率
         return (Track_Request_Power);
     }
 
@@ -766,6 +767,10 @@ void Class_FSM_Calibration_Chassis::Reload_TIM_Status_PeriodElapsedCallback()
     case (1):
         /*校准完成状态*/
         {
+            // 清除重新校准请求标志位
+            Chassis->Lift_Calibrate = false;
+
+            // 抬升状态检测
             bool online_status = true;
             for (int i = 0; i < 4; i++)
             {
