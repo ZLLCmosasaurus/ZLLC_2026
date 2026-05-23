@@ -116,7 +116,7 @@ void Class_MiniPC::Data_Process()
     Rx_Gyro_Yaw = Pack_Rx.target_yaw_vel;
     Rx_Acc_Yaw = Pack_Rx.target_yaw_acc;
   }
-  Math_Constrain(&Rx_Angle_Pitch, -20.0f, 40.0f);
+  Math_Constrain(&Rx_Angle_Pitch, -15.0f, 43.0f);
   Math_Constrain(&Rx_Angle_Yaw, -180.0f, 180.0f);
   memset(USB_Manage_Object->Rx_Buffer, 0, USB_Manage_Object->Rx_Buffer_Length);
 #endif

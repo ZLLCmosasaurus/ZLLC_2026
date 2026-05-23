@@ -512,6 +512,21 @@ void Class_HybridTrackLeg_Chassis::Jointleg_Controller()
         Motor_Joint[1].Set_Target_Omega(-Set_Leg_Velocity[1]);
         break;
     }
+    case Pose_CONTRACT:
+    {
+        // 启动控制方式
+        Motor_Joint[0].Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
+        Motor_Joint[1].Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
+        // 设定控制帧所需参数： 角度、角速度、t_ff、Kp、Kd
+        // 位置速度模式
+        Slope_Position.Set_Target(Set_Leg_Angle[2]);
+
+        Motor_Joint[0].Set_Target_Angle(Slope_Position.Get_Out());
+        Motor_Joint[0].Set_Target_Omega(Set_Leg_Velocity[1]);
+        Motor_Joint[1].Set_Target_Angle(-Slope_Position.Get_Out());
+        Motor_Joint[1].Set_Target_Omega(-Set_Leg_Velocity[1]);
+        break;
+    }
     }
 #endif
 }

@@ -243,10 +243,10 @@ void Class_Gimbal_Pitch_Motor_DM4310::Disable()
  */
 void Class_Gimbal_Pitch_Motor_DM4310::Transform_EmcoderAngle_To_TrueAngle()
 {
-    const uint16_t ENC_AT_MIN = 26217; // 实测：角度 -15° 时的编码器值
-    const uint16_t ENC_AT_MAX = 32628; // 实测：角度 +40° 时的编码器值
-    const float MIN_ANGLE_DEG = -15.0f;
-    const float MAX_ANGLE_DEG = 42.0f;
+    const uint16_t ENC_AT_MIN = 31746; // 实测：角度 -15° 时的编码器值
+    const uint16_t ENC_AT_MAX = 38307; // 实测：角度 +40° 时的编码器值
+    const float MIN_ANGLE_DEG = -21.0f;
+    const float MAX_ANGLE_DEG = 43.7f;
 
     uint16_t encoder_raw = Get_Now_Encoder_Position();
 

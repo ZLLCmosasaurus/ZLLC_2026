@@ -288,8 +288,8 @@ void Class_Booster::Init()
 
     //拨弹盘电机
 
-	Motor_Driver.PID_Angle.Init(10.0f, 0.1f, 0.0f, 0.0f, 0.0f,0.0f);
-    Motor_Driver.PID_Omega.Init(1000.0f, 13.0f, 0.0f, 0.0f, 12288.0f,  12288.0f);
+	Motor_Driver.PID_Angle.Init(15.0f, 0.0f, 0.0f, 0.0f, 0.0f,0.0f);
+    Motor_Driver.PID_Omega.Init(1100.0f, 100.0f, 0.0f, 0.0f, 7000.0f,  14000.0f);
     Motor_Driver.Init(&hfdcan3, DJI_Motor_ID_0x203, DJI_Motor_Control_Method_OMEGA, 50.895f);
     kalman_init(&Kf_Omega,0.0f);
     //注意初始化ID 此版本6020为电流环版本 可能会有ID冲突
@@ -570,6 +570,10 @@ void Class_Booster::Output()
     {
         if(Shooter_Mode == Launcher)
         {
+            for (auto i = 0; i < 4; i++)
+            {
+                // Fric[i].PID_Omega.Set_PID_Constants(10.0f, 0.05f, 0.0f);
+            }
             Fric[0].Set_Target_Omega_Rpm(-(Fric_Low_Rpm_16m_s + Fric_Transform_Rpm));
             Fric[1].Set_Target_Omega_Rpm(Fric_Low_Rpm_16m_s + Fric_Transform_Rpm);
             Fric[2].Set_Target_Omega_Rpm(-(Fric_High_Rpm_16m_s + Fric_Transform_Rpm));
@@ -577,6 +581,10 @@ void Class_Booster::Output()
         }
         else
         {
+            for (auto i = 0; i < 4; i++)
+            {
+                // Fric[i].PID_Omega.Set_PID_Constants(10.0f, 0.05f, 0.0f);
+            }
             Fric[0].Set_Target_Omega_Rpm(-(Fric_Low_Rpm_12m_s + Fric_Transform_Rpm));
             Fric[1].Set_Target_Omega_Rpm(Fric_Low_Rpm_12m_s + Fric_Transform_Rpm);
             Fric[2].Set_Target_Omega_Rpm(-(Fric_High_Rpm_12m_s + Fric_Transform_Rpm));

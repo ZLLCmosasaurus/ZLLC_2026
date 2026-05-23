@@ -478,14 +478,14 @@ void Class_Chariot::Control_Chassis()
         if (DR16.Get_Left_Switch() == DR16_Switch_Status_UP) // 左上 小陀螺模式
         {
             // 吊射模式 失能底盘
-            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
-            // Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SPIN_Positive);
-            // chassis_omega = Chassis.Get_Spin_Omega();
-            // if (DR16.Get_Right_Switch() == DR16_Switch_Status_DOWN) // 右下 小陀螺反向
-            // {
-            //     Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SPIN_Negative);
-            //     chassis_omega = -Chassis.Get_Spin_Omega();
-            // }
+            // Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
+            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SPIN_Positive);
+            chassis_omega = Chassis.Get_Spin_Omega();
+            if (DR16.Get_Right_Switch() == DR16_Switch_Status_DOWN) // 右下 小陀螺反向
+            {
+                Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SPIN_Negative);
+                chassis_omega = -Chassis.Get_Spin_Omega();
+            }
         }
         if (DR16.Get_Left_Switch() == DR16_Switch_Status_DOWN) // 左下 位姿切换
         {
@@ -681,17 +681,21 @@ void Class_Chariot::Control_Chassis()
             // 按键X:切换位姿控制模式
             if (VT13.Get_Keyboard_Key_X() == VT13_Key_Status_TRIG_FREE_PRESSED)
             {
-                if (Chassis.Get_Pose_Control_Type() == Pose_DISABLE)
+                if (Chassis_Logics_Direction == Chassis_Logic_Direction_Positive)
                 {
-                    Chassis.Set_Pose_Control_Type(Pose_ENABLE);
+                    if (Chassis.Get_Pose_Control_Type() == Pose_DISABLE)
+                        Chassis.Set_Pose_Control_Type(Pose_ENABLE);
+                    else if (Chassis.Get_Pose_Control_Type() == Pose_ENABLE)
+                        Chassis.Set_Pose_Control_Type(Pose_STANDBY);
+                    else if (Chassis.Get_Pose_Control_Type() == Pose_STANDBY)
+                        Chassis.Set_Pose_Control_Type(Pose_DISABLE);
                 }
-                else if (Chassis.Get_Pose_Control_Type() == Pose_ENABLE)
+                else
                 {
-                    Chassis.Set_Pose_Control_Type(Pose_STANDBY);
-                }
-                else if (Chassis.Get_Pose_Control_Type() == Pose_STANDBY)
-                {
-                    Chassis.Set_Pose_Control_Type(Pose_DISABLE);
+                    if (Chassis.Get_Pose_Control_Type() == Pose_DISABLE)
+                        Chassis.Set_Pose_Control_Type(Pose_CONTRACT);
+                    else if(Chassis.Get_Pose_Control_Type() == Pose_CONTRACT)
+                        Chassis.Set_Pose_Control_Type(Pose_DISABLE);
                 }
             }
             // ·按键W：底盘往前运动·按键S：底盘往后运动·按键A：底盘往左运动·按键D：底盘往右运动
@@ -836,9 +840,9 @@ void Class_Chariot::Control_Gimbal()
         }
         else if (DR16.Get_Left_Switch() == DR16_Switch_Status_UP) // 左上
         {
-            Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_MINIPC); // 上位机控制
-            Gimbal.Set_Gimbal_Launch_Mode(Launch_Enable);               // 吊射
-            // Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
+            // Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_MINIPC); // 上位机控制
+            // Gimbal.Set_Gimbal_Launch_Mode(Launch_Enable);               // 吊射
+            Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
         }
         else // 其余位置都是遥控器控制
         {
@@ -969,12 +973,12 @@ void Class_Chariot::Control_Gimbal()
                 if (VT13.Get_Keyboard_Key_S() == VT13_Key_Status_TRIG_FREE_PRESSED)
                     base_pitch -= 0.2f;
                 if (VT13.Get_Keyboard_Key_A() == VT13_Key_Status_TRIG_FREE_PRESSED)
-                    base_yaw -= 0.4f;
-                if (VT13.Get_Keyboard_Key_D() == VT13_Key_Status_TRIG_FREE_PRESSED)
                     base_yaw += 0.4f;
+                if (VT13.Get_Keyboard_Key_D() == VT13_Key_Status_TRIG_FREE_PRESSED)
+                    base_yaw -= 0.4f;
             }
 
-            tmp_gimbal_yaw   = base_yaw;
+            tmp_gimbal_yaw = base_yaw;
             tmp_gimbal_pitch = base_pitch;
         }
     }
@@ -1065,8 +1069,8 @@ void Class_Chariot::Control_Booster()
         {
         case (DR16_Switch_Status_UP):
         {
-            Booster.Set_Shooter_Mode(Launcher);
-            MiniPC_Mode = MiniPC_RADAR;
+            // Booster.Set_Shooter_Mode(Launcher);
+            // MiniPC_Mode = MiniPC_RADAR;
             break;
         }
         case (DR16_Switch_Status_MIDDLE):

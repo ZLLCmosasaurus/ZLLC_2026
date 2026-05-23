@@ -53,8 +53,8 @@
 /* Private types -------------------------------------------------------------*/
 
 /* Private variables ---------------------------------------------------------*/
-uint32_t last_cnt_1 ,last_cnt_2;
-float dt_receive1,dt_receive2;
+uint32_t last_cnt_1 ,last_cnt_2 ,last_cnt_3;
+float dt_receive1,dt_receive2,dt_receive3;
 uint32_t init_finished =0 ;
 bool start_flag=0;
 //机器人控制对象
@@ -301,6 +301,7 @@ void Gimbal_Device_CAN3_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage){
     break;
     case (0x203):
     {
+        dt_receive3 = DWT_GetDeltaT(&last_cnt_3);
         chariot.Booster.Motor_Driver.CAN_RxCpltCallback(CAN_RxMessage->Data);
     }
     break;

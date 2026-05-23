@@ -654,18 +654,18 @@ void GIMLine_Init(void)
 	uint16_t y_bias = 0;
 
 	uint8_t N[] = "N";
-	uint8_t M[] = "M";
-	uint8_t F[] = "F";
+	uint8_t R[] = "R";
+	uint8_t A[] = "A";
 
 	P_graphic_data = Arc_Draw(1, Op_Add, 960, 540, 170, 190, 300, 260, 10, White, GIMLineName1);
 	memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
 	Send_UIPack(Drawing_Graphic1_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK);
 
-	Char_Draw(1, Op_Add, 886, 270, 20, sizeof(N), 2, White, GIMLineName2, N);
+	Char_Draw(1, Op_Add, 886, 270, 20, sizeof(A), 2, White, GIMLineName2, A);
 
-	Char_Draw(1, Op_Add, 952, 261, 20, sizeof(M), 2, White, GIMLineName3, M);
+	Char_Draw(1, Op_Add, 952, 261, 20, sizeof(R), 2, White, GIMLineName3, R);
 
-	Char_Draw(1, Op_Add, 1021, 270, 20, sizeof(F), 2, White, GIMLineName4, F);
+	Char_Draw(1, Op_Add, 1021, 270, 20, sizeof(N), 2, White, GIMLineName4, N);
 }
 /**********************************************************************************************************
  *函 数 名: SCapLine_Init
@@ -858,15 +858,15 @@ void GIMLine_Change(uint8_t Init_Cnt)
 
 	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
 
-	switch (JudgeReceiveData.Gimbal_Control_Type)
+	switch (JudgeReceiveData.Minipc_Mode)
 	{
-	case 1: // Gimbal_Control_Type_NORMAL
+	case 0: // Gimbal_Control_Type_NORMAL
 		P_graphic_data = Arc_Draw(0, optype, 960, 540, 170, 176, 300, 260, 10, Green, GIMLineName1);
 		break;
 	case 2: // Gimbal_Control_Type_MINIPC
 		P_graphic_data = Arc_Draw(0, optype, 960, 540, 176, 184, 300, 260, 10, Green, GIMLineName1);
 		break;
-	case 3: // Gimbal_Control_Type_FOLD
+	case 1: // Gimbal_Control_Type_FOLD
 		P_graphic_data = Arc_Draw(0, optype, 960, 540, 184, 190, 300, 260, 10, Green, GIMLineName1);
 		break;
 	default:
@@ -1100,7 +1100,7 @@ void GraphicSendtask(void)
 			break;
 		}
 
-		if (Last_JudgeReceiveData.Gimbal_Control_Type != JudgeReceiveData.Gimbal_Control_Type)
+		if (Last_JudgeReceiveData.Minipc_Mode != JudgeReceiveData.Minipc_Mode)
 		{
 			// 云台用户控制类型变化
 			ui_state = UI_STATE_STATUS_UPDATE;
@@ -1137,7 +1137,7 @@ void GraphicSendtask(void)
 			break;
 		case 2: // 云台控制类型
 			GIMLine_Change(0);
-			Last_JudgeReceiveData.Gimbal_Control_Type = JudgeReceiveData.Gimbal_Control_Type;
+			Last_JudgeReceiveData.Minipc_Mode = JudgeReceiveData.Minipc_Mode;
 			break;
 		case 3: // 底盘控制类型
 			Lanelines_Init();

@@ -411,8 +411,8 @@ protected:
     float Min_Pitch_Angle = -15.0f;
     float Min_Pitch_Angle_Radian = - PI *(15.0/180.0);
     // pitch轴最大值
-    float Max_Pitch_Angle = 40.0f ; //
-    float Max_Pitch_Angle_Radian = PI *(40.0/180.0);
+    float Max_Pitch_Angle = 43.5f ; //
+    float Max_Pitch_Angle_Radian = PI *(43.5/180.0);
 
     //内部变量 
 
