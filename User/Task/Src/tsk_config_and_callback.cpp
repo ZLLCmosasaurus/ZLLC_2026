@@ -555,7 +555,12 @@ void Task1ms_TIM4_Callback()
         chariot.Gimbal.Motor_Pitch.TIM_Process_PeriodElapsedCallback();                 //为了和普通发送分开，避免仲裁
 
         //生成正弦信号测试
+         static uint16_t count = 0;
+         count++;
+         if(count==2){
         Single_Time ++;
+        count =0;
+    }
         Sin_Single = 15.0f * sinf(2.0f * PI * 5.0f * Single_Time / 1000.0f);
         //用于生成控制巡航的正弦信号
         if (chariot.Gimbal.Get_last_Cruise_Mode()==0){

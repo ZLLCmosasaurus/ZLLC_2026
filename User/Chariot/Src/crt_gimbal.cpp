@@ -85,8 +85,8 @@ void Class_Gimbal::Init()
     // Motor_Pitch.Init(&hfdcan1, DJI_Motor_ID_0x206, DJI_Motor_Control_Method_ANGLE);
     // Motor_Pitch_LESO.Init(0.08, 20.0, 1.0, Observe_Motor_Omega, Motor_GM6020, 0.002f);
 
-    Motor_Pitch.PID_Angle.Init(0.3f, 0.0f, 0.0f, 0.0f, 10.0f, 10.0f);
-    Motor_Pitch.PID_Omega.Init(-200.0f, 0.0f, 0.0f, 0.0f, 2048.0f, 2048.0f);
+    Motor_Pitch.PID_Angle.Init(0.41f, 0.0f, 0.0017f, 0.0f, 10.0f, 10.0f);
+    Motor_Pitch.PID_Omega.Init(-200.0f, -100.f, 0.0f, 0.0f, 2048.0f, 2048.0f);
     Motor_Pitch.Init(&hfdcan1, DM_Motor_ID_0x02, DM_Motor_Control_Method_MIT_TORQUE, 0.0f, 30.0f, 7.0f);
 
     // Motor_Pitch.Set_Motor_Parameters(0.0f, 0.0f, 0.0f, 0.0f);
@@ -102,7 +102,7 @@ void Class_Gimbal::Init()
  * @brief 输出到电机
  *
  */
-float tmp_Target_Angle = 0.0f, tmp_Target_Pitch_Angle = 0.0f, test_c = 0;
+float tmp_Target_Angle = 0.0f, tmp_Target_Pitch_Angle = 0.0f, test_c =  0.5895f;
 extern float Sin_Single;
 
 void Class_Gimbal::Output()
@@ -130,6 +130,7 @@ void Class_Gimbal::Output()
             Motor_Pitch.Set_DM_Motor_Control_Alg(DM_PID_Angle);
 
             Target_Yaw_Angle = tmp_Target_Angle;
+            //Target_Pitch_Angle=Sin_Single;
            // Target_Pitch_Angle = tmp_Target_Pitch_Angle;//会和dr16的遥控器输入冲突
             //对于大Yaw控制的突变点与优劣弧处理       0--2*PI
             Angle_Continuity_Process(&Target_Main_Yaw_Angle, Boardc_BMI.Get_Angle_Yaw());
@@ -419,7 +420,7 @@ void Class_Gimbal::TIM_Calculate_PeriodElapsedCallback()
     Motor_Main_Yaw.TIM_Process_PeriodElapsedCallback();
 
     if(Get_Gimbal_Control_Type() != Gimbal_Control_Type_DISABLE){
-        Pitch_Compensite_Output = test_c * cosf(Motor_Pitch.Get_Transform_Angle() / 57.3f);
+        Pitch_Compensite_Output = test_c * cosf(Motor_Pitch.Get_Transform_Angle() / 57.3f + atan2f(9.718f, 58.285f));
         // Pitch_Compensite_Output = Motor_Pitch_LESO.Get_Compensation_Out();
         Motor_Pitch.Compensite_Out(Pitch_Compensite_Output);
     }

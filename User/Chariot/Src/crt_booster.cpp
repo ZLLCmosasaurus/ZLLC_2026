@@ -263,7 +263,7 @@ void Class_Booster::Output()
             dttt = DWT_GetDeltaT(&single_t);
               
             Driver_Angle = Now_Angle;
-            if (Heat + (Cooling_Value < 80.0f ? 4 : 7) * Heat_Consumption - Cooling_Value * dttt <= Heat_Max) {
+            if (Heat + 5.5 * Heat_Consumption - Cooling_Value * dttt <= Heat_Max) {
                 Driver_Angle += 2.0f * PI / 9.0f;
             }
             // }}else{

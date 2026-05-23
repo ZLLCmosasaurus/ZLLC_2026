@@ -914,7 +914,7 @@ void Class_Chariot::Control_Booster()
                 if(MiniPC.Get_mode()==2){
                     if(Booster.Get_Cooling_Value()<80){
                         float now = DWT_GetTimeline_s();  
-                    if((now - last_shot_time) > 0.15f)
+                    if((now - last_shot_time) > 0.05f)
                     {
 
                     Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
@@ -922,7 +922,7 @@ void Class_Chariot::Control_Booster()
             
                 }
                     }else{
-                        Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                        Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
                     }
                     //Shoot_Flag = 1;
                 }
@@ -975,10 +975,22 @@ void Class_Chariot::Control_Booster()
                 Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
                 Shoot_Flag = 0;
             }
-            else if (switch_state == FS_Switch_Status_DOWN && Shoot_Flag == 0) // lian发
+            else if (switch_state == FS_Switch_Status_DOWN ) // lian发
     {
-                 Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
-                 Shoot_Flag = 1;
+                //  
+                // if(Booster.Get_Cooling_Value()<80){
+                //         float now = DWT_GetTimeline_s();  
+                //     if((now - last_shot_time) > 0.05f)
+                //     {
+
+                //     Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                //     last_shot_time = now;
+            
+                // }
+                //     }else{
+                //         Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+                //     }
+                Booster.Set_Booster_Control_Type(Booster_Control_Type_REPEATED);
                 
             }
            
