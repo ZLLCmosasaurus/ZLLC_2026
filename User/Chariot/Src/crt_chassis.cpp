@@ -610,16 +610,13 @@ void Class_Mecanum_Chassis::Output()
     else
     {
         // 抬升电机
+        Calibration_FSM.Reload_TIM_Status_PeriodElapsedCallback();
         if (Calibration_FSM.uplift_cali)
         {
             for (int i = 0; i < 4; i++)
             {
                 Uplift_Motor[i].Set_Target_Radian(Target_Uplift_Motor_Radian[i]);
             }
-        }
-        else
-        {
-            Calibration_FSM.Reload_TIM_Status_PeriodElapsedCallback();
         }
 
         for (int i = 0; i < 4; i++)
@@ -729,6 +726,13 @@ void Class_Mecanum_Chassis::TIM_Calculate_PeriodElapsedCallback(Enum_Sprint_Stat
 void Class_FSM_Calibration_Chassis::Reload_TIM_Status_PeriodElapsedCallback()
 {
     Status[Now_Status_Serial].Time++;
+
+    // 电机在线状态检测
+    for(int i = 0; i < 4; i++)
+    {
+        uplift_online_status[i] = (Chassis->Uplift_Motor[i].Get_DJI_Motor_Status() == DJI_Motor_Status_ENABLE);
+    }
+
     switch (Now_Status_Serial)
     {
     case (0):
@@ -765,13 +769,18 @@ void Class_FSM_Calibration_Chassis::Reload_TIM_Status_PeriodElapsedCallback()
             bool online_status = true;
             for (int i = 0; i < 4; i++)
             {
-                online_status = online_status && (Chassis->Uplift_Motor[i].Get_DJI_Motor_Status() == DJI_Motor_Status_ENABLE);
+                online_status = online_status && uplift_online_status[i];
             }
 
             if (!online_status)
             {
                 Set_Status(0);
                 uplift_cali = false;
+
+                uplift_cali_status[0] = false;
+                uplift_cali_status[1] = false;
+                uplift_cali_status[2] = false;
+                uplift_cali_status[3] = false;
             }
 
             break;
@@ -785,8 +794,8 @@ void Class_FSM_Calibration_Chassis::Reload_TIM_Status_PeriodElapsedCallback()
  */
 bool Class_FSM_Calibration_Chassis::Motor_Calibration(Class_DJI_Motor_C620 *Motor, uint8_t i, float locked_torque, uint16_t &locked_cnt)
 {
-    Motor->Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
-    Motor->Set_Target_Radian(30.0f);
+    Motor->Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
+    Motor->Set_Target_Omega_Radian(5.0f * PI);
 
     if ((fabs(Motor->Get_Now_Torque()) >= locked_torque) && (Motor->Get_Now_Omega_Radian() <= 0.01f))
     {
@@ -794,6 +803,8 @@ bool Class_FSM_Calibration_Chassis::Motor_Calibration(Class_DJI_Motor_C620 *Moto
         if (locked_cnt >= 50)
         {
             locked_cnt = 0;
+
+            Motor->Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
 
             uplift_offset[i] = Motor->Get_Now_Radian();
 

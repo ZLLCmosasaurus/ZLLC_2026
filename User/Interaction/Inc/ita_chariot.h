@@ -372,9 +372,6 @@ protected:
 #endif
 
 #ifdef GIMBAL
-    // 机械臂在线状态，当所有电机全掉线时视为机械臂掉线，需要重新arm_init
-    bool is_arm_online = true;
-
     // 遥控器相关变量
     // 遥控器拨动的死区, 0~1
     float DR16_Dead_Zone = 0.3f;

@@ -399,7 +399,7 @@ void Class_Chariot::CAN_Gimbal_Tx_Chassis_Callback()
     Enum_Chassis_Control_Type chassis_control_type;
     // 底盘坐标系速度目标值 float
     float chassis_velocity_x = 0, chassis_velocity_y = 0, chassis_yaw = 0;
-    bool yaw_data_is_radian = (Keyboard_Control_Type == Keyboard_Control_Type_MOVING);
+    bool yaw_data_is_radian = false;
     // 抬升控制选择
     bool uplift_select[4];
     // 抬升方向设置
@@ -477,7 +477,7 @@ void Class_Chariot::Control_Chassis()
     float chassis_velocity_x = 0.0f;
     float chassis_velocity_y = 0.0f;
     float chassis_delta_radian = 0.0f;
-    bool yaw_data_is_radian = (Keyboard_Control_Type == Keyboard_Control_Type_MOVING);
+    bool yaw_data_is_radian = false;
     bool lift_select[4] = {false, false, false, false};
     Enum_Lift_Direction lift_drc[4] = {Lift_Direction_HOLD, Lift_Direction_HOLD, Lift_Direction_HOLD, Lift_Direction_HOLD};
     Enum_Wheel_Slave_Status wheel_slave_status = Chassis.Get_Wheel_Slave_Status();
@@ -1806,19 +1806,13 @@ void Class_Chariot::Judge_Chariot_Control_Type()
         case (Keyboard_Control_Type_SAVE_LOAD):
         {
             Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
-            if (Gimbal.arm_init)
-            {
-                Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL);
-            }
+            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_NORMAL);
             break;
         }
         case (Keyboard_Control_Type_UPLIFT):
         {
             Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
-            if (Gimbal.arm_init)
-            {
-                Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SLOPE);
-            }
+            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SLOPE);
             break;
         }
         default:
@@ -2003,16 +1997,6 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
         {
             Gimbal.Jodell_ERG150T.TIM1msMod50_Alive_PeriodElapsedCallback();
         }
-
-        is_arm_online = (Gimbal.J0_Pitch_4340.Get_DM_Motor_Status() == DJI_Motor_Status_ENABLE ||
-                         Gimbal.J1_Yaw_8009P.Get_DM_Motor_Status() == DJI_Motor_Status_ENABLE ||
-                         Gimbal.J2_Yaw_4340P.Get_DM_Motor_Status() == DJI_Motor_Status_ENABLE ||
-                         Gimbal.J3_Roll_2325.Get_DM_Motor_Status() == DJI_Motor_Status_ENABLE ||
-                         Gimbal.J4_Pitch_2325.Get_DM_Motor_Status() == DJI_Motor_Status_ENABLE ||
-                         Gimbal.Jodell_ERG150T.Get_Motor_Working_Status() == Jodell_Motor_Working_ENABLE);
-
-        if (!is_arm_online)
-            Gimbal.arm_init = false; // 如果机械臂掉线，arm_init设为false
 
         Gimbal.Boardc_BMI.TIM1msMod50_Alive_PeriodElapsedCallback();
 

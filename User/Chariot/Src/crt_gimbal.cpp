@@ -75,17 +75,26 @@ void Class_Gimbal::Output()
         J3_Roll_2325.Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
         J4_Pitch_2325.Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
         Jodell_ERG150T.Set_Motor_Control_Status(Jodell_Motor_Control_DISABLE);
-
-        // 测试完成后去掉注释
-        arm_init = false;
-        Calibration_FSM.Set_Status(0);
     }
     else // 非失能模式
     {
+        // 速度规划器
+        Set_Planner_Enable(Gimbal_Joint_J1_Yaw, true);
+        Set_Planner_Enable(Gimbal_Joint_J2_Yaw, true);
+        // 校准和初始化状态机，重新上电后触发
+        Calibration_FSM.Reload_TIM_Status_PeriodElapsedCallback();
         if (arm_init)
         {
             if (Gimbal_Control_Type == Gimbal_Control_Type_NORMAL)
             {
+                // 电机使能
+                J0_Pitch_4340.Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
+                J1_Yaw_8009P.Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
+                J2_Yaw_4340P.Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
+                J3_Roll_2325.Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
+                J4_Pitch_2325.Set_DM_Control_Status(DM_Motor_Control_Status_ENABLE);
+                Jodell_ERG150T.Set_Motor_Control_Status(Jodell_Motor_Control_ENABLE);
+
                 J0_Pitch_4340.Set_Target_Omega(Target_J0_Pitch_Omega);
                 J0_Pitch_4340.Set_Target_Angle(Target_J0_Pitch_Radian);
 
@@ -118,11 +127,6 @@ void Class_Gimbal::Output()
             else if ((Get_Gimbal_Control_Type() == Gimbal_Control_Type_MINIPC) && (MiniPC->Get_MiniPC_Status() == MiniPC_Status_DISABLE))
             {
             }
-        }
-        else
-        /*将机械臂调整到初始姿态，只有在整车上电和整臂断电重连（机器人复活）时才会触发，2325的放在校准状态机*/
-        {
-            Calibration_FSM.Reload_TIM_Status_PeriodElapsedCallback();
         }
     }
 }
@@ -238,13 +242,10 @@ void Class_FSM_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
             Gimbal->Jodell_ERG150T.Set_Target_Omega(2.0f * PI);
             Gimbal->Jodell_ERG150T.Set_Target_Roll(0.0f);
 
-            bool init_flag =
-                (fabs(Gimbal->J0_Pitch_4340.Get_Target_Angle() - Gimbal->J0_Pitch_4340.Get_Now_Angle_Rad()) < 0.05f) &&
-                (fabs(Gimbal->J1_Yaw_8009P.Get_Target_Angle() - Gimbal->J1_Yaw_8009P.Get_Now_Angle_Rad()) < 0.05f) &&
-                (fabs(Gimbal->J2_Yaw_4340P.Get_Target_Angle() - Gimbal->J2_Yaw_4340P.Get_Now_Angle_Rad()) < 0.05f) &&
-                (Gimbal->Jodell_ERG150T.Get_Motor_Working_Status() == Jodell_Motor_Working_ENABLE) &&
-                (Gimbal->Jodell_ERG150T.Get_Now_Omega() <= 0.1f) &&
-                (true);
+            bool init_flag = Gimbal->J0_Pitch_4340.Get_DM_Motor_Status() == DM_Motor_Status_ENABLE &&
+                             Gimbal->J1_Yaw_8009P.Get_DM_Motor_Status() == DM_Motor_Status_ENABLE &&
+                             Gimbal->J2_Yaw_4340P.Get_DM_Motor_Status() == DM_Motor_Status_ENABLE &&
+                             Status[Now_Status_Serial].Time >= 750; // 确保电机有足够的时间转到初始位置
 
             if (init_flag)
             {
@@ -320,7 +321,7 @@ void Class_FSM_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
 
             bool finish_flag =
                 (fabs((Gimbal->J3_Roll_2325.Get_Target_Angle()) - Gimbal->J3_Roll_2325.Get_Now_Angle_Rad()) < 0.1f) &&
-                (fabs((Gimbal->J4_Pitch_2325.Get_Target_Angle()) - Gimbal->J4_Pitch_2325.Get_Now_Angle_Rad()) < 0.1f) &&
+                (fabs((Gimbal->J4_Pitch_2325.Get_Target_Angle()) - Gimbal->J4_Pitch_2325.Get_Now_Angle_Rad()) < 1.5f) &&
                 (true);
 
             if (finish_flag)
@@ -335,6 +336,21 @@ void Class_FSM_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
 
     case (3):
     {
+        Gimbal->is_arm_online = (Gimbal->J0_Pitch_4340.Get_DM_Motor_Status() == DJI_Motor_Status_ENABLE &&
+                                 Gimbal->J1_Yaw_8009P.Get_DM_Motor_Status() == DJI_Motor_Status_ENABLE &&
+                                 Gimbal->J2_Yaw_4340P.Get_DM_Motor_Status() == DJI_Motor_Status_ENABLE &&
+                                 Gimbal->J3_Roll_2325.Get_DM_Motor_Status() == DJI_Motor_Status_ENABLE &&
+                                 Gimbal->J4_Pitch_2325.Get_DM_Motor_Status() == DJI_Motor_Status_ENABLE);
+
+        if (!Gimbal->is_arm_online)
+        {
+            // 如果机械臂掉线，arm_init设为false
+            Gimbal->arm_init = false;
+            // 清空校准状态标志位，使之可以重新进入校准状态机
+            pitch_cali_status = false;
+            roll_cali_status = false;
+            Set_Status(0);
+        }
 
         break;
     }

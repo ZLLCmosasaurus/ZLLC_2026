@@ -289,6 +289,8 @@ public:
 
     /*机械臂DH建模*/
     Class_Trajectory_Tracer Trajectory_Tracer;
+    // 机械臂在线状态，当所有电机全掉线时视为机械臂掉线，需要重新arm_init
+    bool is_arm_online = true;
     /*机械整臂初始化标志位*/
     bool arm_init = false;
 

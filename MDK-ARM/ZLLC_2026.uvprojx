@@ -1072,26 +1072,6 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>UI</GroupName>
-          <Files>
-            <File>
-              <FileName>rm_ui_app.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\UI\Src\rm_ui_app.c</FilePath>
-            </File>
-            <File>
-              <FileName>ui_g.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\UI\Src\ui_g.c</FilePath>
-            </File>
-            <File>
-              <FileName>ui_interface.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\UI\Src\ui_interface.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
           <GroupName>::CMSIS</GroupName>
         </Group>
       </Groups>
