@@ -1768,7 +1768,15 @@ void Class_Chariot::Controller_Data_Update()
         }
         case (DR16_Switch_Status_MIDDLE):
         {
-            Keyboard_Control_Type = Keyboard_Control_Type_MOVING;
+            if (Keyboard_Control_Type == Keyboard_Control_Type_DISABLE || Keyboard_Control_Type == Keyboard_Control_Type_WORKING)
+            {
+
+                Keyboard_Control_Type = Keyboard_Control_Type_MOVING;
+            }
+            else
+            {
+                Keyboard_Control_Type = Keyboard_Control_Type;
+            }
             break;
         }
         case (DR16_Switch_Status_DOWN):
@@ -1790,7 +1798,14 @@ void Class_Chariot::Controller_Data_Update()
         }
         case (VT13_Switch_Status_Middle):
         {
-            Keyboard_Control_Type = Keyboard_Control_Type_MOVING;
+            if (Keyboard_Control_Type == Keyboard_Control_Type_DISABLE || Keyboard_Control_Type == Keyboard_Control_Type_WORKING)
+            {
+                Keyboard_Control_Type = Keyboard_Control_Type_MOVING;
+            }
+            else
+            {
+                Keyboard_Control_Type = Keyboard_Control_Type;
+            }
             break;
         }
         case (VT13_Switch_Status_Right):
