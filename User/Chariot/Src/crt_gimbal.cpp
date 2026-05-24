@@ -85,12 +85,13 @@ void Class_Gimbal::Init()
     // Motor_Pitch.Init(&hfdcan1, DJI_Motor_ID_0x206, DJI_Motor_Control_Method_ANGLE);
     // Motor_Pitch_LESO.Init(0.08, 20.0, 1.0, Observe_Motor_Omega, Motor_GM6020, 0.002f);
 
-    Motor_Pitch.PID_Angle.Init(0.41f, 0.0f, 0.0017f, 0.0f, 10.0f, 10.0f);
-    Motor_Pitch.PID_Omega.Init(-200.0f, -100.f, 0.0f, 0.0f, 2048.0f, 2048.0f);
+    Motor_Pitch.PID_Angle.Init(0.41f, 0.0f, 0.0017f, 0.0f, 2.0f, 5.0f);
+    Motor_Pitch.PID_Omega.Init(-100.0f, -50.f, 0.0f, 0.0f, 2048.0f, 2048.0f);
     Motor_Pitch.Init(&hfdcan1, DM_Motor_ID_0x02, DM_Motor_Control_Method_MIT_TORQUE, 0.0f, 30.0f, 7.0f);
 
     // Motor_Pitch.Set_Motor_Parameters(0.0f, 0.0f, 0.0f, 0.0f);
-    Motor_Yaw.Set_Motor_Parameters(0.012f, 0.0f, 0.0f, 0.0f);
+    Motor_Yaw.Set_Motor_Parameters(0.0085f, 0.0f, 0.0f, 0.0f);
+    Motor_Pitch.Set_Motor_Parameters(0.0097f, 0.0f, 0.0f, 0.0f);
 
     External_IMU_Gyro_Yaw.Init(0.99,0.07);
     External_IMU_Gyro_Pitch.Init(0.99,0.07);
@@ -146,8 +147,8 @@ void Class_Gimbal::Output()
 
             Motor_Yaw.Set_Transform_Target_Vel(0.0f);
             Motor_Yaw.Set_Transform_Target_Acc(0.0f);
-            // Motor_Pitch.Set_Transform_Target_Vel(0.0f);
-            // Motor_Pitch.Set_Transform_Target_Acc(0.0f);
+            Motor_Pitch.Set_Transform_Target_Vel(0.0f);
+            Motor_Pitch.Set_Transform_Target_Acc(0.0f);
 
             pre_yaw_angle      = 0.0f;
             pre_pitch_angle    = Motor_Pitch.Get_Transform_Angle();
@@ -244,8 +245,8 @@ void Class_Gimbal::Output()
                     Target_Yaw_Angle = MiniPC_Target_Yaw - Motor_Main_Yaw.Get_Transform_Angle();
                     Target_Pitch_Angle = MiniPC_Target_Pitch;
                     
-                    pre_yaw_angle = Motor_Yaw.Get_Zero_Offset_Angle();
-                    pre_pitch_angle = Motor_Pitch.Get_Transform_Angle();
+                    pre_yaw_angle = Target_Yaw_Angle;
+                    pre_pitch_angle = Target_Pitch_Angle;
                 }
 
                 // 怕超出限位到死区
@@ -259,8 +260,8 @@ void Class_Gimbal::Output()
 
                 Motor_Yaw.Set_Transform_Target_Vel(MiniPC->Get_yaw_vel() / 57.3f);
                 Motor_Yaw.Set_Transform_Target_Acc(MiniPC->Get_yaw_acc() / 57.3f);
-                // Motor_Pitch.Set_Transform_Target_Vel(MiniPC->Get_pitch_vel() / 57.3f);
-                // Motor_Pitch.Set_Transform_Target_Acc(MiniPC->Get_pitch_acc() / 57.3f);
+                Motor_Pitch.Set_Transform_Target_Vel(MiniPC->Get_pitch_vel() / 57.3f);
+                Motor_Pitch.Set_Transform_Target_Acc(MiniPC->Get_pitch_acc() / 57.3f);
 
                 if (MiniPC->Get_mode() == 3)
                 {
@@ -312,8 +313,8 @@ void Class_Gimbal::Output()
                 Motor_Pitch.Set_Target_Angle(Target_Pitch_Angle);
                 Motor_Yaw.Set_Transform_Target_Vel(0.0f);
                 Motor_Yaw.Set_Transform_Target_Acc(0.0f);
-                // Motor_Pitch.Set_Transform_Target_Vel(0.0f);
-                // Motor_Pitch.Set_Transform_Target_Acc(0.0f);
+                Motor_Pitch.Set_Transform_Target_Vel(0.0f);
+                Motor_Pitch.Set_Transform_Target_Acc(0.0f);
 
                 pre_yaw_angle = Motor_Yaw.Get_Zero_Offset_Angle();
                 pre_pitch_angle = Motor_Pitch.Get_Transform_Angle();
@@ -342,8 +343,8 @@ void Class_Gimbal::Output()
 
             Motor_Yaw.Set_Transform_Target_Vel(0.0f);
             Motor_Yaw.Set_Transform_Target_Acc(0.0f);
-            // Motor_Pitch.Set_Transform_Target_Vel(0.0f);
-            // Motor_Pitch.Set_Transform_Target_Acc(0.0f);
+            Motor_Pitch.Set_Transform_Target_Vel(0.0f);
+            Motor_Pitch.Set_Transform_Target_Acc(0.0f);
 
             camera_switch_status = 0;
             camera_switch_time = 0;

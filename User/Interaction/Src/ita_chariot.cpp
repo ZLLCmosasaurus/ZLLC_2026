@@ -911,17 +911,20 @@ void Class_Chariot::Control_Booster()
                     break;
                 }
 
-                if(MiniPC.Get_mode()==2){
-                    if(Booster.Get_Cooling_Value()<80){
-                        float now = DWT_GetTimeline_s();  
-                    if((now - last_shot_time) > 0.05f)
+                if (MiniPC.Get_mode() == 2)
+                {
+                    if (Booster.Get_Cooling_Value() < 80)
                     {
+                        float now = DWT_GetTimeline_s();
+                        if ((now - last_shot_time) > 0.2f)
+                        {
 
-                    Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
-                    last_shot_time = now;
-            
-                }
-                    }else{
+                            Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                            last_shot_time = now;
+                        }
+                    }
+                    else
+                    {
                         Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
                     }
                     //Shoot_Flag = 1;

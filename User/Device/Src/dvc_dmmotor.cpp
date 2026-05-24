@@ -412,6 +412,9 @@ void Class_DM_Motor_J4310::TIM_PID_PeriodElapsedCallback()
                 PID_Omega.TIM_Adjust_PeriodElapsedCallback();
 
                 Out = PID_Omega.Get_Out();
+                float tmp_Torque = J * Transform_Target_Acc + B * Transform_Target_Vel;  //简单的动力学补偿，参数需要根据实际负载测量后赋值
+                Out += tmp_Torque / (Torque_Max / 2048.0f);
+
                 Output_Torque = Torque_Max / 2048.0f * Out;
             }
             else if(DM_Motor_Control_Alg == DM_Motor_DISANLE){

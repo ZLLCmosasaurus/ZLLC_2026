@@ -33,7 +33,7 @@
 
 #define CRUISE_PITCH_SPEED 0.025 * 57.3f          //angle
 #define CRUISE_YAW_SPEED   1.3f                 //rad
-#define LIMIT_YAW_ANGLE    40.0f
+#define LIMIT_YAW_ANGLE    70.0f
 
 /**
  * @brief 云台控制类型
@@ -300,7 +300,7 @@ protected:
 
     //读变量
 // ---------- 巡航正弦参数（常量）----------
-    static constexpr float YAW_AMPLITUDE   = 40.0f;   // 振幅，范围 [-60, 60]
+    static constexpr float YAW_AMPLITUDE   = 70.0f;   // 振幅，范围 [-60, 60]
     static constexpr float YAW_OFFSET      = 0.0f;    // 偏置
     static constexpr float YAW_FREQ        = 0.6f;    // 频率 (Hz)
 

@@ -156,6 +156,9 @@ public:
     inline void Set_Target_Torque(float __Target_Torque);
     inline void Set_Transform_Angle(float __Transform_Angle);
     inline void Set_Transform_Omega(float __Transform_Omega);
+    inline void Set_Transform_Target_Vel(float __Transform_Target_Vel);
+    inline void Set_Transform_Target_Acc(float __Transform_Target_Acc);
+    inline void Set_Motor_Parameters(float __J, float __B, float __Mgl, float __C);
 
     void CAN_RxCpltCallback(uint8_t *Rx_Data);
     void TIM_Alive_PeriodElapsedCallback();
@@ -199,6 +202,12 @@ protected:
     Struct_DM_Motor_Rx_Data Data;
 
     //写变量
+    float J = 0.f;
+    float B = 0.0f;
+    float Mgl = 0.0f;
+    float C = 0.0f;
+    float Transform_Target_Vel = 0.0f;                  //角度环的前馈
+    float Transform_Target_Acc = 0.0f;                  //速度环的前馈
 
     //读写变量
 
@@ -469,6 +478,24 @@ inline void Class_DM_Motor_J4310::Set_Transform_Angle(float __Transform_Angle)
 inline void Class_DM_Motor_J4310::Set_Transform_Omega(float __Transform_Omega)
 {
     Transform_Omega = __Transform_Omega;
+}
+
+inline void Class_DM_Motor_J4310::Set_Transform_Target_Vel(float __Transform_Target_Vel)
+{
+    Transform_Target_Vel = __Transform_Target_Vel;
+}
+
+inline void Class_DM_Motor_J4310::Set_Transform_Target_Acc(float __Transform_Target_Acc)
+{
+    Transform_Target_Acc = __Transform_Target_Acc;
+}
+
+inline void Class_DM_Motor_J4310::Set_Motor_Parameters(float __J, float __B, float __Mgl, float __C)
+{
+    J = __J;
+    B = __B;
+    Mgl = __Mgl;
+    C = __C;
 }
 
 #endif
