@@ -5,9 +5,8 @@
 #include "crt_chassis.h"
 #include "dvc_referee.h"
 
-#ifndef PI
 #define PI 3.14159f
-#endif
+#define Reference_Angle__ 1.2372514f
 #define DMA_FLAG_TCIF4 ((uint32_t)0x20000020)
 /*��Ļ����*/
 #define SCREEN_WIDTH 1080
@@ -20,7 +19,7 @@
 #define CRC_LEN 2		  // β��CRC16У��
 #define DRAWING_PACK 15	  // ��1��ͼ���ݰ�����
 
-#define REFEREE_DMA_TX_QUEUE_DEPTH 8
+#define REFEREE_DMA_TX_QUEUE_DEPTH 4
 #define REFEREE_DMA_MAX_PACKET_LEN SEND_MAX_SIZE
 
 typedef struct {
@@ -259,6 +258,7 @@ typedef struct
 	float Supercap_Voltage;
 	float Pitch_Angle;
 	float Chassis_Gimbal_Diff;
+	float Yaw_Angle;
 
 } JudgeReceive_t;
 
@@ -269,10 +269,7 @@ void referee_data_load_Graphic(int Op_type);
 
 void referee_data_load_shootUI(uint8_t operate_type, uint8_t robot_level);
 void referee_data_load_NumberUI(void);
-void GraphUI_Init(uint16_t self_id);
 void GraphicSendtask(void);
-void GraphSendTask_ResetInit(void);
-void GraphUI_OnTxComplete(void);
 
 void GraphUI_SetLift(float rf_percent, float lf_percent, float rb_percent, float lb_percent);
 void GraphUI_SetPower(float power_percent);
@@ -302,7 +299,6 @@ graphic_data_struct_t *Line_Draw(uint8_t layer, int Op_Type, uint16_t startx, ui
 graphic_data_struct_t *Rectangle_Draw(uint8_t layer, int Op_Type, uint16_t startx, uint16_t starty, uint16_t endx, uint16_t endy, uint16_t line_width, int color, uint8_t name[]);
 graphic_data_struct_t *FloatData_Draw(uint8_t layer, int Op_Type, uint16_t startx, uint16_t starty, float data_f, uint8_t size, uint8_t valid_bit, uint16_t line_width, int color, uint8_t name[]);
 graphic_data_struct_t *CharGraphic_Draw(uint8_t layer, int Op_Type, uint16_t startx, uint16_t starty, uint8_t size, uint8_t len, uint16_t line_width, int color, uint8_t name[]);
-graphic_data_struct_t *IntData_Draw(uint8_t layer, int Op_Type, uint16_t startx, uint16_t starty, int32_t data_i, uint8_t size, uint16_t line_width, int color, uint8_t name[]);
 
 extern F405_typedef F405;
 
@@ -322,6 +318,9 @@ void BoostLine_Change(void);
 void GIMLine_Change(uint8_t Init_Cnt);
 void PitchUI_Change(float Pitch, uint8_t Init_Cnt);
 //void CharChange(uint8_t Init_Flag);
+
+void PitchValue_Change(float pitch, uint8_t Init_Cnt);
+void YawValue_Change(float yaw, uint8_t Init_Cnt);
 
 void Char_Draw(uint8_t layer, int Op_Type, uint16_t startx, uint16_t starty, uint8_t size, uint8_t len, uint16_t line_width, int color, uint8_t name[], uint8_t *str_data);
 
@@ -344,5 +343,8 @@ extern unsigned char JudgeSend[SEND_MAX_SIZE];
 extern JudgeReceive_t JudgeReceiveData;
 extern JudgeReceive_t Last_JudgeReceiveData;
 extern uint8_t Init_Cnt;
+extern volatile uint8_t referee_dma_busy;
+extern uint32_t last_update_time_value;
+extern uint8_t referee_dma_count;
 
 #endif

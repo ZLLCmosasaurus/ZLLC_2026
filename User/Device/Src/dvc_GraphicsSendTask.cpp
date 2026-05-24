@@ -11,14 +11,6 @@
 #include "usart.h"
 #include <stdio.h>
 
-#if defined(GIMBAL) && defined(CHASSIS)
-#error "GIMBAL and CHASSIS cannot be defined at the same time"
-#endif
-
-#if !defined(GIMBAL) && !defined(CHASSIS)
-#error "Either GIMBAL or CHASSIS must be defined"
-#endif
-
 #define CAP_GRAPHIC_NUM 9 // 超级电容的电量显示细分个数
 #define Robot_ID 46
 unsigned char JudgeSend[SEND_MAX_SIZE];
@@ -129,44 +121,47 @@ uint8_t Transmit_Pack[128];				   // 裁判系统发送帧
 uint8_t data_pack[DRAWING_PACK * 7] = {0}; // 数据段部分
 uint8_t DMAsendflag;
 
-#define REFEREE_DMA_TX_QUEUE_DEPTH 8
+#define REFEREE_DMA_TX_QUEUE_DEPTH 40
 #define REFEREE_DMA_MAX_PACKET_LEN SEND_MAX_SIZE
 
 static RefereeDMAPacket_t referee_dma_queue[REFEREE_DMA_TX_QUEUE_DEPTH];
 static uint8_t referee_dma_head = 0;
 static uint8_t referee_dma_tail = 0;
-static uint8_t referee_dma_count = 0;
-static volatile uint8_t referee_dma_busy = 0;
+uint8_t referee_dma_count = 0;
+volatile uint8_t referee_dma_busy = 0;
 
 static inline uint8_t Referee_DMA_QueueFull(void)
 {
-    return referee_dma_count >= REFEREE_DMA_TX_QUEUE_DEPTH;
+	return referee_dma_count >= REFEREE_DMA_TX_QUEUE_DEPTH;
 }
 
 static inline uint8_t Referee_DMA_QueueEmpty(void)
 {
-    return referee_dma_count == 0;
+	return referee_dma_count == 0;
 }
 
 static void Referee_DMA_Dequeue(void)
 {
-    if (Referee_DMA_QueueEmpty()) {
-        return;
-    }
-    referee_dma_head = (referee_dma_head + 1) % REFEREE_DMA_TX_QUEUE_DEPTH;
-    referee_dma_count--;
+	if (Referee_DMA_QueueEmpty())
+	{
+		return;
+	}
+	referee_dma_head = (referee_dma_head + 1) % REFEREE_DMA_TX_QUEUE_DEPTH;
+	referee_dma_count--;
 }
 
 static void Referee_DMA_StartNext(void)
 {
-    if (referee_dma_busy || Referee_DMA_QueueEmpty()) {
-        return;
-    }
+	if (referee_dma_busy || Referee_DMA_QueueEmpty())
+	{
+		return;
+	}
 
-    uint16_t len = referee_dma_queue[referee_dma_head].len;
-    if (HAL_UART_Transmit_DMA(&huart10, referee_dma_queue[referee_dma_head].data, len) == HAL_OK) {
-        referee_dma_busy = 1;
-    }
+	uint16_t len = referee_dma_queue[referee_dma_head].len;
+	if (HAL_UART_Transmit_DMA(&huart10, referee_dma_queue[referee_dma_head].data, len) == HAL_OK)
+	{
+		referee_dma_busy = 1;
+	}
 }
 
 static void Referee_DMA_ClearQueue(void)
@@ -285,39 +280,20 @@ static uint8_t GraphUI_RemoteStateValid(const graph_ui_sync_t *state)
 
 void Referee_DMA_EnqueuePacket(const uint8_t *data, uint16_t len)
 {
-    if (len == 0 || len > REFEREE_DMA_MAX_PACKET_LEN) {
-        return;
-    }
+	if (len == 0 || len > REFEREE_DMA_MAX_PACKET_LEN)
+	{
+		return;
+	}
 
-    if (Referee_DMA_QueueFull()) {
-        return;
-    }
+	// if (Referee_DMA_QueueFull()) {
+	//     return;
+	// }
 
-    memcpy(referee_dma_queue[referee_dma_tail].data, data, len);
-    referee_dma_queue[referee_dma_tail].len = len;
-    referee_dma_tail = (referee_dma_tail + 1) % REFEREE_DMA_TX_QUEUE_DEPTH;
-    referee_dma_count++;
-    Referee_DMA_StartNext();
-}
-
-void GraphUI_Init(uint16_t self_id)
-{
-    g_graph_ui_self_id = self_id;
-    JudgeReceiveData.robot_id = (uint8_t)self_id;
-    memset(&Last_JudgeReceiveData, 0, sizeof(Last_JudgeReceiveData));
-    g_graph_ui_state.uplift_rf_percent = 0.0f;
-    g_graph_ui_state.uplift_lf_percent = 0.0f;
-    g_graph_ui_state.uplift_rb_percent = 0.0f;
-    g_graph_ui_state.uplift_lb_percent = 0.0f;
-    g_graph_ui_state.power_percent = 0.0f;
-    g_graph_ui_state.orientation_forehead = 1U;
-    g_graph_ui_state.speed = GRAPH_UI_SPEED_SLOW;
-    g_graph_ui_state.mode = GRAPH_UI_MODE_WORKING;
-    g_graph_ui_state.stage = 0U;
-    g_graph_ui_state.wheel = GRAPH_UI_WHEEL_ON;
-    g_graph_ui_state.gripper = GRAPH_UI_GRIPPER_CLOSE;
-    g_graph_ui_state.input = GRAPH_UI_INPUT_JOYSTICK;
-    GraphSendTask_ResetInit();
+	memcpy(referee_dma_queue[referee_dma_tail].data, data, len);
+	referee_dma_queue[referee_dma_tail].len = len;
+	referee_dma_tail = (referee_dma_tail + 1) % REFEREE_DMA_TX_QUEUE_DEPTH;
+	referee_dma_count++;
+	Referee_DMA_StartNext();
 }
 
 static void GraphUI_TxCompleteInternal(void)
@@ -465,10 +441,6 @@ void GraphUI_RemoteApply(const graph_ui_sync_t *state)
     g_graph_ui_state.gripper = GraphUI_SanitizeGripper(state->gripper);
     g_graph_ui_state.input = GraphUI_SanitizeInput(state->input);
 
-    if ((state->flags & GRAPH_UI_SYNC_FLAG_FULL_REFRESH) != 0U)
-    {
-        GraphSendTask_ResetInit();
-    }
 }
 /**********************************************************************************************************
  *函 数 名: Send_UIPack
@@ -519,15 +491,35 @@ void Send_toReferee(uint16_t cmd_id, uint16_t data_len)
 	Append_CRC16_Check_Sum(Transmit_Pack, Frame_Length);
 
 	// 对于状态变化类消息，增加发送次数为3次，提高可靠性
-	//uint8_t send_cnt = (cmd_id == Drawing_Char_ID) ? 3 : 1;
-	uint8_t send_cnt = 1;
+	uint8_t send_cnt = (cmd_id == Drawing_Char_ID) ? 3 : 1;
+	// uint8_t send_cnt = 3;
 	while (send_cnt)
 	{
 		send_cnt--;
 		Referee_DMA_EnqueuePacket(Transmit_Pack, Frame_Length);
 	}
 }
+uint32_t lastcnt;
+float dtw;
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
+	void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+	{
+		if (huart == &huart10)
+		{
+			dtw = 1.0f / DWT_GetDeltaT(&lastcnt);
+			// referee_dma_busy = 0;
+			// Referee_DMA_Dequeue();
+			// Referee_DMA_StartNext();
+		}
+	}
+
+#ifdef __cplusplus
+}
+#endif
 
 /**********************************************************************************************************
  *函 数 名: Deleta_Layer
@@ -719,7 +711,6 @@ graphic_data_struct_t *Arc_Draw(uint8_t layer, int Op_Type, uint16_t startx, uin
  *返 回 值: 无
  **********************************************************************************************************/
 
-#if 0
 void Lanelines_Init(void)
 {
 	static uint8_t LaneLineName1[] = "LL1";
@@ -730,24 +721,12 @@ void Lanelines_Init(void)
 	// 确定操作类型
 	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
 
-	if (JudgeReceiveData.Chassis_Control_Type == Chassis_Control_Type_Drive)
-	{
-		// 第一条车道线
-		P_graphic_data = Line_Draw(1, optype, 650, 0, 1145, 450, 4, Orange, LaneLineName1);
-		memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
-		// 第二条车道线
-		P_graphic_data = Line_Draw(1, optype, 1920, 180, 1419, 440, 4, Orange, LaneLineName2);
-		memcpy(&data_pack[DRAWING_PACK], (uint8_t *)P_graphic_data, DRAWING_PACK);
-	}
-	else
-	{
-		// 第一条车道线
-		P_graphic_data = Line_Draw(1, optype, SCREEN_LENGTH * 0.41, SCREEN_WIDTH * 0.3, SCREEN_LENGTH * 0.25, 0, 4, Orange, LaneLineName1);
-		memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
-		// 第二条车道线
-		P_graphic_data = Line_Draw(1, optype, SCREEN_LENGTH * 0.59, SCREEN_WIDTH * 0.3, SCREEN_LENGTH * 0.75, 0, 4, Orange, LaneLineName2);
-		memcpy(&data_pack[DRAWING_PACK], (uint8_t *)P_graphic_data, DRAWING_PACK);
-	}
+	// 第一条车道线
+	P_graphic_data = Line_Draw(1, optype, SCREEN_LENGTH * 0.41, SCREEN_WIDTH * 0.3, SCREEN_LENGTH * 0.25, 0, 4, Orange, LaneLineName1);
+	memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
+	// 第二条车道线
+	P_graphic_data = Line_Draw(1, optype, SCREEN_LENGTH * 0.59, SCREEN_WIDTH * 0.3, SCREEN_LENGTH * 0.75, 0, 4, Orange, LaneLineName2);
+	memcpy(&data_pack[DRAWING_PACK], (uint8_t *)P_graphic_data, DRAWING_PACK);
 
 	Send_UIPack(Drawing_Graphic2_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK * 2); // 发送两个图形
 }
@@ -992,9 +971,9 @@ void Pitch_Line_Init_3(void)
 void GIMLine_Init(void)
 {
 	static uint8_t GIMLineName1[] = "GL1";
-	static uint8_t GIMLineName2[] = "GL2";	
-	static uint8_t GIMLineName3[] = "GL3";	
-	static uint8_t GIMLineName4[] = "GL4";		
+	static uint8_t GIMLineName2[] = "GL2";
+	static uint8_t GIMLineName3[] = "GL3";
+	static uint8_t GIMLineName4[] = "GL4";
 	graphic_data_struct_t *P_graphic_data;
 
 	uint16_t x_bias = 0;
@@ -1011,7 +990,7 @@ void GIMLine_Init(void)
 	Char_Draw(1, Op_Add, 886, 270, 20, sizeof(N), 2, White, GIMLineName2, N);
 
 	Char_Draw(1, Op_Add, 952, 261, 20, sizeof(M), 2, White, GIMLineName3, M);
-	
+
 	Char_Draw(1, Op_Add, 1021, 270, 20, sizeof(F), 2, White, GIMLineName4, F);
 }
 /**********************************************************************************************************
@@ -1065,7 +1044,6 @@ void SCapLine_Change(void)
 
 	// 发送图形数据
 	Send_UIPack(Drawing_Graphic1_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK);
-
 }
 /**********************************************************************************************************
  *函 数 名: ChassisLine_Change
@@ -1085,7 +1063,7 @@ void ChassisLine_Change(float theta, uint8_t Init_Cnt)
 	graphic_data_struct_t *P_graphic_data;
 
 	theta = (int16_t)theta % 360;
-	theta = theta - Reference_Angle;
+	theta = theta - Reference_Angle__;
 
 	// 计算圆弧的起始和终止角度
 	// 随着夹角变化，圆弧整体旋转
@@ -1198,7 +1176,7 @@ void BoostLine_Change(void)
 void GIMLine_Change(uint8_t Init_Cnt)
 {
 	static uint8_t GIMLineName1[] = "GL5";
-	static uint8_t optype;	
+	static uint8_t optype;
 	graphic_data_struct_t *P_graphic_data;
 
 	uint16_t x_bias = 0;
@@ -1263,304 +1241,105 @@ void PitchUI_Change(float Pitch, uint8_t Init_Cnt)
 }
 
 /**********************************************************************************************************
+ *函 数 名: Scap_Change
+ *功能说明: 超电容量百分比
+ *形    参: 无
+ *返 回 值: 无
+ **********************************************************************************************************/
+uint16_t ababa = 0;
+void Scap_Change(float Scap_Percentage, uint8_t Init_Cnt)
+{
+	static uint8_t ScapLineName[] = "SCP";
+	static uint8_t optype;
+	graphic_data_struct_t *P_graphic_data;
+
+	uint16_t x_bias = 0;
+	uint16_t y_bias = 0;
+
+	// 圆弧半径
+	uint32_t radius = 300;
+
+	// 计算圆弧的起始和终止角度
+	uint16_t startAngle = 270;
+	uint16_t endAngle = (uint16_t)(startAngle + (Scap_Percentage / 100.0f) * 40); // 根据百分比计算结束角度
+	ababa = endAngle;
+
+	// 确定操作类型
+	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
+
+	P_graphic_data = Arc_Draw(0, optype, SCREEN_LENGTH * 0.5 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, startAngle, endAngle, 360, 360, 10, Green, ScapLineName);
+	memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
+
+	// 发送图形数据
+	Send_UIPack(Drawing_Graphic1_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK);
+}
+
+/**********************************************************************************************************
+ *函 数 名: PitchValue_Change
+ *功能说明: 显示Pitch角度数值（使用浮点图形）
+ *形    参: pitch       当前俯仰角（度）
+ *          Init_Cnt    初始化标志（0：正常更新，非0：强制以添加模式绘制）
+ *返 回 值: 无
+ **********************************************************************************************************/
+void PitchValue_Change(float pitch, uint8_t Init_Cnt)
+{
+	static uint8_t PitchValueName[] = "PVA";
+	static uint8_t optype;
+	graphic_data_struct_t *P_graphic_data;
+
+	if (pitch > 90.0f)
+		pitch = 90.0f;
+	if (pitch < -90.0f)
+		pitch = -90.0f;
+
+	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
+
+	// 字体大小20，颜色青色(Cyan)
+	P_graphic_data = FloatData_Draw(0, optype, 1593, 550, pitch, 20, 1, 1, Cyan, PitchValueName);
+	memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
+	Send_UIPack(Drawing_Graphic1_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK);
+}
+
+/**********************************************************************************************************
+ *函 数 名: YawValue_Change
+ *功能说明: 显示Yaw角度数值（使用浮点图形）
+ *形    参: yaw         当前偏航角（度）
+ *          Init_Cnt    初始化标志（0：正常更新，非0：强制以添加模式绘制）
+ *返 回 值: 无
+ **********************************************************************************************************/
+void YawValue_Change(float yaw, uint8_t Init_Cnt)
+{
+	static uint8_t YawValueName[] = "YVA";
+	static uint8_t optype;
+	graphic_data_struct_t *P_graphic_data;
+
+	if (yaw > 180.0f)
+		yaw = 180.0f;
+	if (yaw < -180.0f)
+		yaw = -180.0f;
+
+	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
+
+	// 字体大小20，颜色青色(Cyan)
+	P_graphic_data = FloatData_Draw(0, optype, 1593, 600, yaw, 20, 1, 1, Pink, YawValueName);
+	memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
+	Send_UIPack(Drawing_Graphic1_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK);
+}
+
+/**********************************************************************************************************
  *函 数 名: GraphicSendtask
  *功能说明: ͼ�η�������
  *形    参: ��
  *返 回 值: ��
  **********************************************************************************************************/
-#endif
-static uint16_t GraphUI_LiftStartY(float percent)
-{
-	float clamped = GraphUI_ClampPercent01(percent);
-	float height_f = 10.0f + clamped * 135.0f / 100.0f;
-	int height = GraphUI_RoundPositive(height_f);
-	return (uint16_t)(383 - height);
-}
-
-static uint16_t GraphUI_PowerEndX(void)
-{
-	float clamped = GraphUI_ClampMinZero(g_graph_ui_state.power_percent);
-	float width_f = 3.0f + clamped * 677.0f / 100.0f;
-	int end_x = 606 + GraphUI_RoundPositive(width_f);
-	if (end_x > 2047)
-	{
-		end_x = 2047;
-	}
-	return (uint16_t)end_x;
-}
-
-static void GraphUI_GetModeColors(uint8_t rect_colors[5], uint8_t text_colors[5])
-{
-	uint8_t i = 0;
-	for (i = 0; i < 5; i++)
-	{
-		rect_colors[i] = Orange;
-		text_colors[i] = Orange;
-	}
-
-	switch (g_graph_ui_state.mode)
-	{
-	case GRAPH_UI_MODE_MOVING:
-		rect_colors[1] = Green;
-		text_colors[1] = Green;
-		break;
-	case GRAPH_UI_MODE_UPLIFT:
-		rect_colors[2] = Green;
-		text_colors[2] = Green;
-		break;
-	case GRAPH_UI_MODE_DOWNLIFT:
-		rect_colors[3] = Green;
-		text_colors[3] = Green;
-		break;
-	case GRAPH_UI_MODE_SAVELOAD:
-		rect_colors[4] = Green;
-		text_colors[4] = Green;
-		break;
-	case GRAPH_UI_MODE_DISABLE:
-		break;
-	case GRAPH_UI_MODE_WORKING:
-	default:
-		rect_colors[0] = Green;
-		text_colors[0] = Green;
-		break;
-	}
-}
-
-static void GraphUI_SendFigureGroupA(uint8_t op_type)
-{
-	static uint8_t n0[] = "F00";
-	static uint8_t n1[] = "F01";
-	static uint8_t n2[] = "F02";
-	static uint8_t n3[] = "F03";
-	static uint8_t n4[] = "F04";
-	static uint8_t n5[] = "F05";
-	static uint8_t n6[] = "F06";
-	graphic_data_struct_t *p = NULL;
-	uint8_t power_color = (g_graph_ui_state.power_percent > 100.0f) ? 4U : Green;
-
-	p = Rectangle_Draw(0, op_type, 291, 171, 319, 319, 3, White, n0);
-	memcpy(&data_pack[DRAWING_PACK * 0], (uint8_t *)p, DRAWING_PACK);
-	p = Rectangle_Draw(0, op_type, 356, 171, 384, 319, 3, White, n1);
-	memcpy(&data_pack[DRAWING_PACK * 1], (uint8_t *)p, DRAWING_PACK);
-	p = Rectangle_Draw(0, op_type, 414, 171, 442, 319, 3, White, n2);
-	memcpy(&data_pack[DRAWING_PACK * 2], (uint8_t *)p, DRAWING_PACK);
-	p = Rectangle_Draw(0, op_type, 602, 90, 1329, 140, 3, White, n3);
-	memcpy(&data_pack[DRAWING_PACK * 3], (uint8_t *)p, DRAWING_PACK);
-	p = Circle_Draw(0, op_type, 958, 539, 80, 3, (g_graph_ui_state.speed == GRAPH_UI_SPEED_AXEL) ? Orange : Green, n4);
-	memcpy(&data_pack[DRAWING_PACK * 4], (uint8_t *)p, DRAWING_PACK);
-	p = Rectangle_Draw(0, op_type, 233, 171, 261, 319, 3, White, n5);
-	memcpy(&data_pack[DRAWING_PACK * 5], (uint8_t *)p, DRAWING_PACK);
-	p = Rectangle_Draw(0, op_type, 606, 94, GraphUI_PowerEndX(), 100, 40, power_color, n6);
-	memcpy(&data_pack[DRAWING_PACK * 6], (uint8_t *)p, DRAWING_PACK);
-	Send_UIPack(Drawing_Graphic7_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK * 7);
-}
-
-static void GraphUI_SendFigureGroupB(uint8_t op_type)
-{
-	static uint8_t n0[] = "F07";
-	static uint8_t n1[] = "F08";
-	static uint8_t n2[] = "F09";
-	static uint8_t n3[] = "F10";
-	static uint8_t n4[] = "F11";
-	static uint8_t n5[] = "F12";
-	static uint8_t n6[] = "F13";
-	graphic_data_struct_t *p = NULL;
-	uint8_t rect_colors[5];
-	uint8_t text_colors[5];
-	(void)text_colors;
-	GraphUI_GetModeColors(rect_colors, text_colors);
-
-	p = Rectangle_Draw(0, op_type, 235, GraphUI_LiftStartY(g_graph_ui_state.uplift_rf_percent), 235, 383, 25, Orange, n0);
-	memcpy(&data_pack[DRAWING_PACK * 0], (uint8_t *)p, DRAWING_PACK);
-	p = Rectangle_Draw(0, op_type, 294, GraphUI_LiftStartY(g_graph_ui_state.uplift_lf_percent), 294, 383, 25, Orange, n1);
-	memcpy(&data_pack[DRAWING_PACK * 1], (uint8_t *)p, DRAWING_PACK);
-	p = Rectangle_Draw(0, op_type, 359, GraphUI_LiftStartY(g_graph_ui_state.uplift_rb_percent), 359, 383, 25, Orange, n2);
-	memcpy(&data_pack[DRAWING_PACK * 2], (uint8_t *)p, DRAWING_PACK);
-	p = Rectangle_Draw(0, op_type, 418, GraphUI_LiftStartY(g_graph_ui_state.uplift_lb_percent), 418, 383, 25, Orange, n3);
-	memcpy(&data_pack[DRAWING_PACK * 3], (uint8_t *)p, DRAWING_PACK);
-	p = Rectangle_Draw(0, op_type, 793, 253, 843, 303, 3, rect_colors[0], n4);
-	memcpy(&data_pack[DRAWING_PACK * 4], (uint8_t *)p, DRAWING_PACK);
-	p = Rectangle_Draw(0, op_type, 866, 252, 916, 302, 3, rect_colors[1], n5);
-	memcpy(&data_pack[DRAWING_PACK * 5], (uint8_t *)p, DRAWING_PACK);
-	p = Rectangle_Draw(0, op_type, 936, 252, 986, 302, 3, rect_colors[2], n6);
-	memcpy(&data_pack[DRAWING_PACK * 6], (uint8_t *)p, DRAWING_PACK);
-	Send_UIPack(Drawing_Graphic7_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK * 7);
-}
-
-static void GraphUI_SendFigureGroupC(uint8_t op_type)
-{
-	static uint8_t n0[] = "F14";
-	static uint8_t n1[] = "F15";
-	static uint8_t n2[] = "F16";
-	graphic_data_struct_t *p = NULL;
-	uint8_t rect_colors[5];
-	uint8_t text_colors[5];
-	(void)text_colors;
-	GraphUI_GetModeColors(rect_colors, text_colors);
-
-	p = Rectangle_Draw(0, op_type, 1004, 252, 1054, 302, 3, rect_colors[3], n0);
-	memcpy(&data_pack[DRAWING_PACK * 0], (uint8_t *)p, DRAWING_PACK);
-	p = Rectangle_Draw(0, op_type, 1072, 252, 1122, 302, 3, rect_colors[4], n1);
-	memcpy(&data_pack[DRAWING_PACK * 1], (uint8_t *)p, DRAWING_PACK);
-	p = IntData_Draw(0, op_type, 1004, 218, g_graph_ui_state.stage, 20, 2, Yellow, n2);
-	memcpy(&data_pack[DRAWING_PACK * 2], (uint8_t *)p, DRAWING_PACK);
-	Send_UIPack(Drawing_Graphic5_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK * 3);
-}
-
-static void GraphUI_SendCoreStrings(uint8_t op_type)
-{
-	static uint8_t n0[] = "S00";
-	static uint8_t n1[] = "S02";
-	static uint8_t n2[] = "S03";
-	static uint8_t n3[] = "S04";
-	static uint8_t n4[] = "S05";
-	static uint8_t n5[] = "S06";
-	static uint8_t t_stage[] = "STAGE ";
-	static uint8_t t_wheels[] = "WHEELS:";
-	static uint8_t t_grip[] = "GRIP:";
-	static uint8_t t_on[] = "ON";
-	static uint8_t t_off[] = "OFF";
-	static uint8_t t_open[] = "OPEN";
-	static uint8_t t_close[] = "CLOSE";
-	static uint8_t t_fore[] = "FOREHEAD";
-	static uint8_t t_rear[] = "REARBACK";
-
-	Char_Draw(0, op_type, 876, 882, 20, (g_graph_ui_state.orientation_forehead ? (uint8_t)sizeof(t_fore) : (uint8_t)sizeof(t_rear)) - 1U, 2, g_graph_ui_state.orientation_forehead ? Green : Orange, n0, g_graph_ui_state.orientation_forehead ? t_fore : t_rear);
-	Char_Draw(0, op_type, 895, 218, 20, sizeof(t_stage) - 1U, 2, Yellow, n1, t_stage);
-	Char_Draw(0, op_type, 1456, 343, 25, sizeof(t_wheels) - 1U, 3, Cyan, n2, t_wheels);
-	Char_Draw(0, op_type, 1644, 343, 25, (g_graph_ui_state.wheel == GRAPH_UI_WHEEL_ON ? (uint8_t)sizeof(t_on) : (uint8_t)sizeof(t_off)) - 1U, 3, g_graph_ui_state.wheel == GRAPH_UI_WHEEL_ON ? Green : Orange, n3, g_graph_ui_state.wheel == GRAPH_UI_WHEEL_ON ? t_on : t_off);
-	Char_Draw(0, op_type, 1455, 401, 25, sizeof(t_grip) - 1U, 3, Cyan, n4, t_grip);
-	Char_Draw(0, op_type, 1608, 401, 25, (g_graph_ui_state.gripper == GRAPH_UI_GRIPPER_OPEN ? (uint8_t)sizeof(t_open) : (uint8_t)sizeof(t_close)) - 1U, 3, g_graph_ui_state.gripper == GRAPH_UI_GRIPPER_OPEN ? Green : Orange, n5, g_graph_ui_state.gripper == GRAPH_UI_GRIPPER_OPEN ? t_open : t_close);
-}
-
-static void GraphUI_SendModeStrings(uint8_t op_type)
-{
-	static uint8_t n0[] = "S07";
-	static uint8_t n1[] = "S08";
-	static uint8_t n2[] = "S09";
-	static uint8_t n3[] = "S10";
-	static uint8_t n4[] = "S11";
-	static uint8_t z[] = "Z";
-	static uint8_t p[] = "P";
-	static uint8_t s[] = "S";
-	static uint8_t x[] = "X";
-	static uint8_t q[] = "Q";
-	uint8_t rect_colors[5];
-	uint8_t text_colors[5];
-	(void)rect_colors;
-	GraphUI_GetModeColors(rect_colors, text_colors);
-
-	Char_Draw(0, op_type, 803, 292, 30, 1, 3, text_colors[0], n0, z);
-	Char_Draw(0, op_type, 876, 292, 30, 1, 3, text_colors[1], n1, p);
-	Char_Draw(0, op_type, 946, 293, 30, 1, 3, text_colors[2], n2, s);
-	Char_Draw(0, op_type, 1014, 293, 30, 1, 3, text_colors[3], n3, x);
-	Char_Draw(0, op_type, 1082, 293, 30, 1, 3, text_colors[4], n4, q);
-}
-
-static void GraphUI_UpdateLiftBars(uint8_t op_type)
-{
-	static uint8_t n0[] = "F07";
-	static uint8_t n1[] = "F08";
-	static uint8_t n2[] = "F09";
-	static uint8_t n3[] = "F10";
-	graphic_data_struct_t *p = NULL;
-
-	p = Rectangle_Draw(0, op_type, 235, GraphUI_LiftStartY(g_graph_ui_state.uplift_rf_percent), 235, 383, 25, Orange, n0);
-	memcpy(&data_pack[DRAWING_PACK * 0], (uint8_t *)p, DRAWING_PACK);
-	p = Rectangle_Draw(0, op_type, 294, GraphUI_LiftStartY(g_graph_ui_state.uplift_lf_percent), 294, 383, 25, Orange, n1);
-	memcpy(&data_pack[DRAWING_PACK * 1], (uint8_t *)p, DRAWING_PACK);
-	p = Rectangle_Draw(0, op_type, 359, GraphUI_LiftStartY(g_graph_ui_state.uplift_rb_percent), 359, 383, 25, Orange, n2);
-	memcpy(&data_pack[DRAWING_PACK * 2], (uint8_t *)p, DRAWING_PACK);
-	p = Rectangle_Draw(0, op_type, 418, GraphUI_LiftStartY(g_graph_ui_state.uplift_lb_percent), 418, 383, 25, Orange, n3);
-	memcpy(&data_pack[DRAWING_PACK * 3], (uint8_t *)p, DRAWING_PACK);
-	Send_UIPack(Drawing_Graphic5_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK * 4);
-}
-
-static void GraphUI_UpdatePowerBar(uint8_t op_type)
-{
-	static uint8_t n0[] = "F06";
-	graphic_data_struct_t *p = NULL;
-	uint8_t power_color = (g_graph_ui_state.power_percent > 100.0f) ? 4U : Green;
-	p = Rectangle_Draw(0, op_type, 606, 94, GraphUI_PowerEndX(), 100, 40, power_color, n0);
-	memcpy(data_pack, (uint8_t *)p, DRAWING_PACK);
-	Send_UIPack(Drawing_Graphic1_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK);
-}
-
-static void GraphUI_UpdateSpeedCircle(uint8_t op_type)
-{
-	static uint8_t n0[] = "F04";
-	graphic_data_struct_t *p = NULL;
-	p = Circle_Draw(0, op_type, 958, 539, 80, 3, (g_graph_ui_state.speed == GRAPH_UI_SPEED_AXEL) ? Orange : Green, n0);
-	memcpy(data_pack, (uint8_t *)p, DRAWING_PACK);
-	Send_UIPack(Drawing_Graphic1_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK);
-}
-
-static void GraphUI_UpdateModeRects(uint8_t op_type)
-{
-	static uint8_t n0[] = "F11";
-	static uint8_t n1[] = "F12";
-	static uint8_t n2[] = "F13";
-	static uint8_t n3[] = "F14";
-	static uint8_t n4[] = "F15";
-	graphic_data_struct_t *p = NULL;
-	uint8_t rect_colors[5];
-	uint8_t text_colors[5];
-	(void)text_colors;
-	GraphUI_GetModeColors(rect_colors, text_colors);
-
-	p = Rectangle_Draw(0, op_type, 793, 253, 843, 303, 3, rect_colors[0], n0);
-	memcpy(&data_pack[DRAWING_PACK * 0], (uint8_t *)p, DRAWING_PACK);
-	p = Rectangle_Draw(0, op_type, 866, 252, 916, 302, 3, rect_colors[1], n1);
-	memcpy(&data_pack[DRAWING_PACK * 1], (uint8_t *)p, DRAWING_PACK);
-	p = Rectangle_Draw(0, op_type, 936, 252, 986, 302, 3, rect_colors[2], n2);
-	memcpy(&data_pack[DRAWING_PACK * 2], (uint8_t *)p, DRAWING_PACK);
-	p = Rectangle_Draw(0, op_type, 1004, 252, 1054, 302, 3, rect_colors[3], n3);
-	memcpy(&data_pack[DRAWING_PACK * 3], (uint8_t *)p, DRAWING_PACK);
-	p = Rectangle_Draw(0, op_type, 1072, 252, 1122, 302, 3, rect_colors[4], n4);
-	memcpy(&data_pack[DRAWING_PACK * 4], (uint8_t *)p, DRAWING_PACK);
-	Send_UIPack(Drawing_Graphic5_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK * 5);
-	GraphUI_SendModeStrings(op_type);
-}
-
-static void GraphUI_UpdateStage(uint8_t op_type)
-{
-	static uint8_t n0[] = "F16";
-	graphic_data_struct_t *p = NULL;
-	p = IntData_Draw(0, op_type, 1004, 218, g_graph_ui_state.stage, 20, 2, Yellow, n0);
-	memcpy(data_pack, (uint8_t *)p, DRAWING_PACK);
-	Send_UIPack(Drawing_Graphic1_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK);
-}
-
-static void GraphUI_UpdateOrientation(void)
-{
-	static uint8_t n0[] = "S00";
-	static uint8_t t_fore[] = "FOREHEAD";
-	static uint8_t t_rear[] = "REARBACK";
-	Char_Draw(0, Op_Change, 876, 882, 20, (g_graph_ui_state.orientation_forehead ? (uint8_t)sizeof(t_fore) : (uint8_t)sizeof(t_rear)) - 1U, 2, g_graph_ui_state.orientation_forehead ? Green : Orange, n0, g_graph_ui_state.orientation_forehead ? t_fore : t_rear);
-}
-
-static void GraphUI_UpdateWheel(void)
-{
-	static uint8_t n0[] = "S04";
-	static uint8_t t_on[] = "ON";
-	static uint8_t t_off[] = "OFF";
-	Char_Draw(0, Op_Change, 1644, 343, 25, (g_graph_ui_state.wheel == GRAPH_UI_WHEEL_ON ? (uint8_t)sizeof(t_on) : (uint8_t)sizeof(t_off)) - 1U, 3, g_graph_ui_state.wheel == GRAPH_UI_WHEEL_ON ? Green : Orange, n0, g_graph_ui_state.wheel == GRAPH_UI_WHEEL_ON ? t_on : t_off);
-}
-
-static void GraphUI_UpdateGripper(void)
-{
-	static uint8_t n0[] = "S06";
-	static uint8_t t_open[] = "OPEN";
-	static uint8_t t_close[] = "CLOSE";
-	Char_Draw(0, Op_Change, 1608, 401, 25, (g_graph_ui_state.gripper == GRAPH_UI_GRIPPER_OPEN ? (uint8_t)sizeof(t_open) : (uint8_t)sizeof(t_close)) - 1U, 3, g_graph_ui_state.gripper == GRAPH_UI_GRIPPER_OPEN ? Green : Orange, n0, g_graph_ui_state.gripper == GRAPH_UI_GRIPPER_OPEN ? t_open : t_close);
-}
-
 uint8_t Init_Cnt = 10;
 // 添加UI更新频率控制计数器
 static uint32_t ui_update_counter = 0;
 
 // 添加状态变化标志
 static uint8_t status_changed = 0;
+
+uint32_t last_update_time_value = 0; // 上次数值更新时间
 
 // 添加UI更新状态枚举
 typedef enum
@@ -1570,28 +1349,33 @@ typedef enum
 	UI_STATE_VALUE_UPDATE	// 数值更新状态
 } UI_Update_State_t;
 
-#if 0
 uint16_t ssm = 0;
 UI_Update_State_t ui_state = UI_STATE_IDLE; // UI更新状态
 void GraphicSendtask(void)
 {
-	//static UI_Update_State_t ui_state = UI_STATE_IDLE; // UI更新状态
-	static uint8_t status_update_retry = 0;			   // 状态更新重试次数
-	static uint8_t last_status_type = 0;			   // 上次变化的状态类型
-	static uint32_t last_update_time = 0;			   // 上次更新时间
-	static uint32_t current_time = 0;				   // 当前时间
-	static uint32_t last_update_time_value = 0;			   // 上次数值更新时间
+	// static UI_Update_State_t ui_state = UI_STATE_IDLE; // UI更新状态
+	static uint8_t status_update_retry = 0; // 状态更新重试次数
+	static uint8_t last_status_type = 0;	// 上次变化的状态类型
+	static uint32_t last_update_time = 0;	// 上次更新时间
+	static uint32_t current_time = 0;		// 当前时间
 
 	// 获取当前时间
 	current_time = DWT_GetTimeline_ms();
 
+	if (huart10.hdmatx->State == HAL_DMA_STATE_READY)
+	{
+		referee_dma_busy = 0;
+		Referee_DMA_Dequeue();
+		Referee_DMA_StartNext();
+	}
 	// 初始化阶段发送所有UI元素
 	if (Init_Cnt > 0)
 	{
 		Init_Cnt--;
-		if(Init_Cnt == 254)
+		if (Init_Cnt == 254)
 		{
-			Referee_DMA_ClearQueue();
+			referee_dma_busy = 0;
+			referee_dma_count = 0;
 		}
 
 		if (Init_Cnt % 2 == 0)
@@ -1605,7 +1389,7 @@ void GraphicSendtask(void)
 		}
 		else
 		{
-			ShootLines_Init_1();			 // 枪口线
+			ShootLines_Init_1(); // 枪口线
 			ShootLines_Init_2();
 			ShootLines_Init_3();
 			ShootLines_Init_4();
@@ -1615,6 +1399,10 @@ void GraphicSendtask(void)
 		BoostLine_Change();
 		PitchUI_Change(0, Init_Cnt);
 		GIMLine_Change(Init_Cnt);
+		Scap_Change(100, Init_Cnt);
+
+		PitchValue_Change(JudgeReceiveData.Pitch_Angle, 1);
+		YawValue_Change(JudgeReceiveData.Yaw_Angle, 1);
 
 		// 初始化完成后，保存当前数据作为比较基准
 		memcpy(&Last_JudgeReceiveData, &JudgeReceiveData, sizeof(JudgeReceive_t));
@@ -1622,20 +1410,6 @@ void GraphicSendtask(void)
 		return;
 	}
 
-	if(referee_dma_busy)
-	{
-		uint32_t update_time_value = DWT_GetTimeline_ms();
-		if(update_time_value - last_update_time_value > 500)
-		{
-			last_update_time_value = update_time_value;
-			Referee_DMA_ClearQueue();
-		}
-	}
-	else
-	{
-		last_update_time_value = DWT_GetTimeline_ms();
-	}
-	
 	// 状态机处理
 	switch (ui_state)
 	{
@@ -1718,15 +1492,26 @@ void GraphicSendtask(void)
 		// 更新Pitch角度
 		if (fabs(Last_JudgeReceiveData.Pitch_Angle - JudgeReceiveData.Pitch_Angle) > 0.01f)
 		{
-			PitchUI_Change(JudgeReceiveData.Pitch_Angle, 0);
-			Last_JudgeReceiveData.Pitch_Angle = JudgeReceiveData.Pitch_Angle;
+			// PitchUI_Change(JudgeReceiveData.Pitch_Angle, 0);
+			// Last_JudgeReceiveData.Pitch_Angle = JudgeReceiveData.Pitch_Angle;
 		}
 
 		// 更新超级电容电压
-		if (fabs(Last_JudgeReceiveData.Supercap_Voltage - JudgeReceiveData.Supercap_Voltage) >= 0.01f)
+		if (fabs(Last_JudgeReceiveData.Supercap_Voltage - JudgeReceiveData.Supercap_Voltage) >= 2.0f)
 		{
-			SCapLine_Change();
+			Scap_Change(JudgeReceiveData.Supercap_Voltage, 0);
 			Last_JudgeReceiveData.Supercap_Voltage = JudgeReceiveData.Supercap_Voltage;
+		}
+
+		if (fabs(Last_JudgeReceiveData.Pitch_Angle - JudgeReceiveData.Pitch_Angle) > 0.01f)
+		{
+			PitchValue_Change(JudgeReceiveData.Pitch_Angle, 0);
+			Last_JudgeReceiveData.Pitch_Angle = JudgeReceiveData.Pitch_Angle;
+		}
+		if (fabs(Last_JudgeReceiveData.Yaw_Angle - JudgeReceiveData.Yaw_Angle) > 0.01f)
+		{
+			YawValue_Change(JudgeReceiveData.Yaw_Angle, 0);
+			Last_JudgeReceiveData.Yaw_Angle = JudgeReceiveData.Yaw_Angle;
 		}
 
 		// 底盘角度及控制类型
@@ -1736,207 +1521,5 @@ void GraphicSendtask(void)
 		ui_state = UI_STATE_IDLE;
 		last_update_time = current_time;
 		break;
-	}	
-}
-
-#endif
-uint16_t ssm = 0;
-UI_Update_State_t ui_state = UI_STATE_IDLE;
-void GraphicSendtask(void)
-{
-	static uint8_t status_update_retry = 0;
-	static uint8_t last_status_type = 0;
-	static uint32_t last_update_time = 0;
-	static uint32_t current_time = 0;
-	static uint32_t last_update_time_value = 0;
-
-	current_time = DWT_GetTimeline_ms();
-
-	if (Init_Cnt > 0)
-	{
-		Init_Cnt--;
-		if (Init_Cnt == 254U)
-		{
-			Referee_DMA_ClearQueue();
-		}
-
-		if ((Init_Cnt % 2U) == 0U)
-		{
-			GraphUI_SendFigureGroupA(Op_Add);
-			GraphUI_SendFigureGroupC(Op_Add);
-			GraphUI_SendCoreStrings(Op_Add);
-		}
-		else
-		{
-			GraphUI_SendFigureGroupB(Op_Add);
-			GraphUI_SendModeStrings(Op_Add);
-		}
-
-		g_graph_ui_last_state = g_graph_ui_state;
-		return;
 	}
-
-	if (referee_dma_busy)
-	{
-		uint32_t update_time_value = DWT_GetTimeline_ms();
-		if (update_time_value - last_update_time_value > 500U)
-		{
-			last_update_time_value = update_time_value;
-			Referee_DMA_ClearQueue();
-		}
-	}
-	else
-	{
-		last_update_time_value = DWT_GetTimeline_ms();
-	}
-
-	switch (ui_state)
-	{
-	case UI_STATE_IDLE:
-		if (g_graph_ui_last_state.speed != g_graph_ui_state.speed)
-		{
-			ui_state = UI_STATE_STATUS_UPDATE;
-			last_status_type = 1U;
-			status_update_retry = 0U;
-			last_update_time = current_time;
-			break;
-		}
-		if (g_graph_ui_last_state.mode != g_graph_ui_state.mode)
-		{
-			ui_state = UI_STATE_STATUS_UPDATE;
-			last_status_type = 2U;
-			status_update_retry = 0U;
-			last_update_time = current_time;
-			break;
-		}
-		if (g_graph_ui_last_state.orientation_forehead != g_graph_ui_state.orientation_forehead)
-		{
-			ui_state = UI_STATE_STATUS_UPDATE;
-			last_status_type = 3U;
-			status_update_retry = 0U;
-			last_update_time = current_time;
-			break;
-		}
-		if (g_graph_ui_last_state.wheel != g_graph_ui_state.wheel)
-		{
-			ui_state = UI_STATE_STATUS_UPDATE;
-			last_status_type = 4U;
-			status_update_retry = 0U;
-			last_update_time = current_time;
-			break;
-		}
-		if (g_graph_ui_last_state.gripper != g_graph_ui_state.gripper)
-		{
-			ui_state = UI_STATE_STATUS_UPDATE;
-			last_status_type = 5U;
-			status_update_retry = 0U;
-			last_update_time = current_time;
-			break;
-		}
-		if (g_graph_ui_last_state.stage != g_graph_ui_state.stage)
-		{
-			ui_state = UI_STATE_STATUS_UPDATE;
-			last_status_type = 6U;
-			status_update_retry = 0U;
-			last_update_time = current_time;
-			break;
-		}
-		if (current_time - last_update_time > 10U)
-		{
-			ui_state = UI_STATE_VALUE_UPDATE;
-			last_update_time = current_time;
-		}
-		break;
-
-	case UI_STATE_STATUS_UPDATE:
-		switch (last_status_type)
-		{
-		case 1U:
-			GraphUI_UpdateSpeedCircle(Op_Change);
-			g_graph_ui_last_state.speed = g_graph_ui_state.speed;
-			break;
-		case 2U:
-			GraphUI_UpdateModeRects(Op_Change);
-			g_graph_ui_last_state.mode = g_graph_ui_state.mode;
-			break;
-		case 3U:
-			GraphUI_UpdateOrientation();
-			g_graph_ui_last_state.orientation_forehead = g_graph_ui_state.orientation_forehead;
-			break;
-		case 4U:
-			GraphUI_UpdateWheel();
-			g_graph_ui_last_state.wheel = g_graph_ui_state.wheel;
-			break;
-		case 5U:
-			GraphUI_UpdateGripper();
-			g_graph_ui_last_state.gripper = g_graph_ui_state.gripper;
-			break;
-		case 6U:
-			GraphUI_UpdateStage(Op_Change);
-			g_graph_ui_last_state.stage = g_graph_ui_state.stage;
-			break;
-		default:
-			break;
-		}
-
-		status_update_retry++;
-		if (status_update_retry >= 10U)
-		{
-			ui_state = UI_STATE_IDLE;
-			last_update_time = current_time;
-		}
-		else
-		{
-			last_update_time = current_time;
-		}
-		break;
-
-	case UI_STATE_VALUE_UPDATE:
-		if (g_graph_ui_last_state.uplift_rf_percent != g_graph_ui_state.uplift_rf_percent ||
-			g_graph_ui_last_state.uplift_lf_percent != g_graph_ui_state.uplift_lf_percent ||
-			g_graph_ui_last_state.uplift_rb_percent != g_graph_ui_state.uplift_rb_percent ||
-			g_graph_ui_last_state.uplift_lb_percent != g_graph_ui_state.uplift_lb_percent)
-		{
-			GraphUI_UpdateLiftBars(Op_Change);
-			g_graph_ui_last_state.uplift_rf_percent = g_graph_ui_state.uplift_rf_percent;
-			g_graph_ui_last_state.uplift_lf_percent = g_graph_ui_state.uplift_lf_percent;
-			g_graph_ui_last_state.uplift_rb_percent = g_graph_ui_state.uplift_rb_percent;
-			g_graph_ui_last_state.uplift_lb_percent = g_graph_ui_state.uplift_lb_percent;
-		}
-		if (g_graph_ui_last_state.power_percent != g_graph_ui_state.power_percent)
-		{
-			GraphUI_UpdatePowerBar(Op_Change);
-			g_graph_ui_last_state.power_percent = g_graph_ui_state.power_percent;
-		}
-		ui_state = UI_STATE_IDLE;
-		last_update_time = current_time;
-		break;
-	}
-}
-
-void GraphSendTask_ResetInit(void)
-{
-	Referee_DMA_ClearQueue();
-	ui_state = UI_STATE_IDLE;
-	memset(&Last_JudgeReceiveData, 0, sizeof(Last_JudgeReceiveData));
-	Init_Cnt = 255;
-}
-
-graphic_data_struct_t *IntData_Draw(uint8_t layer, int Op_Type, uint16_t startx, uint16_t starty, int32_t data_i, uint8_t size, uint16_t line_width, int color, uint8_t name[])
-{
-	static graphic_data_struct_t drawing;
-	memcpy(drawing.graphic_name, name, 3);
-	drawing.layer = layer;
-	drawing.operate_tpye = Op_Type;
-	drawing.graphic_tpye = TYPE_INT;
-	drawing.width = line_width;
-	drawing.color = color;
-	drawing.start_x = startx;
-	drawing.start_y = starty;
-	drawing.start_angle = size;
-	drawing.end_angle = 0;
-	drawing.radius = ((uint32_t)data_i) & 0x03ff;
-	drawing.end_x = (((uint32_t)data_i) >> 10) & 0x07ff;
-	drawing.end_y = (((uint32_t)data_i) >> 21) & 0x07ff;
-	return &drawing;
 }

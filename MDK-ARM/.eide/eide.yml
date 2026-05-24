@@ -17,7 +17,8 @@ virtualFolder:
         - path: ../User/Task/Src/tsk_config_and_callback.cpp
       folders: []
     - name: Interaction
-      files: []
+      files:
+        - path: ../User/Interaction/Src/ita_chariot.cpp
       folders: []
     - name: Chariot
       files:
@@ -363,7 +364,7 @@ targets:
         - .cmsis/include
         - RTE/_ZLLC_2026
         - ../Drivers/CMSIS/DSP/Include
-      libList: 
+      libList:
         - ../Drivers/CMSIS/DSP/Lib/ARM
     excludeList: []
     settings:

@@ -460,6 +460,7 @@ void Ist8310_IIC3_Callback(uint8_t *Tx_Buffer, uint8_t *Rx_Buffer, uint16_t Tx_L
 void Referee_UART10_Callback(uint8_t *Buffer, uint16_t Length)
 {
     chariot.Referee.UART_RxCpltCallback(Buffer, Length);
+    JudgeReceiveData.robot_id = chariot.Referee.Get_ID();
 }
 #endif
 
@@ -702,7 +703,6 @@ void Task1ms_TIM5_Callback()
         if (mod100 == 100)
         {
 #ifdef CHASSIS
-            GraphicSendtask();
 #endif
             mod100 = 0;
         }
@@ -715,7 +715,14 @@ void Task1ms_TIM5_Callback()
         if (mod68 == 68)
         {
 #ifdef CHASSIS
-// 裁判系统发送
+            // 裁判系统发送
+            // 判断UI刷新
+            if(chariot.Rx_UI_State.flags)
+            {
+                Init_Cnt = 255;
+            }
+            // UI发送
+            GraphicSendtask();
 #endif
             mod68 = 0;
         }
@@ -747,7 +754,7 @@ extern "C" void Task_Init()
     SPI_Init(&hspi2, Device_SPI2_Callback);
 
     // UI任务初始化
-    GraphUI_Init(0);
+    // GraphUI_Init(42);
 #ifdef POWER_LIMIT
 
 #endif
@@ -826,18 +833,6 @@ extern "C" void Task_Loop()
 #endif
 
 #ifdef CHASSIS
-#endif
-}
-
-extern "C" void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
-{
-#ifdef CHASSIS
-    if (huart == &huart10)
-    {
-        GraphUI_OnTxComplete();
-    }
-#else
-    (void)huart;
 #endif
 }
 

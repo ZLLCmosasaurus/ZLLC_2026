@@ -66,7 +66,8 @@
  * @brief 底盘右拨杆和抬升状态枚举
  *
  */
-enum Enum_Chassis_DR16_Right_Uplift_Status{
+enum Enum_Chassis_DR16_Right_Uplift_Status
+{
     DR16_Right_Switch_MIDDLE = 0,
     DR16_Right_Switch_UP,
     DR16_Right_Switch_DOWN,
@@ -568,7 +569,7 @@ class Class_FSM_Ledder : public Class_FSM
 public:
     Class_Mecanum_Chassis *Chassis;
     Class_Chassis *Force_Chassis = nullptr;
-    
+
     Enum_Uplift_FSM_Direction FSM_Direction = Uplift_FSM_HOLD;
 
     float Yaw = 0.0f;
@@ -632,6 +633,7 @@ class Class_FSM_Off_Ledder : public Class_FSM_Ledder
 {
 public:
     void Reload_TIM_Status_PeriodElapsedCallback();
+
 protected:
     // ToF测距模块回传的底盘离地高度
     float Height_Meter;
@@ -770,7 +772,8 @@ protected:
         Uplift_Max_Radian[0] - 28.5f,
         Uplift_Max_Radian[1] - 28.5f,
         Uplift_Max_Radian[2] - 21.15f,
-        Uplift_Max_Radian[3] - 21.15f,};
+        Uplift_Max_Radian[3] - 21.15f,
+    };
 
     // 常量
 
@@ -808,7 +811,7 @@ protected:
     Enum_Chassis_Control_Type Chassis_Control_Type = Chassis_Control_Type_DISABLE;
     Enum_Supercap_Mode Supercap_Mode = Supercap_DISABLE;
     Enum_Chassis_DR16_Right_Uplift_Status DR16_Right_Uplift_Status = DR16_Right_Switch_MIDDLE;
-    
+
     // 抬升状态机枚举
     Enum_Uplift_FSM_Direction Uplift_FSM_Direction = Uplift_FSM_HOLD;
     // 小轮子从动状态枚举
@@ -1013,7 +1016,8 @@ Enum_Chassis_DR16_Right_Uplift_Status Class_Mecanum_Chassis::Get_DR16_Right_Upli
  */
 inline Enum_Lift_Direction Class_Mecanum_Chassis::Get_Lift_Direction(uint8_t index)
 {
-    if (index >= 4) return Lift_Direction_HOLD;
+    if (index >= 4)
+        return Lift_Direction_HOLD;
     return Lift_Direction[index];
 }
 
@@ -1022,7 +1026,8 @@ inline Enum_Lift_Direction Class_Mecanum_Chassis::Get_Lift_Direction(uint8_t ind
  */
 inline bool Class_Mecanum_Chassis::Get_Lift_Select(uint8_t index)
 {
-    if (index >= 4) return false;
+    if (index >= 4)
+        return false;
     return Lift_Select[index];
 }
 
@@ -1216,13 +1221,13 @@ void Class_Mecanum_Chassis::Set_DR16_Right_Uplift_Status(Enum_Chassis_DR16_Right
     DR16_Right_Uplift_Status = __DR16_Right_Uplift_Status;
 }
 
-
 /**
  * @brief 设定指定抬升机构的运动方向
  */
 inline void Class_Mecanum_Chassis::Set_Lift_Direction(uint8_t index, Enum_Lift_Direction direction)
 {
-    if (index >= 4) return;
+    if (index >= 4)
+        return;
     Lift_Direction[index] = direction;
 }
 
