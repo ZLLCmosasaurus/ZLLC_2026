@@ -335,8 +335,6 @@ void Referee_UART1_Callback(uint8_t *Buffer, uint16_t Length)
 {
     chariot.Referee.UART_RxCpltCallback(Buffer, Length);
 }
-#ifdef CHASSIS
-
 #endif
 /**
  * @brief UART1超电回调函数
@@ -374,7 +372,8 @@ float delta_time;
  */
 void Task100us_TIM2_Callback()
 {
-    //GraphicSendtask();
+#ifdef CHASSIS
+    GraphicSendtask();
     static uint16_t Referee_Sand_Cnt = 0;
     // //暂无云台tim4任务
     if (Referee_Sand_Cnt % 50 == 1)
@@ -386,7 +385,7 @@ void Task100us_TIM2_Callback()
     Referee_Sand_Cnt++;
 #ifdef CHASSIS
 
-#elif defined(GIMBAL)
+#ifdef GIMBAL
     // 单给IMU消息开的定时器 ims
     chariot.Gimbal.Boardc_BMI.TIM_Calculate_PeriodElapsedCallback();
 #endif
@@ -428,12 +427,6 @@ void Task1ms_TIM5_Callback()
         /****************************** 驱动层回调函数 1ms *****************************************/
         // 统一打包发送
         TIM_CAN_PeriodElapsedCallback();
-        UI_Refresh++;
-        if (UI_Refresh == 300)
-        {
-            Init_Cnt = 10;
-            UI_Refresh = 0;
-        }
     }
     // pitch = chariot.Gimbal.Boardc_BMI.Get_Angle_Pitch();
     // yaw = chariot.Gimbal.Boardc_BMI.Get_Angle_Yaw();
@@ -474,7 +467,7 @@ extern "C" void Task_Init()
 #endif
 
 #endif
-
+    UART_Init(&huart1, Referee_UART1_Callback, 128);
 #ifdef GIMBAL
     buzzer_init_example();
     // 集中总线can1/can2
@@ -545,8 +538,11 @@ extern "C" void Task_Loop()
 //        chariot.MiniPC_Aim_Status = MinPC_Aim_Status_DISABLE;
 //    }
 #endif
+#ifdef CHASSIS
     if (start_flag == 1)
     {
+
+        GraphicSendtask();
         static float freq;
         static uint32_t time_s;
         freq = 1 / DWT_GetDeltaT(&time_s);

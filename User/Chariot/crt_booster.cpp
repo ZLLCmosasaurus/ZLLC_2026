@@ -161,7 +161,7 @@ void Class_FSM_Driver_Init::Reload_TIM_Status_PeriodElapsedCallback()
         Booster->Driver_Angle = Booster->Motor_Driver.Get_Now_Radian();
         Booster->Motor_Driver.Set_Target_Omega_Radian(0.0f);
         Booster->Motor_Driver.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
-        Booster->Motor_Driver.Set_Target_Radian(PI / 9.0f);
+        Booster->Motor_Driver.Set_Target_Radian((2.0f/3)*PI / 9.0f);
         Booster->Driver_Angle = Booster->Motor_Driver.Get_Now_Radian();
         Booster->Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
         Set_Status(4);

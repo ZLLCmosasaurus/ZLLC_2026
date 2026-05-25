@@ -65,6 +65,7 @@ void Class_Chariot::Init(float __DR16_Dead_Zone)
     Active_Controller = Controller_NONE;
 
     // 云台
+    Gimbal.Referee = &Referee;
     Gimbal.Init();
     Gimbal.MiniPC = &MiniPC;
     // 发射机构
@@ -521,6 +522,30 @@ void Class_Chariot::Control_Gimbal()
     // 获取当前角度值
     tmp_gimbal_yaw = Gimbal.Get_Target_Yaw_Angle();
     tmp_gimbal_pitch = Gimbal.Get_Target_Pitch_Angle();
+    true_pitch = Gimbal.Motor_Pitch_J4310.Get_True_Angle_Pitch();
+    true_yaw = Gimbal.Motor_Yaw.Get_True_Angle_Yaw();
+
+    // IMU:相对于地面系的姿态角
+    // 将无人机系下的姿态角解算到地面系
+    // if (init_finish_flag)
+    // {
+    //     float roll = Gimbal.Boardc_BMI.Get_Rad_Roll();
+    //     float yaw = Gimbal.Get_Target_Yaw_Angle() * PI / 180;
+    //     float pitch = Gimbal.Get_Target_Pitch_Angle() * PI / 180;
+
+    //     float x_w = cosf(pitch) * cosf(yaw);
+    //     float y_w = sinf(pitch);
+    //     float z_w = cosf(pitch) * sinf(yaw);
+
+    //     float x_d = x_w;
+    //     float y_d = y_w * cosf(-roll) + z_w * sinf(-roll);
+    //     float z_d = -y_w * sinf(-roll) + z_w * cosf(-roll);
+
+    //     tmp_gimbal_yaw = atan2f(z_d, x_d) * 180 / PI;
+    //     tmp_gimbal_pitch = atan2f(y_d, sqrtf(x_d * x_d + z_d * z_d)) * 180 / PI;
+    //     world_gimbal_pitch = tmp_gimbal_pitch;
+    //     world_gimbal_yaw = tmp_gimbal_yaw;
+    // }
 
     // 先判断当前活动的控制器
     Judge_Active_Controller();
@@ -649,18 +674,23 @@ void Class_Chariot::Control_Gimbal()
         }
         else if (Active_Controller == Controller_VT13)
         {
-            if (VT13.Get_Keyboard_Key_Q() == VT13_Key_Status_TRIG_FREE_PRESSED)
-            {
-                tmp_gimbal_pitch = 0;
-            }
+
 
             // 长按右键  开启自瞄
-            if (VT13.Get_Mouse_Right_Key() == VT13_Key_Status_PRESSED)
+            if (VT13.Get_Mouse_Right_Key() == VT13_Key_Status_PRESSED && MiniPC.Get_Alive_Status() == 1)
             {
                 Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_MINIPC);
-                JudgeReceiveData.MiniPC_Aim_Status = 1;
-                tmp_gimbal_yaw = Gimbal.Get_Target_Yaw_Angle();
-                tmp_gimbal_pitch = Gimbal.Get_Target_Pitch_Angle();
+
+                if (MiniPC.Get_MiniPC_Status() == MiniPC_Status_ENABLE)
+                {
+                    tmp_gimbal_yaw = MiniPC.Get_Rx_Yaw_Angle();
+                    tmp_gimbal_pitch = MiniPC.Get_Rx_Pitch_Angle();
+                    if (Chassis.Get_Chassis_Control_Type() == Chassis_Control_Type_SPIN)
+                    {
+                        tmp_gimbal_yaw = MiniPC.Get_Rx_Yaw_Angle();
+                        tmp_gimbal_pitch = MiniPC.Get_Rx_Pitch_Angle();
+                    }
+                }
             }
             else
             {
@@ -668,28 +698,27 @@ void Class_Chariot::Control_Gimbal()
                 JudgeReceiveData.MiniPC_Aim_Status = 0;
             }
             tmp_gimbal_yaw -= VT13.Get_Mouse_X() * DR16_Mouse_Yaw_Angle_Resolution;
-            tmp_gimbal_pitch += VT13.Get_Mouse_Y() * DR16_Mouse_Pitch_Angle_Resolution;
+            tmp_gimbal_pitch += VT13.Get_Mouse_Y() * DR16_Mouse_Pitch_Angle_Resolution * 3.0f;
 
-            // F键按下 一键开关弹舱
-            if (VT13.Get_Keyboard_Key_F() == VT13_Key_Status_TRIG_FREE_PRESSED)
-            {
-                if (Compare == 1700)
-                {
-                    Bulletcap_Status = Bulletcap_Status_CLOSE;
-                    Compare = 400;
-                }
-                else
-                {
-                    Bulletcap_Status = Bulletcap_Status_OPEN;
-                    Compare = 1700;
-                }
-            }
+        
             // C键按下 一键调头
             if (VT13.Get_Keyboard_Key_C() == VT13_Key_Status_TRIG_FREE_PRESSED)
             {
                 tmp_gimbal_yaw += 180;
             }
 
+            // Z键按下 切换反小陀螺开关
+            // if (VT13.Get_Keyboard_Key_Z() == VT13_Key_Status_TRIG_FREE_PRESSED)
+            // {
+            //     if (Gimbal.MiniPC->Get_Antispin_Type() == Antispin_On)
+            //     {
+            //         Gimbal.MiniPC->Set_Antispin_Type(Antispin_Off);
+            //     }
+            //     else
+            //     {
+            //         Gimbal.MiniPC->Set_Antispin_Type(Antispin_On);
+            //     }
+            // }
             // V键按下 自瞄模式中切换四点和五点模式
             if (VT13.Get_Keyboard_Key_V() == VT13_Key_Status_TRIG_FREE_PRESSED)
             {
@@ -701,18 +730,60 @@ void Class_Chariot::Control_Gimbal()
             if (VT13.Get_Keyboard_Key_G() == VT13_Key_Status_TRIG_FREE_PRESSED)
             {
                 if (Pitch_Control_Status == Pitch_Status_Control_Free)
+                {
                     Pitch_Control_Status = Pitch_Status_Control_Lock;
+                }   
                 else
+                {
                     Pitch_Control_Status = Pitch_Status_Control_Free;
+                }
+                   
+            }
+            if (VT13.Get_Keyboard_Key_R() == DR16_Key_Status_PRESSED) // 按下R键刷新UI
+            {
+                Referee_UI_Refresh_Status = Referee_UI_Refresh_Status_ENABLE;
+            }
+            else
+            {
+                Referee_UI_Refresh_Status = Referee_UI_Refresh_Status_DISABLE;
             }
         }
     }
 
     // 如果pitch为锁定状态
-    if (Pitch_Control_Status == Pitch_Status_Control_Lock)
-        tmp_gimbal_pitch = 0;
 
     // 设定角度
+
+    // if (init_finish_flag)
+    // {
+    //     if (Gimbal.Get_Gimbal_Roll_Control_Type() == Gimbal_Roll_Control_Type_ROLL_LOCKED)
+    //     {
+    //         // 将地面系的姿态角解算为无人机系
+    //         float roll = Gimbal.Boardc_BMI.Get_Rad_Roll();
+    //         float yaw = tmp_gimbal_yaw * PI / 180;
+    //         float pitch = tmp_gimbal_pitch * PI / 180;
+
+    //         float x_w = cosf(pitch) * cosf(yaw);
+    //         float y_w = sinf(pitch);
+    //         float z_w = cosf(pitch) * sinf(yaw);
+
+    //         float x_d = x_w;
+    //         float y_d = y_w * cosf(roll) + z_w * sinf(roll);
+    //         float z_d = -y_w * sinf(roll) + z_w * cosf(roll);
+
+    //         __tmp_gimbal_yaw = atan2f(z_d, x_d) * 180 / PI;
+    //         __tmp_gimbal_pitch = atan2f(y_d, sqrtf(x_d * x_d + z_d * z_d)) * 180 / PI;
+    //     }
+    //     else
+    //     {
+    //         __tmp_gimbal_yaw = tmp_gimbal_yaw;
+    //         __tmp_gimbal_pitch = tmp_gimbal_pitch;
+    //     }
+    // }
+
+    if (Pitch_Control_Status == Pitch_Status_Control_Lock)
+    {
+        tmp_gimbal_pitch = 0;
     Gimbal.Set_Target_Yaw_Angle(tmp_gimbal_yaw);
     Gimbal.Set_Target_Pitch_Angle(tmp_gimbal_pitch);
 }
@@ -793,7 +864,7 @@ void Class_Chariot::Control_Booster()
             }
             if (VT13.Get_Yaw() > 0.8f && Shoot_Flag == 0) // 五连发
             {
-                Booster.Set_Booster_Control_Type(Booster_Control_Type_MULTI);
+                Booster.Set_Booster_Control_Type(Booster_Control_Type_REPEATED);
                 Shoot_Flag = 1;
             }
         }
@@ -886,6 +957,11 @@ void Class_Chariot::Control_Booster()
                 }
                 else
                     Booster.Booster_User_Control_Type = Booster_User_Control_Type_SINGLE;
+            }
+
+            if(VT13.Get_Keyboard_Key_F() == VT13_Key_Status_PRESSED)
+            {
+                
             }
 
             if (VT13.Get_Keyboard_Key_Ctrl() == VT13_Key_Status_TRIG_FREE_PRESSED)
@@ -1238,7 +1314,7 @@ void Class_Chariot::TIM_Control_Callback()
     Judge_DR16_Control_Type();
     Judge_VT13_Control_Type();
     // 底盘，云台，发射机构控制逻辑
-    Control_Chassis();
+    //Control_Chassis();
     Control_Gimbal();
     Control_Booster();
 }
@@ -1286,6 +1362,7 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
             DR16.TIM1msMod50_Alive_PeriodElapsedCallback();
             VT13.TIM1msMod50_Alive_PeriodElapsedCallback();
             MiniPC.TIM1msMod50_Alive_PeriodElapsedCallback();
+            Referee.TIM1msMod50_Alive_PeriodElapsedCallback();
             mod50_mod3 = 0;
             // Referee.UART_Tx_Referee_UI();
         }
@@ -1295,7 +1372,7 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
 
         Gimbal.Boardc_BMI.TIM1msMod50_Alive_PeriodElapsedCallback();
 
-        // Booster.Motor_Driver.TIM_Alive_PeriodElapsedCallback();
+        Booster.Motor_Driver.TIM_Alive_PeriodElapsedCallback();
         Booster.Motor_Friction_Left.TIM_Alive_PeriodElapsedCallback();
         Booster.Motor_Friction_Right.TIM_Alive_PeriodElapsedCallback();
         Booster.Motor_Friction_Down.TIM_Alive_PeriodElapsedCallback();

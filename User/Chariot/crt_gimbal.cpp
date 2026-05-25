@@ -143,6 +143,7 @@ void Class_Gimbal_Yaw_Motor_GM6020::Transform_Angle()
     True_Rad_Yaw = IMU->Get_Rad_Yaw();
     True_Gyro_Yaw = IMU->Get_Gyro_Yaw();
     True_Angle_Yaw = IMU->Get_Angle_Yaw_Total();
+    True_Angle_Yaw = IMU->Get_Angle_Yaw_Total();
 }
 
 /**

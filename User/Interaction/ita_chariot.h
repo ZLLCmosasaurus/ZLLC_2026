@@ -279,7 +279,6 @@ protected:
     // 常量
     // 键鼠模式按住shift 最大速度缩放系数
     float DR16_Mouse_Chassis_Shift = 2.0f;
-    // 舵机占空比 默认关闭弹舱
     uint16_t Compare = 400;
     // DR16底盘加速灵敏度系数(0.001表示底盘加速度最大为1m/s2)
     float DR16_Keyboard_Chassis_Speed_Resolution_Small = 0.001f;

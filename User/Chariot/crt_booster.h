@@ -62,6 +62,18 @@ enum Enum_Fire_Control_Type
     Fire_Control_Type_AUTO,
 };
 
+enum Enum_Friction_Stage
+{
+    Friction_Stage_UNREADY = 0, // 摩擦轮转速未达发射速度的稳态
+    Friction_Stage_READY,       // 摩擦轮转速达到发射速度的稳态
+};
+
+enum Enum_Fire_Control_Type
+{
+    Fire_Control_Type_MANUL = 0,
+    Fire_Control_Type_AUTO,
+};
+
 /**
  * @brief 摩擦轮控制类型
  *
@@ -206,6 +218,7 @@ public:
 
     Enum_Booster_User_Control_Type Booster_User_Control_Type = Booster_User_Control_Type_SINGLE;
 
+<<<<<<< HEAD
     float Heat_Local = 0.0f; // 本地累加热量
     float Heat_Max = 400.0f;
     float Cooling_Value = 10.0f; // 裁判冷却值
@@ -226,6 +239,8 @@ public:
 
     float tau = 0.0f;
 
+=======
+>>>>>>> 96282cd0b623789a6d446c7e44642c7a43979ab4
 protected:
     // 初始化相关常量
 
