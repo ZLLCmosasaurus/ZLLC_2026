@@ -6,20 +6,20 @@
 //#include "string.h"
 //#include "dvc_referee.h"
 
-//#define SEND_MAX_SIZE    128    //上传数据最大的长度
-//#define frameheader_len  5       //帧头长度
-//#define cmd_len          2       //命令码长度
-//#define crc_len          2       //CRC16校验
-///*屏幕宽度*/
+//#define SEND_MAX_SIZE    128    //?????????
+//#define frameheader_len  5       //????
+//#define cmd_len          2       //?????
+//#define crc_len          2       //CRC16??
+///*????*/
 //#define SCREEN_WIDTH 1080
-//#define SCREEN_LENGTH 1920			//屏幕分辨率
-///*操作类型*/
+//#define SCREEN_LENGTH 1920			//?????
+///*????*/
 //#define Op_None 0
 //#define Op_Add 1
 //#define Op_Change 2
 //#define Op_Delete 3
-//#define Op_Init		1		//初始化，也就是增加图层
-///*颜色*/
+//#define Op_Init		1		//???????????
+///*??*/
 //#define Red_Blue 0
 //#define Yellow   1
 //#define Green    2
@@ -31,7 +31,7 @@
 //#define White    8
 
 
-////功率限制
+////????
 //enum POWERSTATE_Typedef
 //{
 //	BAT = 0,
@@ -46,15 +46,15 @@
 //};
 
 //typedef struct{
-//	char SuperPowerLimit;	  //0为超级电容关闭，不为0则开启使用超级电容
-//	char Chassis_Flag;			//模式见上
-//	char Mag_Flag;					//0表示弹仓盖关闭，1为打开
-//	char Laser_Flag;				//0表示激光关闭，1为打开
-//	short Gimbal_100;				//pitch角度,乘了100之后发
-//	char Gimbal_Flag;				//模式见上
-//	char Graphic_Init_Flag;	//0为进入初始化模式，1为初始化结束
-//	char Freq_state;			  //射频状态，0表示正常射频，1表示高射频
-//	/*打包数据*/
+//	char SuperPowerLimit;	  //0??????????0?????????
+//	char Chassis_Flag;			//????
+//	char Mag_Flag;					//0????????1???
+//	char Laser_Flag;				//0???????1???
+//	short Gimbal_100;				//pitch??,??100???
+//	char Gimbal_Flag;				//????
+//	char Graphic_Init_Flag;	//0?????????1??????
+//	char Freq_state;			  //?????0???????1?????
+//	/*????*/
 //	char Send_Pack1;	
 //	char Fric_Flag;
 //}F405_typedef;
@@ -69,21 +69,21 @@
 //	uint8_t RobotLevel;
 //	uint16_t remainHP;
 //	uint16_t maxHP;
-//	uint16_t HeatCool17;		//17mm枪口每秒冷却值
-//	uint16_t HeatMax17;			//17mm枪口热量上限
-//	uint16_t BulletSpeedMax17;	//17mm枪口上限速度
-//	uint16_t MaxPower;			//底盘功率限制上限
+//	uint16_t HeatCool17;		//17mm???????
+//	uint16_t HeatMax17;			//17mm??????
+//	uint16_t BulletSpeedMax17;	//17mm??????
+//	uint16_t MaxPower;			//????????
 
 //	//0x0202
 //	uint16_t realChassisOutV;
 //	uint16_t realChassisOutA;
 //	float realChassispower;
-//	uint16_t remainEnergy;       //剩余能量
+//	uint16_t remainEnergy;       //????
 //	short shooterHeat17;
 //	
 //	//0x0207
-//	uint8_t bulletFreq;		//射击频率
-//	uint8_t ShootCpltFlag; //已射出一发子弹标志位
+//	uint8_t bulletFreq;		//????
+//	uint8_t ShootCpltFlag; //??????????
 //	
 //	//flag
 //	short HeatUpdateFlag;	
@@ -92,7 +92,7 @@
 //	uint8_t cardType;
 //	uint8_t CardIdx;
 
-//	float bulletSpeed;		//当前射速
+//	float bulletSpeed;		//????
 //	float LastbulletSpeed;
 //}
 //JudgeReceive_t;
@@ -112,7 +112,7 @@
 //	short ABSLastcarSpeedw;
 //} ChassisSpeed_t;
 
-////图形数据
+////????
 //typedef __packed struct
 //{
 //	uint8_t graphic_name[3];
@@ -130,59 +130,59 @@
 //	uint32_t end_y:11;
 //}graphic_data_struct_t;	
 
-///*裁判系统发送信息库*详情见裁判系统串口协议*/
+///*?????????*???????????*/
 //typedef __packed struct
 //{
 //	uint8_t data[113];
-//}robot_interactive_data_t;//交互数据
+//}robot_interactive_data_t;//????
 
 //typedef __packed struct
 //{
-//	uint8_t operate_tpye;		//0空操作  1删除单个图层  2删除所有图层
-//	uint8_t layer;					//图层号  0~9
-//}ext_client_custom_graphic_delete_t;//客户端删除图形
+//	uint8_t operate_tpye;		//0???  1??????  2??????
+//	uint8_t layer;					//???  0~9
+//}ext_client_custom_graphic_delete_t;//???????
 
 //typedef __packed struct
 //{
 //	graphic_data_struct_t grapic_data_struct;
-//}ext_client_custom_graphic_single_t;//客户端绘制一个图形
+//}ext_client_custom_graphic_single_t;//?????????
 
 //typedef __packed struct
 //{
 //	graphic_data_struct_t grapic_data_struct[2];
-//}ext_client_custom_graphic_double_t;//客户端绘制两个图形
+//}ext_client_custom_graphic_double_t;//?????????
 
 //typedef __packed struct
 //{
 //	graphic_data_struct_t grapic_data_struct[5];
-//}ext_client_custom_graphic_five_t;//客户端绘制五个图形
+//}ext_client_custom_graphic_five_t;//?????????
 
 //typedef __packed struct
 //{
 //	graphic_data_struct_t grapic_data_struct[7];
-//}ext_client_custom_graphic_seven_t;//客户端绘制七个图形
+//}ext_client_custom_graphic_seven_t;//?????????
 
 //typedef __packed struct
 //{
 //	graphic_data_struct_t grapic_data_struct;
 //	char data[30];
-//}ext_client_custom_character_t;//客户端绘制字符
+//}ext_client_custom_character_t;//???????
 
-////交互数据信息
-//typedef __packed struct         //帧头帧尾9B
+////??????
+//typedef __packed struct         //????9B
 //{
-//	uint16_t data_cmd_id;	//数据段内容ID  :2B
-//	uint16_t sender_ID;	//发送者ID        :2B
-//	uint16_t receiver_ID;	//接受者ID      :2B
-//	ext_client_custom_graphic_seven_t graphic_custom;//自定义图形数据: 客户端绘制七个图形  ：105B
+//	uint16_t data_cmd_id;	//?????ID  :2B
+//	uint16_t sender_ID;	//???ID        :2B
+//	uint16_t receiver_ID;	//???ID      :2B
+//	ext_client_custom_graphic_seven_t graphic_custom;//???????: ?????????  ?105B
 //}ext_student_interactive_header_data_t;	
 
 //typedef __packed struct
 //{
-//	uint16_t data_cmd_id;	//数据段内容ID                      :2B
-//	uint16_t sender_ID;	//发送者ID														:2B
-//	uint16_t receiver_ID;	//接受者ID													:2B
-//	ext_client_custom_character_t char_custom;//自定义字符串数据   :45B
+//	uint16_t data_cmd_id;	//?????ID                      :2B
+//	uint16_t sender_ID;	//???ID														:2B
+//	uint16_t receiver_ID;	//???ID													:2B
+//	ext_client_custom_character_t char_custom;//????????   :45B
 //}ext_student_interactive_char_header_data_t;
 
 //extern JudgeReceive_t JudgeReceive;

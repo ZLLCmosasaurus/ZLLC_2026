@@ -142,7 +142,7 @@ void Class_Gimbal_Yaw_Motor_GM6020::Transform_Angle()
 {
     True_Rad_Yaw = IMU->Get_Rad_Yaw();
     True_Gyro_Yaw = IMU->Get_Gyro_Yaw();
-    True_Angle_Yaw = IMU->Get_Angle_Yaw();
+    True_Angle_Yaw = IMU->Get_Angle_Yaw_Total();
 }
 
 /**
@@ -609,8 +609,10 @@ void Class_Gimbal::Init()
     // pitch轴4310电机
     //  Motor_Pitch_J4310.PID_Angle.Init(18.0f,1.0f,0.0f,0.0f,2000,4090,0.0f,0.0f,0,0.001f,0.0f,PID_D_First_ENABLE);
     //  Motor_Pitch_J4310.PID_Omega.Init(37.0f,0.0f,0.0f,0.0f,2000,4090, 0.0f, 0.0f, 0.0f, 0.001f, 0.0f);
-    Motor_Pitch_J4310.PID_Angle.Init(50.0f, 2.0f, 0.9f, 0.0f, 1000, 2048, 0.0f, 0.0f, 0, 0.001f, 0.0f, PID_D_First_ENABLE);
+    Motor_Pitch_J4310.PID_Angle.Init(55.0f, 2.0f, 1.0f, 0.0f, 1000, 2048, 0.0f, 0.0f, 0, 0.001f, 0.0f, PID_D_First_ENABLE);
     Motor_Pitch_J4310.PID_Omega.Init(4.0f, 14.0f, 0.002f, 0.0f, 1000, 2048, 0.0f, 0.0f, 0.0f, 0.001f, 0.5f);
+    // Motor_Pitch_J4310.PID_Angle.Init(55.0f, 0.0f, 0.0f, 0.0f, 1000, 320, 0.0f, 0.0f, 0, 0.001f, 0.0f, PID_D_First_ENABLE);
+    // Motor_Pitch_J4310.PID_Omega.Init(7.0f, 0.0f, 0.00f, 0.0f, 1000, 2048, 0.0f, 0.0f, 0.0f, 0.001f, 0.5f);
     Motor_Pitch_J4310.IMU = &Boardc_BMI;
     Motor_Pitch_J4310.Init(&hcan1, (Enum_DM_Motor_ID)0x71, DM_Motor_Control_Method_MIT_IMU_Angle, 0, 20.94f, 5.0f);
     Motor_Pitch_J4310.PID_Angle.Set_I_Separate_Threshold(5.0f);
@@ -646,22 +648,26 @@ void Class_Gimbal::Output()
         {
             // 设置目标角度
             Motor_Yaw.Set_Target_Angle(Target_Yaw_Angle);
-            Motor_Pitch.Set_Target_Angle(Target_Pitch_Angle);
+            Motor_Pitch_J4310.Set_Target_Angle(Target_Pitch_Angle);
         }
         else if ((Gimbal_Control_Type == Gimbal_Control_Type_MINIPC) && (MiniPC->Get_MiniPC_Status() != MiniPC_Status_DISABLE))
         {
-            Target_Pitch_Angle = MiniPC->Get_Rx_Pitch_Angle();
-            Target_Yaw_Angle = MiniPC->Get_Rx_Yaw_Angle();
+            if (MiniPC->Get_Alive_Status() == 1)
+            {
+                Target_Pitch_Angle = MiniPC->Get_Rx_Pitch_Angle();
+                Target_Yaw_Angle = MiniPC->Get_Rx_Yaw_Angle();
+            }
         }
         // 限制角度范围 处理yaw轴180度问题
-        while ((Target_Yaw_Angle - Motor_Yaw.Get_True_Angle_Yaw()) > Max_Yaw_Angle)
-        {
-            Target_Yaw_Angle -= (2 * Max_Yaw_Angle);
-        }
-        while ((Target_Yaw_Angle - Motor_Yaw.Get_True_Angle_Yaw()) < -Max_Yaw_Angle)
-        {
-            Target_Yaw_Angle += (2 * Max_Yaw_Angle);
-        }
+        // while ((Target_Yaw_Angle - Motor_Yaw.Get_True_Angle_Yaw()) > Max_Yaw_Angle)
+        // {
+        //     Target_Yaw_Angle -= (2 * Max_Yaw_Angle);
+        // }
+        // while ((Target_Yaw_Angle - Motor_Yaw.Get_True_Angle_Yaw()) < -Max_Yaw_Angle)
+        // {
+        //     Target_Yaw_Angle += (2 * Max_Yaw_Angle);
+        // }
+        Math_Constrain(&Target_Yaw_Angle, Min_Yaw_Angle, Max_Yaw_Angle);
         // pitch限位
         Math_Constrain(&Target_Pitch_Angle, Min_Pitch_Angle, Max_Pitch_Angle);
         // 设置目标角度
@@ -684,6 +690,19 @@ void Class_Gimbal::TIM_Calculate_PeriodElapsedCallback()
 
     Motor_Pitch_J4310.TIM_PID_PeriodElapsedCallback();
     Motor_Yaw.TIM_PID_PeriodElapsedCallback();
+
+    if ((Motor_Pitch_J4310.Get_Now_Angle() * 180.0f / PI) >= -20.0f)
+    {
+        Motor_Pitch_J4310.PID_Angle.Set_K_P(50.0f);
+        Motor_Pitch_J4310.PID_Angle.Set_K_I(2.0f);
+        Motor_Pitch_J4310.PID_Angle.Set_K_D(1.0f);
+    }
+    else
+    {
+        Motor_Pitch_J4310.PID_Angle.Set_K_P(20.0f);
+        Motor_Pitch_J4310.PID_Angle.Set_K_I(0.0f);
+        Motor_Pitch_J4310.PID_Angle.Set_K_D(0.0f);
+    }
 }
 
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

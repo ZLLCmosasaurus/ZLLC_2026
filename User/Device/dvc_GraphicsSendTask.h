@@ -103,7 +103,7 @@ typedef __PACKED_STRUCT
 	uint32_t start_angle : 9;
 	uint32_t end_angle : 9;
 	uint32_t width : 10;
-	uint32_t start_x : 11;//起点/圆心坐标
+	uint32_t start_x : 11; // 起点/圆心坐标
 	uint32_t start_y : 11;
 	uint32_t radius : 10;
 	uint32_t end_x : 11;
@@ -126,7 +126,7 @@ typedef enum
 
 typedef __packed struct
 {
-	uint8_t operate_tpye;		  // 0空操作  1ɾ������ͼ��  2ɾ������ͼ��
+	uint8_t operate_tpye;		  // 0�ղ���  1ɾ������ͼ��  2ɾ������ͼ��
 	uint8_t layer;				  // ͼ���  0~9
 } client_custom_graphic_delete_t; // �ͻ���ɾ��ͼ��
 
@@ -186,7 +186,7 @@ typedef struct
 	uint8_t Chassis_Control_Type;
 	uint8_t Bullet_Status;
 	uint8_t Minipc_Status;
-	uint8_t MiniPC_Aim_Status;
+	uint8_t MiniPC_Aim_Status; //是否开启自瞄
 	uint8_t Fric_Status;
 	uint8_t Supercap_Energy;
 	uint8_t Supercap_State;
@@ -200,7 +200,9 @@ typedef struct
 	uint16_t Booster_bullet_num;
 	float Supercap_Voltage;
 	float Pitch_Angle;
-	 float Chassis_Gimbal_Diff;
+	float Chassis_Gimbal_Diff;
+	uint8_t MiniPC_Target_Alive;
+	uint8_t MiniPC_Target_Mode;
 
 } JudgeReceive_t;
 

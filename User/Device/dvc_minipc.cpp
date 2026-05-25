@@ -63,7 +63,7 @@ void Class_MiniPC::Data_Process()
   // Self_aim(target_x, target_y, target_z, &tmp_yaw, &tmp_pitch, &Distance);
   Rx_Angle_Pitch = -tmp_pitch * 180 / PI;
   Rx_Angle_Yaw = tmp_yaw * 180 / PI;
-  Math_Constrain(&Rx_Angle_Pitch, -45.0f, 10.0f);
+  Math_Constrain(&Rx_Angle_Pitch, -65.0f, 16.0f);
 }
 
 /**
@@ -77,13 +77,26 @@ void Class_MiniPC::Output()
   float Yaw_rad = Tx_Angle_Yaw * PI / 180.0f;
   float Pitch_rad = Tx_Angle_Pitch * PI / 180.0f;
   float Roll_rad = Tx_Angle_Roll * PI / 180.0f;
-
-  Pack_Tx_CAN.q[3] = (int16_t)((arm_cos_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f) + arm_sin_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f)) * 10000.f);
-  Pack_Tx_CAN.q[0] = (int16_t)((arm_sin_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f) - arm_cos_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f)) * 10000.f);
-  Pack_Tx_CAN.q[1] = (int16_t)((arm_cos_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f) + arm_sin_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f)) * 10000.f);
-  Pack_Tx_CAN.q[2] = (int16_t)((arm_cos_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f) - arm_sin_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f)) * 10000.f);
-
-  memcpy(CAN_Tx_Data, &Pack_Tx_CAN, sizeof(Pack_tx_t));
+  float tmp_q[4];
+  tmp_q[3] = ((arm_cos_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f) + arm_sin_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f)));
+  tmp_q[0] = ((arm_sin_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f) - arm_cos_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f)));
+  tmp_q[1] = ((arm_cos_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f) + arm_sin_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f)));
+  tmp_q[2] = ((arm_cos_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f) - arm_sin_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f)));
+  float m = sqrtf(tmp_q[0] * tmp_q[0] + tmp_q[1] * tmp_q[1] + tmp_q[2] * tmp_q[2] + tmp_q[3] * tmp_q[3]);
+  Pack_Tx_CAN.q[0] = (int16_t)(tmp_q[0] * 10000.0f / m);
+  Pack_Tx_CAN.q[1] = (int16_t)(tmp_q[1] * 10000.0f / m);
+  Pack_Tx_CAN.q[2] = (int16_t)(tmp_q[2] * 10000.0f / m);
+  Pack_Tx_CAN.q[3] = (int16_t)(tmp_q[3] * 10000.0f / m);
+  Pack_Tx_Target_CAN.target_mode = 0;
+  Pack_Tx_Target_CAN.speed = (int16_t)(Referee->Get_Shoot_Speed() * 10000.0f);
+  if (Pack_Tx_Flag == 0)
+  {
+    memcpy(CAN_Tx_Data, &Pack_Tx_CAN, sizeof(Pack_tx_t));
+  }
+  else if (Pack_Tx_Flag == 1)
+  {
+    memcpy(CAN_Tx_Data, &Pack_Tx_Target_CAN, sizeof(Pack_tx_target_t));
+  }
 }
 
 /**
