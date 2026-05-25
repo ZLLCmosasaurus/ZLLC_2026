@@ -121,10 +121,11 @@ public:
     inline float Get_Default_Driver_Omega();
     inline float Get_Friction_Omega();
     inline float Get_Friction_Omega_Threshold();
+    inline float Get_Flag();
     inline uint16_t Get_Heat();
     inline uint16_t Get_Heat_Max();
-    inline uint16_t Get_Cooling_Value();
-    inline uint16_t Get_Heat_Consumption();
+    inline float Get_Cooling_Value();
+    inline float Get_Heat_Consumption();
 
     inline Enum_Booster_Control_Type Get_Booster_Control_Type();
     inline Enum_Friction_Control_Type Get_Friction_Control_Type();
@@ -135,7 +136,8 @@ public:
     inline void Set_Driver_Omega(float __Driver_Omega);
     inline void Set_Booster_Type(Enum_Booster_Type __Booster_Type);
     inline void Set_Heat(uint16_t __Heat);
-    inline void Set_Cooling_Value(uint16_t __Cooling_Value);
+    inline void Set_Shoot_Number(float __Shoot_Number);
+    inline void Set_Cooling_Value(float __Cooling_Value);
 
     void TIM_Calculate_PeriodElapsedCallback();
 	void Output();
@@ -145,7 +147,7 @@ protected:
 
     //常量
     uint16_t Heat_Max = 260;
-    uint16_t Cooling_Value = 30;
+    float Cooling_Value = 30;
     float Heat_Consumption = 10.f;
     //拨弹盘堵转扭矩阈值, 超出被认为卡弹
     uint16_t Driver_Torque_Threshold = 6000;
@@ -160,7 +162,9 @@ protected:
     float ShootTime = 0.f;
     float shoot_speed = 0.f;
     float Now_Angle = 0.f;
-   
+    float shoot_number = 0.f;
+    float ShootNumber = 0.f;
+    float flag = 0.f;
     //读变量
 
     //拨弹盘默认速度, 一圈八发子弹, 此速度下与冷却均衡
@@ -173,7 +177,7 @@ protected:
     Enum_Friction_Control_Type Friction_Control_Type = Friction_Control_Type_DISABLE;
     Enum_Booster_Type Booster_Type;
     //摩擦轮角速度
-    float Friction_Omega = 1050.0f;
+    float Friction_Omega = 1010.0f;
     //拨弹盘实际的目标速度, 一圈八发子弹
     float Driver_Omega = -2.0f * PI * 2;
     //拨弹轮目标绝对角度 加圈数
@@ -200,11 +204,11 @@ uint16_t Class_Booster::Get_Heat_Max()
     return (Heat_Max);
 }
 
-uint16_t Class_Booster::Get_Cooling_Value()
+float Class_Booster::Get_Cooling_Value()
 {
     return (Cooling_Value);
 }
-uint16_t Class_Booster::Get_Heat_Consumption()
+float Class_Booster::Get_Heat_Consumption()
 {
     return (Heat_Consumption);
 }
@@ -238,10 +242,26 @@ float Class_Booster::Get_Friction_Omega_Threshold()
 {
     return (Friction_Omega_Threshold);
 }
+
+/**
+ * @brief 获取flag值
+ *
+ * @return float flag值
+ */
+float Class_Booster::Get_Flag()
+{
+    return (flag);
+}
+
 void Class_Booster::Set_Heat(uint16_t __Heat)
 {
     Heat = __Heat;
 }
+void Class_Booster::Set_Shoot_Number(float  __Shoot_Number)
+{
+    shoot_number = __Shoot_Number;
+}
+
 /**
  * @brief 设定发射机构状态
  *
@@ -307,7 +327,7 @@ void Class_Booster::Set_Driver_Omega(float __Driver_Omega)
 {
     Driver_Omega = __Driver_Omega;
 }
-void Class_Booster::Set_Cooling_Value(uint16_t __Cooling_Value)
+void Class_Booster::Set_Cooling_Value(float __Cooling_Value)
 {
     Cooling_Value = __Cooling_Value;
 }

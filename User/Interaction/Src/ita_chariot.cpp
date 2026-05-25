@@ -883,7 +883,9 @@ void Class_Chariot::Control_Booster()
 #elif defined(USE_FS_i6X)
 // uint32_t single_time;
 // float Dt_single;
-
+uint32_t  single_t1=0;
+float bt2 = 0.0f;
+ float threshold = 0.0f;
 void Class_Chariot::Control_Booster()
 {
    
@@ -911,26 +913,33 @@ void Class_Chariot::Control_Booster()
                     break;
                 }
 
-                if (MiniPC.Get_mode() == 2)
+                if (MiniPC.MiniPC_Fire_Updata_Flag == 1)
                 {
-                    if (Booster.Get_Cooling_Value() < 80)
+                    float now = DWT_GetTimeline_s();
+                    if (Booster.Get_Flag() == 0)
                     {
-                        float now = DWT_GetTimeline_s();
-                        if ((now - last_shot_time) > 0.2f)
-                        {
+                        threshold = 0.05f;
+                    }
+                    else if (Booster.Get_Flag() == 1)
+                    {
+                        threshold = Booster.Get_Heat_Consumption() / Booster.Get_Cooling_Value();
+                    }
 
-                            Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
-                            last_shot_time = now;
-                        }
+                    if ((now - last_shot_time) >= threshold)
+                    {
+                        bt2 = DWT_GetDeltaT(&single_t1);
+                        Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                        last_shot_time = now;
                     }
                     else
                     {
                         Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
                     }
-                    //Shoot_Flag = 1;
+                    MiniPC.MiniPC_Fire_Updata_Flag = 0;
                 }
                 else{
                     Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+                    Booster.Set_Shoot_Number(0.f);
                 }
                 break;
             }
@@ -977,30 +986,37 @@ void Class_Chariot::Control_Booster()
             if (switch_state == FS_Switch_Status_UP){
                 Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
                 Shoot_Flag = 0;
+                Booster.Set_Shoot_Number(0.f);
             }
-            else if (switch_state == FS_Switch_Status_DOWN ) // lian发
-    {
-                //  
-                // if(Booster.Get_Cooling_Value()<80){
-                //         float now = DWT_GetTimeline_s();  
-                //     if((now - last_shot_time) > 0.05f)
-                //     {
+            else if (switch_state == FS_Switch_Status_DOWN && Shoot_Flag == 0) // lian发
+            {
+                float now = DWT_GetTimeline_s();
 
-                //     Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
-                //     last_shot_time = now;
-            
-                // }
-                //     }else{
-                //         Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
-                //     }
-                Booster.Set_Booster_Control_Type(Booster_Control_Type_REPEATED);
-                
+                if (Booster.Get_Flag() == 0)
+                {
+                    threshold = 0.05f;
+                }
+                else if (Booster.Get_Flag() == 1)
+                {
+                    threshold = Booster.Get_Heat_Consumption() / Booster.Get_Cooling_Value();
+                }
+
+                if ((now - last_shot_time) >= threshold)
+                {
+                    bt2 = DWT_GetDeltaT(&single_t1);
+                    Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                    last_shot_time = now;
+                }
+                else
+                {
+                    Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+                }
+                // Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                // Shoot_Flag = 1;
             }
-           
-       
+        }
     }
 }
-		}
 #endif
 #endif
 

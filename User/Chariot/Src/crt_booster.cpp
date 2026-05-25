@@ -234,6 +234,7 @@ void Class_Booster::Output()
             
         
             shoot_time = 0;
+            shoot_number = 0;
         }
         break;
         case (Booster_Control_Type_CEASEFIRE):
@@ -249,7 +250,7 @@ void Class_Booster::Output()
             }
       
             shoot_time = 0;
-         
+            //shoot_number = 0;
         }
         break;
         case (Booster_Control_Type_SINGLE):
@@ -260,12 +261,37 @@ void Class_Booster::Output()
             Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
             Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
 
-            dttt = DWT_GetDeltaT(&single_t);
-              
+
             Driver_Angle = Now_Angle;
-            if (Heat + 5.5 * Heat_Consumption - Cooling_Value * dttt <= Heat_Max) {
-                Driver_Angle += 2.0f * PI / 9.0f;
+
+         //   if(Heat<Heat_Max-4*Heat_Consumption){
+                if(Heat<Heat_Max-3*Heat_Consumption){
+                    if(shoot_number==0){
+                    if(Heat_Max-Heat<100){
+                        ShootNumber=2*((Heat_Max-Heat-1*Heat_Consumption)/(2*Heat_Consumption-0.1f*Cooling_Value));
+                    }else{
+                    ShootNumber=2*((Heat_Max-Heat-2*Heat_Consumption)/(2*Heat_Consumption-0.1f*Cooling_Value));
+                }
+                flag=0;
+                }else if(0<shoot_number&&shoot_number < ShootNumber){
+                    Driver_Angle += 2.0f * PI / 9.0f;
+                    flag = 0;
+                }else{
+                    if(Heat<Heat_Max-4*Heat_Consumption){
+                    shoot_number=-1;
+                    }
+                    flag = 1;
+                    Driver_Angle += 2.0f * PI / 9.0f;
+                }
             }
+           // }
+            if(shoot_number < ShootNumber){
+                shoot_number ++;
+            }
+           // dttt = DWT_GetDeltaT(&single_t);
+              
+            
+           
             // }}else{
             //     Driver_Angle = Now_Angle ;
             // }
@@ -412,7 +438,7 @@ void Class_Booster::TIM_Calculate_PeriodElapsedCallback()
     else
     {
         Heat = Referee->Get_Booster_17mm_1_Heat();
-        Heat_Max = Referee->Get_Booster_17mm_1_Heat_Max();
+        Heat_Max = 260;//Referee->Get_Booster_17mm_1_Heat_Max();
         Cooling_Value = Referee->Get_Booster_17mm_1_Heat_CD();
     }
    
