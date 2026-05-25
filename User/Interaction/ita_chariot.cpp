@@ -675,7 +675,6 @@ void Class_Chariot::Control_Gimbal()
         else if (Active_Controller == Controller_VT13)
         {
 
-
             // 长按右键  开启自瞄
             if (VT13.Get_Mouse_Right_Key() == VT13_Key_Status_PRESSED && MiniPC.Get_Alive_Status() == 1)
             {
@@ -700,7 +699,6 @@ void Class_Chariot::Control_Gimbal()
             tmp_gimbal_yaw -= VT13.Get_Mouse_X() * DR16_Mouse_Yaw_Angle_Resolution;
             tmp_gimbal_pitch += VT13.Get_Mouse_Y() * DR16_Mouse_Pitch_Angle_Resolution * 3.0f;
 
-        
             // C键按下 一键调头
             if (VT13.Get_Keyboard_Key_C() == VT13_Key_Status_TRIG_FREE_PRESSED)
             {
@@ -732,12 +730,11 @@ void Class_Chariot::Control_Gimbal()
                 if (Pitch_Control_Status == Pitch_Status_Control_Free)
                 {
                     Pitch_Control_Status = Pitch_Status_Control_Lock;
-                }   
+                }
                 else
                 {
                     Pitch_Control_Status = Pitch_Status_Control_Free;
                 }
-                   
             }
             if (VT13.Get_Keyboard_Key_R() == DR16_Key_Status_PRESSED) // 按下R键刷新UI
             {
@@ -784,8 +781,9 @@ void Class_Chariot::Control_Gimbal()
     if (Pitch_Control_Status == Pitch_Status_Control_Lock)
     {
         tmp_gimbal_pitch = 0;
-    Gimbal.Set_Target_Yaw_Angle(tmp_gimbal_yaw);
-    Gimbal.Set_Target_Pitch_Angle(tmp_gimbal_pitch);
+        Gimbal.Set_Target_Yaw_Angle(tmp_gimbal_yaw);
+        Gimbal.Set_Target_Pitch_Angle(tmp_gimbal_pitch);
+    }
 }
 #endif
 
@@ -959,9 +957,8 @@ void Class_Chariot::Control_Booster()
                     Booster.Booster_User_Control_Type = Booster_User_Control_Type_SINGLE;
             }
 
-            if(VT13.Get_Keyboard_Key_F() == VT13_Key_Status_PRESSED)
+            if (VT13.Get_Keyboard_Key_F() == VT13_Key_Status_PRESSED)
             {
-                
             }
 
             if (VT13.Get_Keyboard_Key_Ctrl() == VT13_Key_Status_TRIG_FREE_PRESSED)
@@ -1314,7 +1311,7 @@ void Class_Chariot::TIM_Control_Callback()
     Judge_DR16_Control_Type();
     Judge_VT13_Control_Type();
     // 底盘，云台，发射机构控制逻辑
-    //Control_Chassis();
+    // Control_Chassis();
     Control_Gimbal();
     Control_Booster();
 }

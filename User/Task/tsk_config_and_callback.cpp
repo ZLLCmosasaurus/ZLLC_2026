@@ -335,7 +335,6 @@ void Referee_UART1_Callback(uint8_t *Buffer, uint16_t Length)
 {
     chariot.Referee.UART_RxCpltCallback(Buffer, Length);
 }
-#endif
 /**
  * @brief UART1超电回调函数
  *
@@ -372,7 +371,6 @@ float delta_time;
  */
 void Task100us_TIM2_Callback()
 {
-#ifdef CHASSIS
     GraphicSendtask();
     static uint16_t Referee_Sand_Cnt = 0;
     // //暂无云台tim4任务
@@ -383,7 +381,6 @@ void Task100us_TIM2_Callback()
     }
 
     Referee_Sand_Cnt++;
-#ifdef CHASSIS
 
 #ifdef GIMBAL
     // 单给IMU消息开的定时器 ims
@@ -538,7 +535,6 @@ extern "C" void Task_Loop()
 //        chariot.MiniPC_Aim_Status = MinPC_Aim_Status_DISABLE;
 //    }
 #endif
-#ifdef CHASSIS
     if (start_flag == 1)
     {
 
