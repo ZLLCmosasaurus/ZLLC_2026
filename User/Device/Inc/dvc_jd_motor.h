@@ -4,6 +4,7 @@
 #include "drv_math.h"
 #include "agile_modbus.h"
 #include "agile_modbus_rtu.h"
+#include "buzzer.h"
 
 enum Jodell_Motor_Comm_Status
 {
@@ -29,9 +30,21 @@ enum Jodell_Tx_Frame_Type
     Jodell_Tx_Frame_WRITE
 };
 
+enum Jodell_Motor_Fault_Code : uint8_t
+{
+    Jodell_Motor_Fault_NONE = 0x00,
+    Jodell_Motor_Fault_ENCODER = 1 << 2,
+    Jodell_Motor_Fault_OVER_CURRENT = 1 << 3,
+    Jodell_Motor_Fault_VOLTAGE = 1 << 4,
+    Jodell_Motor_Fault_OVER_TEMP = 1 << 6,
+    Jodell_Motor_Fault_PRODUCT = 1 << 7,
+};
+
 struct Jodell_Roll_Rx_Data
 {
     bool Enable_Status = false;
+    uint8_t Fault_Code = Jodell_Motor_Fault_NONE;
+    bool Has_Fault = false;
     float Now_Angle = 0.0f;
     float Now_Absolute_Angle = 0.0f;
     float Now_Relative_Angle = 0.0f;
@@ -44,6 +57,8 @@ struct Jodell_Roll_Rx_Data
 struct Jodell_Gripper_Rx_Data
 {
     bool Enable_Status = false;
+    uint8_t Fault_Code = Jodell_Motor_Fault_NONE;
+    bool Has_Fault = false;
     uint8_t Now_Position = 0;
     float Now_Omega = 0.0f;
     float Now_Torque = 0.0f;
@@ -60,6 +75,8 @@ public:
 
     void TIM_UART_Tx_PeriodElapsedCallback();
 
+    void Jodell_Error_Check_Buzzer();
+
     inline void Set_Motor_Control_Status(Jodell_Motor_Control_Status __Motor_Control_Status);
     inline Jodell_Motor_Working_Status Get_Motor_Working_Status();
 
@@ -74,6 +91,11 @@ public:
     inline float Get_Now_Omega();
     inline float Get_Now_Roll();
     inline uint8_t Get_Now_Gripper_Position();
+    inline uint8_t Get_Gripper_Fault_Code();
+    inline uint8_t Get_Roll_Fault_Code();
+    inline bool Get_Motor_Has_Fault();
+    inline bool Get_Gripper_Has_Fault();
+    inline bool Get_Roll_Has_Fault();
 
     inline void Set_Gripper_Position(uint8_t __Target_Gripper_Position);
     inline uint8_t Get_Gripper_Position();
@@ -99,7 +121,7 @@ private:
     int16_t Target_Absolute_Position_Deg = 0;
     int8_t Target_Absolute_Position_Turns = 0;
     float Target_Omega = 17.4527f;
-    float Target_Torque = 1.5f;
+    float Target_Torque = 0.3f;
     uint8_t Target_Gripper_Position = 0;
 
     // 堵转检测相关变量
@@ -152,6 +174,31 @@ inline float Class_Jodell_Motor::Get_Now_Roll()
 inline uint8_t Class_Jodell_Motor::Get_Now_Gripper_Position()
 {
     return Gripper_Data.Now_Position;
+}
+
+inline uint8_t Class_Jodell_Motor::Get_Gripper_Fault_Code()
+{
+    return Gripper_Data.Fault_Code;
+}
+
+inline uint8_t Class_Jodell_Motor::Get_Roll_Fault_Code()
+{
+    return Roll_Data.Fault_Code;
+}
+
+inline bool Class_Jodell_Motor::Get_Motor_Has_Fault()
+{
+    return (Gripper_Data.Has_Fault || Roll_Data.Has_Fault);
+}
+
+inline bool Class_Jodell_Motor::Get_Gripper_Has_Fault()
+{
+    return Gripper_Data.Has_Fault;
+}
+
+inline bool Class_Jodell_Motor::Get_Roll_Has_Fault()
+{
+    return Roll_Data.Has_Fault;
 }
 
 inline void Class_Jodell_Motor::Set_Gripper_Position(uint8_t __Target_Gripper_Position)

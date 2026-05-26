@@ -41,7 +41,7 @@ typedef struct
     uint8_t stage;
     graph_ui_wheel_t wheel;
     graph_ui_gripper_t gripper;
-    graph_ui_input_t input;
+    graph_ui_orientation_t input;
 } graph_ui_state_t;
 
 static graph_ui_state_t g_graph_ui_state = {
@@ -53,7 +53,7 @@ static graph_ui_state_t g_graph_ui_state = {
     0U,
     GRAPH_UI_WHEEL_ON,
     GRAPH_UI_GRIPPER_CLOSE,
-    GRAPH_UI_INPUT_JOYSTICK
+    GRAPH_UI_ORIENTATION_FOREHEAD
 };
 
 static graph_ui_state_t g_graph_ui_last_state = {
@@ -65,7 +65,7 @@ static graph_ui_state_t g_graph_ui_last_state = {
     0U,
     GRAPH_UI_WHEEL_ON,
     GRAPH_UI_GRIPPER_CLOSE,
-    GRAPH_UI_INPUT_JOYSTICK
+    GRAPH_UI_ORIENTATION_FOREHEAD
 };
 
 static graph_ui_sync_t g_graph_ui_remote_state = {
@@ -73,7 +73,7 @@ static graph_ui_sync_t g_graph_ui_remote_state = {
     GRAPH_UI_MODE_WORKING,
     0U,
     GRAPH_UI_GRIPPER_CLOSE,
-    GRAPH_UI_INPUT_JOYSTICK,
+    GRAPH_UI_ORIENTATION_FOREHEAD,
     0U
 };
 
@@ -230,9 +230,17 @@ static graph_ui_gripper_t GraphUI_SanitizeGripper(graph_ui_gripper_t gripper)
     return (gripper == GRAPH_UI_GRIPPER_OPEN) ? GRAPH_UI_GRIPPER_OPEN : GRAPH_UI_GRIPPER_CLOSE;
 }
 
-static graph_ui_input_t GraphUI_SanitizeInput(graph_ui_input_t input)
+static graph_ui_orientation_t GraphUI_SanitizeInput(graph_ui_orientation_t input)
 {
-    return (input == GRAPH_UI_INPUT_KEYBOARD) ? GRAPH_UI_INPUT_KEYBOARD : GRAPH_UI_INPUT_JOYSTICK;
+    switch (input)
+    {
+    case GRAPH_UI_ORIENTATION_FOREHEAD:
+    case GRAPH_UI_ORIENTATION_REARBACK:
+    case GRAPH_UI_ORIENTATION_FOLLOW:
+        return input;
+    default:
+        return GRAPH_UI_ORIENTATION_FOREHEAD;
+    }
 }
 
 static uint8_t GraphUI_RemoteStateValid(const graph_ui_sync_t *state)
@@ -270,7 +278,9 @@ static uint8_t GraphUI_RemoteStateValid(const graph_ui_sync_t *state)
         return 0U;
     }
 
-    if (state->input != GRAPH_UI_INPUT_JOYSTICK && state->input != GRAPH_UI_INPUT_KEYBOARD)
+    if (state->input != GRAPH_UI_ORIENTATION_FOREHEAD &&
+        state->input != GRAPH_UI_ORIENTATION_REARBACK &&
+        state->input != GRAPH_UI_ORIENTATION_FOLLOW)
     {
         return 0U;
     }
@@ -339,6 +349,7 @@ void GraphUI_SetSpeed(graph_ui_speed_t speed)
 void GraphUI_SetMode(graph_ui_mode_t mode)
 {
     g_graph_ui_state.mode = GraphUI_SanitizeMode(mode);
+    JudgeReceiveData.UI_Mode = g_graph_ui_state.mode;
 }
 
 void GraphUI_SetStage(uint8_t stage)
@@ -349,11 +360,13 @@ void GraphUI_SetStage(uint8_t stage)
 void GraphUI_SetGripper(graph_ui_gripper_t gripper)
 {
     g_graph_ui_state.gripper = GraphUI_SanitizeGripper(gripper);
+    JudgeReceiveData.Gripper_Status = g_graph_ui_state.gripper;
 }
 
-void GraphUI_SetInput(graph_ui_input_t input)
+void GraphUI_SetInput(graph_ui_orientation_t input)
 {
     g_graph_ui_state.input = GraphUI_SanitizeInput(input);
+    JudgeReceiveData.Orientation_Status = g_graph_ui_state.input;
 }
 
 void GraphUI_RemoteSetSpeed(graph_ui_speed_t speed)
@@ -376,7 +389,7 @@ void GraphUI_RemoteSetGripper(graph_ui_gripper_t gripper)
     g_graph_ui_remote_state.gripper = GraphUI_SanitizeGripper(gripper);
 }
 
-void GraphUI_RemoteSetInput(graph_ui_input_t input)
+void GraphUI_RemoteSetInput(graph_ui_orientation_t input)
 {
     g_graph_ui_remote_state.input = GraphUI_SanitizeInput(input);
 }
@@ -416,7 +429,7 @@ uint8_t GraphUI_RemoteUnpack(const uint8_t data[GRAPH_UI_SYNC_DLC], graph_ui_syn
     decoded_state.mode = (graph_ui_mode_t)data[GRAPH_UI_SYNC_IDX_MODE];
     decoded_state.stage = data[GRAPH_UI_SYNC_IDX_STAGE];
     decoded_state.gripper = (graph_ui_gripper_t)data[GRAPH_UI_SYNC_IDX_GRIPPER];
-    decoded_state.input = (graph_ui_input_t)data[GRAPH_UI_SYNC_IDX_INPUT];
+    decoded_state.input = (graph_ui_orientation_t)data[GRAPH_UI_SYNC_IDX_INPUT];
     decoded_state.flags = data[GRAPH_UI_SYNC_IDX_FLAGS];
 
     if (GraphUI_RemoteStateValid(&decoded_state) == 0U)
@@ -437,9 +450,12 @@ void GraphUI_RemoteApply(const graph_ui_sync_t *state)
 
     g_graph_ui_state.speed = GraphUI_SanitizeSpeed(state->speed);
     g_graph_ui_state.mode = GraphUI_SanitizeMode(state->mode);
+    JudgeReceiveData.UI_Mode = g_graph_ui_state.mode;
     g_graph_ui_state.stage = (state->stage > 9U) ? 9U : state->stage;
     g_graph_ui_state.gripper = GraphUI_SanitizeGripper(state->gripper);
+    JudgeReceiveData.Gripper_Status = g_graph_ui_state.gripper;
     g_graph_ui_state.input = GraphUI_SanitizeInput(state->input);
+    JudgeReceiveData.Orientation_Status = g_graph_ui_state.input;
 
 }
 /**********************************************************************************************************
@@ -742,138 +758,30 @@ void ShootLines_Init_1(void)
 	static uint8_t ShootLineName2[] = "SL2";
 	static uint8_t ShootLineName3[] = "SL3";
 	static uint8_t ShootLineName4[] = "SL4";
-	static uint8_t ShootLineName5[] = "SL5";
-	static uint8_t ShootLineName6[] = "SL6";
-	static uint8_t ShootLineName7[] = "SL7";
 	graphic_data_struct_t *P_graphic_data;
 
-	uint16_t x_bias = 0;
-	uint16_t y_bias = 0;
-	// 左侧纵向虚线
-	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 - 135 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 - 135 + x_bias, SCREEN_WIDTH * 0.5 - 10 + y_bias, 1, White, ShootLineName1);
+	P_graphic_data = Rectangle_Draw(1, Op_Add, 1454, 295, 1482, 445, 25, White, ShootLineName1);
 	memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
 
-	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 - 120 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 - 120 + x_bias, SCREEN_WIDTH * 0.5 - 10 + y_bias, 1, White, ShootLineName2);
+	P_graphic_data = Rectangle_Draw(1, Op_Add, 1524, 295, 1552, 445, 25, White, ShootLineName2);
 	memcpy(&data_pack[DRAWING_PACK], (uint8_t *)P_graphic_data, DRAWING_PACK);
 
-	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 - 105 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 - 105 + x_bias, SCREEN_WIDTH * 0.5 - 10 + y_bias, 1, White, ShootLineName3);
+	P_graphic_data = Rectangle_Draw(1, Op_Add, 1594, 295, 1622, 445, 25, White, ShootLineName3);
 	memcpy(&data_pack[DRAWING_PACK * 2], (uint8_t *)P_graphic_data, DRAWING_PACK);
 
-	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 - 90 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 - 90 + x_bias, SCREEN_WIDTH * 0.5 - 10 + y_bias, 1, White, ShootLineName4);
-	memcpy(&data_pack[DRAWING_PACK * 3], (uint8_t *)P_graphic_data, DRAWING_PACK);
-
-	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 - 75 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 - 75 + x_bias, SCREEN_WIDTH * 0.5 - 10 + y_bias, 1, White, ShootLineName5);
-	memcpy(&data_pack[DRAWING_PACK * 4], (uint8_t *)P_graphic_data, DRAWING_PACK);
-
-	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 - 60 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 - 60 + x_bias, SCREEN_WIDTH * 0.5 - 10 + y_bias, 1, White, ShootLineName6);
-	memcpy(&data_pack[DRAWING_PACK * 5], (uint8_t *)P_graphic_data, DRAWING_PACK);
-
-	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 - 45 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 - 45 + x_bias, SCREEN_WIDTH * 0.5 - 10 + y_bias, 1, White, ShootLineName7);
-	memcpy(&data_pack[DRAWING_PACK * 6], (uint8_t *)P_graphic_data, DRAWING_PACK);
-
-	Send_UIPack(Drawing_Graphic7_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK * 7); // 发送七个图形
-}
-void ShootLines_Init_2(void)
-{
-	static uint8_t ShootLineName1[] = "SL8";
-	static uint8_t ShootLineName2[] = "SL9";
-	static uint8_t ShootLineName3[] = "SL0";
-	static uint8_t ShootLineName4[] = "SLA";
-	static uint8_t ShootLineName5[] = "SLB";
-	static uint8_t ShootLineName6[] = "SLC";
-	static uint8_t ShootLineName7[] = "SLD";
-	graphic_data_struct_t *P_graphic_data;
-
-	uint16_t x_bias = 0;
-	uint16_t y_bias = 0;
-	// 右侧纵向虚线
-	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 + 135 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 + 135 + x_bias, SCREEN_WIDTH * 0.5 - 10 + y_bias, 1, White, ShootLineName1);
-	memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
-
-	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 + 120 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 + 120 + x_bias, SCREEN_WIDTH * 0.5 - 10 + y_bias, 1, White, ShootLineName2);
-	memcpy(&data_pack[DRAWING_PACK], (uint8_t *)P_graphic_data, DRAWING_PACK);
-
-	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 + 105 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 + 105 + x_bias, SCREEN_WIDTH * 0.5 - 10 + y_bias, 1, White, ShootLineName3);
-	memcpy(&data_pack[DRAWING_PACK * 2], (uint8_t *)P_graphic_data, DRAWING_PACK);
-
-	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 + 90 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 + 90 + x_bias, SCREEN_WIDTH * 0.5 - 10 + y_bias, 1, White, ShootLineName4);
-	memcpy(&data_pack[DRAWING_PACK * 3], (uint8_t *)P_graphic_data, DRAWING_PACK);
-
-	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 + 75 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 + 75 + x_bias, SCREEN_WIDTH * 0.5 - 10 + y_bias, 1, White, ShootLineName5);
-	memcpy(&data_pack[DRAWING_PACK * 4], (uint8_t *)P_graphic_data, DRAWING_PACK);
-
-	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 + 60 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 + 60 + x_bias, SCREEN_WIDTH * 0.5 - 10 + y_bias, 1, White, ShootLineName6);
-	memcpy(&data_pack[DRAWING_PACK * 5], (uint8_t *)P_graphic_data, DRAWING_PACK);
-
-	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 + 45 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 + 45 + x_bias, SCREEN_WIDTH * 0.5 - 10 + y_bias, 1, White, ShootLineName7);
-	memcpy(&data_pack[DRAWING_PACK * 6], (uint8_t *)P_graphic_data, DRAWING_PACK);
-
-	Send_UIPack(Drawing_Graphic7_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK * 7); // 发送七个图形
-}
-void ShootLines_Init_3(void)
-{
-	static uint8_t ShootLineName1[] = "S31";
-	static uint8_t ShootLineName2[] = "S32";
-	static uint8_t ShootLineName3[] = "S33";
-	static uint8_t ShootLineName4[] = "S34";
-	static uint8_t ShootLineName5[] = "S35";
-	static uint8_t ShootLineName6[] = "S36";
-	static uint8_t ShootLineName7[] = "S37";
-	graphic_data_struct_t *P_graphic_data;
-
-	uint16_t x_bias = 0;
-	uint16_t y_bias = 0;
-
-	// 外侧轮廓瞄准线
-	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 - 150 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 - 150 + x_bias, SCREEN_WIDTH * 0.5 - 20 + y_bias, 1, White, ShootLineName1);
-	memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
-
-	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 + 150 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 + 150 + x_bias, SCREEN_WIDTH * 0.5 - 20 + y_bias, 1, White, ShootLineName2);
-	memcpy(&data_pack[DRAWING_PACK], (uint8_t *)P_graphic_data, DRAWING_PACK);
-
-	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 - 150 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 - 190 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, 1, White, ShootLineName3);
-	memcpy(&data_pack[DRAWING_PACK * 2], (uint8_t *)P_graphic_data, DRAWING_PACK);
-
-	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 + 150 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, SCREEN_LENGTH * 0.5 + 190 + x_bias, SCREEN_WIDTH * 0.5 + y_bias, 1, White, ShootLineName4);
-	memcpy(&data_pack[DRAWING_PACK * 3], (uint8_t *)P_graphic_data, DRAWING_PACK);
-
-	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 + x_bias, SCREEN_WIDTH * 0.5 + 60 + y_bias, SCREEN_LENGTH * 0.5 + x_bias, SCREEN_WIDTH * 0.5 + 95 + y_bias, 1, White, ShootLineName5);
-	memcpy(&data_pack[DRAWING_PACK * 4], (uint8_t *)P_graphic_data, DRAWING_PACK);
-
-	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 + x_bias, SCREEN_WIDTH * 0.5 - 50 + y_bias, SCREEN_LENGTH * 0.5 + x_bias, SCREEN_WIDTH * 0.5 - 210 + y_bias, 1, White, ShootLineName6);
-	memcpy(&data_pack[DRAWING_PACK * 5], (uint8_t *)P_graphic_data, DRAWING_PACK);
-
-	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 + x_bias, SCREEN_WIDTH * 0.5 - 50 + y_bias, SCREEN_LENGTH * 0.5 + x_bias, SCREEN_WIDTH * 0.5 - 210 + y_bias, 1, White, ShootLineName7);
-	memcpy(&data_pack[DRAWING_PACK * 6], (uint8_t *)P_graphic_data, DRAWING_PACK);
-
-	Send_UIPack(Drawing_Graphic7_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK * 7); // 发送七个图形
-}
-void ShootLines_Init_4(void)
-{
-	static uint8_t ShootLineName1[] = "S37";
-	static uint8_t ShootLineName2[] = "S38";
-	static uint8_t ShootLineName3[] = "S39";
-	static uint8_t ShootLineName4[] = "S3A";
-	static uint8_t ShootLineName5[] = "S3B";
-	graphic_data_struct_t *P_graphic_data;
-
-	uint16_t x_bias = 0;
-	uint16_t y_bias = 0;
-
-	// 内侧轮廓瞄准线
-	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 - 19 + x_bias, SCREEN_WIDTH * 0.5 - 82 + y_bias, SCREEN_LENGTH * 0.5 + 20 + x_bias, SCREEN_WIDTH * 0.5 - 82 + y_bias, 1, White, ShootLineName1);
-	memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
-
-	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 - 39 + x_bias, SCREEN_WIDTH * 0.5 - 114 + y_bias, SCREEN_LENGTH * 0.5 + 40 + x_bias, SCREEN_WIDTH * 0.5 - 114 + y_bias, 1, White, ShootLineName2);
-	memcpy(&data_pack[DRAWING_PACK], (uint8_t *)P_graphic_data, DRAWING_PACK);
-
-	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 - 59 + x_bias, SCREEN_WIDTH * 0.5 - 146 + y_bias, SCREEN_LENGTH * 0.5 + 60 + x_bias, SCREEN_WIDTH * 0.5 - 146 + y_bias, 1, White, ShootLineName3);
-	memcpy(&data_pack[DRAWING_PACK * 2], (uint8_t *)P_graphic_data, DRAWING_PACK);
-
-	P_graphic_data = Line_Draw(1, Op_Add, SCREEN_LENGTH * 0.5 - 79 + x_bias, SCREEN_WIDTH * 0.5 - 178 + y_bias, SCREEN_LENGTH * 0.5 + 80 + x_bias, SCREEN_WIDTH * 0.5 - 178 + y_bias, 1, White, ShootLineName4);
+	P_graphic_data = Rectangle_Draw(1, Op_Add, 1664, 295, 1692, 445, 25, White, ShootLineName4);
 	memcpy(&data_pack[DRAWING_PACK * 3], (uint8_t *)P_graphic_data, DRAWING_PACK);
 
 	Send_UIPack(Drawing_Graphic5_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK * 4); // 发送四个图形
+}
+void ShootLines_Init_2(void)
+{
+}
+void ShootLines_Init_3(void)
+{
+}
+void ShootLines_Init_4(void)
+{
 }
 /**********************************************************************************************************
  *函 数 名: Pitch_Line_Init
@@ -974,24 +882,36 @@ void GIMLine_Init(void)
 	static uint8_t GIMLineName2[] = "GL2";
 	static uint8_t GIMLineName3[] = "GL3";
 	static uint8_t GIMLineName4[] = "GL4";
+	static uint8_t GIMLineName5[] = "GL6";
+	static uint8_t GIMLineName6[] = "GL7";
+	static uint8_t GIMLineName7[] = "GL8";
 	graphic_data_struct_t *P_graphic_data;
 
 	uint16_t x_bias = 0;
 	uint16_t y_bias = 0;
 
-	uint8_t N[] = "N";
+	uint8_t D[] = "D";
+	uint8_t W[] = "W";
 	uint8_t M[] = "M";
-	uint8_t F[] = "F";
+	uint8_t U[] = "U";
+	uint8_t L[] = "L";
+	uint8_t S[] = "S";
 
-	P_graphic_data = Arc_Draw(1, Op_Add, 960, 540, 170, 190, 300, 260, 10, White, GIMLineName1);
+	P_graphic_data = Arc_Draw(1, Op_Add, 960, 540, 150, 210, 300, 260, 10, White, GIMLineName1);
 	memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
 	Send_UIPack(Drawing_Graphic1_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK);
 
-	Char_Draw(1, Op_Add, 886, 270, 20, sizeof(N), 2, White, GIMLineName2, N);
+	Char_Draw(1, Op_Add, 790, 295, 20, sizeof(D), 2, White, GIMLineName2, D);
 
-	Char_Draw(1, Op_Add, 952, 261, 20, sizeof(M), 2, White, GIMLineName3, M);
+	Char_Draw(1, Op_Add, 858, 274, 20, sizeof(W), 2, White, GIMLineName3, W);
 
-	Char_Draw(1, Op_Add, 1021, 270, 20, sizeof(F), 2, White, GIMLineName4, F);
+	Char_Draw(1, Op_Add, 928, 263, 20, sizeof(M), 2, White, GIMLineName4, M);
+
+	Char_Draw(1, Op_Add, 998, 263, 20, sizeof(U), 2, White, GIMLineName5, U);
+
+	Char_Draw(1, Op_Add, 1068, 274, 20, sizeof(L), 2, White, GIMLineName6, L);
+
+	Char_Draw(1, Op_Add, 1136, 295, 20, sizeof(S), 2, White, GIMLineName7, S);
 }
 /**********************************************************************************************************
  *函 数 名: SCapLine_Init
@@ -1057,19 +977,10 @@ void ChassisLine_Change(float theta, uint8_t Init_Cnt)
 {
 	static uint8_t ChassisLineName[] = "CLC";
 	static uint8_t optype;
-	uint16_t start_angle;
-	uint16_t end_angle;
 
 	graphic_data_struct_t *P_graphic_data;
 
-	theta = (int16_t)theta % 360;
-	theta = theta - Reference_Angle__;
-
-	// 计算圆弧的起始和终止角度
-	// 随着夹角变化，圆弧整体旋转
-
-	start_angle = (uint16_t)(345 + theta) % 360;
-	end_angle = (uint16_t)(15 + theta) % 360;
+	(void)theta;
 
 	// 圆弧半径
 	uint32_t radius = 83;
@@ -1080,19 +991,15 @@ void ChassisLine_Change(float theta, uint8_t Init_Cnt)
 	uint16_t x_bias = 0;
 	uint16_t y_bias = 0;
 
-	uint8_t indicatorColor;
-	switch (JudgeReceiveData.Chassis_Control_Type)
+	switch (JudgeReceiveData.Orientation_Status)
 	{
-	case 0: // Chassis_Control_Type_DISABLE
-		P_graphic_data = Arc_Draw(0, optype, SCREEN_LENGTH * 0.5 + 632 + x_bias, SCREEN_WIDTH * 0.5 + 184 + y_bias, 0, 360, radius, radius, 15, Black, ChassisLineName);
+	case GRAPH_UI_ORIENTATION_FOREHEAD:
+		P_graphic_data = Arc_Draw(0, optype, SCREEN_LENGTH * 0.5 + 632 + x_bias, SCREEN_WIDTH * 0.5 + 184 + y_bias, 0, 360, radius, radius, 15, Green, ChassisLineName);
 		break;
-	case 1: // Chassis_Control_Type_FOLLOW
-		P_graphic_data = Arc_Draw(0, optype, SCREEN_LENGTH * 0.5 + 632 + x_bias, SCREEN_WIDTH * 0.5 + 184 + y_bias, start_angle, end_angle, radius, radius, 15, Green, ChassisLineName);
-		break;
-	case 2: // Chassis_Control_Type_SPIN
+	case GRAPH_UI_ORIENTATION_REARBACK:
 		P_graphic_data = Arc_Draw(0, optype, SCREEN_LENGTH * 0.5 + 632 + x_bias, SCREEN_WIDTH * 0.5 + 184 + y_bias, 0, 360, radius, radius, 15, Orange, ChassisLineName);
 		break;
-	case 3: // Chassis_Control_Type_DRIVE
+	case GRAPH_UI_ORIENTATION_FOLLOW:
 		P_graphic_data = Arc_Draw(0, optype, SCREEN_LENGTH * 0.5 + 632 + x_bias, SCREEN_WIDTH * 0.5 + 184 + y_bias, 0, 360, radius, radius, 15, Cyan, ChassisLineName);
 		break;
 	default:
@@ -1126,9 +1033,9 @@ void BoostLine_Change(void)
 	// 确定操作类型
 	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
 
-	switch (JudgeReceiveData.Fric_Status)
+	switch (JudgeReceiveData.Gripper_Status)
 	{
-	case 0: // Booster_Control_Type_DISABLE
+	case GRAPH_UI_GRIPPER_CLOSE:
 		P_graphic_data = Line_Draw(0, optype, 1593, 726, 1593, 659, 6, Green, BoostLineName1);
 		memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
 
@@ -1140,7 +1047,7 @@ void BoostLine_Change(void)
 		// 发送图形数据
 		Send_UIPack(Drawing_Graphic5_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK * 3);
 		break;
-	case 1: // Booster_Control_Type_ENABLE
+	case GRAPH_UI_GRIPPER_OPEN:
 		P_graphic_data = Line_Draw(0, optype, 1593, 726, 1593, 659, 6, Orange, BoostLineName1);
 		memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
 
@@ -1184,19 +1091,28 @@ void GIMLine_Change(uint8_t Init_Cnt)
 
 	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
 
-	switch (JudgeReceiveData.Gimbal_Control_Type)
+	switch (JudgeReceiveData.UI_Mode)
 	{
-	case 1: // Gimbal_Control_Type_NORMAL
-		P_graphic_data = Arc_Draw(0, optype, 960, 540, 170, 176, 300, 260, 10, Green, GIMLineName1);
+	case GRAPH_UI_MODE_DISABLE:
+		P_graphic_data = Arc_Draw(0, optype, 960, 540, 150, 160, 300, 260, 10, Green, GIMLineName1);
 		break;
-	case 2: // Gimbal_Control_Type_MINIPC
-		P_graphic_data = Arc_Draw(0, optype, 960, 540, 176, 184, 300, 260, 10, Green, GIMLineName1);
+	case GRAPH_UI_MODE_WORKING:
+		P_graphic_data = Arc_Draw(0, optype, 960, 540, 160, 170, 300, 260, 10, Green, GIMLineName1);
 		break;
-	case 3: // Gimbal_Control_Type_FOLD
-		P_graphic_data = Arc_Draw(0, optype, 960, 540, 184, 190, 300, 260, 10, Green, GIMLineName1);
+	case GRAPH_UI_MODE_MOVING:
+		P_graphic_data = Arc_Draw(0, optype, 960, 540, 170, 180, 300, 260, 10, Green, GIMLineName1);
+		break;
+	case GRAPH_UI_MODE_UPLIFT:
+		P_graphic_data = Arc_Draw(0, optype, 960, 540, 180, 190, 300, 260, 10, Green, GIMLineName1);
+		break;
+	case GRAPH_UI_MODE_DOWNLIFT:
+		P_graphic_data = Arc_Draw(0, optype, 960, 540, 190, 200, 300, 260, 10, Green, GIMLineName1);
+		break;
+	case GRAPH_UI_MODE_SAVELOAD:
+		P_graphic_data = Arc_Draw(0, optype, 960, 540, 200, 210, 300, 260, 10, Green, GIMLineName1);
 		break;
 	default:
-		P_graphic_data = Arc_Draw(0, optype, 960, 540, 170, 190, 300, 260, 10, Black, GIMLineName1);
+		P_graphic_data = Arc_Draw(0, optype, 960, 540, 150, 210, 300, 260, 10, Black, GIMLineName1);
 		break;
 	}
 
@@ -1415,7 +1331,7 @@ void GraphicSendtask(void)
 	{
 	case UI_STATE_IDLE:
 		// 检查是否有状态变化
-		if (Last_JudgeReceiveData.Fric_Status != JudgeReceiveData.Fric_Status)
+		if (Last_JudgeReceiveData.Gripper_Status != JudgeReceiveData.Gripper_Status)
 		{
 			ssm++;
 			// 摩擦轮状态变化
@@ -1426,7 +1342,7 @@ void GraphicSendtask(void)
 			break;
 		}
 
-		if (Last_JudgeReceiveData.Gimbal_Control_Type != JudgeReceiveData.Gimbal_Control_Type)
+		if (Last_JudgeReceiveData.UI_Mode != JudgeReceiveData.UI_Mode)
 		{
 			// 云台用户控制类型变化
 			ui_state = UI_STATE_STATUS_UPDATE;
@@ -1436,9 +1352,17 @@ void GraphicSendtask(void)
 			break;
 		}
 
+		if (Last_JudgeReceiveData.Orientation_Status != JudgeReceiveData.Orientation_Status)
+		{
+			ui_state = UI_STATE_STATUS_UPDATE;
+			last_status_type = 4;
+			status_update_retry = 0;
+			last_update_time = current_time;
+			break;
+		}
+
 		if (Last_JudgeReceiveData.Chassis_Control_Type != JudgeReceiveData.Chassis_Control_Type)
 		{
-			// 底盘控制类型变化
 			ui_state = UI_STATE_STATUS_UPDATE;
 			last_status_type = 3;
 			status_update_retry = 0;
@@ -1459,15 +1383,19 @@ void GraphicSendtask(void)
 		{
 		case 1: // 摩擦轮状态
 			BoostLine_Change();
-			Last_JudgeReceiveData.Fric_Status = JudgeReceiveData.Fric_Status;
+			Last_JudgeReceiveData.Gripper_Status = JudgeReceiveData.Gripper_Status;
 			break;
 		case 2: // 云台控制类型
 			GIMLine_Change(0);
-			Last_JudgeReceiveData.Gimbal_Control_Type = JudgeReceiveData.Gimbal_Control_Type;
+			Last_JudgeReceiveData.UI_Mode = JudgeReceiveData.UI_Mode;
 			break;
 		case 3: // 底盘控制类型
 			Lanelines_Init();
 			Last_JudgeReceiveData.Chassis_Control_Type = JudgeReceiveData.Chassis_Control_Type;
+			break;
+		case 4: // 底盘方向状态
+			ChassisLine_Change(JudgeReceiveData.Chassis_Gimbal_Diff, 0);
+			Last_JudgeReceiveData.Orientation_Status = JudgeReceiveData.Orientation_Status;
 			break;
 		}
 

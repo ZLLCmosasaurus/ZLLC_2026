@@ -103,9 +103,10 @@ typedef enum
 
 typedef enum
 {
-    GRAPH_UI_INPUT_JOYSTICK = 0,
-    GRAPH_UI_INPUT_KEYBOARD,
-} graph_ui_input_t;
+    GRAPH_UI_ORIENTATION_FOREHEAD = 0,
+    GRAPH_UI_ORIENTATION_REARBACK,
+	GRAPH_UI_ORIENTATION_FOLLOW,
+} graph_ui_orientation_t;
 
 typedef struct
 {
@@ -113,7 +114,7 @@ typedef struct
     graph_ui_mode_t mode;
     uint8_t stage;
     graph_ui_gripper_t gripper;
-    graph_ui_input_t input;
+    graph_ui_orientation_t input;
     uint8_t flags;
 } graph_ui_sync_t;
 
@@ -253,6 +254,9 @@ typedef struct
 	uint8_t Supercap_State; // 超级电容状态
 	uint8_t Minipc_Mode;
 	uint8_t Gimbal_Control_Type; // 添加云台控制状态字段
+	graph_ui_mode_t UI_Mode;
+	graph_ui_gripper_t Gripper_Status;
+	graph_ui_orientation_t Orientation_Status;
 	uint8_t Booster_User_Control_Type;
 	uint16_t booster_fric_omega_left;
 	float Supercap_Voltage;
@@ -279,13 +283,13 @@ void GraphUI_SetSpeed(graph_ui_speed_t speed);
 void GraphUI_SetMode(graph_ui_mode_t mode);
 void GraphUI_SetStage(uint8_t stage);
 void GraphUI_SetGripper(graph_ui_gripper_t gripper);
-void GraphUI_SetInput(graph_ui_input_t input);
+void GraphUI_SetInput(graph_ui_orientation_t input);
 
 void GraphUI_RemoteSetSpeed(graph_ui_speed_t speed);
 void GraphUI_RemoteSetMode(graph_ui_mode_t mode);
 void GraphUI_RemoteSetStage(uint8_t stage);
 void GraphUI_RemoteSetGripper(graph_ui_gripper_t gripper);
-void GraphUI_RemoteSetInput(graph_ui_input_t input);
+void GraphUI_RemoteSetInput(graph_ui_orientation_t input);
 void GraphUI_RemoteRequestFullRefresh(void);
 void GraphUI_RemotePack(uint8_t data[GRAPH_UI_SYNC_DLC]);
 uint8_t GraphUI_RemoteUnpack(const uint8_t data[GRAPH_UI_SYNC_DLC], graph_ui_sync_t *out);

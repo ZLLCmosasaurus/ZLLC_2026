@@ -1172,31 +1172,28 @@ void Class_Chariot::Control_Gimbal()
         tmp_vt03_yaw = Gimbal.J1_Yaw_8009P.Get_Now_Angle_Rad() * 180.0f / PI + 30.0f;
     }
 
-    if (Keyboard_Control_Type != Keyboard_Control_Type_SAVE_LOAD)
+    Gimbal.Set_Planner_Mode(Gimbal_Joint_J1_Yaw, Joint_Planner_Mode_CONSTANT_ACCEL);
+    Gimbal.Set_Planner_Mode(Gimbal_Joint_J2_Yaw, Joint_Planner_Mode_CONSTANT_ACCEL);
+    FSM_Save_Load.Reset();
+
+    if (Gimbal.J1_Yaw_Planner.Get_Enable() == false)
     {
-        Gimbal.Set_Planner_Mode(Gimbal_Joint_J1_Yaw, Joint_Planner_Mode_CONSTANT_ACCEL);
-        Gimbal.Set_Planner_Mode(Gimbal_Joint_J2_Yaw, Joint_Planner_Mode_CONSTANT_ACCEL);
-        FSM_Save_Load.Reset();
-
-        if (Gimbal.J1_Yaw_Planner.Get_Enable() == false)
-        {
-            Gimbal.Reset_Planner(Gimbal_Joint_J1_Yaw);
-            Gimbal.Set_Planner_Enable(Gimbal_Joint_J1_Yaw, true);
-        }
-
-        if (Gimbal.J2_Yaw_Planner.Get_Enable() == false)
-        {
-            Gimbal.Reset_Planner(Gimbal_Joint_J2_Yaw);
-            Gimbal.Set_Planner_Enable(Gimbal_Joint_J2_Yaw, true);
-        }
-
-        Gimbal.Set_Target_J0_Pitch_Radian(tmp_j0_pitch_radian);
-        Gimbal.Set_Target_J1_Yaw_Radian(tmp_j1_yaw_radian);
-        Gimbal.Set_Target_J2_Yaw_Radian(tmp_j2_yaw_radian);
-        Gimbal.Set_Target_J3_Roll_Radian(tmp_j3_roll_radian);
-        Gimbal.Set_Target_J4_Pitch_Radian(tmp_j4_pitch_radian);
-        Gimbal.Set_Target_J5_Roll_Radian(tmp_j5_roll_radian);
+        Gimbal.Reset_Planner(Gimbal_Joint_J1_Yaw);
+        Gimbal.Set_Planner_Enable(Gimbal_Joint_J1_Yaw, true);
     }
+
+    if (Gimbal.J2_Yaw_Planner.Get_Enable() == false)
+    {
+        Gimbal.Reset_Planner(Gimbal_Joint_J2_Yaw);
+        Gimbal.Set_Planner_Enable(Gimbal_Joint_J2_Yaw, true);
+    }
+
+    Gimbal.Set_Target_J0_Pitch_Radian(tmp_j0_pitch_radian);
+    Gimbal.Set_Target_J1_Yaw_Radian(tmp_j1_yaw_radian);
+    Gimbal.Set_Target_J2_Yaw_Radian(tmp_j2_yaw_radian);
+    Gimbal.Set_Target_J3_Roll_Radian(tmp_j3_roll_radian);
+    Gimbal.Set_Target_J4_Pitch_Radian(tmp_j4_pitch_radian);
+    Gimbal.Set_Target_J5_Roll_Radian(tmp_j5_roll_radian);
 
     Gimbal.Set_Target_Gripper_Position(tmp_gripper_position);
     Gimbal.Set_Target_VT03_Pitch_Angle(tmp_vt03_pitch);
@@ -1208,11 +1205,11 @@ void Class_Chariot::UI_Remote_Update()
     // 遥控器类别更新（键鼠/摇杆）
     if (DR16_Control_Type == DR16_Control_Type_REMOTE || VT13_Control_Type == VT13_Control_Type_REMOTE)
     {
-        GraphUI_RemoteSetInput(GRAPH_UI_INPUT_JOYSTICK);
+        GraphUI_RemoteSetInput(GRAPH_UI_ORIENTATION_FOREHEAD);
     }
     else if (DR16_Control_Type == DR16_Control_Type_KEYBOARD || VT13_Control_Type == VT13_Control_Type_KEYBOARD)
     {
-        GraphUI_RemoteSetInput(GRAPH_UI_INPUT_KEYBOARD);
+        GraphUI_RemoteSetInput(GRAPH_UI_ORIENTATION_REARBACK);
     }
 
     // 运行模式以及FSM_Stage更新
@@ -1237,7 +1234,7 @@ void Class_Chariot::UI_Remote_Update()
     }
     case (Keyboard_Control_Type_UPLIFT):
     {
-        GraphUI_RemoteSetMode(GRAPH_UI_MODE_DOWNLIFT);
+        GraphUI_RemoteSetMode(GRAPH_UI_MODE_UPLIFT);
         break;
     }
     case (Keyboard_Control_Type_SAVE_LOAD):

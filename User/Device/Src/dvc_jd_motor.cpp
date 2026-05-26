@@ -90,7 +90,7 @@ void Class_Jodell_Motor::Jodell_Motor_UART_RxCplt_Callback(uint8_t *Rx_Data, uin
             // 读取的寄存器个数
             int regs_read = agile_modbus_deserialize_read_registers(ctx, Length, read_data);
 
-            if (regs_read >= 6)
+            if (regs_read >= 8)
                 Data_Process(read_data, regs_read);
 
             // 下一帧为写入帧
@@ -218,6 +218,11 @@ void Class_Jodell_Motor::Data_Process(uint16_t *data, int regs)
     uint8_t roll_enable_status = ((data[1] & 0xFF) >> 3) & 0x03;
     Roll_Data.Enable_Status = (roll_enable_status == 0x03 ? true : false);
 
+    Gripper_Data.Fault_Code = static_cast<uint8_t>(data[0] >> 8);
+    Gripper_Data.Has_Fault = (Gripper_Data.Fault_Code != Jodell_Motor_Fault_NONE);
+    Roll_Data.Fault_Code = static_cast<uint8_t>(data[1] >> 8);
+    Roll_Data.Has_Fault = (Roll_Data.Fault_Code != Jodell_Motor_Fault_NONE);
+
     // 更新电机类中的电机运行状态
     Motor_Working_Status = (Gripper_Data.Enable_Status && Roll_Data.Enable_Status ? Jodell_Motor_Working_ENABLE : Jodell_Motor_Working_DISABLE);
 
@@ -280,5 +285,24 @@ void Class_Jodell_Motor::Jodell_Safety_Check()
     else if(Locked_cnt == 0)
     {
         is_locked = false;
+    }
+}
+
+void Class_Jodell_Motor::Jodell_Error_Check_Buzzer()
+{
+    if(Get_Motor_Has_Fault())
+    {
+        if(Get_Gripper_Has_Fault() && !Get_Roll_Has_Fault())
+        {
+            buzzer_setTask(&buzzer, BUZZER_CALIBRATING_PRIORITY);
+        }
+        else if(Get_Roll_Has_Fault() && !Get_Gripper_Has_Fault())
+        {
+            buzzer_setTask(&buzzer, BUZZER_CALIBRATED_PRIORITY);
+        }
+        else
+        {
+            buzzer_setTask(&buzzer, BUZZER_POKEMON_HEALED);
+        }
     }
 }
