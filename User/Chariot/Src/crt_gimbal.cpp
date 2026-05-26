@@ -65,7 +65,7 @@ void Class_Gimbal::Init()
     Motor_Yaw.PID_Angle.Init(0.65f, 0.0f, 0.0f, 0.012f, 10, 10);
     //Kp给大容易因为大小Yaw联动的噪声出问题，达不到理想的想要，用大Ki补偿误差，还有Ki对抖动不敏感（积分，相位延迟）强制补偿掉，也可以尝试LESO，但他可能对噪声敏感一些（重在抗扰动）
     //Ki太大对阶跃信号抖动滞后，不用了
-    Motor_Yaw.PID_Omega.Init(6000.0f, 7000.0f, 0.0f, 0.0f, Motor_Yaw.Get_Output_Max(), Motor_Yaw.Get_Output_Max());
+    Motor_Yaw.PID_Omega.Init(6300.0f, 7000.0f, 0.0f, 0.0f, Motor_Yaw.Get_Output_Max(), Motor_Yaw.Get_Output_Max());
     Motor_Yaw.PID_Torque.Init(0.f, 0.0f, 0.0f, 0.0f, Motor_Yaw.Get_Output_Max(), Motor_Yaw.Get_Output_Max());
 
     Motor_Yaw.SMC_Control.Init(0.005, 85.0, 85.0, 5.0);
@@ -85,13 +85,13 @@ void Class_Gimbal::Init()
     // Motor_Pitch.Init(&hfdcan1, DJI_Motor_ID_0x206, DJI_Motor_Control_Method_ANGLE);
     // Motor_Pitch_LESO.Init(0.08, 20.0, 1.0, Observe_Motor_Omega, Motor_GM6020, 0.002f);
 
-    Motor_Pitch.PID_Angle.Init(0.41f, 0.0f, 0.0017f, 0.0f, 2.0f, 5.0f);
-    Motor_Pitch.PID_Omega.Init(-100.0f, -50.f, 0.0f, 0.0f, 2048.0f, 2048.0f);
+    Motor_Pitch.PID_Angle.Init(0.7f, 0.0f, 0.0018f, 0.0f, 2.0f, 5.0f);
+    Motor_Pitch.PID_Omega.Init(-200.0f, -100.f, 0.0f, 0.0f, 2048.0f, 2048.0f);
     Motor_Pitch.Init(&hfdcan1, DM_Motor_ID_0x02, DM_Motor_Control_Method_MIT_TORQUE, 0.0f, 30.0f, 7.0f);
 
     // Motor_Pitch.Set_Motor_Parameters(0.0f, 0.0f, 0.0f, 0.0f);
-    Motor_Yaw.Set_Motor_Parameters(0.0085f, 0.0f, 0.0f, 0.0f);
-    Motor_Pitch.Set_Motor_Parameters(0.0097f, 0.0f, 0.0f, 0.0f);
+    Motor_Yaw.Set_Motor_Parameters(0.016f, 0.0f, 0.0f, 0.0f);
+    Motor_Pitch.Set_Motor_Parameters(0.014f, 0.0f, 0.0f, 0.0f);
 
     External_IMU_Gyro_Yaw.Init(0.99,0.07);
     External_IMU_Gyro_Pitch.Init(0.99,0.07);

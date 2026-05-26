@@ -438,7 +438,7 @@ void Class_Booster::TIM_Calculate_PeriodElapsedCallback()
     else
     {
         Heat = Referee->Get_Booster_17mm_1_Heat();
-        Heat_Max = 260;//Referee->Get_Booster_17mm_1_Heat_Max();
+        Heat_Max = Referee->Get_Booster_17mm_1_Heat_Max();
         Cooling_Value = Referee->Get_Booster_17mm_1_Heat_CD();
     }
    

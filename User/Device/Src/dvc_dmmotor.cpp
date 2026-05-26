@@ -250,6 +250,9 @@ void Class_DM_Motor_J4310::TIM_Alive_PeriodElapsedCallback()
             CAN_Send_Data(CAN_Manage_Object->CAN_Handler, static_cast<Enum_DM_Motor_ID>(CAN_ID) + 0x03, DM_Motor_CAN_Message_Enter, 8); // 使能电机
             DWT_Delay_us(50);
         }
+        PID_Angle.Set_Integral_Error(0.0f);
+        PID_Omega.Set_Integral_Error(0.0f);
+       // PID_Torque.Set_Integral_Error(0.0f);
     }
     else
     {

@@ -321,6 +321,9 @@ void Class_LK_Motor::TIM_Alive_PeriodElapsedCallback()
     {
         //电机断开连接
         LK_Motor_Status = LK_Motor_Status_DISABLE;
+        PID_Angle.Set_Integral_Error(0.0f);
+        PID_Omega.Set_Integral_Error(0.0f);
+        PID_Torque.Set_Integral_Error(0.0f);
     }
     else
     {

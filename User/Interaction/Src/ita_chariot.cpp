@@ -939,7 +939,7 @@ void Class_Chariot::Control_Booster()
                 }
                 else{
                     Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
-                    Booster.Set_Shoot_Number(0.f);
+                    //Booster.Set_Shoot_Number(0.f);
                 }
                 break;
             }
@@ -986,33 +986,33 @@ void Class_Chariot::Control_Booster()
             if (switch_state == FS_Switch_Status_UP){
                 Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
                 Shoot_Flag = 0;
-                Booster.Set_Shoot_Number(0.f);
+               // Booster.Set_Shoot_Number(0.f);
             }
             else if (switch_state == FS_Switch_Status_DOWN && Shoot_Flag == 0) // lian发
             {
-                float now = DWT_GetTimeline_s();
+                // float now = DWT_GetTimeline_s();
 
-                if (Booster.Get_Flag() == 0)
-                {
-                    threshold = 0.05f;
-                }
-                else if (Booster.Get_Flag() == 1)
-                {
-                    threshold = Booster.Get_Heat_Consumption() / Booster.Get_Cooling_Value();
-                }
+                // if (Booster.Get_Flag() == 0)
+                // {
+                //     threshold = 0.05f;
+                // }
+                // else if (Booster.Get_Flag() == 1)
+                // {
+                //     threshold = Booster.Get_Heat_Consumption() / Booster.Get_Cooling_Value();
+                // }
 
-                if ((now - last_shot_time) >= threshold)
-                {
-                    bt2 = DWT_GetDeltaT(&single_t1);
-                    Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
-                    last_shot_time = now;
-                }
-                else
-                {
-                    Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
-                }
-                // Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
-                // Shoot_Flag = 1;
+                // if ((now - last_shot_time) >= threshold)
+                // {
+                //     bt2 = DWT_GetDeltaT(&single_t1);
+                //     Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                //     last_shot_time = now;
+                // }
+                // else
+                // {
+                //     Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+                // }
+                Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                Shoot_Flag = 1;
             }
         }
     }
