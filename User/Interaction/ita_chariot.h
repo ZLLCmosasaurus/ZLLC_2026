@@ -24,6 +24,7 @@
 #include "crt_chassis.h"
 #include "config.h"
 #include "dvc_dmmotor.h"
+#include "dvc_pilotlamp.h"
 
 #include "buzzer.h"
 /* Exported macros -----------------------------------------------------------*/
@@ -160,6 +161,8 @@ public:
     // 底盘
     Class_Tricycle_Chassis Chassis;
 
+    Class_PilotLamp PilotLamp;
+
 #ifdef GIMBAL
     // 遥控器
     Class_DR16 DR16;
@@ -180,6 +183,8 @@ public:
    
     friend class Class_FSM_Alive_Control;
     friend class Class_FSM_Alive_Control_VT13;
+
+    
 #endif
 
     void Init(float __DR16_Dead_Zone = 0);

@@ -32,5 +32,23 @@ protected:
     
     uint16_t mod = 0;
 };
+inline Enum_PilotLamp_Type Class_PilotLamp::Get_PilotLamp_Type()
+{
+    return (PilotLamp_Type);
+}
 
+inline void Class_PilotLamp::SetLEDRed(GPIO_PinState state)
+{
+    HAL_GPIO_WritePin(LED_gpio_red, LED_pin_red, state);
+}
+
+inline void Class_PilotLamp::SetLEDBlue(GPIO_PinState state)
+{
+    HAL_GPIO_WritePin(LED_gpio_blue, LED_pin_blue, state);
+}
+
+inline void Class_PilotLamp::SetLEDGreen(GPIO_PinState state)
+{
+    HAL_GPIO_WritePin(LED_gpio_green, LED_pin_green, state);
+}
 #endif // !1

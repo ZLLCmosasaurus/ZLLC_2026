@@ -335,6 +335,9 @@ void Referee_UART1_Callback(uint8_t *Buffer, uint16_t Length)
 {
     chariot.Referee.UART_RxCpltCallback(Buffer, Length);
 }
+#ifdef CHASSIS
+
+#endif
 /**
  * @brief UART1超电回调函数
  *
@@ -371,7 +374,7 @@ float delta_time;
  */
 void Task100us_TIM2_Callback()
 {
-    GraphicSendtask();
+    
     static uint16_t Referee_Sand_Cnt = 0;
     // //暂无云台tim4任务
     if (Referee_Sand_Cnt % 50 == 1)
@@ -381,8 +384,9 @@ void Task100us_TIM2_Callback()
     }
 
     Referee_Sand_Cnt++;
+#ifdef CHASSIS
 
-#ifdef GIMBAL
+#elif defined(GIMBAL)
     // 单给IMU消息开的定时器 ims
     chariot.Gimbal.Boardc_BMI.TIM_Calculate_PeriodElapsedCallback();
 #endif
@@ -413,7 +417,7 @@ void Task1ms_TIM5_Callback()
     /****************************** 交互层回调函数 1ms *****************************************/
     if (start_flag == 1)
     {
-        static uint16_t UI_Refresh = 0;
+        //static uint16_t UI_Refresh = 0;
         buzzer_setTask(&buzzer, BUZZER_FORCE_STOP_PRIORITY);
 #ifdef GIMBAL
         chariot.FSM_Alive_Control.Reload_TIM_Status_PeriodElapsedCallback();
@@ -424,6 +428,12 @@ void Task1ms_TIM5_Callback()
         /****************************** 驱动层回调函数 1ms *****************************************/
         // 统一打包发送
         TIM_CAN_PeriodElapsedCallback();
+        // UI_Refresh++;
+        // if (UI_Refresh == 300)
+        // {
+        //     Init_Cnt = 10;
+        //     UI_Refresh = 0;
+        // }
     }
     // pitch = chariot.Gimbal.Boardc_BMI.Get_Angle_Pitch();
     // yaw = chariot.Gimbal.Boardc_BMI.Get_Angle_Yaw();
@@ -464,7 +474,7 @@ extern "C" void Task_Init()
 #endif
 
 #endif
-    UART_Init(&huart1, Referee_UART1_Callback, 128);
+
 #ifdef GIMBAL
     buzzer_init_example();
     // 集中总线can1/can2
@@ -537,17 +547,17 @@ extern "C" void Task_Loop()
 #endif
     if (start_flag == 1)
     {
-
-        GraphicSendtask();
         static float freq;
         static uint32_t time_s;
         freq = 1 / DWT_GetDeltaT(&time_s);
-        GraphicSendtask();
+        // GraphicSendtask();
+			GraphicSendtask();
         JudgeReceiveData.robot_id = chariot.Referee.Get_ID();
         JudgeReceiveData.Pitch_Angle = chariot.Gimbal_Tx_Pitch_Angle; // pitch角度
         JudgeReceiveData.Bullet_Status = chariot.Bulletcap_Status;    // 弹舱
         JudgeReceiveData.Fric_Status = chariot.Fric_Status;           // 摩擦轮
-        JudgeReceiveData.Minipc_Status = chariot.MiniPC_Status;       // 自瞄是否离线
+        JudgeReceiveData.Minipc_Status = chariot.MiniPC.Get_MiniPC_Status();  //自瞄掉线与否
+        JudgeReceiveData.MiniPC_Aim_Status = chariot.MiniPC.Get_Alive_Status();       // 自瞄是否识别到敌人
         JudgeReceiveData.Booster_User_Control_Type = chariot.Booster_User_Control_Type;
         // JudgeReceiveData.Supercap_Energy = chariot.Chassis.Supercap.Get_Stored_Energy();    // 超级电容储能
         JudgeReceiveData.Supercap_Voltage = chariot.Chassis.Supercap.Get_Now_Voltage() / 100.0f; // 超级电容容量
@@ -556,10 +566,13 @@ extern "C" void Task_Loop()
         // JudgeReceiveData.booster_fric_omega_left = chariot.Booster_fric_omega_left; // 左摩擦轮速度; // 左摩擦轮速度
         // JudgeReceiveData.booster_fric_omega_right = chariot.Booster_fric_omega_right;
         // JudgeReceiveData.Booster_bullet_num = chariot.Booster_bullet_num - chariot.Booster_bullet_num_before;
-        JudgeReceiveData.Minipc_Mode = chariot.MiniPC_Type;
+        JudgeReceiveData.Minipc_Mode = (uint8_t)chariot.MiniPC.MiniPC_Target_Mode; //自瞄目标 前哨战/基地
         JudgeReceiveData.Antispin_Type = chariot.Antispin_Type;
+        JudgeReceiveData.Booster_status = (uint8_t)chariot.Booster.Get_Booster_Control_Type(); //拨弹盘
+        JudgeReceiveData.Gimbal_Control_Type = (uint8_t)chariot.Gimbal.Get_Gimbal_Control_Type();
+        JudgeReceiveData.PilotLamp_Mode = (uint8_t)chariot.PilotLamp.Get_PilotLamp_Type();
         if (chariot.Referee_UI_Refresh_Status == Referee_UI_Refresh_Status_ENABLE)
-            Init_Cnt = 255;
+            Init_Cnt = 100;
     }
 }
 

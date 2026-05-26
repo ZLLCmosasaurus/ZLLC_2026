@@ -107,6 +107,7 @@ virtualFolder:
         - path: ../User/Device/buzzer.c
         - path: ../User/Device/dvc_dmmotor.cpp
         - path: ../User/Device/dvc_imu.cpp
+        - path: ../User/Device/dvc_pilotlamp.cpp
       folders: []
     - name: Interaction
       files:

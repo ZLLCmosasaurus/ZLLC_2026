@@ -10,6 +10,7 @@
 #include <string.h>
 #include "usart.h"
 #include <stdio.h>
+#include "dvc_pilotlamp.h"
 
 #define CAP_GRAPHIC_NUM 9 // 超级电容的电量显示细分个数
 #define Robot_ID 46
@@ -474,34 +475,6 @@ void FrictSpeed_Draw(uint16_t omega_left, uint16_t omega_right, uint8_t Init_Cnt
 		last_omega_right = omega_right;
 	}
 }
-
-void FricStatus_Draw(uint8_t fric_status, uint8_t Init_Cnt)
-{
-	static uint8_t FricStatusName[] = "frs";
-	static uint8_t FricStatusOn[] = "ON";
-	static uint8_t FricStatusOff[] = "OFF";
-	// static uint8_t FricStatus[] = (fric_status == 1 ? "ON" : "OFF");
-	static uint8_t last_fric_status = Last_JudgeReceiveData.Fric_Status;
-	uint8_t optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
-	if ((last_fric_status != fric_status) || Init_Cnt > 0)
-	{
-		if (fric_status == 1)
-		{
-			Char_Draw(0, optype,
-					  0.9 * SCREEN_LENGTH, 0.35 * SCREEN_WIDTH, // 数值位置 (X, Y)
-					  20, strlen((char *)FricStatusOn), 2,
-					  Green, FricStatusName, FricStatusOn);
-		}
-		else
-		{
-			Char_Draw(0, optype,
-					  0.9 * SCREEN_LENGTH, 0.35 * SCREEN_WIDTH, // 数值位置 (X, Y)
-					  20, strlen((char *)FricStatusOff), 2,
-					  Green, FricStatusName, FricStatusOff);
-		}
-	}
-}
-
 void BulletNum_Draw(uint16_t bullet_num, uint8_t Init_Cnt)
 {
 	static uint8_t BulletNumName[] = "bun"; // 数值的独立名称
@@ -552,80 +525,23 @@ void CapDraw(float CapVolt, uint8_t Init_Flag)
 }
 
 /*字符变化发送*/
-void ChassisChange(uint8_t Init_Flag)
+void FricChange(uint8_t Init_Flag)
 {
 
-	uint8_t SPIN[] = "SPIN";
-	uint8_t FOLLOW[] = "FOLLOW";
-	uint8_t Chassis_Off[] = "OFF";
+	uint8_t FOLLOW[] = "ENABLE";
+	uint8_t Chassis_Off[] = "DISABLE";
 
 	static uint8_t optype;
 	/*底盘状态改变*/
 	static uint8_t ChassisChangeName[] = "cha";
 	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
-	switch (JudgeReceiveData.Chassis_Control_Type)
+	switch (JudgeReceiveData.Fric_Status)
 	{
 	case 0:
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.40 * SCREEN_WIDTH, 20, sizeof(Chassis_Off), 2, Pink, ChassisChangeName, Chassis_Off);
+		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.70 * SCREEN_WIDTH, 20, sizeof(Chassis_Off), 2, Pink, ChassisChangeName, Chassis_Off);
 		break;
 	case 1:
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.40 * SCREEN_WIDTH, 20, sizeof(FOLLOW), 2, Green, ChassisChangeName, FOLLOW);
-		break;
-	case 2:
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.40 * SCREEN_WIDTH, 20, sizeof(SPIN), 2, Orange, ChassisChangeName, SPIN);
-		break;
-	}
-}
-
-void TargetModeChange(uint8_t Init_Cnt)
-{
-	uint8_t OUTPOST[] = "OUTPOST";
-	uint8_t BASE[] = "BASE";
-	uint8_t ROBOT[] = "ROBOT";
-	static uint8_t optype;
-	/*底盘状态改变*/
-	static uint8_t TargetModeChangeName[] = "tmn";
-	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
-	switch (JudgeReceiveData.MiniPC_Target_Alive)
-	{
-	case 0:
-	{
-		Char_Draw(0, Op_Add, 0.90 * SCREEN_LENGTH, 0.55 * SCREEN_WIDTH, 20, sizeof(OUTPOST), 2, Green, TargetModeChangeName, OUTPOST);
-	}
-	break;
-	case 1:
-	{
-		Char_Draw(0, Op_Add, 0.90 * SCREEN_LENGTH, 0.55 * SCREEN_WIDTH, 20, sizeof(BASE), 2, Green, TargetModeChangeName, BASE);
-	}
-	break;
-	case 2:
-	{
-		Char_Draw(0, Op_Add, 0.90 * SCREEN_LENGTH, 0.55 * SCREEN_WIDTH, 20, sizeof(ROBOT), 2, Green, TargetModeChangeName, ROBOT);
-	}
-	break;
-	default:
-		break;
-	}
-}
-
-void AutoAimChange(uint8_t Init_Cnt) // 是否开启自瞄
-{
-	uint8_t ON[] = "ON";
-	uint8_t OFF[] = "OFf";
-	static uint8_t optype;
-	/*底盘状态改变*/
-	static uint8_t AutoAimChangeName[] = "acn";
-	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
-
-	switch (JudgeReceiveData.MiniPC_Aim_Status)
-	{
-	case 0:
-		Char_Draw(0, Op_Add, 0.90 * SCREEN_LENGTH, 0.50 * SCREEN_WIDTH, 20, sizeof(OFF), 2, Green, AutoAimChangeName, OFF);
-		break;
-	case 1:
-		Char_Draw(0, Op_Add, 0.90 * SCREEN_LENGTH, 0.50 * SCREEN_WIDTH, 20, sizeof(ON), 2, Green, AutoAimChangeName, ON);
-		break;
-	default:
+		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.70 * SCREEN_WIDTH, 20, sizeof(FOLLOW), 2, Green, ChassisChangeName, FOLLOW);
 		break;
 	}
 }
@@ -638,58 +554,38 @@ void AutoAimChange(uint8_t Init_Cnt) // 是否开启自瞄
  **********************************************************************************************************/
 void Char_Init(void)
 {
-	static uint8_t PitchName[] = "pit";
-	static uint8_t GimbalName[] = "gim";
-
+	static uint8_t FrictionName[] = "fri";
 	static uint8_t AutoName[] = "aim";
-	static uint8_t CapStaticName[] = "cpt";
-	static uint8_t FireName[] = "frm";
-	static uint8_t FricSpeedName[] = "fsp";
+	static uint8_t FricStatusName[] = "fsp";
 	static uint8_t GimbalStatusLabelName[] = "gsl"; // 云台状态标签名称
-													// 发射机构模式标签名称
-	static uint8_t MiniPCModeLabelName[] = "mpl";	// MiniPC模式标签名称
+	static uint8_t BoosterModeLabelName[] = "bml";	// 发射机构模式标签名称
+	static uint8_t MiniPCTargetLabelName[] = "mpl";	// MiniPC模式标签名称
 	static uint8_t BulletNumName[] = "bnu";			// 弹丸已发射数量
 	static uint8_t AntispinType[] = "ant";
-
-	static uint8_t FrictionName[] = "fri";
-	static uint8_t TagertModeName[] = "tmn";
-	static uint8_t AutoAimName[] = "aan";
-	static uint8_t BoosterModeLabelName[] = "bml";
-
-	uint8_t fric_status_label[] = "FRIC:";
-	Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.60 * SCREEN_WIDTH, 20, sizeof(fric_status_label), 2, Yellow, FrictionName, fric_status_label);
-
-	uint8_t target_mode_label[] = "TARGET:";
-	Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.55 * SCREEN_WIDTH, 20, sizeof(target_mode_label), 2, Yellow, TagertModeName, target_mode_label);
-
-	uint8_t auto_aim_label[] = "AUTOAIM:";
-	Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.50 * SCREEN_WIDTH, 20, sizeof(auto_aim_label), 2, Yellow, AutoAimName, auto_aim_label);
-
-	uint8_t booster_mode_label[] = "BOOSTER:";
-	Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.45 * SCREEN_WIDTH, 20, sizeof(booster_mode_label), 2, Yellow, BoosterModeLabelName, booster_mode_label);
+	static uint8_t PliotStatusName[] = "psn";
 	/*              FIREMODE字符*/
+	
 
-	// /*              CAP字符*/
-	// uint8_t cap_char[] = "CAP :      %";
-	// Char_Draw(0, Op_Add, 0.40 * SCREEN_LENGTH, 0.1 * SCREEN_WIDTH, 30, sizeof(cap_char), 2, Yellow, CapStaticName, cap_char);
+	uint8_t fric_status_label[] = "FRIC :";
+	Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.70 * SCREEN_WIDTH, 20, sizeof(fric_status_label), 2, Yellow, FricStatusName, fric_status_label);
 
-	// uint8_t fric_speed_label[] = "OMEGA :";
-	// Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.35 * SCREEN_WIDTH, 20, sizeof(fric_speed_label), 2, Yellow, FricSpeedName, fric_speed_label);
-
-	// uint8_t bullet_num_label[] = "BULLET :";
-	// Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.60 * SCREEN_WIDTH, 20, sizeof(bullet_num_label), 2, Yellow, BulletNumName, bullet_num_label);
-
-	uint8_t antispintype_label[] = "Antispin :";
-	Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.65 * SCREEN_WIDTH, 20, sizeof(antispintype_label), 2, Yellow, BulletNumName, antispintype_label);
+	uint8_t orin_alive_label[] = "ORIN :";
+	Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.65 * SCREEN_WIDTH, 20, sizeof(orin_alive_label), 2, Yellow, BulletNumName, orin_alive_label);
 	/*              MINIPC MODE字符*/
-	uint8_t minipc_mode_label[] = "MINIPC :";
-	Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.55 * SCREEN_WIDTH, 20, sizeof(minipc_mode_label), 2, Yellow, MiniPCModeLabelName, minipc_mode_label);
+	uint8_t minipc_target_label[] = "TARGET :";
+	Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.60 * SCREEN_WIDTH, 20, sizeof(minipc_target_label), 2, Yellow, MiniPCTargetLabelName, minipc_target_label);
 
 	/*              BOOSTER MODE字符*/
+	uint8_t booster_mode_label[] = "BOOSTER:";
+	Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.55 * SCREEN_WIDTH, 20, sizeof(booster_mode_label), 2, Yellow, BoosterModeLabelName, booster_mode_label);
 
 	/*              GIMBAL状态标签            */
 	uint8_t gimbal_status_label[] = "GIMBAL :";
-	Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.45 * SCREEN_WIDTH, 20, sizeof(gimbal_status_label), 2, Yellow, GimbalStatusLabelName, gimbal_status_label);
+	Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.50 * SCREEN_WIDTH, 20, sizeof(gimbal_status_label), 2, Yellow, GimbalStatusLabelName, gimbal_status_label);
+
+	
+	uint8_t pliot_status_label[] = "PLIOT :";
+	Char_Draw(0, Op_Add, 0.80 * SCREEN_LENGTH, 0.45 * SCREEN_WIDTH, 20, sizeof(pliot_status_label), 2, Yellow, PliotStatusName, pliot_status_label);
 }
 
 void MiniPC_Aim_Change(uint8_t Init_Cnt)
@@ -701,7 +597,7 @@ void MiniPC_Aim_Change(uint8_t Init_Cnt)
 
 	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
 
-	switch (JudgeReceiveData.Minipc_Status)
+	switch (JudgeReceiveData.MiniPC_Aim_Status)
 	{
 	case 1:
 		P_graphic_data = Rectangle_Draw(0, optype, 0.3495 * SCREEN_LENGTH, 0.25 * SCREEN_WIDTH, 0.651 * SCREEN_LENGTH, 0.75 * SCREEN_WIDTH, 5, Green, Auto_Aim_ChangeName);
@@ -768,24 +664,6 @@ void PitchUI_Change(float Pitch, uint8_t Init_Cnt)
 	Send_UIPack(Drawing_Graphic1_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK);
 }
 
-/**********************************************************************************************************
- *函 数 名: CapUI_Change
- *功能说明: ���ݵ�������
- *形    参: ��
- *返 回 值: ��
- **********************************************************************************************************/
-void CapUI_Change(float CapVolt, uint8_t Init_Cnt)
-{
-	static uint8_t CapName[] = "cpv";
-	static uint8_t optype;
-
-	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
-
-	graphic_data_struct_t *P_graphic_data;
-	P_graphic_data = FloatData_Draw(0, optype, 0.42 * SCREEN_LENGTH + 100, 0.1 * SCREEN_WIDTH, CapVolt * 100, 30, 4, 2, Orange, CapName);
-	memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
-	Send_UIPack(Drawing_Graphic1_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK); // ���ַ�
-}
 
 /**********************************************************************************************************
  *函 数 名: RadarDoubleDamage_Draw
@@ -835,16 +713,65 @@ void GimbalStatus_Draw(uint8_t Init_Cnt)
 	switch (JudgeReceiveData.Gimbal_Control_Type)
 	{
 	case 0: // Gimbal_Control_Type_DISABLE
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.45 * SCREEN_WIDTH, 20, sizeof(DISABLE), 2, Pink, GimbalStatusName, DISABLE);
+		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.50 * SCREEN_WIDTH, 20, sizeof(DISABLE), 2, Pink, GimbalStatusName, DISABLE);
 		break;
 	case 1: // Gimbal_Control_Type_NORMAL
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.45 * SCREEN_WIDTH, 20, sizeof(NORMAL), 2, Green, GimbalStatusName, NORMAL);
+		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.50 * SCREEN_WIDTH, 20, sizeof(NORMAL), 2, Green, GimbalStatusName, NORMAL);
 		break;
 	case 2: // Gimbal_Control_Type_MINIPC
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.45 * SCREEN_WIDTH, 20, sizeof(MINIPC), 2, Orange, GimbalStatusName, MINIPC);
+		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.50 * SCREEN_WIDTH, 20, sizeof(MINIPC), 2, Orange, GimbalStatusName, MINIPC);
 		break;
 	default:
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.45 * SCREEN_WIDTH, 20, sizeof(DISABLE), 2, Pink, GimbalStatusName, DISABLE);
+		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.50 * SCREEN_WIDTH, 20, sizeof(DISABLE), 2, Pink, GimbalStatusName, DISABLE);
+		break;
+	}
+}
+
+void PliotLampChange(uint8_t Init_Cnt)
+{
+	static uint8_t PliotLampChangeName[] = "pcn";
+	static uint8_t optype;
+	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
+	switch (JudgeReceiveData.PilotLamp_Mode)
+	{
+	case Enum_PilotLamp_Type_Left45Deg:
+	{
+		uint8_t str[] = "L45";
+		Char_Draw(0, Op_Add, 0.90 * SCREEN_LENGTH, 0.45 * SCREEN_WIDTH, 20, sizeof(str), 2, Green, PliotLampChangeName, str);
+		break;
+	}
+	case Enum_PilotLamp_Type_Right45Deg:
+	{
+		uint8_t str[] = "R45";
+		Char_Draw(0, Op_Add, 0.90 * SCREEN_LENGTH, 0.45 * SCREEN_WIDTH, 20, sizeof(str), 2, Green, PliotLampChangeName, str);
+		break;
+	}
+	case Enum_PilotLamp_Type_Position1:
+	{
+		uint8_t str[] = "P1";
+		Char_Draw(0, Op_Add, 0.90 * SCREEN_LENGTH, 0.45 * SCREEN_WIDTH, 20, sizeof(str), 2, Green, PliotLampChangeName, str);
+		break;
+	}
+	case Enum_PilotLamp_Type_Position2:
+	{
+		uint8_t str[] = "P2";
+		Char_Draw(0, Op_Add, 0.90 * SCREEN_LENGTH, 0.45 * SCREEN_WIDTH, 20, sizeof(str), 2, Green, PliotLampChangeName, str);
+		break;
+	}
+	case Enum_PilotLamp_Type_Position3:
+	{
+		uint8_t str[] = "P3";
+		Char_Draw(0, Op_Add, 0.90 * SCREEN_LENGTH, 0.45 * SCREEN_WIDTH, 20, sizeof(str), 2, Green, PliotLampChangeName, str);
+		break;
+	}
+	case Enum_PilotLamp_Type_Position4:
+	{
+		uint8_t str[] = "P4";
+		Char_Draw(0, Op_Add, 0.90 * SCREEN_LENGTH, 0.45 * SCREEN_WIDTH, 20, sizeof(str), 2, Green, PliotLampChangeName, str);
+		break;
+	}
+
+	default:
 		break;
 	}
 }
@@ -859,28 +786,15 @@ void BoosterMode_Draw(uint8_t Init_Cnt)
 {
 	static uint8_t BoosterModeStatusName[] = "bms";
 	static uint8_t optype;
-	static uint8_t DISABLE[] = "DISABLE";
-	static uint8_t SINGLE[] = "SINGLE";
-	static uint8_t MULTI[] = "DUAL ";
-	static uint8_t REP[] = "REP";
+	static uint8_t SINGLE[] = "DISABLE";
+	static uint8_t MULTI[] = "ENABLE ";
 
 	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
-
-	switch (JudgeReceiveData.Booster_User_Control_Type)
+	if(JudgeReceiveData.Booster_status == 0)
 	{
-	case 0: // Booster_User_Control_Type_SINGLE
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.50 * SCREEN_WIDTH, 20, sizeof(DISABLE), 2, Green, BoosterModeStatusName, DISABLE);
-		break;
-	case 1: // Booster_User_Control_Type_MULTI
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.50 * SCREEN_WIDTH, 20, sizeof(SINGLE), 2, Orange, BoosterModeStatusName, SINGLE);
-		break;
-	case 2:
-	Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.50 * SCREEN_WIDTH, 20, sizeof(MULTI), 2, Orange, BoosterModeStatusName, MULTI);
-	break;
-	case 3:
-	Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.50 * SCREEN_WIDTH, 20, sizeof(REP), 2, Orange, BoosterModeStatusName, REP);
-	break;
+		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.55 * SCREEN_WIDTH, 20, sizeof(SINGLE), 2, Green, BoosterModeStatusName, SINGLE);
 	}
+	else Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.55 * SCREEN_WIDTH, 20, sizeof(MULTI), 2, Orange, BoosterModeStatusName, MULTI);
 }
 
 /**********************************************************************************************************
@@ -893,32 +807,33 @@ void MiniPCMode_Draw(uint8_t Init_Cnt)
 {
 	static uint8_t MiniPCModeStatusName[] = "mpm";
 	static uint8_t optype;
-	static uint8_t ARMOR[] = "ARMOR  ";
-	static uint8_t WINDMILL[] = "WINDMILL";
+	static uint8_t ARMOR[] = "OUTPOST";
+	static uint8_t WINDMILL[] = "BASE";
 
 	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
 
 	switch (JudgeReceiveData.Minipc_Mode)
 	{
 	case 0: // MiniPC_Mode_ARMOR
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.55 * SCREEN_WIDTH, 20, sizeof(ARMOR), 2, Green, MiniPCModeStatusName, ARMOR);
+		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.60 * SCREEN_WIDTH, 20, sizeof(ARMOR), 2, Green, MiniPCModeStatusName, ARMOR);
 		break;
 	case 1: // MiniPC_Mode_WINDMILL
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.55 * SCREEN_WIDTH, 20, sizeof(WINDMILL), 2, Orange, MiniPCModeStatusName, WINDMILL);
+		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.60 * SCREEN_WIDTH, 20, sizeof(WINDMILL), 2, Orange, MiniPCModeStatusName, WINDMILL);
 		break;
 	default:
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.55 * SCREEN_WIDTH, 20, sizeof(ARMOR), 2, Green, MiniPCModeStatusName, ARMOR);
+		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.60 * SCREEN_WIDTH, 20, sizeof(ARMOR), 2, Green, MiniPCModeStatusName, ARMOR);
 		break;
 	}
 }
 /**********************************************************************************************************
- *函 数 名: Antispin_Draw
+ *函 数 名: MiniPC_Alive_Draw
  *功能说明: 显示是否开启反小陀螺UI显示
  *形    参: 初始化标志
  *返 回 值: 无
  **********************************************************************************************************/
-void Antispin_Draw(uint8_t Init_Cnt)
+void MiniPC_Alive_Draw(uint8_t Init_Cnt)
 {
+
 	static uint8_t AntispinTypeName[] = "atn";
 	static uint8_t optype;
 	static uint8_t On[] = "ON  ";
@@ -926,16 +841,16 @@ void Antispin_Draw(uint8_t Init_Cnt)
 
 	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
 
-	switch (JudgeReceiveData.Minipc_Mode)
+	switch (JudgeReceiveData.Minipc_Status)
 	{
-	case 0: // MiniPC_Mode_ARMOR
+	case 0: 
 		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.65 * SCREEN_WIDTH, 20, sizeof(Off), 2, Green, AntispinTypeName, Off);
 		break;
-	case 1: // MiniPC_Mode_WINDMILL
+	case 1: 
 		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.65 * SCREEN_WIDTH, 20, sizeof(On), 2, Orange, AntispinTypeName, On);
 		break;
 	default:
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.65 * SCREEN_WIDTH, 20, sizeof(On), 2, Green, AntispinTypeName, On);
+		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.65 * SCREEN_WIDTH, 20, sizeof(On), 2, Green, AntispinTypeName, Off);
 		break;
 	}
 }
@@ -945,7 +860,7 @@ void Antispin_Draw(uint8_t Init_Cnt)
  *形    参: ��
  *返 回 值: ��
  **********************************************************************************************************/
-uint8_t Init_Cnt = 10;
+uint8_t Init_Cnt = 50;
 // 添加UI更新频率控制计数器
 static uint32_t ui_update_counter = 0;
 
@@ -974,31 +889,16 @@ void GraphicSendtask(void)
 	// 初始化阶段发送所有UI元素
 	if (Init_Cnt > 0)
 	{
-		ChassisChange(Init_Cnt);
-		PitchUI_Change(JudgeReceiveData.Pitch_Angle, Init_Cnt);
-		// CarPosture_Change(JudgeReceiveData.Chassis_Gimbal_Diff, Init_Cnt); // 直接传入弧度值
-		// CapDraw(JudgeReceiveData.Supercap_Voltage, Init_Cnt);
-		MiniPC_Aim_Change(Init_Cnt);
-		// FrictSpeed_Draw(JudgeReceiveData.booster_fric_omega_left, JudgeReceiveData.booster_fric_omega_right, Init_Cnt);
-		FricStatus_Draw(JudgeReceiveData.Fric_Status, Init_Cnt);
-		TargetModeChange(Init_Cnt);
-		AutoAimChange(Init_Cnt);
-		BoosterMode_Draw(Init_Cnt);
-
-
-		// BulletNum_Draw(JudgeReceiveData.Booster_bullet_num, Init_Cnt);
-		// Antispin_Draw(Init_Cnt);
-		//  CapUI_Change(JudgeReceiveData.Supercap_Voltage, Init_Cnt);
-		// BoosterMode_Draw(Init_Cnt);
-		// GimbalStatus_Draw(Init_Cnt);
-		// RadarDoubleDamage_Draw(Init_Cnt);
-		// MiniPCMode_Draw(Init_Cnt); // 添加MiniPC模式初始化
-
 		Init_Cnt--;
 
 		Char_Init();	   // 字符
-		ShootLines_Init(); // 枪口线
-		// Lanelines_Init();  // 车道线
+		MiniPC_Aim_Change(Init_Cnt); //自瞄框
+		FricChange(Init_Cnt);
+		MiniPC_Alive_Draw(Init_Cnt);
+		MiniPCMode_Draw(Init_Cnt);
+		BoosterMode_Draw(Init_Cnt);
+		GimbalStatus_Draw(Init_Cnt); // Pilot模式
+		PliotLampChange(Init_Cnt);
 
 		// 初始化完成后，保存当前数据作为比较基准
 		memcpy(&Last_JudgeReceiveData, &JudgeReceiveData, sizeof(JudgeReceive_t));
@@ -1021,9 +921,9 @@ void GraphicSendtask(void)
 			break;
 		}
 
-		if (Last_JudgeReceiveData.MiniPC_Target_Mode != JudgeReceiveData.MiniPC_Target_Mode)
+		if (Last_JudgeReceiveData.Minipc_Status != JudgeReceiveData.Minipc_Status)
 		{
-			// 目标选择状态变化
+			// MiniPC状态变化
 			ui_state = UI_STATE_STATUS_UPDATE;
 			last_status_type = 2;
 			status_update_retry = 0;
@@ -1031,7 +931,7 @@ void GraphicSendtask(void)
 			break;
 		}
 
-		if (Last_JudgeReceiveData.Booster_User_Control_Type != JudgeReceiveData.Booster_User_Control_Type)
+		if (Last_JudgeReceiveData.Minipc_Mode != JudgeReceiveData.Minipc_Mode)
 		{
 			// 发射机构用户控制类型变化
 			ui_state = UI_STATE_STATUS_UPDATE;
@@ -1041,9 +941,9 @@ void GraphicSendtask(void)
 			break;
 		}
 
-		if (Last_JudgeReceiveData.MiniPC_Aim_Status != JudgeReceiveData.MiniPC_Aim_Status)
+		if (Last_JudgeReceiveData.Booster_status != JudgeReceiveData.Booster_status)
 		{
-			// 是否开启自瞄变化
+			// 云台控制类型变化
 			ui_state = UI_STATE_STATUS_UPDATE;
 			last_status_type = 4;
 			status_update_retry = 0;
@@ -1051,7 +951,7 @@ void GraphicSendtask(void)
 			break;
 		}
 
-		if (Last_JudgeReceiveData.Radar_Double_Damage_Flag != JudgeReceiveData.Radar_Double_Damage_Flag)
+		if (Last_JudgeReceiveData.Gimbal_Control_Type != JudgeReceiveData.Gimbal_Control_Type)
 		{
 			// 雷达双倍易伤状态变化
 			ui_state = UI_STATE_STATUS_UPDATE;
@@ -1061,7 +961,7 @@ void GraphicSendtask(void)
 			break;
 		}
 
-		if (Last_JudgeReceiveData.Minipc_Mode != JudgeReceiveData.Minipc_Mode)
+		if (Last_JudgeReceiveData.PilotLamp_Mode != JudgeReceiveData.PilotLamp_Mode)
 		{
 
 			ui_state = UI_STATE_STATUS_UPDATE;
@@ -1070,20 +970,11 @@ void GraphicSendtask(void)
 			last_update_time = current_time;
 			break;
 		}
-		if (Last_JudgeReceiveData.Antispin_Type != JudgeReceiveData.Antispin_Type)
+		if (Last_JudgeReceiveData.MiniPC_Aim_Status != JudgeReceiveData.Antispin_Type)
 		{
 
 			ui_state = UI_STATE_STATUS_UPDATE;
 			last_status_type = 7;
-			status_update_retry = 0;
-			last_update_time = current_time;
-			break;
-		}
-		if (Last_JudgeReceiveData.Booster_bullet_num != JudgeReceiveData.Booster_bullet_num)
-		{
-
-			ui_state = UI_STATE_STATUS_UPDATE;
-			last_status_type = 8;
 			status_update_retry = 0;
 			last_update_time = current_time;
 			break;
@@ -1100,39 +991,33 @@ void GraphicSendtask(void)
 		// 根据状态类型发送对应的状态更新
 		switch (last_status_type)
 		{
-		case 1: // 摩擦轮是否开启
-			FricStatus_Draw(JudgeReceiveData.Fric_Status,0);
+		case 1: // 摩擦轮状态
+			FricChange(0);
 			Last_JudgeReceiveData.Fric_Status = JudgeReceiveData.Fric_Status;
 			break;
-		case 2: // 目标选择模式
-			// MiniPC_Aim_Change(0);
-			TargetModeChange(0);
-			Last_JudgeReceiveData.MiniPC_Target_Mode = JudgeReceiveData.MiniPC_Target_Mode;
+		case 2: // MiniPC在线状态
+			MiniPC_Alive_Draw(0);
+			Last_JudgeReceiveData.Minipc_Status = JudgeReceiveData.Minipc_Status;
 			break;
-		case 3: // 发射机构用户控制类型
-			BoosterMode_Draw(0);
-			Last_JudgeReceiveData.Booster_User_Control_Type = JudgeReceiveData.Booster_User_Control_Type;
-			break;
-		case 4: // 云台控制类型
-			AutoAimChange(0);
-			Last_JudgeReceiveData.MiniPC_Aim_Status = JudgeReceiveData.MiniPC_Aim_Status;
-			break;
-		case 5: // 雷达双倍易伤状态
-			RadarDoubleDamage_Draw(0);
-			Last_JudgeReceiveData.Radar_Double_Damage_Flag = JudgeReceiveData.Radar_Double_Damage_Flag;
-			break;
-		case 6: // MiniPC模式
+		case 3: // 云台手自瞄打击目标 前哨/基地
 			MiniPCMode_Draw(0);
 			Last_JudgeReceiveData.Minipc_Mode = JudgeReceiveData.Minipc_Mode;
 			break;
-		case 7:
-			Antispin_Draw(0);
-			Last_JudgeReceiveData.Antispin_Type = JudgeReceiveData.Antispin_Type;
+		case 4: // 拨弹盘状态
+			BoosterMode_Draw(0);
+			Last_JudgeReceiveData.Booster_status = JudgeReceiveData.Booster_status;
 			break;
-		case 8:
-			BulletNum_Draw(JudgeReceiveData.Booster_bullet_num, 0);
-			Last_JudgeReceiveData.Booster_bullet_num = JudgeReceiveData.Booster_bullet_num;
+		case 5: // Gimbal状态
+			GimbalStatus_Draw(0);
+			Last_JudgeReceiveData.Gimbal_Control_Type = JudgeReceiveData.Gimbal_Control_Type;
 			break;
+		case 6: // Pilot模式
+			PliotLampChange(0);
+			Last_JudgeReceiveData.PilotLamp_Mode = JudgeReceiveData.PilotLamp_Mode;
+			break;
+		case 7:  //自瞄识别框
+			MiniPC_Aim_Change(0);
+			Last_JudgeReceiveData.MiniPC_Aim_Status =  JudgeReceiveData.MiniPC_Aim_Status;
 		}
 
 		// 增加重试次数
@@ -1155,38 +1040,38 @@ void GraphicSendtask(void)
 		// 只更新一个数值，避免占用太多通信资源
 		static uint8_t value_update_index = 0;
 
-		switch (value_update_index)
-		{
-		case 0: // 更新Pitch角度
-			if (fabs(Last_JudgeReceiveData.Pitch_Angle - JudgeReceiveData.Pitch_Angle) > 0.01f)
-			{
-				PitchUI_Change(JudgeReceiveData.Pitch_Angle, 0);
-				Last_JudgeReceiveData.Pitch_Angle = JudgeReceiveData.Pitch_Angle;
-			}
-			break;
+		// switch (value_update_index)
+		// {
+		// case 0: // 更新Pitch角度
+		// 	if (fabs(Last_JudgeReceiveData.Pitch_Angle - JudgeReceiveData.Pitch_Angle) > 0.01f)
+		// 	{
+		// 		PitchUI_Change(JudgeReceiveData.Pitch_Angle, 0);
+		// 		Last_JudgeReceiveData.Pitch_Angle = JudgeReceiveData.Pitch_Angle;
+		// 	}
+		// 	break;
 
-		case 1: // 更新超级电容电压
-			if (fabs(Last_JudgeReceiveData.Supercap_Voltage - JudgeReceiveData.Supercap_Voltage) >= 0.01f)
-			{
-				CapDraw(JudgeReceiveData.Supercap_Voltage, 0);
-				// CapUI_Change(JudgeReceiveData.Supercap_Voltage, 0);
-				Last_JudgeReceiveData.Supercap_Voltage = JudgeReceiveData.Supercap_Voltage;
-			}
-			break;
+		// case 1: // 更新超级电容电压
+		// 	if (fabs(Last_JudgeReceiveData.Supercap_Voltage - JudgeReceiveData.Supercap_Voltage) >= 0.01f)
+		// 	{
+		// 		CapDraw(JudgeReceiveData.Supercap_Voltage, 0);
+		// 		// CapUI_Change(JudgeReceiveData.Supercap_Voltage, 0);
+		// 		Last_JudgeReceiveData.Supercap_Voltage = JudgeReceiveData.Supercap_Voltage;
+		// 	}
+		// 	break;
 
-		case 2: // 更新摩擦轮转速
-			FrictSpeed_Draw(JudgeReceiveData.booster_fric_omega_left, JudgeReceiveData.booster_fric_omega_right, 0);
-			break;
+		// case 2: // 更新摩擦轮转速
+		// 	//FrictSpeed_Draw(JudgeReceiveData.booster_fric_omega_left, JudgeReceiveData.booster_fric_omega_right, 0);
+		// 	break;
 
-		case 3: // 更新云台底盘夹角与自瞄状态
-			if (fabs(Last_JudgeReceiveData.Chassis_Gimbal_Diff - JudgeReceiveData.Chassis_Gimbal_Diff) >= PI / 180.0)
-			{
-				CarPosture_Change(JudgeReceiveData.Chassis_Gimbal_Diff, 0); // 直接传入弧度值
-				Last_JudgeReceiveData.Chassis_Gimbal_Diff = JudgeReceiveData.Chassis_Gimbal_Diff;
-				Last_JudgeReceiveData.Minipc_Status = JudgeReceiveData.Minipc_Status;
-			}
-			break;
-		}
+		// case 3: // 更新云台底盘夹角与自瞄状态
+		// 	if (fabs(Last_JudgeReceiveData.Chassis_Gimbal_Diff - JudgeReceiveData.Chassis_Gimbal_Diff) >= PI / 180.0)
+		// 	{
+		// 		//CarPosture_Change(JudgeReceiveData.Chassis_Gimbal_Diff, 0); // 直接传入弧度值
+		// 		//Last_JudgeReceiveData.Chassis_Gimbal_Diff = JudgeReceiveData.Chassis_Gimbal_Diff;
+		// 		//Last_JudgeReceiveData.Minipc_Status = JudgeReceiveData.Minipc_Status;
+		// 	}
+		// 	break;
+		// }
 
 		// 更新索引，循环遍历所有数值
 		value_update_index = (value_update_index + 1) % 4;

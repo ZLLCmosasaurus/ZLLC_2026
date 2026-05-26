@@ -293,184 +293,7 @@ void Class_Chariot::CAN_Gimbal_Tx_Chassis_Callback_1()
 #ifdef GIMBAL
 void Class_Chariot::Control_Chassis()
 {
-    // 遥控器摇杆值
-    // float dr16_l_x = 0, dr16_l_y = 0;
-    // float vt13_l_x = 0, vt13_l_y = 0;
-    // // 云台坐标系速度目标值 float
-    // float chassis_velocity_x = 0, chassis_velocity_y = 0;
-    // static float chassis_omega = 0;
-
-    // // 先判断当前活动的控制器
-    // Judge_Active_Controller();
-
-    // /************************************遥控器控制逻辑*********************************************/
-    // if (Active_Controller == Controller_DR16 && DR16_Control_Type == DR16_Control_Type_REMOTE)
-    // {
-    //     // 排除遥控器死区
-    //     dr16_l_x = (Math_Abs(DR16.Get_Left_X()) > DR16_Dead_Zone) ? DR16.Get_Left_X() : 0;
-    //     dr16_l_y = (Math_Abs(DR16.Get_Left_Y()) > DR16_Dead_Zone) ? DR16.Get_Left_Y() : 0;
-
-    //     // 设定矩形到圆形映射进行控制
-    //     chassis_velocity_x = dr16_l_x * sqrt(1.0f - dr16_l_y * dr16_l_y / 2.0f) * Chassis.Get_Velocity_X_Max();
-    //     chassis_velocity_y = dr16_l_y * sqrt(1.0f - dr16_l_x * dr16_l_x / 2.0f) * Chassis.Get_Velocity_Y_Max();
-
-    //     // 键盘遥控器操作逻辑
-    //     if (DR16.Get_Left_Switch() == DR16_Switch_Status_MIDDLE) // 左中 随动模式
-    //     {
-    //         // 底盘随动
-    //         Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_FLLOW);
-    //     }
-    //     if (DR16.Get_Left_Switch() == DR16_Switch_Status_UP) // 左上 小陀螺模式
-    //     {
-    //         Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SPIN);
-    //         chassis_omega = -Chassis.Get_Spin_Omega();
-    //         if (DR16.Get_Right_Switch() == DR16_Switch_Status_DOWN) // 右下 小陀螺反向
-    //         {
-    //             Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_ANTI_SPIN);
-    //             chassis_omega = Chassis.Get_Spin_Omega();
-    //         }
-    //     }
-    // }
-    // else if (Active_Controller == Controller_VT13 && VT13_Control_Type == VT13_Control_Type_REMOTE)
-    // {
-    //     // 排除遥控器死区
-    //     vt13_l_x = (Math_Abs(VT13.Get_Left_X()) > DR16_Dead_Zone) ? VT13.Get_Left_X() : 0;
-    //     vt13_l_y = (Math_Abs(VT13.Get_Left_Y()) > DR16_Dead_Zone) ? VT13.Get_Left_Y() : 0;
-
-    //     // 设定矩形到圆形映射进行控制
-    //     chassis_velocity_x = vt13_l_x * sqrt(1.0f - vt13_l_y * vt13_l_y / 2.0f) * Chassis.Get_Velocity_X_Max();
-    //     chassis_velocity_y = vt13_l_y * sqrt(1.0f - vt13_l_x * vt13_l_x / 2.0f) * Chassis.Get_Velocity_Y_Max();
-
-    //     // 键盘遥控器操作逻辑
-    //     if (VT13.Get_Switch() == VT13_Switch_Status_Left)
-    //     {
-    //         Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SPIN);
-    //         chassis_omega = -Chassis.Get_Spin_Omega();
-    //     }
-    //     if (VT13.Get_Switch() == VT13_Switch_Status_Middle)
-    //     {
-    //         // 底盘随动
-    //         Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_FLLOW);
-    //     }
-    //     if (VT13.Get_Switch() == VT13_Switch_Status_Right)
-    //     {
-    //         Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SPIN);
-    //         chassis_omega = Chassis.Get_Spin_Omega();
-    //     }
-    // }
-    // /************************************键鼠控制逻辑*********************************************/
-    // else if ((Active_Controller == Controller_DR16 && DR16_Control_Type == DR16_Control_Type_KEYBOARD) ||
-    //          (Active_Controller == Controller_VT13 && VT13_Control_Type == VT13_Control_Type_KEYBOARD))
-    // {
-    //     // 分别处理DR16和VT13遥控器
-    //     if (Active_Controller == Controller_DR16)
-    //     {
-    //         if (DR16.Get_Keyboard_Key_Shift() == DR16_Key_Status_PRESSED) // 按住shift加速
-    //         {
-    //             DR16_Mouse_Chassis_Shift = 1.0f;
-    //             Sprint_Status = Sprint_Status_ENABLE;
-    //         }
-    //         else
-    //         {
-    //             DR16_Mouse_Chassis_Shift = 2.0f;
-    //             Sprint_Status = Sprint_Status_DISABLE;
-    //         }
-
-    //         if (DR16.Get_Keyboard_Key_A() == DR16_Key_Status_PRESSED) // x轴
-    //         {
-    //             chassis_velocity_x = -Chassis.Get_Velocity_X_Max() / DR16_Mouse_Chassis_Shift;
-    //         }
-    //         if (DR16.Get_Keyboard_Key_D() == DR16_Key_Status_PRESSED)
-    //         {
-    //             chassis_velocity_x = Chassis.Get_Velocity_X_Max() / DR16_Mouse_Chassis_Shift;
-    //         }
-    //         if (DR16.Get_Keyboard_Key_W() == DR16_Key_Status_PRESSED) // y轴
-    //         {
-    //             chassis_velocity_y = Chassis.Get_Velocity_Y_Max() / DR16_Mouse_Chassis_Shift;
-    //         }
-    //         if (DR16.Get_Keyboard_Key_S() == DR16_Key_Status_PRESSED)
-    //         {
-    //             chassis_velocity_y = -Chassis.Get_Velocity_Y_Max() / DR16_Mouse_Chassis_Shift;
-    //         }
-
-    //         if (DR16.Get_Keyboard_Key_E() == DR16_Key_Status_TRIG_FREE_PRESSED) // E键切换小陀螺与随动
-    //         {
-    //             if (Chassis.Get_Chassis_Control_Type() == Chassis_Control_Type_FLLOW)
-    //             {
-    //                 Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SPIN);
-    //                 chassis_omega = Chassis.Get_Spin_Omega();
-    //             }
-    //             else
-    //                 Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_FLLOW);
-    //         }
-
-    //         if (DR16.Get_Keyboard_Key_R() == DR16_Key_Status_PRESSED) // 按下R键刷新UI
-    //         {
-    //             Referee_UI_Refresh_Status = Referee_UI_Refresh_Status_ENABLE;
-    //         }
-    //         else
-    //         {
-    //             Referee_UI_Refresh_Status = Referee_UI_Refresh_Status_DISABLE;
-    //         }
-    //     }
-    //     else if (Active_Controller == Controller_VT13)
-    //     {
-    //         if (VT13.Get_Keyboard_Key_Shift() == VT13_Key_Status_PRESSED) // 按住shift加速
-    //         {
-    //             DR16_Mouse_Chassis_Shift = 1.0f;
-    //             Sprint_Status = Sprint_Status_ENABLE;
-    //         }
-    //         else
-    //         {
-    //             DR16_Mouse_Chassis_Shift = 2.0f;
-    //             Sprint_Status = Sprint_Status_DISABLE;
-    //         }
-    //         if (Chassis.Get_Chassis_Control_Type() == Chassis_Control_Type_DISABLE)
-    //         {
-    //             Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_FLLOW);
-    //         }
-    //         if (VT13.Get_Keyboard_Key_A() == VT13_Key_Status_PRESSED) // x轴
-    //         {
-    //             chassis_velocity_x = -Chassis.Get_Velocity_X_Max() / DR16_Mouse_Chassis_Shift;
-    //         }
-    //         if (VT13.Get_Keyboard_Key_D() == VT13_Key_Status_PRESSED)
-    //         {
-    //             chassis_velocity_x = Chassis.Get_Velocity_X_Max() / DR16_Mouse_Chassis_Shift;
-    //         }
-    //         if (VT13.Get_Keyboard_Key_W() == VT13_Key_Status_PRESSED) // y轴
-    //         {
-    //             chassis_velocity_y = Chassis.Get_Velocity_Y_Max() / DR16_Mouse_Chassis_Shift;
-    //         }
-    //         if (VT13.Get_Keyboard_Key_S() == VT13_Key_Status_PRESSED)
-    //         {
-    //             chassis_velocity_y = -Chassis.Get_Velocity_Y_Max() / DR16_Mouse_Chassis_Shift;
-    //         }
-
-    //         if (VT13.Get_Keyboard_Key_E() == VT13_Key_Status_TRIG_FREE_PRESSED) // E键切换小陀螺与随动
-    //         {
-    //             if (Chassis.Get_Chassis_Control_Type() == Chassis_Control_Type_FLLOW)
-    //             {
-    //                 Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SPIN);
-    //                 chassis_omega = Chassis.Get_Spin_Omega();
-    //             }
-    //             else
-    //                 Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_FLLOW);
-    //         }
-
-    //         if (VT13.Get_Keyboard_Key_R() == VT13_Key_Status_PRESSED) // 按下R键刷新UI
-    //         {
-    //             Referee_UI_Refresh_Status = Referee_UI_Refresh_Status_ENABLE;
-    //         }
-    //         else
-    //         {
-    //             Referee_UI_Refresh_Status = Referee_UI_Refresh_Status_DISABLE;
-    //         }
-    //     }
-    // }
-
-    // Chassis.Set_Target_Velocity_X(chassis_velocity_x);
-    // Chassis.Set_Target_Velocity_Y(chassis_velocity_y);
-    // Chassis.Set_Target_Omega(chassis_omega);
+    
 }
 #endif
 
@@ -694,7 +517,7 @@ void Class_Chariot::Control_Gimbal()
             else
             {
                 Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
-                JudgeReceiveData.MiniPC_Aim_Status = 0;
+                //JudgeReceiveData.MiniPC_Aim_Status = 0;
             }
             tmp_gimbal_yaw -= VT13.Get_Mouse_X() * DR16_Mouse_Yaw_Angle_Resolution;
             tmp_gimbal_pitch += VT13.Get_Mouse_Y() * DR16_Mouse_Pitch_Angle_Resolution * 3.0f;
@@ -945,7 +768,7 @@ void Class_Chariot::Control_Booster()
         {
             if (VT13.Get_Keyboard_Key_B() == VT13_Key_Status_TRIG_FREE_PRESSED)
             {
-                if (Booster.Booster_User_Control_Type == Booster_User_Control_Type_SINGLE)
+                if (Booster.Get_Booster_Control_Type() == Booster_User_Control_Type_SINGLE)
                 {
                     Booster.Booster_User_Control_Type = Booster_User_Control_Type_DUAL;
                 }
@@ -981,25 +804,25 @@ void Class_Chariot::Control_Booster()
                 {
                     if (VT13.Get_Mouse_Left_Key() == VT13_Key_Status_PRESSED)
                     {
-                        Enum_Booster_Control_Type tmp_type;
-                        switch (Booster.Booster_User_Control_Type)
-                        {
-                        case Booster_User_Control_Type_DISABLE:
-                            tmp_type = Booster_Control_Type_DISABLE;
-                            break;
-                        case Booster_User_Control_Type_SINGLE:
-                            tmp_type = Booster_Control_Type_SINGLE;
-                            break;
-                        case Booster_User_Control_Type_DUAL:
-                            tmp_type = Booster_Control_Type_MULTI;
-                            break;
-                        case Booster_User_Control_Type_REPEATED:
-                            tmp_type = Booster_Control_Type_REPEATED;
-                            break;
-                        default:
-                            break;
-                        }
-                        Booster.Set_Booster_Control_Type(tmp_type);
+                        // Enum_Booster_Control_Type tmp_type;
+                        // switch (Booster.Booster_User_Control_Type)
+                        // {
+                        // case Booster_User_Control_Type_DISABLE:
+                        //     tmp_type = Booster_Control_Type_DISABLE;
+                        //     break;
+                        // case Booster_User_Control_Type_SINGLE:
+                        //     tmp_type = Booster_Control_Type_SINGLE;
+                        //     break;
+                        // case Booster_User_Control_Type_DUAL:
+                        //     tmp_type = Booster_Control_Type_MULTI;
+                        //     break;
+                        // case Booster_User_Control_Type_REPEATED:
+                        //     tmp_type = Booster_Control_Type_REPEATED;
+                        //     break;
+                        // default:
+                        //     break;
+                        // }
+                        Booster.Set_Booster_Control_Type(Booster_Control_Type_REPEATED);
                     }
                     else
                     {
@@ -1010,25 +833,25 @@ void Class_Chariot::Control_Booster()
                 {
                     if (VT13.Get_Mouse_Left_Key() == VT13_Key_Status_PRESSED)
                     {
-                        Enum_Booster_Control_Type tmp_type;
-                        switch (Booster.Booster_User_Control_Type)
-                        {
-                        case Booster_User_Control_Type_DISABLE:
-                            tmp_type = Booster_Control_Type_DISABLE;
-                            break;
-                        case Booster_User_Control_Type_SINGLE:
-                            tmp_type = Booster_Control_Type_SINGLE;
-                            break;
-                        case Booster_User_Control_Type_DUAL:
-                            tmp_type = Booster_Control_Type_MULTI;
-                            break;
-                        case Booster_User_Control_Type_REPEATED:
-                            tmp_type = Booster_Control_Type_REPEATED;
-                            break;
-                        default:
-                            break;
-                        }
-                        Booster.Set_Booster_Control_Type(tmp_type);
+                        // Enum_Booster_Control_Type tmp_type;
+                        // switch (Booster.Booster_User_Control_Type)
+                        // {
+                        // case Booster_User_Control_Type_DISABLE:
+                        //     tmp_type = Booster_Control_Type_DISABLE;
+                        //     break;
+                        // case Booster_User_Control_Type_SINGLE:
+                        //     tmp_type = Booster_Control_Type_SINGLE;
+                        //     break;
+                        // case Booster_User_Control_Type_DUAL:
+                        //     tmp_type = Booster_Control_Type_MULTI;
+                        //     break;
+                        // case Booster_User_Control_Type_REPEATED:
+                        //     tmp_type = Booster_Control_Type_REPEATED;
+                        //     break;
+                        // default:
+                        //     break;
+                        // }
+                        Booster.Set_Booster_Control_Type(Booster_Control_Type_REPEATED);
                     }
                     else
                     {
