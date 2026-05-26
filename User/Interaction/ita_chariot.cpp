@@ -601,12 +601,27 @@ void Class_Chariot::Control_Gimbal()
     //     }
     // }
 
-    if (Pitch_Control_Status == Pitch_Status_Control_Lock)
-    {
-        tmp_gimbal_pitch = 0;
+        if (tmp_gimbal_pitch > 15.0f)
+        {
+            tmp_gimbal_pitch = 15.0;
+        }
+        else if (tmp_gimbal_pitch < -70.0f)
+        {
+            tmp_gimbal_pitch = -70.0f;
+        }
+        if (tmp_gimbal_yaw > 180.0f)
+        {
+            tmp_gimbal_yaw = 180.0;
+        }
+        else if (tmp_gimbal_yaw < -180.0f)
+        {
+            tmp_gimbal_yaw = -180.0f;
+        }
+        
         Gimbal.Set_Target_Yaw_Angle(tmp_gimbal_yaw);
+
         Gimbal.Set_Target_Pitch_Angle(tmp_gimbal_pitch);
-    }
+
 }
 #endif
 

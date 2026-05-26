@@ -179,8 +179,8 @@ protected:
     //常量
 
     // 重力补偿
-    float Gravity_Compensate = 580.0f;
-    float Friction_Compensate = 100.0f;
+    float Gravity_Compensate = 623.0f;
+    float Friction_Compensate = 0.0f;
 
     //内部变量
     float True_Rad_Pitch = 0.0f;

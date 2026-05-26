@@ -163,6 +163,7 @@ void Chassis_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
  *
  * @param CAN_RxMessage CAN1收到的消息
  */
+uint8_t aaa= 0;
 #ifdef GIMBAL
 void Gimbal_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
@@ -177,14 +178,17 @@ void Gimbal_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 
     case (0x202):
     {
+        aaa++;
         // chariot.Booster.Motor_Friction_Left.CAN_RxCpltCallback(CAN_RxMessage->Data);
     }
     break;
     case (0x201):
     {
+        aaa++;
         // chariot.Booster.Motor_Friction_Right.CAN_RxCpltCallback(CAN_RxMessage->Data);
     }
     break;
+    
 
     case (YAW_FEEDBACK_IDENTIFIER): // Yaw电机数据
     {
