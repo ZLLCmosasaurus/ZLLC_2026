@@ -31,9 +31,17 @@ void Class_PilotLamp::TIM_Calculate_PeriodElapsedCallback()
     break;
     case Enum_PilotLamp_Type_Right45Deg:
     {
-        SetLEDRed(GPIO_PIN_SET);
+        // SetLEDRed(GPIO_PIN_SET);
+        // SetLEDGreen(GPIO_PIN_SET);
+        // HAL_GPIO_WritePin(LED_gpio_blue,LED_pin_blue,GPIO_PIN_RESET);
+
+        SetLEDBlue(GPIO_PIN_SET);
         SetLEDGreen(GPIO_PIN_SET);
-        HAL_GPIO_WritePin(LED_gpio_blue,LED_pin_blue,GPIO_PIN_RESET);
+        if((0 <= mod && mod < 50) || (100 <= mod && mod < 150))
+        {
+            SetLEDRed(GPIO_PIN_RESET);
+        }
+        else SetLEDRed(GPIO_PIN_SET);
     }
     break;
     case Enum_PilotLamp_Type_Position1:
@@ -86,9 +94,19 @@ void Class_PilotLamp::TIM_Calculate_PeriodElapsedCallback()
     }
 }
 
-void Class_PilotLamp::Set_PilotLamp_Type(Enum_PilotLamp_Type __PilotLamp_Type)
+
+
+inline void Class_PilotLamp::SetLEDRed(GPIO_PinState state)
 {
-    PilotLamp_Type = __PilotLamp_Type;
+    HAL_GPIO_WritePin(LED_gpio_red, LED_pin_red, state);
 }
 
+inline void Class_PilotLamp::SetLEDBlue(GPIO_PinState state)
+{
+    HAL_GPIO_WritePin(LED_gpio_blue, LED_pin_blue, state);
+}
 
+inline void Class_PilotLamp::SetLEDGreen(GPIO_PinState state)
+{
+    HAL_GPIO_WritePin(LED_gpio_green, LED_pin_green, state);
+}

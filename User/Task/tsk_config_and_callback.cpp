@@ -528,6 +528,7 @@ extern "C" void Task_Init()
     HAL_TIM_Base_Start_IT(&htim5);
 }
 
+
 /**
  * @brief 前台循环任务
  *
@@ -576,7 +577,7 @@ extern "C" void Task_Loop()
         JudgeReceiveData.Gimbal_Control_Type = (uint8_t)chariot.Gimbal.Get_Gimbal_Control_Type();
         JudgeReceiveData.PilotLamp_Mode = (uint8_t)chariot.PilotLamp.Get_PilotLamp_Type();
         if (chariot.Referee_UI_Refresh_Status == Referee_UI_Refresh_Status_ENABLE)
-            Init_Cnt = 100;
+            Init_Cnt = 15;
     }
 }
 

@@ -807,7 +807,8 @@ void MiniPCMode_Draw(uint8_t Init_Cnt)
 {
 	static uint8_t MiniPCModeStatusName[] = "mpm";
 	static uint8_t optype;
-	static uint8_t ARMOR[] = "OUTPOST";
+	static uint8_t ARMOR1[] = "OUTPOST_1";
+	static uint8_t ARMOR2[] = "OUTPOST_2";
 	static uint8_t WINDMILL[] = "BASE";
 
 	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
@@ -815,13 +816,13 @@ void MiniPCMode_Draw(uint8_t Init_Cnt)
 	switch (JudgeReceiveData.Minipc_Mode)
 	{
 	case 0: // MiniPC_Mode_ARMOR
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.60 * SCREEN_WIDTH, 20, sizeof(ARMOR), 2, Green, MiniPCModeStatusName, ARMOR);
+		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.60 * SCREEN_WIDTH, 20, sizeof(ARMOR1), 2, Green, MiniPCModeStatusName, ARMOR1);
 		break;
 	case 1: // MiniPC_Mode_WINDMILL
 		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.60 * SCREEN_WIDTH, 20, sizeof(WINDMILL), 2, Orange, MiniPCModeStatusName, WINDMILL);
 		break;
 	default:
-		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.60 * SCREEN_WIDTH, 20, sizeof(ARMOR), 2, Green, MiniPCModeStatusName, ARMOR);
+		Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.60 * SCREEN_WIDTH, 20, sizeof(ARMOR2), 2, Green, MiniPCModeStatusName, ARMOR2);
 		break;
 	}
 }
@@ -860,7 +861,7 @@ void MiniPC_Alive_Draw(uint8_t Init_Cnt)
  *形    参: ��
  *返 回 值: ��
  **********************************************************************************************************/
-uint8_t Init_Cnt = 50;
+uint8_t Init_Cnt = 15;
 // 添加UI更新频率控制计数器
 static uint32_t ui_update_counter = 0;
 
