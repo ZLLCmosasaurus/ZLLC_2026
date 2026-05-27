@@ -1,0 +1,162 @@
+T15B0 000:391.937   SEGGER J-Link V9.44 Log File
+T15B0 000:392.244   DLL Compiled: May 20 2026 16:05:20
+T15B0 000:392.260   Logging started @ 2026-05-27 14:59
+T15B0 000:392.274   Process: D:\Keil5\UV4\UV4.exe
+T15B0 000:392.299 - 392.288ms 
+T15B0 000:392.321 JLINK_SetWarnOutHandler(...)
+T15B0 000:392.339 - 0.021ms 
+T15B0 000:392.358 JLINK_OpenEx(...)
+T15B0 000:403.597   Firmware: J-Link V9 compiled May  7 2021 16:26:12
+T15B0 000:404.828   Firmware: J-Link V9 compiled May  7 2021 16:26:12
+T15B0 000:405.162   Decompressing FW timestamp took 253 us
+T15B0 000:411.112   Hardware: V9.70
+T15B0 000:411.157   S/N: 602712353
+T15B0 000:411.177   OEM: SEGGER
+T15B0 000:411.197   Feature(s): GDB, RDI, FlashBP, FlashDL, JFlash
+T15B0 000:412.149   Bootloader: (FW returned invalid version)
+T15B0 000:413.155   TELNET listener socket opened on port 19021
+T15B0 000:413.346   WEBSRV WEBSRV_Init(): Starting webserver thread(s)
+T15B0 000:413.501   WEBSRV Failed to put socket into listener state (port 19080)
+T15B0 000:413.735   WEBSRV Webserver running on local port 19081
+T15B0 000:413.923   Looking for J-Link GUI Server exe at: D:\Keil5\ARM\Segger\JLinkGUIServer.exe
+T15B0 000:414.255   Looking for J-Link GUI Server exe at: C:\Program Files\SEGGER\JLink_V944\JLinkGUIServer.exe
+T15B0 000:414.341   Forking J-Link GUI Server: C:\Program Files\SEGGER\JLink_V944\JLinkGUIServer.exe
+T15B0 000:419.982   J-Link GUI Server info: "J-Link GUI server V9.44 "
+T15B0 000:420.592 - 28.221ms returns "O.K."
+T15B0 000:420.670 JLINK_GetEmuCaps()
+T15B0 000:420.692 - 0.017ms returns 0xB9FF7BBF
+T15B0 000:420.714 JLINK_TIF_GetAvailable(...)
+T15B0 000:421.073 - 0.358ms 
+T15B0 000:421.109 JLINK_SetErrorOutHandler(...)
+T15B0 000:421.124 - 0.015ms 
+T15B0 000:421.175 JLINK_ExecCommand("ProjectFile = "D:\Program\ZLLC\M66\ZLLC_2026\M66\MDK-ARM\JLinkSettings.ini"", ...). 
+T15B0 000:444.382   Ref file found at: D:\Keil5\ARM\Segger\JLinkDevices.ref
+T15B0 000:444.561   REF file references invalid XML file: C:\Program Files\SEGGER\JLink_V944\JLinkDevices.xml
+T15B0 000:444.675 - 23.502ms returns 0x00
+T15B0 000:444.709 JLINK_ExecCommand("Device = STM32F407IG", ...). 
+T15B0 000:445.126   Flash bank @ 0x08000000: SFL: Parsing sectorization info from ELF file
+T15B0 000:445.146     FlashDevice.SectorInfo[0]: .SectorSize = 0x00004000, .SectorStartAddr = 0x08000000
+T15B0 000:445.165     FlashDevice.SectorInfo[1]: .SectorSize = 0x00010000, .SectorStartAddr = 0x08010000
+T15B0 000:445.182     FlashDevice.SectorInfo[2]: .SectorSize = 0x000D0000, .SectorStartAddr = 0x08020000
+T15B0 000:445.200   FlashBank @0x08000000: Sectorization info from SFL ELF file ignored because sectorization override from DLL / XML file is active.
+T15B0 000:445.636   Flash bank @ 0x08000000: SFL: Parsing sectorization info from ELF file
+T15B0 000:445.656     FlashDevice.SectorInfo[0]: .SectorSize = 0x00004000, .SectorStartAddr = 0x08000000
+T15B0 000:445.674     FlashDevice.SectorInfo[1]: .SectorSize = 0x00010000, .SectorStartAddr = 0x08010000
+T15B0 000:445.691     FlashDevice.SectorInfo[2]: .SectorSize = 0x000D0000, .SectorStartAddr = 0x08020000
+T15B0 000:445.709   FlashBank @0x1FFF7800: Sectorization info from SFL ELF file ignored because sectorization override from DLL / XML file is active.
+T15B0 000:445.762   Device "STM32F407IG" selected.
+T15B0 000:446.291 - 1.582ms returns 0x00
+T15B0 000:446.334   ERROR: Unknown command
+T15B0 000:446.362 JLINK_GetHardwareVersion()
+T15B0 000:446.376 - 0.012ms returns 97000
+T15B0 000:446.393 JLINK_GetDLLVersion()
+T15B0 000:446.405 - 0.011ms returns 94400
+T15B0 000:446.492 JLINK_GetOEMString(...)
+T15B0 000:446.533 JLINK_GetFirmwareString(...)
+T15B0 000:446.546 - 0.012ms 
+T15B0 000:446.566 JLINK_GetDLLVersion()
+T15B0 000:446.579 - 0.012ms returns 94400
+T15B0 000:446.592 JLINK_GetCompileDateTime()
+T15B0 000:446.605 - 0.012ms 
+T15B0 000:446.621 JLINK_GetFirmwareString(...)
+T15B0 000:446.632 - 0.011ms 
+T15B0 000:446.647 JLINK_GetHardwareVersion()
+T15B0 000:446.658 - 0.011ms returns 97000
+T15B0 000:446.672 JLINK_GetSN()
+T15B0 000:446.684 - 0.011ms returns 602712353
+T15B0 000:446.780 JLINK_GetOEMString(...)
+T15B0 000:446.808 JLINK_TIF_Select(JLINKARM_TIF_SWD)
+T15B0 000:447.530 - 0.730ms returns 0x00
+T15B0 000:447.557 JLINK_HasError()
+T15B0 000:447.583 JLINK_SetSpeed(3000)
+T15B0 000:447.935 - 0.357ms 
+T15B0 000:448.620 JLINK_HasError()
+T15B0 000:448.661 JLINK_SetResetType(JLINKARM_RESET_TYPE_NORMAL)
+T15B0 000:448.678 - 0.016ms returns JLINKARM_RESET_TYPE_NORMAL
+T15B0 000:448.697 JLINK_Reset()
+T15B0 000:449.169   InitTarget() start
+T15B0 000:449.207    J-Link Script File: Executing InitTarget()
+T15B0 000:449.432   SWD selected. Executing JTAG -> SWD switching sequence.
+T15B0 000:753.628   DAP initialized successfully.
+T15B0 000:955.794   Can not attach to CPU. Trying connect under reset.
+T15B0 001:006.604   SWD selected. Executing JTAG -> SWD switching sequence.
+T15B0 001:311.790   DAP initialized successfully.
+T15B0 001:514.332   Connecting to CPU via connect under reset failed.
+T15B0 001:565.377   
+  ***** Error: 
+T15B0 001:565.449   J-Link script file function InitTarget() returned with error code -1
+T15B0 001:565.479   InitTarget() end - Took 1.11s
+T15B0 001:565.551   Connect failed. Resetting via Reset pin and trying again.
+T15B0 001:627.407   InitTarget() start
+T15B0 001:627.453    J-Link Script File: Executing InitTarget()
+T15B0 001:627.663   SWD selected. Executing JTAG -> SWD switching sequence.
+T15B0 001:932.299   DAP initialized successfully.
+T15B0 002:133.890   Can not attach to CPU. Trying connect under reset.
+T15B0 002:185.224   SWD selected. Executing JTAG -> SWD switching sequence.
+T15B0 002:489.226   DAP initialized successfully.
+T15B0 002:691.217   Connecting to CPU via connect under reset failed.
+T15B0 002:741.942   
+  ***** Error: 
+T15B0 002:741.990   J-Link script file function InitTarget() returned with error code -1
+T15B0 002:742.019   InitTarget() end - Took 1.11s
+T15B0 002:742.039 - 2293.340ms 
+T15B0 002:742.151 JLINK_GetId()
+T15B0 002:742.422   InitTarget() start
+T15B0 002:742.443    J-Link Script File: Executing InitTarget()
+T15B0 002:742.997   SWD selected. Executing JTAG -> SWD switching sequence.
+T15B0 003:047.426   DAP initialized successfully.
+T15B0 003:248.788   Can not attach to CPU. Trying connect under reset.
+T15B0 003:299.212   SWD selected. Executing JTAG -> SWD switching sequence.
+T15B0 003:604.233   DAP initialized successfully.
+T15B0 003:806.414   Connecting to CPU via connect under reset failed.
+T15B0 003:856.940   
+  ***** Error: 
+T15B0 003:856.988   J-Link script file function InitTarget() returned with error code -1
+T15B0 003:857.018   InitTarget() end - Took 1.11s
+T15B0 003:857.040   Connect failed. Resetting via Reset pin and trying again.
+T15B0 003:919.577   InitTarget() start
+T15B0 003:919.625    J-Link Script File: Executing InitTarget()
+T15B0 003:919.848   SWD selected. Executing JTAG -> SWD switching sequence.
+T15B0 004:223.744   DAP initialized successfully.
+T15B0 004:426.129   Can not attach to CPU. Trying connect under reset.
+T15B0 004:476.815   SWD selected. Executing JTAG -> SWD switching sequence.
+T15B0 004:782.141   DAP initialized successfully.
+T15B0 004:983.448   Connecting to CPU via connect under reset failed.
+T15B0 005:034.225   
+  ***** Error: 
+T15B0 005:034.280   J-Link script file function InitTarget() returned with error code -1
+T15B0 005:034.313   InitTarget() end - Took 1.11s
+T15B0 005:034.337 - 2292.184ms returns 0x00000000
+T15B0 005:034.383 JLINK_GetId()
+T15B0 005:034.830   InitTarget() start
+T15B0 005:034.870    J-Link Script File: Executing InitTarget()
+T15B0 005:035.376   SWD selected. Executing JTAG -> SWD switching sequence.
+T15B0 005:338.805   DAP initialized successfully.
+T15B0 005:561.236   Can not attach to CPU. Trying connect under reset.
+T15B0 005:611.800   SWD selected. Executing JTAG -> SWD switching sequence.
+T15B0 005:914.972   DAP initialized successfully.
+T15B0 006:116.783   Connecting to CPU via connect under reset failed.
+T15B0 006:167.483   
+  ***** Error: 
+T15B0 006:167.538   J-Link script file function InitTarget() returned with error code -1
+T15B0 006:167.678   InitTarget() end - Took 1.13s
+T15B0 006:167.702   Connect failed. Resetting via Reset pin and trying again.
+T15B0 006:230.287   InitTarget() start
+T15B0 006:230.343    J-Link Script File: Executing InitTarget()
+T15B0 006:230.813   SWD selected. Executing JTAG -> SWD switching sequence.
+T15B0 006:534.605   DAP initialized successfully.
+T15B0 006:737.309   Can not attach to CPU. Trying connect under reset.
+T15B0 006:788.775   SWD selected. Executing JTAG -> SWD switching sequence.
+T15B0 007:092.235   DAP initialized successfully.
+T15B0 007:293.897   Connecting to CPU via connect under reset failed.
+T15B0 007:345.292   
+  ***** Error: 
+T15B0 007:345.334   J-Link script file function InitTarget() returned with error code -1
+T15B0 007:345.356   InitTarget() end - Took 1.11s
+T15B0 007:345.370 - 2310.986ms returns 0x00000000
+T15B0 007:356.758 JLINK_GetFirmwareString(...)
+T15B0 007:356.828 - 0.069ms 
+T15B0 014:144.627 JLINK_Close()
+T15B0 014:146.534 - 1.908ms
+T15B0 014:146.570   
+T15B0 014:146.582   Closed

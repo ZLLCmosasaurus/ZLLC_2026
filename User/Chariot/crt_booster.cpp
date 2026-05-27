@@ -102,82 +102,82 @@ float Average_Now_Omega_Radian = 0.0f;
  * @todo 加入预置超时
  */
 
-void Class_FSM_Driver_Init::Reload_TIM_Status_PeriodElapsedCallback()
-{
-    Status[Now_Status_Serial].Time++;
-    switch (Now_Status_Serial)
-    {
-    case 0:
-    {
-        // 未初始化状态
-        Booster->Output();
-        Booster->Motor_Driver.Set_Driver_Reset_Status(Driver_Reset_Status_UNREADY);
-        if (Booster->Motor_Driver.Get_DJI_Motor_Status() == DJI_Motor_Status_ENABLE)
-        {
-            // 电机初始化完成，开始预置
-            Booster->Motor_Driver.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
-            Set_Status(1);
-        }
-    }
-    break;
-    case 1:
-    {
-        // 电机初始化完成，开始预置状态
-        Booster->Output();
-        Booster->Set_Booster_Control_Type(Booster_Control_Type_REPEATED);
-        Booster->Motor_Driver.Set_Target_Omega_Radian(Booster->Driver_Omega / 5.0f);
-        if (abs(Booster->Motor_Driver.Get_Now_Torque()) >= Booster->Driver_Torque_Threshold / 2.0f)
-        {
-            // 大扭矩->预置嫌疑状态
-            Set_Status(2);
-        }
-        if (Status[Now_Status_Serial].Time >= 1000)
-        {
-            // 如果预置时间超过1000ms，则跳过预置，直接认为成功
-            Set_Status(4);
-        }
-    }
-    break;
-    case 2:
-    {
-        // 大扭矩->预置嫌疑状态
-        Booster->Output();
-        if (Status[Now_Status_Serial].Time >= 4)
-        {
-            // 长时间大扭矩->预置成功
-            Set_Status(3);
-        }
-        else if (abs(Booster->Motor_Driver.Get_Now_Torque()) < Booster->Driver_Torque_Threshold / 2.0f)
-        {
-            // 短时间大扭矩->正常状态
-            Set_Status(1);
-        }
-    }
-    break;
-    case 3:
-    {
-        // 预置成功处理状态
-        Booster->Output();
-        Booster->Driver_Angle = Booster->Motor_Driver.Get_Now_Radian();
-        Booster->Motor_Driver.Set_Target_Omega_Radian(0.0f);
-        Booster->Motor_Driver.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
-        Booster->Motor_Driver.Set_Target_Radian((2.0f/3)*PI / 9.0f);
-        Booster->Driver_Angle = Booster->Motor_Driver.Get_Now_Radian();
-        Booster->Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
-        Set_Status(4);
-    }
-    break;
-    case 4:
-    {
-        // 预置成功状态
-        Booster->Output();
-        Booster->Motor_Driver.Set_Driver_Reset_Status(Driver_Reset_Status_READTY);
-    }
-    break;
-    default:
-        break;
-    }
-}
+// void Class_FSM_Driver_Init::Reload_TIM_Status_PeriodElapsedCallback()
+// {
+//     Status[Now_Status_Serial].Time++;
+//     switch (Now_Status_Serial)
+//     {
+//     case 0:
+//     {
+//         // 未初始化状态
+//         Booster->Output();
+//         Booster->Motor_Driver.Set_Driver_Reset_Status(Driver_Reset_Status_UNREADY);
+//         if (Booster->Motor_Driver.Get_DJI_Motor_Status() == DJI_Motor_Status_ENABLE)
+//         {
+//             // 电机初始化完成，开始预置
+//             Booster->Motor_Driver.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
+//             Set_Status(1);
+//         }
+//     }
+//     break;
+//     case 1:
+//     {
+//         // 电机初始化完成，开始预置状态
+//         Booster->Output();
+//         Booster->Set_Booster_Control_Type(Booster_Control_Type_REPEATED);
+//         Booster->Motor_Driver.Set_Target_Omega_Radian(Booster->Driver_Omega / 5.0f);
+//         if (abs(Booster->Motor_Driver.Get_Now_Torque()) >= Booster->Driver_Torque_Threshold / 2.0f)
+//         {
+//             // 大扭矩->预置嫌疑状态
+//             Set_Status(2);
+//         }
+//         if (Status[Now_Status_Serial].Time >= 1000)
+//         {
+//             // 如果预置时间超过1000ms，则跳过预置，直接认为成功
+//             Set_Status(4);
+//         }
+//     }
+//     break;
+//     case 2:
+//     {
+//         // 大扭矩->预置嫌疑状态
+//         Booster->Output();
+//         if (Status[Now_Status_Serial].Time >= 4)
+//         {
+//             // 长时间大扭矩->预置成功
+//             Set_Status(3);
+//         }
+//         else if (abs(Booster->Motor_Driver.Get_Now_Torque()) < Booster->Driver_Torque_Threshold / 2.0f)
+//         {
+//             // 短时间大扭矩->正常状态
+//             Set_Status(1);
+//         }
+//     }
+//     break;
+//     case 3:
+//     {
+//         // 预置成功处理状态
+//         Booster->Output();
+//         Booster->Driver_Angle = Booster->Motor_Driver.Get_Now_Radian();
+//         Booster->Motor_Driver.Set_Target_Omega_Radian(0.0f);
+//         Booster->Motor_Driver.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_ANGLE);
+//         Booster->Motor_Driver.Set_Target_Radian((2.0f/3)*PI / 9.0f);
+//         Booster->Driver_Angle = Booster->Motor_Driver.Get_Now_Radian();
+//         Booster->Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+//         Set_Status(4);
+//     }
+//     break;
+//     case 4:
+//     {
+//         // 预置成功状态
+//         Booster->Output();
+//         Booster->Motor_Driver.Set_Driver_Reset_Status(Driver_Reset_Status_READTY);
+//     }
+//     break;
+//     default:
+//         break;
+//     }
+// }
 
 void Class_FSM_Heat_Detect::Reload_TIM_Status_PeriodElapsedCallback()
 {
@@ -567,6 +567,7 @@ float Get_Heat_Limit_Factor(float Q_warn, float Q_satu, float Q_th, float factor
  * @brief 输出到电机
  *
  */
+#define Heat_Detect_ENABLE_1
 void Class_Booster::Output()
 {
     // 控制拨弹轮
@@ -702,63 +703,136 @@ void Class_Booster::Output()
     case (Booster_Control_Type_REPEATED):
     {
         // 连发模式
-
-        // float Heat_Res = SHOOT_HEAT_MAX - FSM_Heat_Detect.Heat;
-        // float cold_satu_factor = COLD_PER_SEC / 200.0f;
-        // float Heat_Warn = 0.3f * SHOOT_HEAT_MAX;
-        // float Heat_Satu = 0.2f * SHOOT_HEAT_MAX;
-        // float Heat_Th = 0.05f * SHOOT_HEAT_MAX;
-
-        // float heat_limit_factor = Get_Heat_Limit_Factor(Heat_Warn, Heat_Satu, Heat_Th, cold_satu_factor, Heat_Res);
-
-        Motor_Driver.Set_Target_Omega_Radian(0.0f);
-        Swtich_To_Angle_Control_Flag = 1;
-        Swtich_To_Chasefire_Control_Flag = 1;
         Motor_Driver.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
         Motor_Friction_Left.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
         Motor_Friction_Right.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
         Motor_Friction_Down.Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
 
-        float net_heat_rate = 10.0f * Base_Frequency - Cooling_Value;//冷却值记得读裁判系统，还有最大热量
+        #ifdef Heat_Detect_ENABLE_1
+        // 根据冷却计算拨弹盘默认速度, 此速度下与冷却均衡
+        Default_Driver_Omega =
+            Referee->Get_Booster_17mm_1_Heat_CD() / 10.0f / 9.0f * 2.0f * PI;
+        // 热量控制
+        // 机器人冷却(单位：点/s)
+        float a = static_cast<float>(Referee->Get_Booster_17mm_1_Heat_CD());
+        // 枪口还能利用的热量上限(单位：点)
+        //  float m = static_cast<float>(Referee->Get_Booster_17mm_1_Heat_Max() - FSM_Heat_Detect.Heat);
+        float m = static_cast<float>(Referee->Get_Booster_17mm_1_Heat_Max() - Referee->Get_Booster_17mm_1_Heat());
+        // 每射击一发消耗热量(单位：点)
+        constexpr float d = 10.0f;
+        // 射速(单位：发/s)
+        static float shoot_speed = 0.0f;
 
-        if (Overheat_Flag)
+        // 本周期射击的总持续时间(单位：ms)
+        static uint16_t ShootTime = 0;
+        // 本周期射击的实际时间(单位：ms)
+        static uint16_t shoot_time = 0;
+        static uint16_t last_shoot_time = 0;
+
+        // 最终得出的拨弹盘转速
+        float target_omega = 0.0f;
+        // 射速与拨弹盘转速的转换关系
+        constexpr float rad_per_bullet = 2.0f * PI / 9.0f; // 假设一圈9发
+
+        if (m >= 100)
         {
-            tau = 0.0f;
+            // 热量充裕时
+            target_omega = Driver_Omega;
+            shoot_time = 0;
         }
-        else if (net_heat_rate > 0 && Heat_Local < Heat_Max)
+        else if (m >= 30 && m <= 100)
         {
-            tau = (Heat_Max - Heat_Local) / net_heat_rate;
+            if (shoot_time == 0)
+            {
+                /**
+                 * @brief 决定本次射击周期要持续多久
+                 *
+                 * @param (m + k * a) 要经过多少个裁判系统解算周期 按照同济大学的解释如下：
+                 * > 根据热量上限和冷却决定射击策略，计算得当射击时间为m（热量上限）+1*a（冷却速率）时基本可以抹除冷却优先和爆发优先的差距，即两者各级对应射速相近
+                 * > 当k增大时，差距射击频率差距主要体现在低等级（爆发高，冷却低），等级越高影响越小。爆发模式下各等级射频更加均匀且持续时间更长，
+                 * > 冷却模式正好相反，低等级射频低，高等级射频高且持续时间短，可灵活选择m+k*a
+                 * 详见此链接：https://bbs.robomaster.com/article/630409
+                 *
+                 * 最终乘以100是为了将单位统一为ms，因为此函数的执行周期为1ms，而裁判系统的结算频率为10Hz。
+                 */
+                ShootTime = (m + 2 * a) * 100;
+                Math_Constrain<uint16_t>(&ShootTime, 1000, 5600);
+                // 分级射速
+                if (m < 50)
+                {
+                    constexpr float kNormalFactor = 3.0f;
+
+                    shoot_speed = (d * m - a - kNormalFactor * d) /
+                                      (d * ShootTime / 1000.0f) +
+                                  a / d;
+                }
+                else
+                {
+                    constexpr float kBurstFactor = 7.0f;
+
+                    shoot_speed = (d * m - a - kBurstFactor * d) /
+                                      (d * ShootTime / 1000.0f) +
+                                  a / d;
+                }
+            }
+            else if (0 < shoot_time && shoot_time < ShootTime)
+            {
+                // 在射击周期内，按原计划射弹
+                target_omega = shoot_speed * rad_per_bullet;
+                Math_Constrain<float>(&target_omega, 0.0f, 18.0f);
+            }
+            else
+            {
+                // 超出了射击周期，贴近冷却回复速度射弹
+                target_omega = rad_per_bullet * a / d;
+                if (target_omega < 1.0f * rad_per_bullet)
+                {
+                    target_omega = 0.0f;
+                }
+                Math_Constrain<float>(&target_omega, 0.0f, 18.0f);
+            }
+            if (shoot_time < ShootTime)
+            {
+                shoot_time++;
+            }
+            last_shoot_time = ShootTime;
+            if (m >= 40)
+            {
+                // 射击周期结束，热量还有余裕，重新进入下一个射击周期
+                if (shoot_time >= ShootTime)
+                {
+                    shoot_time = 0;
+                }
+            }
+            else if (m <= 32)
+            {
+                // 热量不足，强制进入下一个射击周期
+                shoot_time = last_shoot_time;
+            }
         }
-        else
+        else if (m <= 30)
         {
-            tau = INFINITY;
+            // 热量不足，强制停机
+            target_omega = 0.0f;
+            shoot_time = 0;
         }
 
-        // ---------- 收缩因子 ----------
-        float S = 1.0f / (1.0f + exp((tau - Tau0) / Tau1));
-
-        // ---------- 平衡频率 ----------
-        Balance_Frequency = Cooling_Value / 10.0f * 0.85f;
-
-        // ---------- 目标角速度 ----------
-        float omega_balance = Balance_Frequency * (2.5f * 2.0f * PI / 9.0f);
-        float omega_max = Base_Frequency * (2.5f * 2.0f * PI / 9.0f);
-
-        float target_omega = omega_max - (omega_max - omega_balance) * S;
         Motor_Driver.Set_Target_Omega_Radian(target_omega);
-
-        // ---------- 过热迟滞 ----------
-        if (Heat_Local >= Heat_Max)
-        {
-            Overheat_Flag = true;
-        }
-        else if (Heat_Local <= Recover_Ratio * Heat_Max)
-        {
-            Overheat_Flag = false;
-        }
-        //Motor_Driver.Set_Target_Omega_Radian(-Driver_Omega * heat_limit_factor);
-
-        // Driver_Angle = Motor_Driver.Get_Now_Radian();
+        Swtich_To_Angle_Control_Flag = 1;
+#endif
+#ifdef Heat_Detect_DISABLE
+        // if (Referee->Get_Booster_17mm_1_Heat() + 30 <
+        //     Referee->Get_Booster_17mm_1_Heat_Max())
+        // {
+        //     Motor_Driver.Set_Target_Omega_Radian(Default_Driver_Omega);
+        // }
+        // else
+        // {
+        //     Booster_Control_Type = Booster_Control_Type_CEASEFIRE;
+        // }
+        Motor_Driver.Set_Target_Omega_Radian(Driver_Omega);
+        Swtich_To_Angle_Control_Flag = 1;
+#endif
     }
     break;
     }
@@ -818,7 +892,7 @@ void Class_Booster::TIM_Calculate_PeriodElapsedCallback()
 
     FSM_Friction.Reload_TIM_Status_PeriodElapsedCallback();
 
-    FSM_Driver_Init.Reload_TIM_Status_PeriodElapsedCallback();
+    // FSM_Driver_Init.Reload_TIM_Status_PeriodElapsedCallback();
 
     Heat_Max = smax;
     Heat_Local = Referee->Get_Booster_17mm_1_Heat();

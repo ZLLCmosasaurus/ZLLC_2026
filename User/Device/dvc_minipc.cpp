@@ -33,6 +33,7 @@ void Class_MiniPC::Init(CAN_HandleTypeDef *hcan)
   {
     CAN_Manage_Object = &CAN1_Manage_Object;
     CAN_Tx_Data = CAN1_MiniPc_Tx_Data;
+    CAN_Tx_Target_Data = CAN1_MiniPc_Tx_Target_Data;
   }
   else if (hcan->Instance == CAN2)
   {
@@ -87,16 +88,11 @@ void Class_MiniPC::Output()
   Pack_Tx_CAN.q[1] = (int16_t)(tmp_q[1] * 10000.0f / m);
   Pack_Tx_CAN.q[2] = (int16_t)(tmp_q[2] * 10000.0f / m);
   Pack_Tx_CAN.q[3] = (int16_t)(tmp_q[3] * 10000.0f / m);
-  Pack_Tx_Target_CAN.target_mode = 0;
+  // Pack_Tx_Target_CAN.target_mode = 0;
   Pack_Tx_Target_CAN.speed = (int16_t)(Referee->Get_Shoot_Speed() * 10000.0f);
-  if (Pack_Tx_Flag == 0)
-  {
-    memcpy(CAN_Tx_Data, &Pack_Tx_CAN, sizeof(Pack_tx_t));
-  }
-  else if (Pack_Tx_Flag == 1)
-  {
-    memcpy(CAN_Tx_Data, &Pack_Tx_Target_CAN, sizeof(Pack_tx_target_t));
-  }
+  memcpy(CAN_Tx_Data, &Pack_Tx_CAN, sizeof(Pack_tx_t));
+  memcpy(CAN_Tx_Target_Data, &Pack_Tx_Target_CAN, sizeof(Pack_tx_target_t));
+
 }
 
 /**

@@ -303,8 +303,8 @@ void Class_Gimbal_Pitch_Motor_J4310::TIM_PID_PeriodElapsedCallback()
         //				}
 
         // Set_Out(Target_Torque);
-        Target_Torque -= Gravity_Compensate * cosf(True_Rad_Pitch - 37.2 * PI / 180.0f) + Friction_Compensate * Get_Friction_Compensation(Get_Now_Omega(), 10.0f);
-        Set_Out((Target_Torque)); // 补偿重力，pitch水平时，重心与pitch转轴连线与水平面夹角27.85度
+        Target_Torque += (Gravity_Compensate * cosf(True_Rad_Pitch - 37.2 * PI / 180.0f) + Friction_Compensate * Get_Friction_Compensation(Get_Now_Omega(), 10.0f));
+        Set_Out(-(Target_Torque)); // 补偿重力，pitch水平时，重心与pitch转轴连线与水平面夹角27.85度  PID极性为负，于2026.5.27凌晨
     }
     break;
 
@@ -612,8 +612,8 @@ void Class_Gimbal::Init()
     // Motor_Pitch_J4310.PID_Angle.Init(55.0f, 2.0f, 1.0f, 0.0f, 1000, 2048, 0.0f, 0.0f, 0, 0.001f, 0.0f, PID_D_First_ENABLE);
     // Motor_Pitch_J4310.PID_Omega.Init(4.0f, 14.0f, 0.002f, 0.0f, 1000, 2048, 0.0f, 0.0f, 0.0f, 0.001f, 0.5f);
 
-    Motor_Pitch_J4310.PID_Angle.Init(0.0f, 0.0f, 0.0f, 0.0f, 1000, 2048, 0.0f, 0.0f, 0, 0.001f, 0.0f, PID_D_First_ENABLE);
-    Motor_Pitch_J4310.PID_Omega.Init(0.0f, 0.0f, 0.00f, 0.0f, 1000, 2048, 0.0f, 0.0f, 0.0f, 0.001f, 0.5f);
+    Motor_Pitch_J4310.PID_Angle.Init(34.0f, 0.01f, 0.000f, 0.0f, 1000, 2048, 0.0f, 0.0f, 0, 0.001f, 0.0f, PID_D_First_ENABLE);
+    Motor_Pitch_J4310.PID_Omega.Init(12.0f, 0.02f, 0.00f, 0.0f, 1000, 2048, 0.0f, 0.0f, 0.0f, 0.001f, 0.5f);
     
     Motor_Pitch_J4310.IMU = &Boardc_BMI;
     Motor_Pitch_J4310.Init(&hcan1, (Enum_DM_Motor_ID)0x71, DM_Motor_Control_Method_MIT_IMU_Angle, 0, 20.94f, 5.0f);

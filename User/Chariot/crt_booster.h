@@ -244,7 +244,7 @@ protected:
     // 读变量
 
     // 拨弹盘默认速度, 一圈八发子弹, 此速度下与冷却均衡
-    float Default_Driver_Omega = -2.0f * PI;
+    float Default_Driver_Omega = 2.0f * PI;
 
     // 写变量
 
@@ -254,11 +254,10 @@ protected:
     Enum_Friction_Stage Friction_Stage = Friction_Stage_UNREADY;
     Enum_Fire_Control_Type Fire_Control_Type = Fire_Control_Type_AUTO;
     // 摩擦轮角速度
-    float Friction_Omega = 1100.0f;
+    float Friction_Omega = 910.0f;
 
     // 拨弹盘实际的目标速度, 一圈九发子弹
-    // float Driver_Omega = -2.0f * PI * 20.0f / 9.0f;
-    float Driver_Omega = -2.0f * PI * 2.5f * 20.0f / 9.0f;
+    float Driver_Omega = 2.0f * PI * 2.0f;//弹频为每秒18发
     // 拨弹轮目标绝对角度 加圈数
     float Driver_Angle = 0.0f;
     // 读写变量

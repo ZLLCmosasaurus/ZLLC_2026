@@ -318,6 +318,8 @@ protected:
     Struct_CAN_Manage_Object *CAN_Manage_Object;
     // 发送缓存区
     uint8_t *CAN_Tx_Data;
+    // 目标选择模式发送缓冲区
+    uint8_t *CAN_Tx_Target_Data;
     // 数据包头标
     uint8_t Frame_Header;
     // 数据包尾标

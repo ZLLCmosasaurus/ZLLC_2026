@@ -179,7 +179,7 @@ protected:
     //常量
 
     // 重力补偿
-    float Gravity_Compensate = 623.0f;
+    float Gravity_Compensate = 500.0f;
     float Friction_Compensate = 0.0f;
 
     //内部变量
