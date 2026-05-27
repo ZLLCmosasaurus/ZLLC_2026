@@ -431,7 +431,7 @@ void Class_Chariot::Control_Gimbal()
                 now_stats = (now_stats + 1) % 3;
                 MiniPC.MiniPC_Target_Mode = (Enum_MiniPC_Target_Mode)(now_stats);
             }
-            
+
             if(VT13.Get_Keyboard_Key_Q() == VT13_Key_Status_TRIG_FREE_PRESSED)
             {
                 PilotLamp.Set_PilotLamp_Type(Enum_PilotLamp_Type_Left45Deg);
@@ -456,7 +456,7 @@ void Class_Chariot::Control_Gimbal()
             {
                 PilotLamp.Set_PilotLamp_Type(Enum_PilotLamp_Type_Position4);
             }
-            if(VT13.Get_Keyboard_Key_Shift() == VT13_Key_Status_TRIG_FREE_PRESSED)
+            if(VT13.Get_Keyboard_Key_G() == VT13_Key_Status_TRIG_FREE_PRESSED)
             {
                 PilotLamp.Set_PilotLamp_Type(Enum_PilotLamp_Type_TurnOffAll);
             }
