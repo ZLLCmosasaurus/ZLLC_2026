@@ -171,6 +171,8 @@ void Class_MiniPC::Output()
   Data_MCU_To_NUC.Target_Position_Y              = Referee->Get_Map_Command_Taregt_Position_Y() * 100.0f;
   Data_MCU_To_NUC.Dart_Target                    = Referee->Get_Dart_Command_Target();
   Data_MCU_To_NUC.free_respawn_ready             = Referee->Get_Sentry_info();
+  Data_MCU_To_NUC.remaining_energy               = Supercap->Get_Consuming_Power();
+
 
   //顺序发送版本    可以从雷达获取敌方车辆位置，发送给上位机
   switch(index)

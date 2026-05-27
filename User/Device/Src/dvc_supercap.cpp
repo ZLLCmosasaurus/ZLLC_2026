@@ -118,7 +118,7 @@ void Class_Supercap::Data_Process()
 
             if(Referee->Get_Game_Stage() == Referee_Game_Status_Stage_BATTLE)
             {
-                Consuming_Power -= (float)(Get_Consuming_Power_Now() / 10000);
+                Consuming_Power -= (float)(Get_Consuming_Power_Now() / 10000.0f);
             }
             break;
         }

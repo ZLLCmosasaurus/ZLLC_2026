@@ -240,7 +240,11 @@ void Class_Chariot::CAN_Chassis_Tx_Gimbal_Callback()
     // memcpy(CAN3_Chassis_Tx_Data_G + 2, &Target_Position_Y, sizeof(int16_t));
 
     uint8_t supercap_proportion = Chassis.Supercap.Get_Supercap_Proportion();
+    uint16_t consuming_power = Chassis.Supercap.Get_Consuming_Power();
     CAN_Chassis_Tx_Data[0] = supercap_proportion;
+
+    Math_Constrain(&consuming_power, (uint16_t)0, (uint16_t)30000);
+    memcpy(CAN_Chassis_Tx_Data + 1, &consuming_power, sizeof(uint16_t));
 }
 #endif
 
@@ -371,6 +375,7 @@ void Class_Chariot::CAN_Gimbal_Rx_Chassis_Callback()
     Chassis_Alive_Flag++;
 
     Chassis.Supercap.CAN_Supercap_Rx_Data_Normal.Cap_Proportion = CAN_Manage_Object->Rx_Buffer.Data[0];
+    Chassis.Supercap.Consuming_Power = CAN_Manage_Object->Rx_Buffer.Data[2] << 8 | CAN_Manage_Object->Rx_Buffer.Data[1];
 
     // switch(CAN_Manage_Object->Rx_Buffer.Header.Identifier){
     //     case (0x188):{
@@ -988,7 +993,7 @@ void Class_Chariot::Control_Booster()
                 Shoot_Flag = 0;
                // Booster.Set_Shoot_Number(0.f);
             }
-            else if (switch_state == FS_Switch_Status_DOWN && Shoot_Flag == 0) // lian发
+            else if (switch_state == FS_Switch_Status_DOWN) // lian发
             {
                 // float now = DWT_GetTimeline_s();
 
@@ -1011,8 +1016,8 @@ void Class_Chariot::Control_Booster()
                 // {
                 //     Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
                 // }
-                Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
-                Shoot_Flag = 1;
+                Booster.Set_Booster_Control_Type(Booster_Control_Type_REPEATED);
+                // Shoot_Flag = 1;
             }
         }
     }

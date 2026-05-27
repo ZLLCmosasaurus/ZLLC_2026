@@ -271,6 +271,8 @@ struct Struct_MiniPC_Tx_Data
     uint16_t Projectile_Allowance; // 允许发弹量
     uint16_t Remaining_Time;       // 比赛剩余时间
     uint32_t free_respawn_ready;//0没复活，1复活了
+    uint16_t remaining_energy; //剩余能量 20000J
+
     // 雷达站数据
     uint8_t Invincivle_State;  // 敌对方无敌状态
     uint16_t enemy_position_x; // 前两位高位为机器编号，后十四位为坐标值
