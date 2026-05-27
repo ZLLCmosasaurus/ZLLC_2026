@@ -55,6 +55,7 @@ uint8_t CAN2_Gimbal_Tx_Chassis_Data_1[8]; // 云台给底盘发送缓冲区
 uint8_t CAN2_Chassis_Tx_Gimbal_Data_1[8]; // 底盘给云台发送缓冲区
 
 uint8_t CAN1_MiniPc_Tx_Data[8];
+uint8_t CAN1_MiniPc_Tx_Target_Data[8];
 uint8_t CAN2_MiniPc_Tx_Data[8];
 /*********LK电机 控制缓冲区***********/
 uint8_t CAN1_0x141_Tx_Data[8];
@@ -260,7 +261,7 @@ void TIM_CAN_PeriodElapsedCallback()
 		}
         else if(mod % 5 == 1)
         {
-            CAN_Send_Data(&hcan1, 0xa2, CAN1_MiniPc_Tx_Data, 8);
+            CAN_Send_Data(&hcan1, 0xa2, CAN1_MiniPc_Tx_Target_Data, 8);
         }
         else
         {

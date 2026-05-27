@@ -126,9 +126,10 @@ extern uint8_t CAN2_0x146_Tx_Data[8];
 extern uint8_t CAN2_0x147_Tx_Data[8];
 extern uint8_t CAN2_0x148_Tx_Data[8];
 extern uint8_t CAN1_MiniPc_Tx_Data[8];
+extern uint8_t CAN1_MiniPc_Tx_Target_Data[8];
 extern uint8_t CAN2_MiniPc_Tx_Data[8];
 
-/********* DM电机 控制缓冲区  *********/
+/*********   DM电机 控制缓冲区  *********/
 extern uint8_t CAN1_0x3FE_Tx_Data[8];
 extern uint8_t CAN1_0x4FE_Tx_Data[8];//一拖四模式
 
