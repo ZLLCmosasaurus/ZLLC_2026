@@ -601,7 +601,7 @@ void Task1ms_TIM5_Callback()
         
     /****************************** 驱动层回调函数 1ms *****************************************/ 
         //统一打包发送
-        // TIM_CAN_PeriodElapsedCallback();                            //1khz发送，确保每一帧都被执行
+        TIM_CAN_PeriodElapsedCallback();                            //1khz发送，确保每一帧都被执行
         
         static int mod5 = 0,mod100 = 0,mod68 = 0;
         mod5++;

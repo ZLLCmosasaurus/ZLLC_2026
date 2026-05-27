@@ -343,11 +343,11 @@ void Class_Booster::Output()
                 ShootTime = ((Heat_Max - Heat) + 2 * Cooling_Value) * 10;
                 if (Heat_Max - Heat < 100)              //分级弹频
                 {
-                    shoot_speed = (10 * (Heat_Max - Heat) - Cooling_Value - 3 * Heat_Consumption) / (Heat_Consumption * (ShootTime / 100.f)) + Cooling_Value / Heat_Consumption;
+                    shoot_speed = (10 * (Heat_Max - Heat) - Cooling_Value - 4 * Heat_Consumption) / (Heat_Consumption * (ShootTime / 100.f)) + Cooling_Value / Heat_Consumption;
                 }
                 else
                 {
-                    shoot_speed = (10 * (Heat_Max - Heat) - Cooling_Value - 5 * Heat_Consumption) / (Heat_Consumption * (ShootTime / 100.f)) + Cooling_Value / Heat_Consumption;
+                    shoot_speed = (10 * (Heat_Max - Heat) - Cooling_Value - 6 * Heat_Consumption) / (Heat_Consumption * (ShootTime / 100.f)) + Cooling_Value / Heat_Consumption;
                 }
             }
             else if (0 < shoot_time && shoot_time < ShootTime)
@@ -358,7 +358,7 @@ void Class_Booster::Output()
                 Motor_Driver.Set_Target_Omega_Radian(Driver_Omega);
             }
            else {
-            if(Heat<Heat_Max*0.8){
+            if(Heat<Heat_Max*0.75){
                 shoot_time=-2;
             }else{
                 shoot_speed = (Cooling_Value / Heat_Consumption);
