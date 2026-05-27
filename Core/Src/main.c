@@ -73,7 +73,6 @@ void SystemClock_Config(void);
   * @retval int
   */
 int main(void)
-
 {
 
   /* USER CODE BEGIN 1 */
@@ -86,8 +85,6 @@ int main(void)
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
 
-	
-	
   /* USER CODE BEGIN Init */
 
   /* USER CODE END Init */

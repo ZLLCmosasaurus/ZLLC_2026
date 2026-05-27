@@ -795,8 +795,11 @@ void Class_Chariot::Control_Booster()
                     Booster.Booster_User_Control_Type = Booster_User_Control_Type_SINGLE;
             }
 
-            if (VT13.Get_Keyboard_Key_F() == VT13_Key_Status_PRESSED)
+            if(VT13.Get_Keyboard_Key_V() == VT13_Key_Status_TRIG_FREE_PRESSED)
             {
+                uint8_t tmp = (uint8_t)MiniPC.MiniPC_Target_Mode;
+                tmp = (tmp + 1) % 3;
+                MiniPC.MiniPC_Target_Mode = (Enum_MiniPC_Target_Mode)tmp;
             }
 
             if (VT13.Get_Keyboard_Key_Ctrl() == VT13_Key_Status_TRIG_FREE_PRESSED)
@@ -819,24 +822,7 @@ void Class_Chariot::Control_Booster()
                 {
                     if (VT13.Get_Mouse_Left_Key() == VT13_Key_Status_PRESSED)
                     {
-                        // Enum_Booster_Control_Type tmp_type;
-                        // switch (Booster.Booster_User_Control_Type)
-                        // {
-                        // case Booster_User_Control_Type_DISABLE:
-                        //     tmp_type = Booster_Control_Type_DISABLE;
-                        //     break;
-                        // case Booster_User_Control_Type_SINGLE:
-                        //     tmp_type = Booster_Control_Type_SINGLE;
-                        //     break;
-                        // case Booster_User_Control_Type_DUAL:
-                        //     tmp_type = Booster_Control_Type_MULTI;
-                        //     break;
-                        // case Booster_User_Control_Type_REPEATED:
-                        //     tmp_type = Booster_Control_Type_REPEATED;
-                        //     break;
-                        // default:
-                        //     break;
-                        // }
+
                         Booster.Set_Booster_Control_Type(Booster_Control_Type_REPEATED);
                     }
                     else
@@ -848,24 +834,6 @@ void Class_Chariot::Control_Booster()
                 {
                     if (VT13.Get_Mouse_Left_Key() == VT13_Key_Status_PRESSED)
                     {
-                        // Enum_Booster_Control_Type tmp_type;
-                        // switch (Booster.Booster_User_Control_Type)
-                        // {
-                        // case Booster_User_Control_Type_DISABLE:
-                        //     tmp_type = Booster_Control_Type_DISABLE;
-                        //     break;
-                        // case Booster_User_Control_Type_SINGLE:
-                        //     tmp_type = Booster_Control_Type_SINGLE;
-                        //     break;
-                        // case Booster_User_Control_Type_DUAL:
-                        //     tmp_type = Booster_Control_Type_MULTI;
-                        //     break;
-                        // case Booster_User_Control_Type_REPEATED:
-                        //     tmp_type = Booster_Control_Type_REPEATED;
-                        //     break;
-                        // default:
-                        //     break;
-                        // }
                         Booster.Set_Booster_Control_Type(Booster_Control_Type_REPEATED);
                     }
                     else
@@ -883,29 +851,6 @@ void Class_Chariot::Control_Booster()
 }
 #endif
 
-#ifdef CHASSIS
-void Class_Chariot::CAN_Chassis_Tx_Gimbal_Callback()
-{
-    uint16_t Shooter_Barrel_Heat;
-    uint16_t Shooter_Barrel_Heat_Limit;
-    uint16_t Shooter_Speed;
-    Shooter_Barrel_Heat_Limit = Referee.Get_Booster_17mm_1_Heat_Max();
-    Shooter_Barrel_Heat = Referee.Get_Booster_17mm_1_Heat();
-    Shooter_Speed = uint16_t(Referee.Get_Shoot_Speed() * 10);
-    // 发送数据给云台
-    CAN2_Chassis_Tx_Gimbal_Data[0] = Referee.Get_ID();
-    CAN2_Chassis_Tx_Gimbal_Data[1] = Referee.Get_Game_Stage();
-    memcpy(CAN2_Chassis_Tx_Gimbal_Data + 2, &Shooter_Barrel_Heat_Limit, sizeof(uint16_t));
-    memcpy(CAN2_Chassis_Tx_Gimbal_Data + 4, &Shooter_Barrel_Heat, sizeof(uint16_t));
-    memcpy(CAN2_Chassis_Tx_Gimbal_Data + 6, &Shooter_Speed, sizeof(uint16_t));
-}
-void Class_Chariot::CAN_Chassis_Tx_Gimbal_Callback_1()
-{
-    uint16_t current_heat;
-    current_heat = Referee.Get_Booster_17mm_1_Heat();
-    memcpy(&CAN2_Chassis_Tx_Gimbal_Data_1[2], &current_heat, sizeof(uint16_t));
-}
-#endif
 /**
  * @brief 计算回调函数
  *
@@ -913,72 +858,6 @@ void Class_Chariot::CAN_Chassis_Tx_Gimbal_Callback_1()
 
 void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
 {
-#ifdef CHASSIS
-    // 计算云台与底盘的夹角（弧度制）
-    float chassis_gimbal_diff = (Reference_Angle - Chassis_Angle);
-    if (chassis_gimbal_diff <= 0)
-    {
-        chassis_gimbal_diff += 2 * PI;
-    }
-
-    // 将夹角信息存入JudgeReceiveData
-    JudgeReceiveData.Chassis_Gimbal_Diff = chassis_gimbal_diff;
-
-    // 小陀螺 随动计算角速度
-    if (Chassis.Get_Chassis_Control_Type() == Chassis_Control_Type_SPIN)
-    {
-        Chassis.Set_Target_Omega(Chassis.Get_Spin_Omega());
-    }
-    else if (Chassis.Get_Chassis_Control_Type() == Chassis_Control_Type_FLLOW)
-    {
-        // 随动yaw角度优化
-        float temp_yaw, temp_reference;
-        temp_yaw = Chassis_Angle;
-        temp_reference = Reference_Angle;
-
-        // 将角度规范化到 [-π, π] 范围内
-        if (temp_yaw > PI)
-            temp_yaw = temp_yaw - 2 * PI;
-        else if (temp_yaw < -PI)
-            temp_yaw = temp_yaw + 2 * PI;
-
-        if (temp_reference > PI)
-            temp_reference = temp_reference - 2 * PI;
-        else if (temp_reference < -PI)
-            temp_reference = temp_reference + 2 * PI;
-
-        // 计算角度差，选择最短路径（优弧）
-        float angle_diff = temp_reference - temp_yaw;
-
-        // 优弧劣弧判断与优化
-        if (angle_diff > PI)
-        {
-            angle_diff -= 2 * PI;
-        }
-        else if (angle_diff < -PI)
-        {
-            angle_diff += 2 * PI;
-        }
-
-        // 使用优化后的角度差进行PID控制
-        PID_Chassis_Fllow.Set_Target(temp_yaw + angle_diff);
-        PID_Chassis_Fllow.Set_Now(temp_yaw);
-        PID_Chassis_Fllow.TIM_Adjust_PeriodElapsedCallback();
-        Chassis.Set_Target_Omega(PID_Chassis_Fllow.Get_Out());
-    }
-
-    static uint8_t mod2 = 0;
-    // 各个模块的分别解算
-    mod2++;
-    if (mod2 == 2)
-    {
-        Chassis.TIM_Calculate_PeriodElapsedCallback(Sprint_Status);
-        mod2 = 0;
-    }
-
-    // 底盘解算任务
-
-#elif defined(GIMBAL)
 
     // 各个模块的分别解算
     Gimbal.TIM_Calculate_PeriodElapsedCallback();
@@ -986,7 +865,6 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
     // 传输数据给上位机
     MiniPC.TIM_Write_PeriodElapsedCallback();
 
-#endif
 }
 
 /**
