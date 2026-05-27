@@ -134,6 +134,7 @@ void Class_Gimbal::Output()
             //Target_Pitch_Angle=Sin_Single;
            // Target_Pitch_Angle = tmp_Target_Pitch_Angle;//会和dr16的遥控器输入冲突
             //对于大Yaw控制的突变点与优劣弧处理       0--2*PI
+
             Angle_Continuity_Process(&Target_Main_Yaw_Angle, Boardc_BMI.Get_Angle_Yaw());
             Angle_Continuity_Process(&Target_Yaw_Angle, Motor_Yaw.Get_Zero_Offset_Angle());
 
@@ -221,7 +222,7 @@ void Class_Gimbal::Output()
                     Motor_Main_Yaw.Set_LK_Motor_Control_Method(LK_Motor_Control_Method_OMEGA);
                     float Target_Main_Yaw_Omega = MiniPC->Get_Rx_Target_Omega_Yaw_Main();
                     Motor_Main_Yaw.Set_Target_Omega_Angle(Target_Main_Yaw_Omega);               //rad/s
-
+                    Target_Main_Yaw_Angle= Boardc_BMI.Get_Angle_Yaw();
                     pre_main_yaw_angle = Boardc_BMI.Get_Angle_Yaw();
                 }
 
