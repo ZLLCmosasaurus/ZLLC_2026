@@ -35,9 +35,10 @@
 #define POWER_CONTROL 0 //启用功率控制
 //#define BUFFER_LOOP
 
-//#define Heat_Detect_ENABLE
-#define Heat_Detect_DISABLE
+#define Heat_Detect_ENABLE
+//#define Heat_Detect_DISABLE
 
+#define Forward_Power
 
 #define SuperCap 0
 

@@ -1235,7 +1235,17 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
 		Chassis.Set_Target_Omega(0.0f);
 	}
 
-	// Chassis.Set_Sprint_Status(Sprint_Status);		
+	// Chassis.Set_Sprint_Status(Sprint_Status);	
+     // 超电控制
+    if (Sprint_Status == Sprint_Status_ENABLE)
+    {
+        Chassis.Supercap.Set_Supercap_Usage_Stratage(Supercap_Usage_Stratage_Supercap_BufferPower);
+    }
+    else
+    {
+        Chassis.Supercap.Set_Supercap_Usage_Stratage(Supercap_Usage_Stratage_Referee_BufferPower);
+    }
+    Chassis.Supercap.TIM_Supercap_PeriodElapsedCallback();
     Chassis.TIM_Calculate_PeriodElapsedCallback(Sprint_Status);//还有飞坡前馈没写
 				
 #elif defined(GIMBAL)
