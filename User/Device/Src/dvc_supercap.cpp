@@ -161,7 +161,7 @@ void Class_Supercap::Get_Referee_MaxPower()
 {
     if (Robot_Power_Status == 1)
     {
-        Referee_MaxPower = Referee->Get_Chassis_Power_Max();
+        Referee_MaxPower = 35;
         return;
     }
 #ifdef Forward_Power
@@ -288,8 +288,8 @@ void Class_Supercap::Output()
         // 使用tanh实现平滑过渡，范围[-20, 20]
         bufferPower = 20.0f * tanhf(normalized);
 
-        Chassis_Device_LimitPower = Referee_MaxPower + bufferPower;
-        Limit_Power = Referee_MaxPower + bufferPower;
+        Chassis_Device_LimitPower = Referee->Get_Chassis_Power_Max() + bufferPower;
+        Limit_Power = Referee->Get_Chassis_Power_Max() + bufferPower;
     }
 }
 
