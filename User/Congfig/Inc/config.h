@@ -17,8 +17,8 @@
 /* Exported macros -----------------------------------------------------------*/
 
 //底盘或云台状态
-//#define CHASSIS
-#define GIMBAL
+#define CHASSIS
+//#define GIMBAL
 
 //底盘标定参考正方向角度(数据来源yaw电机)
 #define Reference_Angle  -53.23f
