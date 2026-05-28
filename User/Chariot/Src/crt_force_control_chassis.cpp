@@ -4,6 +4,7 @@ void Class_Chassis::Init()
 {
     // PID初始化
 
+    /*力控底盘PID参数*/
     // 底盘速度xPID, 输出摩擦力
     PID_Velocity_X.Init(60.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1000.0f, 0.002f);
 
@@ -19,16 +20,16 @@ void Class_Chassis::Init()
     // 轮向电机ID初始化
     // 电机初始化
     Motor_Wheel[0].Init(&hfdcan1, Motor_DJI_ID_0x201, Motor_DJI_Control_Method_CURRENT, 3591.f / 187.f, Motor_DJI_Power_Limit_Status_ENABLE);
-    Motor_Wheel[0].PID_Omega.Init(0.0f, 0.0f, 0.0f, 0.0f, 20.0f, 20.0f);
+    Motor_Wheel[0].PID_Omega.Init(2.0f, 0.0f, 0.0f, 0.0f, 0.0f, Motor_Wheel[0].Get_Current_Max());
     // 电机初始化
     Motor_Wheel[1].Init(&hfdcan1, Motor_DJI_ID_0x202, Motor_DJI_Control_Method_CURRENT, 3591.f / 187.f, Motor_DJI_Power_Limit_Status_ENABLE);
-    Motor_Wheel[1].PID_Omega.Init(0.0f, 0.0f, 0.0f, 0.0f, 20.0f, 20.0f);
+    Motor_Wheel[1].PID_Omega.Init(2.25f, 0.0f, 0.0f, 0.0f, 0.0f, Motor_Wheel[1].Get_Current_Max());
     // 电机初始化
     Motor_Wheel[2].Init(&hfdcan1, Motor_DJI_ID_0x203, Motor_DJI_Control_Method_CURRENT, 3591.f / 187.f, Motor_DJI_Power_Limit_Status_ENABLE);
-    Motor_Wheel[2].PID_Omega.Init(0.0f, 0.0f, 0.0f, 0.0f, 20.0f, 20.0f);
+    Motor_Wheel[2].PID_Omega.Init(2.0f, 0.0f, 0.0f, 0.0f, 0.0f, Motor_Wheel[2].Get_Current_Max());
     // 电机初始化
     Motor_Wheel[3].Init(&hfdcan1, Motor_DJI_ID_0x204, Motor_DJI_Control_Method_CURRENT, 3591.f / 187.f, Motor_DJI_Power_Limit_Status_ENABLE);
-    Motor_Wheel[3].PID_Omega.Init(0.0f, 0.0f, 0.0f, 0.0f, 20.0f, 20.0f);
+    Motor_Wheel[3].PID_Omega.Init(2.2f, 0.0f, 0.0f, 0.0f, 0.0f, Motor_Wheel[3].Get_Current_Max());
 
     // 超级电容初始化
     Supercap.Init_UART(&huart1);
@@ -42,16 +43,16 @@ void Class_Chassis::Init()
     init_filter(&Omega_Spike, 5);
 
     // 斜坡函数加减速速度X  控制周期1ms
-    Slope_Velocity_X.Init(0.005f, 0.01f);
+    Slope_Velocity_X.Init(0.0075f, 0.0075f);
     // 斜坡函数加减速速度Y  控制周期1ms
-    Slope_Velocity_Y.Init(0.005f, 0.01f);
+    Slope_Velocity_Y.Init(0.0075f, 0.0075f);
     // 斜坡函数加减速角速度
     Slope_Omega.Init(0.05f, 0.05f);
     Power_Limit.Set_K3(0.0f);
 }
 
-// #define Control_Type_Oemga
-#define Control_Type_Current
+#define Control_Type_Omega
+// #define Control_Type_Current
 
 void Class_Chassis::TIM_100ms_Alive_PeriodElapsedCallback()
 {
@@ -108,6 +109,7 @@ void Class_Chassis::TIM_2ms_Resolution_PeriodElapsedCallback()
  */
 void Class_Chassis::TIM_2ms_Control_PeriodElapsedCallback()
 {
+    // 运动学逆解算计算出各个轮子速度
     Kinematics_Inverse_Resolution();
 
 #ifdef Control_Type_Current
@@ -163,6 +165,7 @@ void Class_Chassis::Output_To_Dynamics()
     }
     case (Chassis_Control_Type_NORMAL__):
     {
+        /*力控底盘力矩PID计算*/
         PID_Velocity_X.Set_Target(Slope_Velocity_X.Get_Out());
         PID_Velocity_X.Set_Now(Now_Velocity_X_Spike);
         PID_Velocity_X.TIM_Adjust_PeriodElapsedCallback();
@@ -241,6 +244,10 @@ void Class_Chassis::Output_To_Motor()
             Motor_Wheel[i].Set_Control_Method(Motor_DJI_Control_Method_CURRENT);
 
             Motor_Wheel[i].Set_Target_Current(0.0f);
+
+            #ifdef Control_Type_Omega
+            Motor_Wheel[i].PID_Omega.Set_Integral_Error(0.0f);
+            #endif
         }
 
         break;
@@ -258,7 +265,7 @@ void Class_Chassis::Output_To_Motor()
             Motor_Wheel[i].Set_Target_Current(Target_Wheel_Current[i]);
         }
 #endif
-#ifdef Control_Type_Oemga
+#ifdef Control_Type_Omega
         for (int i = 0; i < 4; i++)
         {
             Motor_Wheel[i].Set_Control_Method(Motor_DJI_Control_Method_OMEGA);

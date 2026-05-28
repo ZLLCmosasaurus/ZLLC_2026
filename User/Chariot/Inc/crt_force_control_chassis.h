@@ -34,6 +34,7 @@ struct Struct_Chassis_INS_Data
 class Class_Chassis
 {
 public:
+    /*力控底盘相关*/
     // 底盘速度值PID
     Class_PID PID_Velocity_X;
 
