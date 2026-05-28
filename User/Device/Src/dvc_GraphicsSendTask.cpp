@@ -413,6 +413,7 @@ void GraphUI_RemotePack(uint8_t data[GRAPH_UI_SYNC_DLC])
     data[GRAPH_UI_SYNC_IDX_GRIPPER] = (uint8_t)g_graph_ui_remote_state.gripper;
     data[GRAPH_UI_SYNC_IDX_INPUT] = (uint8_t)g_graph_ui_remote_state.input;
     data[GRAPH_UI_SYNC_IDX_FLAGS] = g_graph_ui_remote_state.flags;
+	// 清零刷新标志位
     g_graph_ui_remote_state.flags = 0U;
 }
 

@@ -59,10 +59,10 @@ bool verify_crc16_check_sum(uint8_t *p_msg, uint16_t len)
 void Class_VT13::VT13_UART_RxCpltCallback(uint8_t *Rx_Data)
 {
   // 判断是否为遥控器数据(0xA9 0x53)或图传链路数据(0xA5)
-  if ((*(Rx_Data + 0) != 0xA9 || *(Rx_Data + 1) != 0x53) && (*(Rx_Data + 0) != 0xA5))
-  {
-    return;
-  }
+  // if ((*(Rx_Data + 0) != 0xA9 || *(Rx_Data + 1) != 0x53) && (*(Rx_Data + 0) != 0xA5))
+  // {
+  //   return;
+  // }
 
   // 图传链路数据解包
   if (*(Rx_Data + 0) == 0xA5)
@@ -84,7 +84,7 @@ void Class_VT13::VT13_UART_RxCpltCallback(uint8_t *Rx_Data)
     }
   }
   // VT13遥控器及键鼠数据解包
-  else
+  if (*(Rx_Data + 0) == 0xA9 && *(Rx_Data + 1) == 0x53)
   {
     if (!verify_crc16_check_sum(Rx_Data, 21))
     {

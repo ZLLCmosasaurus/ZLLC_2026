@@ -436,7 +436,10 @@ void VT13_UART_Callback(uint8_t *Buffer, uint16_t Length)
 {
     chariot.VT13.VT13_UART_RxCpltCallback(Buffer);
     // 底盘 云台 发射机构 的控制策略
-    chariot.TIM_Control_Callback();
+    if (*(Buffer + 0) == 0xA9 && *(Buffer + 1) == 0x53)
+    {
+        chariot.TIM_Control_Callback();
+    }
 }
 #endif
 
@@ -589,12 +592,12 @@ void Task100us_TIM4_Callback()
 #endif
 #elif defined(USE_VT13)
 #ifdef DEBUG
-        if (chariot.VT13.Get_VT13_Status() == VT13_Status_DISABLE)
-        {
-            chariot.Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_DISABLE);
-            chariot.Booster.Set_Booster_Control_Type(Booster_Control_Type_DISABLE);
-            chariot.Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
-        }
+        // if (chariot.VT13.Get_VT13_Status() == VT13_Status_DISABLE)
+        // {
+        //     chariot.Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_DISABLE);
+        //     chariot.Booster.Set_Booster_Control_Type(Booster_Control_Type_DISABLE);
+        //     chariot.Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
+        // }
 #else
         if (CAN3_Chassis_Rx_Data_A.game_process != 4)
         {
@@ -717,7 +720,7 @@ void Task1ms_TIM5_Callback()
 #ifdef CHASSIS
             // 裁判系统发送
             // 判断UI刷新
-            if(chariot.Rx_UI_State.flags)
+            if (chariot.Rx_UI_State.flags)
             {
                 Init_Cnt = 255;
             }

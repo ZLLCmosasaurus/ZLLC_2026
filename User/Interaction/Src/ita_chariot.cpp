@@ -1157,8 +1157,7 @@ void Class_Chariot::Control_Gimbal()
         break;
     }
 
-    if (Keyboard_Control_Type != Keyboard_Control_Type_SAVE_LOAD &&
-        Key_Is_Pressed(controller_mouse_right_key))
+    if (Key_Is_Pressed(controller_mouse_right_key))
     {
         if (VT03_Yaw_Control_Type == VT03_Yaw_Control_Type_MANUAL)
         {
@@ -1186,6 +1185,19 @@ void Class_Chariot::Control_Gimbal()
     {
         Gimbal.Reset_Planner(Gimbal_Joint_J2_Yaw);
         Gimbal.Set_Planner_Enable(Gimbal_Joint_J2_Yaw, true);
+    }
+
+    // Yaw控制张合
+    if(fabs(yaw) >= 0.85f)
+    {
+        if(tmp_gripper_position >= 128)
+        {
+            tmp_gripper_position = 0;
+        }
+        else
+        {
+            tmp_gripper_position = 255;
+        }
     }
 
     Gimbal.Set_Target_J0_Pitch_Radian(tmp_j0_pitch_radian);
@@ -1392,6 +1404,7 @@ void Class_Chariot::TIM_Calculate_PeriodElapsedCallback()
     MiniPC.TIM_Write_PeriodElapsedCallback();
     // 给下板发送数据
     CAN_Gimbal_Tx_Chassis_Callback();
+    CAN_Gimbal_Tx_Chassis_UI_Callback();
 #endif
 
 #ifdef MOTOR_TEST_CHASSIS
@@ -1499,13 +1512,13 @@ void Class_Chariot::Judge_Active_Controller()
     Judge_VT13_Control_Type();
 
     // 判断当前活动的控制器
-    if (VT13_Control_Type != VT13_Control_Type_NONE)
-    {
-        Active_Controller = Controller_VT13;
-    }
-    else if (DR16_Control_Type != DR16_Control_Type_NONE)
+    if (DR16_Control_Type != DR16_Control_Type_NONE)
     {
         Active_Controller = Controller_DR16;
+    }
+    else if (VT13_Control_Type != VT13_Control_Type_NONE)
+    {
+        Active_Controller = Controller_VT13;
     }
     else
     {
@@ -1993,12 +2006,12 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
 #endif
 #elif defined(USE_VT13)
 #ifdef DEBUG
-        if (VT13.Get_VT13_Status() == VT13_Status_DISABLE)
-        {
-            Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_DISABLE);
-            Booster.Set_Booster_Control_Type(Booster_Control_Type_DISABLE);
-            Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
-        }
+        // if (VT13.Get_VT13_Status() == VT13_Status_DISABLE)
+        // {
+        //     Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_DISABLE);
+        //     Booster.Set_Booster_Control_Type(Booster_Control_Type_DISABLE);
+        //     Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
+        // }
 #else
         if (CAN3_Chassis_Rx_Data_A.game_process != 4)
         {
@@ -2077,12 +2090,12 @@ void Class_Chariot::TIM_Unline_Protect_PeriodElapsedCallback()
 #endif
 #elif defined(USE_VT13)
 #ifdef DEBUG
-    if (VT13.Get_VT13_Status() == VT13_Status_DISABLE)
-    {
-        Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_DISABLE);
-        Booster.Set_Booster_Control_Type(Booster_Control_Type_DISABLE);
-        Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
-    }
+    // if (VT13.Get_VT13_Status() == VT13_Status_DISABLE)
+    // {
+    //     Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_DISABLE);
+    //     Booster.Set_Booster_Control_Type(Booster_Control_Type_DISABLE);
+    //     Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
+    // }
 #else
     if (CAN3_Chassis_Rx_Data_A.game_process != 4)
     {
