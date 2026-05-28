@@ -17,10 +17,12 @@
 /* Exported macros -----------------------------------------------------------*/
 
 //底盘或云台状态
-#define CHASSIS
-//#define GIMBAL
-#define TEST
+//#define CHASSIS
+#define GIMBAL
 
+//底盘标定参考正方向角度(数据来源yaw电机)
+#define Reference_Angle  -53.23f
+#define Reference_Radian  (Reference_Angle * PI / 180.f)
 
 //调试或比赛状态
 #define DEBUG
@@ -33,6 +35,10 @@
 #define POWER_CONTROL 0 //启用功率控制
 //#define BUFFER_LOOP
 
+#define Heat_Detect_ENABLE
+//#define Heat_Detect_DISABLE
+
+#define Forward_Power
 
 #define SuperCap 0
 

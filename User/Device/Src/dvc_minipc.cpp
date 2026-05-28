@@ -33,12 +33,12 @@ void Class_MiniPC::Init(FDCAN_HandleTypeDef *hcan)
   if (hcan->Instance == FDCAN1)
   {
     CAN_Manage_Object = &CAN1_Manage_Object;
-    CAN_Tx_Data_A = CAN1_MiniPc_Tx_Data;
+    CAN_Tx_Data = CAN1_MiniPc_Tx_Data;
   }
   else if (hcan->Instance == FDCAN2)
   {
     CAN_Manage_Object = &CAN2_Manage_Object;
-    CAN_Tx_Data_B = CAN2_MiniPc_Tx_Data;
+    CAN_Tx_Data = CAN2_MiniPc_Tx_Data;
   }
 }
 
@@ -53,10 +53,10 @@ void Class_MiniPC::Data_Process()
   float tmp_yaw, tmp_pitch;
   // // 将CAN接收到的数据转换为实际值 (除以1000转换回浮点数)
   // float target_x = Pack_Rx.target_x / 1000.0f;
-  // float target_y = Pack_Rx.target_y / 1000.0f;
+  // float target_y = Pack_Rx.target_y / 1000.0f;    
   // float target_z = Pack_Rx.target_z / 1000.0f;
-  tmp_yaw = Pack_Rx.yaw /1000.0f;
-  tmp_pitch = Pack_Rx.pitch /1000.0f;
+  tmp_yaw = Pack_Rx.yaw /10000.0f;
+  tmp_pitch = Pack_Rx.pitch /10000.0f;
   Fire = Pack_Rx.Fire;
   alive = Pack_Rx.alive;
   
@@ -64,26 +64,34 @@ void Class_MiniPC::Data_Process()
   // Self_aim(target_x, target_y, target_z, &tmp_yaw, &tmp_pitch, &Distance);
   Rx_Angle_Pitch = tmp_pitch * 180 / PI;
   Rx_Angle_Yaw = tmp_yaw * 180 / PI;
-  Math_Constrain(&Rx_Angle_Pitch, -10.0f, 10.0f);
+  Math_Constrain(&Rx_Angle_Pitch, -20.0f, 25.0f);
 }
 
 /**
  * @brief 迷你主机发送数据输出
  *
  */
+float Dttttt;
+uint32_t last_cnttt = 0;
 void Class_MiniPC::Output()
 {
   // 设置发送数据
-  Pack_Tx_CAN_B.game_stage = (Enum_MiniPC_Game_Stage)Referee->Get_Game_Stage();
-  Pack_Tx_CAN_B.target_type = Get_MiniPC_Type();
 
-  Pack_Tx_CAN_A.Roll = Tx_Angle_Roll*100.0f;
-  Pack_Tx_CAN_A.Yaw = Tx_Angle_Yaw*100.0f;
-  //Pack_Tx_CAN_A.Pitch = -1.0f * Tx_Angle_Pitch*100.0f; //左手螺旋
-  Pack_Tx_CAN_A.Pitch = 1.0f * Tx_Angle_Pitch*100.0f;//右手螺旋
-  //Pack_Tx_CAN_A.Gyro_Yaw = Tx_Angle_Gyro_Yaw * 100.0f; 
-  memcpy(CAN_Tx_Data_A, &Pack_Tx_CAN_A, sizeof(Pack_tx_can_t_A));
-  memcpy(CAN_Tx_Data_B, &Pack_Tx_CAN_B, sizeof(Pack_tx_can_t_B));
+  float Yaw_rad = Tx_Angle_Yaw * PI / 180.0f;
+  float Pitch_rad = Tx_Angle_Pitch * PI / 180.0f;
+  float Roll_rad = Tx_Angle_Roll * PI / 180.0f;
+
+  // Pack_Tx_CAN.q[0] = (int16_t)((arm_sin_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f) - arm_cos_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f)) * 10000.f);
+  // Pack_Tx_CAN.q[1] = (int16_t)((arm_cos_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f) + arm_sin_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f)) * 10000.f);
+  // Pack_Tx_CAN.q[2] = (int16_t)((arm_cos_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f) - arm_sin_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f)) * 10000.f);
+  // Pack_Tx_CAN.q[3] = (int16_t)((arm_cos_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f) + arm_sin_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f)) * 10000.f);
+
+  Pack_Tx_CAN.q[3] = (int16_t)((arm_cos_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f) + arm_sin_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f)) * 10000.f);
+  Pack_Tx_CAN.q[0] = (int16_t)((arm_sin_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f) - arm_cos_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f)) * 10000.f);
+  Pack_Tx_CAN.q[1] = (int16_t)((arm_cos_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f) + arm_sin_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f)) * 10000.f);
+  Pack_Tx_CAN.q[2] = (int16_t)((arm_cos_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f) - arm_sin_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f)) * 10000.f);
+    memcpy(CAN_Tx_Data, &Pack_Tx_CAN, sizeof(Pack_tx_t));
+    Dttttt = DWT_GetDeltaT(&last_cnttt);
 
 }
 

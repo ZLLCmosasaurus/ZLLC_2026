@@ -32,7 +32,7 @@ extern "C" {
 
 /* USER CODE END Includes */
 
-extern IWDG_HandleTypeDef hiwdg1;
+// extern IWDG_HandleTypeDef hiwdg1;
 
 /* USER CODE BEGIN Private defines */
 

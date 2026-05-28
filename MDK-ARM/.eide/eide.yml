@@ -340,6 +340,7 @@ targets:
         - ../User/Algorithm/Inc
         - ../Drivers/CMSIS/Include
         - ../DSP
+        - ../Drivers/CMSIS/DSP/Include
         - .cmsis/include
         - RTE/_ZLLC_2026
         - ../DSP/Include
@@ -357,7 +358,7 @@ targets:
           version: 3
           afterBuildTasks: []
           asm-compiler:
-            $use: asm-auto
+            $use: asm
             misc-controls: ""
           beforeBuildTasks: []
           c/cpp-compiler:

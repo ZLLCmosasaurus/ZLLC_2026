@@ -32,6 +32,8 @@ class Class_Chariot;
 //云台折叠互斥锁
 extern uint16_t gimbal_lock;
 extern uint16_t run_time;
+extern bool Reset_Pitch_2;
+extern float reference_angle;
 /* Exported types ------------------------------------------------------------*/
 
 /**
@@ -212,20 +214,16 @@ public:
         //底盘随动PID环
         Class_LK_Motor Motor_Yaw;
         Class_PID PID_Chassis_Follow;
-        
+
+        Class_IMU Boardc_BMI;
+
     #endif 
 
         //裁判系统
         Class_Referee Referee;
         //底盘
-        Class_Tricycle_Chassis Chassis;
-        
-    #ifdef TEST
-    Class_DR16 DR16;
-    Class_FSM_Alive_Control FSM_Alive_Control;
-    friend class Class_FSM_Alive_Control;
-    #endif
-        
+        Class_Steering_Wheel_Chassis Chassis;
+
     #ifdef GIMBAL
         //遥控器
         Class_DR16 DR16;
@@ -254,6 +252,7 @@ public:
         void CAN_Chassis_Tx_Gimbal_Callback();
         void CAN_Chassis_Rx_Gimbal_Callback_1();
         void CAN_Chassis_Tx_Gimbal_Callback_1();
+        void CAN_Chassis_Rx_Gimbal_Callback_2();
         void TIM1msMod50_Gimbal_Communicate_Alive_PeriodElapsedCallback();
         inline void Set_Gimbal_Status(Enum_Gimbal_Status __Gimbal_Status);
         inline Enum_Gimbal_Status Get_Gimbal_Status();
@@ -291,6 +290,7 @@ public:
         void CAN_Gimbal_Tx_Chassis_Callback();
         void CAN_Gimbal_Rx_Chassis_Callback_1();
         void CAN_Gimbal_Tx_Chassis_Callback_1();
+        void CAN_Gimbal_Tx_Chassis_Callback_2();
         
         void TIM_Control_Callback();
         void Contorl_Fold_Pitch();
@@ -322,9 +322,6 @@ public:
     //底盘云台通讯数据
     float Gimbal_Tx_Pitch_Angle = 0;
 
-    //临时加的上位机存活变量
-    uint8_t minipc_alive = 0;
-
 protected:
 
     //遥控器拨动的死区, 0~1
@@ -340,9 +337,6 @@ protected:
 
     //底盘转换后的角度（数据来源yaw电机）
     float Chassis_Angle;
-    //底盘标定参考正方向角度(数据来源yaw电机)
-    float Reference_Angle = -34.387207;
-	float Reference_Radian = Reference_Angle * PI / 180.f;
 
     #ifdef CHASSIS
         //小陀螺云台坐标系稳定偏转角度 用于矫正
@@ -356,9 +350,6 @@ protected:
         //底盘 云台 发射机构 前一帧控制类型
         Enum_Chassis_Control_Type Pre_Chassis_Control_Type = Chassis_Control_Type_DISABLE;
         Enum_Gimbal_Control_Type Pre_Gimbal_Control_Type = Gimbal_Control_Type_NORMAL;
-        
-        //云台还没出，先放在底盘里的东西
-        void Control_Chassis_Test();
     #endif
 
     #ifdef GIMBAL

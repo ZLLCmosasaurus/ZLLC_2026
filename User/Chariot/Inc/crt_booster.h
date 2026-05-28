@@ -201,11 +201,30 @@ public:
     Class_DJI_Motor_C610 Motor_Driver;
 
     // 摩擦轮电机左
-    Class_DJI_Motor_C620 Motor_Friction_Left;
+    Class_DJI_Motor_C610 Motor_Friction_Left;
     // 摩擦轮电机右
-    Class_DJI_Motor_C620 Motor_Friction_Right;
+    Class_DJI_Motor_C610 Motor_Friction_Right;
+    // 摩擦轮电机下
+    Class_DJI_Motor_C610 Motor_Friction_Down;
 
     Class_PID Bullet_Speed;
+    /**********************************/
+    // 热量预测与控制
+    float Heat_Local = 0.0f; // 本地累加热量
+    float Heat_Max = 400.0f;
+    float Cooling_Value = 10.0f; // 裁判冷却值
+
+    // 收缩参数（可调）
+    float Tau0 = 0.835f;           // 提前收缩时间
+    float Tau1 = 0.14f;           // 收缩陡度
+    float Recover_Ratio = 0.85f; // 恢复比例
+
+    bool Overheat_Flag = false;
+
+    // 射速相关
+    float Base_Frequency = 15.0f; // f0
+    float Balance_Frequency = 0.0f;
+    /**********************************/
     void Init();
 
     inline float Get_Default_Driver_Omega();
@@ -241,16 +260,13 @@ protected:
     // 内部变量
     uint8_t shoot_time = 0;
     float ShootTime = 0;
-    uint16_t Heat;
-    uint16_t Heat_Max;
-    uint16_t Cooling_Value = 14;
     float shoot_speed;
     float Heat_Consumption = 10.0f;
 
     // 读变量
 
     // 拨弹盘默认速度
-    float Default_Driver_Omega = 2.0f * PI / 9.0f * 25.f;
+    float Default_Driver_Omega = 2.5f * 2.0f * PI / 9.0f * 15.f;
 
     // 写变量
 
@@ -258,7 +274,7 @@ protected:
     Enum_Booster_Control_Type Booster_Control_Type = Booster_Control_Type_DISABLE;
     Enum_Friction_Control_Type Friction_Control_Type = Friction_Control_Type_DISABLE;
     // 摩擦轮角速度
-    float Friction_Omega = 680.0f;
+    float Friction_Omega = 1050.0f;
     float Target_Bullet_Speed = 23.5f;
     // 拨弹盘实际的目标速度
     float Driver_Omega = 2.0f * PI * 2.5f ;
@@ -266,6 +282,8 @@ protected:
     float Driver_Angle = 0.0f;
     // 读写变量
 
+    // 热量预测时间 τ
+    float τ = 0.0f;
     // 内部函数
 };
 
