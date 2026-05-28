@@ -420,7 +420,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     __HAL_LINKDMA(uartHandle,hdmarx,hdma_uart7_rx);
 
     /* UART7 interrupt Init */
-    HAL_NVIC_SetPriority(UART7_IRQn, 1, 1);
+    HAL_NVIC_SetPriority(UART7_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(UART7_IRQn);
   /* USER CODE BEGIN UART7_MspInit 1 */
 

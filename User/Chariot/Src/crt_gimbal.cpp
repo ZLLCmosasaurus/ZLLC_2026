@@ -222,6 +222,7 @@ void Class_Gimbal::Output()
                     Motor_Main_Yaw.Set_LK_Motor_Control_Method(LK_Motor_Control_Method_OMEGA);
                     float Target_Main_Yaw_Omega = MiniPC->Get_Rx_Target_Omega_Yaw_Main();
                     Motor_Main_Yaw.Set_Target_Omega_Angle(Target_Main_Yaw_Omega);               //rad/s
+                    
                     Target_Main_Yaw_Angle= Boardc_BMI.Get_Angle_Yaw();
                     pre_main_yaw_angle = Boardc_BMI.Get_Angle_Yaw();
                 }

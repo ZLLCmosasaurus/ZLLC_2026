@@ -226,7 +226,7 @@ void CAN_Init(FDCAN_HandleTypeDef *hcan, CAN_Call_Back Callback_Function)
         //拒绝接收匹配不成功的标准ID和扩展ID,不接受远程帧
         // HAL_FDCAN_ConfigGlobalFilter(&hfdcan1,FDCAN_REJECT,FDCAN_REJECT,FDCAN_REJECT_REMOTE,FDCAN_REJECT_REMOTE);
         // HAL_FDCAN_ConfigFifoWatermark(&hfdcan1, FDCAN_CFG_RX_FIFO0, 1);			
-        HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
+        HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO0_NEW_MESSAGE | FDCAN_IT_BUS_OFF, 0);
     }
     else if (hcan->Instance == FDCAN2)
     {
@@ -244,7 +244,7 @@ void CAN_Init(FDCAN_HandleTypeDef *hcan, CAN_Call_Back Callback_Function)
         //拒绝接收匹配不成功的标准ID和扩展ID,不接受远程帧
         // HAL_FDCAN_ConfigGlobalFilter(&hfdcan2,FDCAN_REJECT,FDCAN_REJECT,FDCAN_REJECT_REMOTE,FDCAN_REJECT_REMOTE);
         // HAL_FDCAN_ConfigFifoWatermark(&hfdcan2, FDCAN_CFG_RX_FIFO1, 1);
-        HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_RX_FIFO1_NEW_MESSAGE, 0);
+        HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_RX_FIFO1_NEW_MESSAGE | FDCAN_IT_BUS_OFF, 0);
     }
     else if (hcan->Instance == FDCAN3)
     {
@@ -261,7 +261,7 @@ void CAN_Init(FDCAN_HandleTypeDef *hcan, CAN_Call_Back Callback_Function)
         HAL_FDCAN_ConfigFilter(&hfdcan3,&fdcan_filter); 		 				  //接收ID2
         //拒绝接收匹配不成功的标准ID和扩展ID,不接受远程帧
         HAL_FDCAN_ConfigGlobalFilter(&hfdcan3,FDCAN_REJECT,FDCAN_REJECT,FDCAN_REJECT_REMOTE,FDCAN_REJECT_REMOTE);
-        HAL_FDCAN_ConfigFifoWatermark(&hfdcan3, FDCAN_CFG_RX_FIFO0, 1);
+        HAL_FDCAN_ConfigFifoWatermark(&hfdcan3, FDCAN_CFG_RX_FIFO0 | FDCAN_IT_BUS_OFF, 1);
         HAL_FDCAN_ActivateNotification(&hfdcan3, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
     }
     // can_filter_init(hcan);
@@ -451,6 +451,36 @@ void HAL_FDCAN_TxBufferCompleteCallback(FDCAN_HandleTypeDef *hfdcan, uint32_t Bu
   /* NOTE: This function Should not be modified, when the callback is needed,
            the HAL_FDCAN_TxBufferCompleteCallback could be implemented in the user file
    */
+}
+
+/**
+ * @brief CAN错误状态回调函数
+ *
+ * @param hfdcan CAN句柄
+ * @param ErrorStatusITs 错误状态中断掩码
+ */
+extern "C" void HAL_FDCAN_ErrorStatusCallback(FDCAN_HandleTypeDef *hfdcan, uint32_t ErrorStatusITs)
+{
+    if (ErrorStatusITs & FDCAN_IT_BUS_OFF)
+    {
+        // 停止CAN
+        HAL_FDCAN_Stop(hfdcan);
+        // 重新启动CAN
+        HAL_FDCAN_Start(hfdcan);
+        // 可选：重新激活通知
+        if (hfdcan->Instance == FDCAN1)
+        {
+            HAL_FDCAN_ActivateNotification(hfdcan, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
+        }
+        else if (hfdcan->Instance == FDCAN2)
+        {
+            HAL_FDCAN_ActivateNotification(hfdcan, FDCAN_IT_RX_FIFO1_NEW_MESSAGE, 0);
+        }
+        else if (hfdcan->Instance == FDCAN3)
+        {
+            HAL_FDCAN_ActivateNotification(hfdcan, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0);
+        }
+    }
 }
 
 void HAL_FDCAN_ErrorCallback(FDCAN_HandleTypeDef *hfdcan){

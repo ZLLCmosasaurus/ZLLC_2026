@@ -1481,7 +1481,7 @@ void Class_FSM_Alive_Control_Fs_i6x::Reload_TIM_Status_PeriodElapsedCallback()
             huart5.ErrorCode = 0;
             UART5_Manage_Object.Rx_Length = 0;
             memset(UART5_Manage_Object.Rx_Buffer, 0, UART_BUFFER_SIZE);
-            HAL_UART_DMAStop(&huart5); // 停止以重启
+            // HAL_UART_DMAStop(&huart5); // 停止以重启
             //HAL_Delay(10); // 等待错误结束
             HAL_UARTEx_ReceiveToIdle_DMA(&huart5, UART5_Manage_Object.Rx_Buffer, UART5_Manage_Object.Rx_Buffer_Length * 2);
             __HAL_DMA_DISABLE_IT(&hdma_uart5_rx, DMA_IT_HT);
