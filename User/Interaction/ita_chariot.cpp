@@ -23,7 +23,8 @@
 /* Private function declarations ---------------------------------------------*/
 
 /* Function prototypes -------------------------------------------------------*/
-
+float gimbal_pitch_offset = 0.5f;
+float gimbal_yaw_offset = 0.5f;
 /**
  * @brief 控制交互端初始化
  *
@@ -309,19 +310,22 @@ void Class_Chariot::Control_Gimbal()
 
         if (Gimbal.Get_Gimbal_Control_Type() == Gimbal_Control_Type_DISABLE)
             Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
-        if (VT13.Get_Button_Right() == VT13_Button_TRIG_FREE_PRESSED) //
+        if (VT13.Get_Button_Right() == VT13_Button_TRIG_FREE_PRESSED && MiniPC.Get_Alive_Status() == 1)
         {
-            if (Gimbal.Get_Gimbal_Control_Type() == Gimbal_Control_Type_NORMAL)
-                Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_MINIPC);
-            else if (Gimbal.Get_Gimbal_Control_Type() == Gimbal_Control_Type_MINIPC)
-                Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
+            Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_MINIPC);
 
-            // 两次开启自瞄分别切换四点五点
-            // if (Gimbal.MiniPC->Get_MiniPC_Type() == MiniPC_Type_Nomal)
-            //     Gimbal.MiniPC->Set_MiniPC_Type(MiniPC_Type_Windmill); // 五点
-            // else
-            //     Gimbal.MiniPC->Set_MiniPC_Type(MiniPC_Type_Nomal);
+                if (MiniPC.Get_MiniPC_Status() == MiniPC_Status_ENABLE)
+                {
+                    tmp_gimbal_yaw = MiniPC.Get_Rx_Yaw_Angle();
+                    tmp_gimbal_pitch = MiniPC.Get_Rx_Pitch_Angle();
+                }
         }
+
+        if(VT13.Get_Switch() == VT13_Switch_Status_Left)
+        {
+            MiniPC.MiniPC_Target_Mode = Enum_MiniPC_Target_Mode_BASE;
+        }
+        else MiniPC.MiniPC_Target_Mode = Enum_MiniPC_Target_Mode_OUTPOST;
 
         // 遥控器操作逻辑
         tmp_gimbal_yaw -= vt13_y * DR16_Yaw_Angle_Resolution;
@@ -410,11 +414,6 @@ void Class_Chariot::Control_Gimbal()
                 {
                     tmp_gimbal_yaw = MiniPC.Get_Rx_Yaw_Angle();
                     tmp_gimbal_pitch = MiniPC.Get_Rx_Pitch_Angle();
-                    if (Chassis.Get_Chassis_Control_Type() == Chassis_Control_Type_SPIN)
-                    {
-                        tmp_gimbal_yaw = MiniPC.Get_Rx_Yaw_Angle();
-                        tmp_gimbal_pitch = MiniPC.Get_Rx_Pitch_Angle();
-                    }
                 }
             }
             else
@@ -461,13 +460,30 @@ void Class_Chariot::Control_Gimbal()
                 PilotLamp.Set_PilotLamp_Type(Enum_PilotLamp_Type_TurnOffAll);
             }
 
-            if (VT13.Get_Keyboard_Key_R() == DR16_Key_Status_PRESSED) // 按下R键刷新UI
+            if (VT13.Get_Keyboard_Key_R() == VT13_Key_Status_PRESSED) // 按下R键刷新UI
             {
                 Referee_UI_Refresh_Status = Referee_UI_Refresh_Status_ENABLE;
             }
             else
             {
                 Referee_UI_Refresh_Status = Referee_UI_Refresh_Status_DISABLE;
+            }
+
+            if(VT13.Get_Keyboard_Key_W() == VT13_Key_Status_TRIG_FREE_PRESSED)
+            {
+                tmp_gimbal_pitch += gimbal_pitch_offset;
+            }
+            if(VT13.Get_Keyboard_Key_X() == VT13_Key_Status_TRIG_FREE_PRESSED)
+            {
+                tmp_gimbal_pitch -= gimbal_pitch_offset;
+            }
+            if(VT13.Get_Keyboard_Key_A() == VT13_Key_Status_TRIG_FREE_PRESSED)
+            {
+                tmp_gimbal_yaw -= gimbal_yaw_offset;
+            }
+            if(VT13.Get_Keyboard_Key_C() == VT13_Key_Status_TRIG_FREE_PRESSED)
+            {
+                tmp_gimbal_yaw -= gimbal_yaw_offset;
             }
         }
     }

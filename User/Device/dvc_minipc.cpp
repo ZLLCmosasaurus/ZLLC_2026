@@ -88,7 +88,7 @@ void Class_MiniPC::Output()
   Pack_Tx_CAN.q[1] = (int16_t)(tmp_q[1] * 10000.0f / m);
   Pack_Tx_CAN.q[2] = (int16_t)(tmp_q[2] * 10000.0f / m);
   Pack_Tx_CAN.q[3] = (int16_t)(tmp_q[3] * 10000.0f / m);
-  // Pack_Tx_Target_CAN.target_mode = 0;
+  Pack_Tx_Target_CAN.target_mode = (uint8_t)(MiniPC_Target_Mode);
   Pack_Tx_Target_CAN.speed = (int16_t)(Referee->Get_Shoot_Speed() * 10000.0f);
   memcpy(CAN_Tx_Data, &Pack_Tx_CAN, sizeof(Pack_tx_t));
   memcpy(CAN_Tx_Target_Data, &Pack_Tx_Target_CAN, sizeof(Pack_tx_target_t));
