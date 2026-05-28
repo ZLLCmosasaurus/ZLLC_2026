@@ -75,6 +75,17 @@ class Class_IMU
     float Get_Accel_Y(void);
     float Get_Accel_Z(void);
 
+    float Get_Accel_X_n();
+    float Get_Accel_Y_n();
+    float Get_Accel_Z_n();
+
+    float Get_Accel_X_b();
+    float Get_Accel_Y_b();
+    float Get_Accel_Z_b();
+
+    float *Get_Quaternion(void);
+
+
     float Get_Gyro_Roll(void);
     float Get_Gyro_Pitch(void);
     float Get_Gyro_Yaw(void);
@@ -125,6 +136,8 @@ class Class_IMU
 
     void BodyFrameToEarthFrame(const float *vecBF, float *vecEF, float *q);
     void EarthFrameToBodyFrame(const float *vecEF, float *vecBF, float *q);
+
+    float invSqrt(float x);
 };
 
 //---------------------------------------------------------------------------------------------------

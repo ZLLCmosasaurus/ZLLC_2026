@@ -711,6 +711,21 @@ void Class_DJI_Motor_C620::Output()
 }
 
 /**
+ * @brief 电机失能
+ *
+ */
+void Class_DJI_Motor_C620::Disable()
+{
+    Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OPENLOOP);
+
+    PID_Omega.Set_Integral_Error(0.0f);
+    PID_Angle.Set_Integral_Error(0.0f);
+
+    Set_Out(0.0f);
+    Output();
+}
+
+/**
  * @brief CAN通信接收回调函数
  *
  * @param Rx_Data 接收的数据
@@ -756,14 +771,15 @@ void Class_DJI_Motor_C620::TIM_PID_PeriodElapsedCallback()
     {
     case (DJI_Motor_Control_Method_OPENLOOP):
     {
-        //默认开环扭矩控制
-        Out = Target_Torque / Torque_Max * Output_Max;
+        //默认闭环扭矩控制
+        Out = 0.0f;
     }
     break;
     case (DJI_Motor_Control_Method_TORQUE):
     {
         //默认闭环扭矩控制
-        Out = Target_Torque / Torque_Max * Output_Max;
+         Out = Target_Torque * Output_Max / ((Gearbox_Rate * 0.3f * 20.0f)/ 19.2032f);
+        Math_Constrain(&Out, -16384.0f, 16384.0f);
     }
     break;
     case (DJI_Motor_Control_Method_OMEGA):
@@ -804,6 +820,7 @@ void Class_DJI_Motor_C620::TIM_PID_PeriodElapsedCallback()
         PID_Omega.TIM_Adjust_PeriodElapsedCallback();
 
         Out = PID_Omega.Get_Out();
+        Math_Constrain(&Out, -10000.0f, 10000.0f);
 		}
     break;
     default:

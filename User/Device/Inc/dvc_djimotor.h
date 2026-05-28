@@ -427,6 +427,8 @@ public:
     inline void Set_Transform_Radian_Omega(float __Transform_Radian_Omega);		
     inline void Set_Out(float __Out);
 
+    void Disable();
+
     void CAN_RxCpltCallback(uint8_t *Rx_Data);
     void TIM_Alive_PeriodElapsedCallback();
     void TIM_PID_PeriodElapsedCallback();

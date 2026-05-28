@@ -105,9 +105,44 @@ float solution2;
 float test_cal;
 float Class_Power_Limit::Calculate_Toque(float omega, float power, float torque, uint8_t motor_index)
 {
-    //#define OLD_Type_CALCULATE_TOQUE
-    #define NEW_Type_CALCULATE_TOQUE
-    #ifdef OLD_Type_CALCULATE_TOQUE
+
+    // omega = rpm2av(omega);
+    // float newTorqueCurrent = 0.0f;
+
+    // float delta = omega * omega - 4 * (k1 * fabs(omega) + k3 - power) * k2;
+
+    // if (torque * omega <= 0 || floatEqual(power, 0.0f))             //电机减速反向电动势是发出功率，不消耗功率
+    // {
+    //     newTorqueCurrent = torque;
+    //     test_flag=0;
+    // }
+    // else
+    // {
+    //     if (floatEqual(delta, 0.0f))
+    //     {
+    //         newTorqueCurrent = -omega / (2.0f * k2);
+    //         test_flag=1;
+    //     }
+    //     else if (delta > 0.0f)
+    //     {
+    //         float solution1 = (-omega + sqrtf(delta)) / (2.0f * k2);
+    //         float solution2 = (-omega - sqrtf(delta)) / (2.0f * k2);
+
+    //         newTorqueCurrent = (torque > 0) ? solution1 : solution2;
+
+    //         test_flag=2;
+
+    //         test_cal=(omega) * torque +
+    //                  fabs((omega)) * k1 +
+    //                  torque * torque * k2 +
+    //                  k3;
+    //     }
+    //     else            //delta < 0
+    //     {
+    //         newTorqueCurrent = -omega / (2.0f * k2);
+    //         test_flag=3;
+    //     }
+    // }
     omega = rpm2av(omega);
     float newTorqueCurrent = 0.0f;
 
@@ -147,46 +182,6 @@ float Class_Power_Limit::Calculate_Toque(float omega, float power, float torque,
         // newTorqueCurrent = (torque > 0) ? solution1 : solution2;
     }
     return newTorqueCurrent;
-    #elif defined (NEW_Type_CALCULATE_TOQUE)
-    omega = rpm2av(omega);
-    float newTorqueCurrent = 0.0f;
-
-    float delta = omega * omega - 4 * (k1 * fabs(omega) + k3 - power) * k2;
-
-    if(delta < 0.0f)
-    {
-        newTorqueCurrent = 0.0f; //-omega / (2.0f * k2);
-    }
-    else 
-    {
-        float solution1 = (-omega + sqrtf(delta)) / (2.0f * k2);
-        float solution2 = (-omega - sqrtf(delta)) / (2.0f * k2);
-        if ((solution1 > 0.0f && solution2 < 0.0f) || (solution1 < 0.0f && solution2 > 0.0f))
-        {
-            if ((torque > 0.0f && solution1 > 0.0f) || (torque < 0.0f && solution1 < 0.0f))
-            {
-                newTorqueCurrent = solution1;
-            }
-            else
-            {
-                newTorqueCurrent = solution2;
-            }
-        }
-        else
-        {
-            if (Math_Abs(solution1) < Math_Abs(solution2))
-            {
-                newTorqueCurrent = solution1;
-            }
-            else
-            {
-                newTorqueCurrent = solution2;
-            }
-        }
-    }
-
-    return newTorqueCurrent;
-    #endif
 }
 
 /**

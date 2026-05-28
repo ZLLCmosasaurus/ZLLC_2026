@@ -17,6 +17,4 @@ version: "2.1"
 options:
     ZLLC_2026:
         files: {}
-        virtualPathFiles:
-            <virtual_root>/Application/User/Core/iwdg.c: ""
-            <virtual_root>/Drivers/STM32H7xx_HAL_Driver/stm32h7xx_hal_iwdg.c: ""
+        virtualPathFiles: {}
