@@ -84,6 +84,7 @@ virtualFolder:
                 - path: ../Core/Src/gpio.c
                 - path: ../Core/Src/dma.c
                 - path: ../Core/Src/fdcan.c
+                - path: ../Core/Src/iwdg.c
                 - path: ../Core/Src/spi.c
                 - path: ../Core/Src/tim.c
                 - path: ../Core/Src/usart.c
@@ -132,6 +133,7 @@ virtualFolder:
             - path: ../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_i2c_ex.c
             - path: ../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_exti.c
             - path: ../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_fdcan.c
+            - path: ../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_iwdg.c
             - path: ../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi.c
             - path: ../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_spi_ex.c
             - path: ../Drivers/STM32H7xx_HAL_Driver/Src/stm32h7xx_hal_tim.c
@@ -144,7 +146,8 @@ virtualFolder:
             - path: ../Core/Src/system_stm32h7xx.c
           folders: []
     - name: Middlewares
-      files: []
+      files:
+        - path: ../Src/arm_cortexM7l_math.lib
       folders:
         - name: USB_Device_Library
           files:
@@ -337,9 +340,10 @@ targets:
         - ../User/Algorithm/Inc
         - ../Drivers/CMSIS/Include
         - ../DSP
-        - ../Middlewares/ST/ARM/DSP/Inc
+        - ../Drivers/CMSIS/DSP/Include
         - .cmsis/include
         - RTE/_ZLLC_2026
+        - ../DSP/Include
       libList: []
     excludeList: []
     settings:
@@ -349,13 +353,12 @@ targets:
       AC6:
         archExtensions: ""
         cpuType: Cortex-M7
-        floatingPointHardware: double
+        floatingPointHardware: single
         options:
           version: 3
           afterBuildTasks: []
           asm-compiler:
-            $use: asm-auto
-            defines: []
+            $use: asm
             misc-controls: ""
           beforeBuildTasks: []
           c/cpp-compiler:
