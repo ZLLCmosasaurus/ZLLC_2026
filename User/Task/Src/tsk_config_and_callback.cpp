@@ -531,7 +531,7 @@ void Task1ms_TIM4_Callback()
             //     chariot.TIM_Control_Callback();
             // }
         }
-        else{      
+        else{                   
                                                                           //非比赛状态/遥控器在线
             chariot.FSM_Alive_Control_Fs_i6x.Reload_TIM_Status_PeriodElapsedCallback();    //遥控器离线失能保护
             

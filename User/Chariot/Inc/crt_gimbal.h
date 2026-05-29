@@ -302,11 +302,11 @@ protected:
 // ---------- 巡航正弦参数（常量）----------
     static constexpr float YAW_AMPLITUDE   = 70.0f;   // 振幅，范围 [-60, 60]
     static constexpr float YAW_OFFSET      = 0.0f;    // 偏置
-    static constexpr float YAW_FREQ        = 0.6f;    // 频率 (Hz)
+    static constexpr float YAW_FREQ        = 0.3f;    // 频率 (Hz)
 
     static constexpr float PITCH_AMPLITUDE = 18.0f;   // 振幅，范围 [-25, 22]
     static constexpr float PITCH_OFFSET    = -0.0f;   // 偏置
-    static constexpr float PITCH_FREQ      = 2.0f;    // 频率 (Hz)
+    static constexpr float PITCH_FREQ      = 1.5f;    // 频率 (Hz)
 
     // ---------- 巡航状态变量 ----------
     float phi0_yaw          = 0.0f;   // Yaw 初始相位（弧度）
