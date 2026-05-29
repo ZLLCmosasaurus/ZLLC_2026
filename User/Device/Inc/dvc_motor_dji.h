@@ -18,7 +18,7 @@
 
 #include "alg_pid.h"
 #include "drv_can.h"
-
+#include "my_kalman.h"
 /* Exported macros -----------------------------------------------------------*/
 
 /* Exported types ------------------------------------------------------------*/
@@ -432,6 +432,8 @@ public:
     Class_PID PID_Angle;
     // PID角速度环控制
     Class_PID PID_Omega;
+
+    my_kalman Kalman_Filter;
 
     void Init(FDCAN_HandleTypeDef *hcan, Enum_Motor_DJI_ID __CAN_Rx_ID, Enum_Motor_DJI_Control_Method __Motor_DJI_Control_Method = Motor_DJI_Control_Method_OMEGA, float __Gearbox_Rate = 3591.0f / 187.0f, Enum_Motor_DJI_Power_Limit_Status __Power_Limit_Status = Motor_DJI_Power_Limit_Status_DISABLE, float __Current_Max = 20.0f);
 

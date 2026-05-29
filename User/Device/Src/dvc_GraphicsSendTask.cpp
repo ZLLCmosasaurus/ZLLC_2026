@@ -396,7 +396,12 @@ void GraphUI_RemoteSetInput(graph_ui_orientation_t input)
 
 void GraphUI_RemoteRequestFullRefresh(void)
 {
-    g_graph_ui_remote_state.flags |= GRAPH_UI_SYNC_FLAG_FULL_REFRESH;
+    g_graph_ui_remote_state.flags = true;
+}
+
+void GraphUI_RemoteRequsetReset()
+{
+	g_graph_ui_remote_state.flags = false;
 }
 
 void GraphUI_RemotePack(uint8_t data[GRAPH_UI_SYNC_DLC])
@@ -413,8 +418,6 @@ void GraphUI_RemotePack(uint8_t data[GRAPH_UI_SYNC_DLC])
     data[GRAPH_UI_SYNC_IDX_GRIPPER] = (uint8_t)g_graph_ui_remote_state.gripper;
     data[GRAPH_UI_SYNC_IDX_INPUT] = (uint8_t)g_graph_ui_remote_state.input;
     data[GRAPH_UI_SYNC_IDX_FLAGS] = g_graph_ui_remote_state.flags;
-	// 清零刷新标志位
-    g_graph_ui_remote_state.flags = 0U;
 }
 
 uint8_t GraphUI_RemoteUnpack(const uint8_t data[GRAPH_UI_SYNC_DLC], graph_ui_sync_t *out)
@@ -891,28 +894,28 @@ void GIMLine_Init(void)
 	uint16_t x_bias = 0;
 	uint16_t y_bias = 0;
 
-	uint8_t D[] = "D";
-	uint8_t W[] = "W";
-	uint8_t M[] = "M";
-	uint8_t U[] = "U";
-	uint8_t L[] = "L";
+	uint8_t Z[] = "Z";
+	uint8_t X[] = "X";
+	uint8_t C[] = "C";
+	uint8_t V[] = "V";
 	uint8_t S[] = "S";
+	uint8_t D[] = "D";
 
 	P_graphic_data = Arc_Draw(1, Op_Add, 960, 540, 150, 210, 300, 260, 10, White, GIMLineName1);
 	memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
 	Send_UIPack(Drawing_Graphic1_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK);
 
-	Char_Draw(1, Op_Add, 790, 295, 20, sizeof(D), 2, White, GIMLineName2, D);
+	Char_Draw(1, Op_Add, 790, 295, 20, sizeof(Z), 2, White, GIMLineName2, Z);
 
-	Char_Draw(1, Op_Add, 858, 274, 20, sizeof(W), 2, White, GIMLineName3, W);
+	Char_Draw(1, Op_Add, 858, 274, 20, sizeof(X), 2, White, GIMLineName3, X);
 
-	Char_Draw(1, Op_Add, 928, 263, 20, sizeof(M), 2, White, GIMLineName4, M);
+	Char_Draw(1, Op_Add, 928, 263, 20, sizeof(C), 2, White, GIMLineName4, C);
 
-	Char_Draw(1, Op_Add, 998, 263, 20, sizeof(U), 2, White, GIMLineName5, U);
+	Char_Draw(1, Op_Add, 998, 263, 20, sizeof(V), 2, White, GIMLineName5, V);
 
-	Char_Draw(1, Op_Add, 1068, 274, 20, sizeof(L), 2, White, GIMLineName6, L);
+	Char_Draw(1, Op_Add, 1068, 274, 20, sizeof(S), 2, White, GIMLineName6, S);
 
-	Char_Draw(1, Op_Add, 1136, 295, 20, sizeof(S), 2, White, GIMLineName7, S);
+	Char_Draw(1, Op_Add, 1136, 295, 20, sizeof(D), 2, White, GIMLineName7, D);
 }
 /**********************************************************************************************************
  *函 数 名: SCapLine_Init
@@ -1097,19 +1100,19 @@ void GIMLine_Change(uint8_t Init_Cnt)
 	case GRAPH_UI_MODE_DISABLE:
 		P_graphic_data = Arc_Draw(0, optype, 960, 540, 150, 160, 300, 260, 10, Green, GIMLineName1);
 		break;
-	case GRAPH_UI_MODE_WORKING:
+	case GRAPH_UI_MODE_SAVELOAD:
 		P_graphic_data = Arc_Draw(0, optype, 960, 540, 160, 170, 300, 260, 10, Green, GIMLineName1);
 		break;
-	case GRAPH_UI_MODE_MOVING:
+	case GRAPH_UI_MODE_DOWNLIFT:
 		P_graphic_data = Arc_Draw(0, optype, 960, 540, 170, 180, 300, 260, 10, Green, GIMLineName1);
 		break;
 	case GRAPH_UI_MODE_UPLIFT:
 		P_graphic_data = Arc_Draw(0, optype, 960, 540, 180, 190, 300, 260, 10, Green, GIMLineName1);
 		break;
-	case GRAPH_UI_MODE_DOWNLIFT:
+	case GRAPH_UI_MODE_MOVING:
 		P_graphic_data = Arc_Draw(0, optype, 960, 540, 190, 200, 300, 260, 10, Green, GIMLineName1);
 		break;
-	case GRAPH_UI_MODE_SAVELOAD:
+	case GRAPH_UI_MODE_WORKING:
 		P_graphic_data = Arc_Draw(0, optype, 960, 540, 200, 210, 300, 260, 10, Green, GIMLineName1);
 		break;
 	default:
@@ -1297,26 +1300,26 @@ void GraphicSendtask(void)
 
 		if (Init_Cnt % 2 == 0)
 		{
-			Pitch_Line_Init_1(); // Pitch线
-			Pitch_Line_Init_2();
-			Pitch_Line_Init_3();
-			SCapLine_Init();  // 超电容线
+			// Pitch_Line_Init_1(); // Pitch线
+			// Pitch_Line_Init_2();
+			// Pitch_Line_Init_3();
+			// SCapLine_Init();  // 超电容线
 			Lanelines_Init(); // 车道线
-			GIMLine_Init();	  // 云台线
 		}
 		else
 		{
-			ShootLines_Init_1(); // 枪口线
-			ShootLines_Init_2();
-			ShootLines_Init_3();
-			ShootLines_Init_4();
+			// ShootLines_Init_1(); // 枪口线
+			// ShootLines_Init_2();
+			// ShootLines_Init_3();
+			// ShootLines_Init_4();
+			GIMLine_Init();	  // 云台线
 		}
 
 		ChassisLine_Change(0, Init_Cnt); // 底盘方向线
 		BoostLine_Change();
-		PitchUI_Change(0, Init_Cnt);
+		// PitchUI_Change(0, Init_Cnt);
 		GIMLine_Change(Init_Cnt);
-		Scap_Change(100, Init_Cnt);
+		// Scap_Change(100, Init_Cnt);
 
 		PitchValue_Change(JudgeReceiveData.Pitch_Angle, 1);
 		YawValue_Change(JudgeReceiveData.Yaw_Angle, 1);
@@ -1382,11 +1385,11 @@ void GraphicSendtask(void)
 		// 根据状态类型发送对应的状态更新
 		switch (last_status_type)
 		{
-		case 1: // 摩擦轮状态
+		case 1: // 夹爪状态
 			BoostLine_Change();
 			Last_JudgeReceiveData.Gripper_Status = JudgeReceiveData.Gripper_Status;
 			break;
-		case 2: // 云台控制类型
+		case 2: // 整车控制类型
 			GIMLine_Change(0);
 			Last_JudgeReceiveData.UI_Mode = JudgeReceiveData.UI_Mode;
 			break;
@@ -1426,11 +1429,11 @@ void GraphicSendtask(void)
 		}
 
 		// 更新超级电容电压
-		if (fabs(Last_JudgeReceiveData.Supercap_Voltage - JudgeReceiveData.Supercap_Voltage) >= 2.0f)
-		{
-			Scap_Change(JudgeReceiveData.Supercap_Voltage, 0);
-			Last_JudgeReceiveData.Supercap_Voltage = JudgeReceiveData.Supercap_Voltage;
-		}
+		// if (fabs(Last_JudgeReceiveData.Supercap_Voltage - JudgeReceiveData.Supercap_Voltage) >= 2.0f)
+		// {
+		// 	Scap_Change(JudgeReceiveData.Supercap_Voltage, 0);
+		// 	Last_JudgeReceiveData.Supercap_Voltage = JudgeReceiveData.Supercap_Voltage;
+		// }
 
 		if (fabs(Last_JudgeReceiveData.Pitch_Angle - JudgeReceiveData.Pitch_Angle) > 0.01f)
 		{

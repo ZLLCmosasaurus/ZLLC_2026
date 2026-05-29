@@ -72,6 +72,7 @@ enum Enum_DR16_Control_Type
     DR16_Control_Type_REMOTE = 0,
     DR16_Control_Type_KEYBOARD,
     DR16_Control_Type_NONE,
+    DR16_Control_Type_IDLE,
 };
 
 /**
@@ -83,6 +84,7 @@ enum Enum_VT13_Control_Type
     VT13_Control_Type_REMOTE = 0,
     VT13_Control_Type_KEYBOARD,
     VT13_Control_Type_NONE,
+    VT13_Control_Type_IDLE,
 };
 
 /**

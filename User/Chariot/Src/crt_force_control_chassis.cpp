@@ -20,16 +20,16 @@ void Class_Chassis::Init()
     // 轮向电机ID初始化
     // 电机初始化
     Motor_Wheel[0].Init(&hfdcan1, Motor_DJI_ID_0x201, Motor_DJI_Control_Method_CURRENT, 3591.f / 187.f, Motor_DJI_Power_Limit_Status_ENABLE);
-    Motor_Wheel[0].PID_Omega.Init(2.0f, 0.0f, 0.0f, 0.0f, 0.0f, Motor_Wheel[0].Get_Current_Max());
+    Motor_Wheel[0].PID_Omega.Init(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, Motor_Wheel[0].Get_Current_Max());
     // 电机初始化
     Motor_Wheel[1].Init(&hfdcan1, Motor_DJI_ID_0x202, Motor_DJI_Control_Method_CURRENT, 3591.f / 187.f, Motor_DJI_Power_Limit_Status_ENABLE);
-    Motor_Wheel[1].PID_Omega.Init(2.25f, 0.0f, 0.0f, 0.0f, 0.0f, Motor_Wheel[1].Get_Current_Max());
+    Motor_Wheel[1].PID_Omega.Init(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, Motor_Wheel[1].Get_Current_Max());
     // 电机初始化
     Motor_Wheel[2].Init(&hfdcan1, Motor_DJI_ID_0x203, Motor_DJI_Control_Method_CURRENT, 3591.f / 187.f, Motor_DJI_Power_Limit_Status_ENABLE);
-    Motor_Wheel[2].PID_Omega.Init(2.0f, 0.0f, 0.0f, 0.0f, 0.0f, Motor_Wheel[2].Get_Current_Max());
+    Motor_Wheel[2].PID_Omega.Init(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, Motor_Wheel[2].Get_Current_Max());
     // 电机初始化
     Motor_Wheel[3].Init(&hfdcan1, Motor_DJI_ID_0x204, Motor_DJI_Control_Method_CURRENT, 3591.f / 187.f, Motor_DJI_Power_Limit_Status_ENABLE);
-    Motor_Wheel[3].PID_Omega.Init(2.2f, 0.0f, 0.0f, 0.0f, 0.0f, Motor_Wheel[3].Get_Current_Max());
+    Motor_Wheel[3].PID_Omega.Init(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, Motor_Wheel[3].Get_Current_Max());
 
     // 超级电容初始化
     Supercap.Init_UART(&huart1);

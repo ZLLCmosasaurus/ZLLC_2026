@@ -115,7 +115,7 @@ typedef struct
     uint8_t stage;
     graph_ui_gripper_t gripper;
     graph_ui_orientation_t input;
-    uint8_t flags;
+    bool flags;
 } graph_ui_sync_t;
 
 #define GRAPH_UI_SYNC_DLC 8U
@@ -125,7 +125,6 @@ typedef struct
 #define GRAPH_UI_SYNC_IDX_GRIPPER 3U
 #define GRAPH_UI_SYNC_IDX_INPUT 4U
 #define GRAPH_UI_SYNC_IDX_FLAGS 5U
-#define GRAPH_UI_SYNC_FLAG_FULL_REFRESH 0x01U
 
 typedef struct
 {
@@ -291,6 +290,7 @@ void GraphUI_RemoteSetStage(uint8_t stage);
 void GraphUI_RemoteSetGripper(graph_ui_gripper_t gripper);
 void GraphUI_RemoteSetInput(graph_ui_orientation_t input);
 void GraphUI_RemoteRequestFullRefresh(void);
+void GraphUI_RemoteRequsetReset();
 void GraphUI_RemotePack(uint8_t data[GRAPH_UI_SYNC_DLC]);
 uint8_t GraphUI_RemoteUnpack(const uint8_t data[GRAPH_UI_SYNC_DLC], graph_ui_sync_t *out);
 void GraphUI_RemoteApply(const graph_ui_sync_t *state);

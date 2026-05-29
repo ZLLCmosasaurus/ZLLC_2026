@@ -86,6 +86,7 @@ virtualFolder:
         - path: ../User/Algorithm/Src/robotics.cpp
         - path: ../User/Algorithm/Src/matrix.cpp
         - path: ../User/Algorithm/Src/alg_new_power_limit.cpp
+        - path: ../User/Algorithm/Src/my_kalman.cpp
       folders: []
     - name: Application
       files: []

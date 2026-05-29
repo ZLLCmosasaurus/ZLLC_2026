@@ -289,7 +289,7 @@ void Chassis_Device_CAN3_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
         chariot.CAN_Chassis_Rx_Gimbal_Callback(CAN_RxMessage->Data);
         break;
     }
-    case (0x95):
+    case (0x95): // UI更新包
     {
         chariot.CAN_Chassis_Rx_Gimbal_Callback(CAN_RxMessage->Data);
         break;
@@ -720,10 +720,13 @@ void Task1ms_TIM5_Callback()
 #ifdef CHASSIS
             // 裁判系统发送
             // 判断UI刷新
-            if (chariot.Rx_UI_State.flags)
+            if (chariot.Rx_UI_State.flags && Init_Cnt == 0)
             {
                 Init_Cnt = 255;
             }
+            //车体Pitch角度更新
+            JudgeReceiveData.Pitch_Angle = chariot.Force_Chassis.Get_Angle_Pitch();
+            JudgeReceiveData.Yaw_Angle = chariot.Force_Chassis.Get_Angle_Roll();
             // UI发送
             GraphicSendtask();
 #endif

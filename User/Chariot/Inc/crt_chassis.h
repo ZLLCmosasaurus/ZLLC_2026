@@ -32,6 +32,7 @@
 #include "alg_fsm.h"
 #include "dvc_dr16.h"
 #include "dvc_dwt.h"
+#include "my_kalman.h"
 /* Exported macros -----------------------------------------------------------*/
 #define wheel_diameter 0.14100000f  // 轮子直径，m
 #define half_width 0.159f           // m
