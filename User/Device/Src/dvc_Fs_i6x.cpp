@@ -213,14 +213,17 @@ void Class_Fs_i6x::Judge_Updata(Struct_FS_UART_Data Pre_UART_Rx_Data, Struct_FS_
  * @brief ???????????????????????????
  *
  */
+uint8_t x1=0,x2;
 void Class_Fs_i6x::FS_Data_Process()
 {
     // ?????????
     memcpy(&Now_UART_Rx_Data, UART_Manage_Object->Rx_Buffer, sizeof(Struct_FS_UART_Data));
 
     if(Now_UART_Rx_Data.start != 0x0F || Now_UART_Rx_Data.end != 0xFE){
+        x1++;
         return;
     }
+    x2++;
     FS_Flag += 1;
 
     // ??????
