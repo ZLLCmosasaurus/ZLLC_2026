@@ -520,7 +520,10 @@ void Task1ms_TIM4_Callback()
         //     chariot.TIM_Control_Callback();
         // }
         #elif defined(USE_FS_i6X)
-         if(chariot.Referee.Get_Game_Stage() == Referee_Game_Status_Stage_BATTLE && chariot.FS_i6X.Get_FS_Status() == FS_Status_DISABLE && chariot.Referee.Get_Referee_Status() == Referee_Status_ENABLE){                               //比赛开始状态
+         if(chariot.Referee.Get_Game_Stage() == Referee_Game_Status_Stage_BATTLE
+          && chariot.FS_i6X.Get_FS_Status() == FS_Status_DISABLE 
+          && chariot.Referee.Get_Referee_Status() == Referee_Status_ENABLE
+        && chariot.Referee.Game_Status_Online == 1){                               //比赛开始状态
              chariot.FS_i6X.Set_Switch_0(FS_Switch_Status_DOWN);                  //保险 强制上位机
              chariot.FS_i6X.Set_Switch_2(FS_Switch_Status_DOWN);                 //强制上位机自动打弹
              chariot.TIM_Control_Callback();                                         //里面上位机离线的相关处理了

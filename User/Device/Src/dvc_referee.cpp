@@ -164,6 +164,8 @@ void Class_Referee::Data_Process(uint16_t Length)
         {
         case Referee_Command_ID_GAME_STATUS:
         {
+            Game_Status_Flag += 1;
+
             memcpy(&Game_Status, tmp_buffer->Data, sizeof(Struct_Referee_Rx_Data_Game_Status));
             Dt0[1] = DWT_GetDeltaT(&last_cnt[1]);
             break;
@@ -313,6 +315,20 @@ void Class_Referee::TIM1msMod50_Alive_PeriodElapsedCallback()
         Referee_Status = Referee_Status_ENABLE;
     }
     Pre_Flag = Flag;
+}
+
+void Class_Referee::TIM_Game_Status_Alive_PeriodElapsedCallback()
+{
+    if(Game_Status_Flag == Game_Status_Pre_Flag)
+    {
+        Game_Status_Online = 0;
+    }
+    else
+    {
+        Game_Status_Online = 1;
+    }
+
+    Game_Status_Pre_Flag = Game_Status_Flag;
 }
 
 /**

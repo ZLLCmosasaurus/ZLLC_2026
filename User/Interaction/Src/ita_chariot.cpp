@@ -897,7 +897,7 @@ void Class_Chariot::Control_Booster()
    // static uint8_t booster_sign = 0;
     static float  single_time;
    
-     static float last_shot_time = 0.0f;
+    static float last_shot_time = 0.0f;
     volatile int FS_Left1_Switch_Status = FS_i6X.Get_Switch_0();
 
     if(FS_Left1_Switch_Status == FS_Switch_Status_DOWN){         //上位机模式
@@ -1120,10 +1120,13 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
 {
     static uint8_t mod50 = 0;
     static uint8_t mod50_mod3 = 0;
+    static uint8_t mod50_mod50 = 0;
+
     mod50++;
     if (mod50 == 50)
     {
         mod50_mod3++;
+        mod50_mod50++;
         //TIM_Unline_Protect_PeriodElapsedCallback();
         #ifdef CHASSIS
             Chassis.Supercap.TIM_Alive_PeriodElapsedCallback();
@@ -1164,6 +1167,12 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
                 #elif defined(USE_FS_i6X)
                 FS_i6X.TIM1msMod50_Alive_PeriodElapsedCallback();
                 #endif
+            if(mod50_mod50%50==0)
+            {
+                Referee.TIM_Game_Status_Alive_PeriodElapsedCallback();
+                mod50_mod50 = 0;
+            }
+
             if(mod50_mod3%3==0)
             {
                 //判断底盘通讯在线状态

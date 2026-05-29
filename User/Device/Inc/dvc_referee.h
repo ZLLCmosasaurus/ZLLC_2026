@@ -1298,10 +1298,12 @@ public:
 
     void UART_RxCpltCallback(uint8_t *Rx_Data, uint16_t Size);
     void TIM1msMod50_Alive_PeriodElapsedCallback();
+    void TIM_Game_Status_Alive_PeriodElapsedCallback();
 
     void Sentry_Auto_cmd_Transmit();
     void TIM_UART_Tx_PeriodElapsedCallback();
 
+    uint8_t Game_Status_Online = 0;
     
 protected:
     //初始化相关常量
@@ -1322,6 +1324,9 @@ protected:
     uint32_t Flag = 0;
     //前一时刻的裁判系统接收flag
     uint32_t Pre_Flag = 0;
+
+    uint32_t Game_Status_Flag = 0; //比赛状态flag
+    uint32_t Game_Status_Pre_Flag = 0; //比赛结果flag
 
     //读变量
 
