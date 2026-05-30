@@ -188,6 +188,7 @@ public:
     void TIM_Alive_PeriodElapsedCallback();
     void TIM_Process_PeriodElapsedCallback();
     void TIM_PID_PeriodElapsedCallback();
+    void Clear_Error();
 
 protected:
     //初始化相关变量

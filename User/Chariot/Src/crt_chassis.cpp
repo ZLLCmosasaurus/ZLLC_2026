@@ -800,7 +800,7 @@ void Class_FSM_Calibration_Chassis::Reload_TIM_Status_PeriodElapsedCallback()
 bool Class_FSM_Calibration_Chassis::Motor_Calibration(Class_DJI_Motor_C620 *Motor, uint8_t i, float locked_torque, uint16_t &locked_cnt)
 {
     Motor->Set_DJI_Motor_Control_Method(DJI_Motor_Control_Method_OMEGA);
-    Motor->Set_Target_Omega_Radian(5.0f * PI);
+    Motor->Set_Target_Omega_Radian(4.0f * PI);
 
     if ((fabs(Motor->Get_Now_Torque()) >= locked_torque) && (Motor->Get_Now_Omega_Radian() <= 0.01f))
     {

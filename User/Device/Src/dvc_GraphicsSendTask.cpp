@@ -30,52 +30,49 @@ short lastBigFrictSpeed;
 
 typedef struct
 {
-    float uplift_rf_percent;
-    float uplift_lf_percent;
-    float uplift_rb_percent;
-    float uplift_lb_percent;
-    float power_percent;
-    uint8_t orientation_forehead;
-    graph_ui_speed_t speed;
-    graph_ui_mode_t mode;
-    uint8_t stage;
-    graph_ui_wheel_t wheel;
-    graph_ui_gripper_t gripper;
-    graph_ui_orientation_t input;
+	float uplift_rf_percent;
+	float uplift_lf_percent;
+	float uplift_rb_percent;
+	float uplift_lb_percent;
+	float power_percent;
+	uint8_t orientation_forehead;
+	graph_ui_speed_t speed;
+	graph_ui_mode_t mode;
+	uint8_t stage;
+	graph_ui_wheel_t wheel;
+	graph_ui_gripper_t gripper;
+	graph_ui_orientation_t input;
 } graph_ui_state_t;
 
 static graph_ui_state_t g_graph_ui_state = {
-    0.0f, 0.0f, 0.0f, 0.0f,
-    0.0f,
-    1U,
-    GRAPH_UI_SPEED_SLOW,
-    GRAPH_UI_MODE_WORKING,
-    0U,
-    GRAPH_UI_WHEEL_ON,
-    GRAPH_UI_GRIPPER_CLOSE,
-    GRAPH_UI_ORIENTATION_FOREHEAD
-};
+	0.0f, 0.0f, 0.0f, 0.0f,
+	0.0f,
+	1U,
+	GRAPH_UI_SPEED_SLOW,
+	GRAPH_UI_MODE_WORKING,
+	0U,
+	GRAPH_UI_WHEEL_ON,
+	GRAPH_UI_GRIPPER_CLOSE,
+	GRAPH_UI_ORIENTATION_FOREHEAD};
 
 static graph_ui_state_t g_graph_ui_last_state = {
-    0.0f, 0.0f, 0.0f, 0.0f,
-    0.0f,
-    1U,
-    GRAPH_UI_SPEED_SLOW,
-    GRAPH_UI_MODE_WORKING,
-    0U,
-    GRAPH_UI_WHEEL_ON,
-    GRAPH_UI_GRIPPER_CLOSE,
-    GRAPH_UI_ORIENTATION_FOREHEAD
-};
+	0.0f, 0.0f, 0.0f, 0.0f,
+	0.0f,
+	1U,
+	GRAPH_UI_SPEED_SLOW,
+	GRAPH_UI_MODE_WORKING,
+	0U,
+	GRAPH_UI_WHEEL_ON,
+	GRAPH_UI_GRIPPER_CLOSE,
+	GRAPH_UI_ORIENTATION_FOREHEAD};
 
 static graph_ui_sync_t g_graph_ui_remote_state = {
-    GRAPH_UI_SPEED_SLOW,
-    GRAPH_UI_MODE_WORKING,
-    0U,
-    GRAPH_UI_GRIPPER_CLOSE,
-    GRAPH_UI_ORIENTATION_FOREHEAD,
-    0U
-};
+	GRAPH_UI_SPEED_SLOW,
+	GRAPH_UI_MODE_WORKING,
+	0U,
+	GRAPH_UI_GRIPPER_CLOSE,
+	GRAPH_UI_ORIENTATION_FOREHEAD,
+	0U};
 
 static uint16_t g_graph_ui_self_id = 0U;
 
@@ -166,126 +163,126 @@ static void Referee_DMA_StartNext(void)
 
 static void Referee_DMA_ClearQueue(void)
 {
-    referee_dma_head = 0;
-    referee_dma_tail = 0;
-    referee_dma_count = 0;
-    referee_dma_busy = 0;
+	referee_dma_head = 0;
+	referee_dma_tail = 0;
+	referee_dma_count = 0;
+	referee_dma_busy = 0;
 }
 
 static float GraphUI_ClampPercent01(float value)
 {
-    if (value < 0.0f)
-    {
-        return 0.0f;
-    }
-    if (value > 100.0f)
-    {
-        return 100.0f;
-    }
-    return value;
+	if (value < 0.0f)
+	{
+		return 0.0f;
+	}
+	if (value > 100.0f)
+	{
+		return 100.0f;
+	}
+	return value;
 }
 
 static float GraphUI_ClampMinZero(float value)
 {
-    return (value < 0.0f) ? 0.0f : value;
+	return (value < 0.0f) ? 0.0f : value;
 }
 
 static int GraphUI_RoundPositive(float value)
 {
-    if (value <= 0.0f)
-    {
-        return 0;
-    }
-    return (int)(value + 0.5f);
+	if (value <= 0.0f)
+	{
+		return 0;
+	}
+	return (int)(value + 0.5f);
 }
 
 static graph_ui_speed_t GraphUI_SanitizeSpeed(graph_ui_speed_t speed)
 {
-    return (speed == GRAPH_UI_SPEED_AXEL) ? GRAPH_UI_SPEED_AXEL : GRAPH_UI_SPEED_SLOW;
+	return (speed == GRAPH_UI_SPEED_AXEL) ? GRAPH_UI_SPEED_AXEL : GRAPH_UI_SPEED_SLOW;
 }
 
 static graph_ui_mode_t GraphUI_SanitizeMode(graph_ui_mode_t mode)
 {
-    switch (mode)
-    {
-    case GRAPH_UI_MODE_DISABLE:
-    case GRAPH_UI_MODE_WORKING:
-    case GRAPH_UI_MODE_MOVING:
-    case GRAPH_UI_MODE_UPLIFT:
-    case GRAPH_UI_MODE_DOWNLIFT:
-    case GRAPH_UI_MODE_SAVELOAD:
-        return mode;
-    default:
-        return GRAPH_UI_MODE_WORKING;
-    }
+	switch (mode)
+	{
+	case GRAPH_UI_MODE_DISABLE:
+	case GRAPH_UI_MODE_WORKING:
+	case GRAPH_UI_MODE_MOVING:
+	case GRAPH_UI_MODE_UPLIFT:
+	case GRAPH_UI_MODE_DOWNLIFT:
+	case GRAPH_UI_MODE_SAVELOAD:
+		return mode;
+	default:
+		return GRAPH_UI_MODE_WORKING;
+	}
 }
 
 static graph_ui_wheel_t GraphUI_SanitizeWheel(graph_ui_wheel_t wheel)
 {
-    return (wheel == GRAPH_UI_WHEEL_OFF) ? GRAPH_UI_WHEEL_OFF : GRAPH_UI_WHEEL_ON;
+	return (wheel == GRAPH_UI_WHEEL_OFF) ? GRAPH_UI_WHEEL_OFF : GRAPH_UI_WHEEL_ON;
 }
 
 static graph_ui_gripper_t GraphUI_SanitizeGripper(graph_ui_gripper_t gripper)
 {
-    return (gripper == GRAPH_UI_GRIPPER_OPEN) ? GRAPH_UI_GRIPPER_OPEN : GRAPH_UI_GRIPPER_CLOSE;
+	return (gripper == GRAPH_UI_GRIPPER_OPEN) ? GRAPH_UI_GRIPPER_OPEN : GRAPH_UI_GRIPPER_CLOSE;
 }
 
 static graph_ui_orientation_t GraphUI_SanitizeInput(graph_ui_orientation_t input)
 {
-    switch (input)
-    {
-    case GRAPH_UI_ORIENTATION_FOREHEAD:
-    case GRAPH_UI_ORIENTATION_REARBACK:
-    case GRAPH_UI_ORIENTATION_FOLLOW:
-        return input;
-    default:
-        return GRAPH_UI_ORIENTATION_FOREHEAD;
-    }
+	switch (input)
+	{
+	case GRAPH_UI_ORIENTATION_FOREHEAD:
+	case GRAPH_UI_ORIENTATION_REARBACK:
+	case GRAPH_UI_ORIENTATION_FOLLOW:
+		return input;
+	default:
+		return GRAPH_UI_ORIENTATION_FOREHEAD;
+	}
 }
 
 static uint8_t GraphUI_RemoteStateValid(const graph_ui_sync_t *state)
 {
-    if (state == NULL)
-    {
-        return 0U;
-    }
+	if (state == NULL)
+	{
+		return 0U;
+	}
 
-    if (state->speed != GRAPH_UI_SPEED_SLOW && state->speed != GRAPH_UI_SPEED_AXEL)
-    {
-        return 0U;
-    }
+	if (state->speed != GRAPH_UI_SPEED_SLOW && state->speed != GRAPH_UI_SPEED_AXEL)
+	{
+		return 0U;
+	}
 
-    switch (state->mode)
-    {
-    case GRAPH_UI_MODE_DISABLE:
-    case GRAPH_UI_MODE_WORKING:
-    case GRAPH_UI_MODE_MOVING:
-    case GRAPH_UI_MODE_UPLIFT:
-    case GRAPH_UI_MODE_DOWNLIFT:
-    case GRAPH_UI_MODE_SAVELOAD:
-        break;
-    default:
-        return 0U;
-    }
+	switch (state->mode)
+	{
+	case GRAPH_UI_MODE_DISABLE:
+	case GRAPH_UI_MODE_WORKING:
+	case GRAPH_UI_MODE_MOVING:
+	case GRAPH_UI_MODE_UPLIFT:
+	case GRAPH_UI_MODE_DOWNLIFT:
+	case GRAPH_UI_MODE_SAVELOAD:
+		break;
+	default:
+		return 0U;
+	}
 
-    if (state->stage > 9U)
-    {
-        return 0U;
-    }
+	if (state->stage > 9U)
+	{
+		return 0U;
+	}
 
-    if (state->gripper != GRAPH_UI_GRIPPER_CLOSE && state->gripper != GRAPH_UI_GRIPPER_OPEN)
-    {
-        return 0U;
-    }
+	if (state->gripper != GRAPH_UI_GRIPPER_CLOSE && state->gripper != GRAPH_UI_GRIPPER_OPEN)
+	{
+		return 0U;
+	}
 
-    if (state->input != GRAPH_UI_ORIENTATION_FOREHEAD &&
-        state->input != GRAPH_UI_ORIENTATION_REARBACK &&
-        state->input != GRAPH_UI_ORIENTATION_FOLLOW)
-    {
-        return 0U;
-    }
+	if (state->input != GRAPH_UI_ORIENTATION_FOREHEAD &&
+		state->input != GRAPH_UI_ORIENTATION_REARBACK &&
+		state->input != GRAPH_UI_ORIENTATION_FOLLOW)
+	{
+		return 0U;
+	}
 
-    return 1U;
+	return 1U;
 }
 
 void Referee_DMA_EnqueuePacket(const uint8_t *data, uint16_t len)
@@ -308,95 +305,95 @@ void Referee_DMA_EnqueuePacket(const uint8_t *data, uint16_t len)
 
 static void GraphUI_TxCompleteInternal(void)
 {
-    referee_dma_busy = 0;
-    Referee_DMA_Dequeue();
-    Referee_DMA_StartNext();
+	referee_dma_busy = 0;
+	Referee_DMA_Dequeue();
+	Referee_DMA_StartNext();
 }
 
 void GraphUI_OnTxComplete(void)
 {
-    GraphUI_TxCompleteInternal();
+	GraphUI_TxCompleteInternal();
 }
 
 void GraphUI_SetLift(float rf_percent, float lf_percent, float rb_percent, float lb_percent)
 {
-    g_graph_ui_state.uplift_rf_percent = GraphUI_ClampPercent01(rf_percent);
-    g_graph_ui_state.uplift_lf_percent = GraphUI_ClampPercent01(lf_percent);
-    g_graph_ui_state.uplift_rb_percent = GraphUI_ClampPercent01(rb_percent);
-    g_graph_ui_state.uplift_lb_percent = GraphUI_ClampPercent01(lb_percent);
+	g_graph_ui_state.uplift_rf_percent = GraphUI_ClampPercent01(rf_percent);
+	g_graph_ui_state.uplift_lf_percent = GraphUI_ClampPercent01(lf_percent);
+	g_graph_ui_state.uplift_rb_percent = GraphUI_ClampPercent01(rb_percent);
+	g_graph_ui_state.uplift_lb_percent = GraphUI_ClampPercent01(lb_percent);
 }
 
 void GraphUI_SetPower(float power_percent)
 {
-    g_graph_ui_state.power_percent = GraphUI_ClampMinZero(power_percent);
+	g_graph_ui_state.power_percent = GraphUI_ClampMinZero(power_percent);
 }
 
 void GraphUI_SetOrientation(uint8_t forehead)
 {
-    g_graph_ui_state.orientation_forehead = (forehead != 0U) ? 1U : 0U;
+	g_graph_ui_state.orientation_forehead = (forehead != 0U) ? 1U : 0U;
 }
 
 void GraphUI_SetWheel(graph_ui_wheel_t status)
 {
-    g_graph_ui_state.wheel = GraphUI_SanitizeWheel(status);
+	g_graph_ui_state.wheel = GraphUI_SanitizeWheel(status);
 }
 
 void GraphUI_SetSpeed(graph_ui_speed_t speed)
 {
-    g_graph_ui_state.speed = GraphUI_SanitizeSpeed(speed);
+	g_graph_ui_state.speed = GraphUI_SanitizeSpeed(speed);
 }
 
 void GraphUI_SetMode(graph_ui_mode_t mode)
 {
-    g_graph_ui_state.mode = GraphUI_SanitizeMode(mode);
-    JudgeReceiveData.UI_Mode = g_graph_ui_state.mode;
+	g_graph_ui_state.mode = GraphUI_SanitizeMode(mode);
+	JudgeReceiveData.UI_Mode = g_graph_ui_state.mode;
 }
 
 void GraphUI_SetStage(uint8_t stage)
 {
-    g_graph_ui_state.stage = (stage > 9U) ? 9U : stage;
+	g_graph_ui_state.stage = (stage > 9U) ? 9U : stage;
 }
 
 void GraphUI_SetGripper(graph_ui_gripper_t gripper)
 {
-    g_graph_ui_state.gripper = GraphUI_SanitizeGripper(gripper);
-    JudgeReceiveData.Gripper_Status = g_graph_ui_state.gripper;
+	g_graph_ui_state.gripper = GraphUI_SanitizeGripper(gripper);
+	JudgeReceiveData.Gripper_Status = g_graph_ui_state.gripper;
 }
 
 void GraphUI_SetInput(graph_ui_orientation_t input)
 {
-    g_graph_ui_state.input = GraphUI_SanitizeInput(input);
-    JudgeReceiveData.Orientation_Status = g_graph_ui_state.input;
+	g_graph_ui_state.input = GraphUI_SanitizeInput(input);
+	JudgeReceiveData.Orientation_Status = g_graph_ui_state.input;
 }
 
 void GraphUI_RemoteSetSpeed(graph_ui_speed_t speed)
 {
-    g_graph_ui_remote_state.speed = GraphUI_SanitizeSpeed(speed);
+	g_graph_ui_remote_state.speed = GraphUI_SanitizeSpeed(speed);
 }
 
 void GraphUI_RemoteSetMode(graph_ui_mode_t mode)
 {
-    g_graph_ui_remote_state.mode = GraphUI_SanitizeMode(mode);
+	g_graph_ui_remote_state.mode = GraphUI_SanitizeMode(mode);
 }
 
 void GraphUI_RemoteSetStage(uint8_t stage)
 {
-    g_graph_ui_remote_state.stage = (stage > 9U) ? 9U : stage;
+	g_graph_ui_remote_state.stage = (stage > 9U) ? 9U : stage;
 }
 
 void GraphUI_RemoteSetGripper(graph_ui_gripper_t gripper)
 {
-    g_graph_ui_remote_state.gripper = GraphUI_SanitizeGripper(gripper);
+	g_graph_ui_remote_state.gripper = GraphUI_SanitizeGripper(gripper);
 }
 
 void GraphUI_RemoteSetInput(graph_ui_orientation_t input)
 {
-    g_graph_ui_remote_state.input = GraphUI_SanitizeInput(input);
+	g_graph_ui_remote_state.input = GraphUI_SanitizeInput(input);
 }
 
 void GraphUI_RemoteRequestFullRefresh(void)
 {
-    g_graph_ui_remote_state.flags = true;
+	g_graph_ui_remote_state.flags = true;
 }
 
 void GraphUI_RemoteRequsetReset()
@@ -406,61 +403,60 @@ void GraphUI_RemoteRequsetReset()
 
 void GraphUI_RemotePack(uint8_t data[GRAPH_UI_SYNC_DLC])
 {
-    if (data == NULL)
-    {
-        return;
-    }
+	if (data == NULL)
+	{
+		return;
+	}
 
-    memset(data, 0, GRAPH_UI_SYNC_DLC);
-    data[GRAPH_UI_SYNC_IDX_SPEED] = (uint8_t)g_graph_ui_remote_state.speed;
-    data[GRAPH_UI_SYNC_IDX_MODE] = (uint8_t)g_graph_ui_remote_state.mode;
-    data[GRAPH_UI_SYNC_IDX_STAGE] = g_graph_ui_remote_state.stage;
-    data[GRAPH_UI_SYNC_IDX_GRIPPER] = (uint8_t)g_graph_ui_remote_state.gripper;
-    data[GRAPH_UI_SYNC_IDX_INPUT] = (uint8_t)g_graph_ui_remote_state.input;
-    data[GRAPH_UI_SYNC_IDX_FLAGS] = g_graph_ui_remote_state.flags;
+	memset(data, 0, GRAPH_UI_SYNC_DLC);
+	data[GRAPH_UI_SYNC_IDX_SPEED] = (uint8_t)g_graph_ui_remote_state.speed;
+	data[GRAPH_UI_SYNC_IDX_MODE] = (uint8_t)g_graph_ui_remote_state.mode;
+	data[GRAPH_UI_SYNC_IDX_STAGE] = g_graph_ui_remote_state.stage;
+	data[GRAPH_UI_SYNC_IDX_GRIPPER] = (uint8_t)g_graph_ui_remote_state.gripper;
+	data[GRAPH_UI_SYNC_IDX_INPUT] = (uint8_t)g_graph_ui_remote_state.input;
+	data[GRAPH_UI_SYNC_IDX_FLAGS] = g_graph_ui_remote_state.flags;
 }
 
 uint8_t GraphUI_RemoteUnpack(const uint8_t data[GRAPH_UI_SYNC_DLC], graph_ui_sync_t *out)
 {
-    graph_ui_sync_t decoded_state;
+	graph_ui_sync_t decoded_state;
 
-    if (data == NULL || out == NULL)
-    {
-        return 0U;
-    }
+	if (data == NULL || out == NULL)
+	{
+		return 0U;
+	}
 
-    decoded_state.speed = (graph_ui_speed_t)data[GRAPH_UI_SYNC_IDX_SPEED];
-    decoded_state.mode = (graph_ui_mode_t)data[GRAPH_UI_SYNC_IDX_MODE];
-    decoded_state.stage = data[GRAPH_UI_SYNC_IDX_STAGE];
-    decoded_state.gripper = (graph_ui_gripper_t)data[GRAPH_UI_SYNC_IDX_GRIPPER];
-    decoded_state.input = (graph_ui_orientation_t)data[GRAPH_UI_SYNC_IDX_INPUT];
-    decoded_state.flags = data[GRAPH_UI_SYNC_IDX_FLAGS];
+	decoded_state.speed = (graph_ui_speed_t)data[GRAPH_UI_SYNC_IDX_SPEED];
+	decoded_state.mode = (graph_ui_mode_t)data[GRAPH_UI_SYNC_IDX_MODE];
+	decoded_state.stage = data[GRAPH_UI_SYNC_IDX_STAGE];
+	decoded_state.gripper = (graph_ui_gripper_t)data[GRAPH_UI_SYNC_IDX_GRIPPER];
+	decoded_state.input = (graph_ui_orientation_t)data[GRAPH_UI_SYNC_IDX_INPUT];
+	decoded_state.flags = data[GRAPH_UI_SYNC_IDX_FLAGS];
 
-    if (GraphUI_RemoteStateValid(&decoded_state) == 0U)
-    {
-        return 0U;
-    }
+	if (GraphUI_RemoteStateValid(&decoded_state) == 0U)
+	{
+		return 0U;
+	}
 
-    *out = decoded_state;
-    return 1U;
+	*out = decoded_state;
+	return 1U;
 }
 
 void GraphUI_RemoteApply(const graph_ui_sync_t *state)
 {
-    if (state == NULL)
-    {
-        return;
-    }
+	if (state == NULL)
+	{
+		return;
+	}
 
-    g_graph_ui_state.speed = GraphUI_SanitizeSpeed(state->speed);
-    g_graph_ui_state.mode = GraphUI_SanitizeMode(state->mode);
-    JudgeReceiveData.UI_Mode = g_graph_ui_state.mode;
-    g_graph_ui_state.stage = (state->stage > 9U) ? 9U : state->stage;
-    g_graph_ui_state.gripper = GraphUI_SanitizeGripper(state->gripper);
-    JudgeReceiveData.Gripper_Status = g_graph_ui_state.gripper;
-    g_graph_ui_state.input = GraphUI_SanitizeInput(state->input);
-    JudgeReceiveData.Orientation_Status = g_graph_ui_state.input;
-
+	g_graph_ui_state.speed = GraphUI_SanitizeSpeed(state->speed);
+	g_graph_ui_state.mode = GraphUI_SanitizeMode(state->mode);
+	JudgeReceiveData.UI_Mode = g_graph_ui_state.mode;
+	g_graph_ui_state.stage = (state->stage > 9U) ? 9U : state->stage;
+	g_graph_ui_state.gripper = GraphUI_SanitizeGripper(state->gripper);
+	JudgeReceiveData.Gripper_Status = g_graph_ui_state.gripper;
+	g_graph_ui_state.input = GraphUI_SanitizeInput(state->input);
+	JudgeReceiveData.Orientation_Status = g_graph_ui_state.input;
 }
 /**********************************************************************************************************
  *函 数 名: Send_UIPack
@@ -995,20 +991,29 @@ void ChassisLine_Change(float theta, uint8_t Init_Cnt)
 	uint16_t x_bias = 0;
 	uint16_t y_bias = 0;
 
-	switch (JudgeReceiveData.Orientation_Status)
+	// switch (JudgeReceiveData.Orientation_Status)
+	// {
+	// case GRAPH_UI_ORIENTATION_FOREHEAD:
+	// 	P_graphic_data = Arc_Draw(0, optype, SCREEN_LENGTH * 0.5 + 632 + x_bias, SCREEN_WIDTH * 0.5 + 184 + y_bias, 0, 360, radius, radius, 15, Green, ChassisLineName);
+	// 	break;
+	// case GRAPH_UI_ORIENTATION_REARBACK:
+	// 	P_graphic_data = Arc_Draw(0, optype, SCREEN_LENGTH * 0.5 + 632 + x_bias, SCREEN_WIDTH * 0.5 + 184 + y_bias, 0, 360, radius, radius, 15, Orange, ChassisLineName);
+	// 	break;
+	// case GRAPH_UI_ORIENTATION_FOLLOW:
+	// 	P_graphic_data = Arc_Draw(0, optype, SCREEN_LENGTH * 0.5 + 632 + x_bias, SCREEN_WIDTH * 0.5 + 184 + y_bias, 0, 360, radius, radius, 15, Cyan, ChassisLineName);
+	// 	break;
+	// default:
+	// 	P_graphic_data = Arc_Draw(0, optype, SCREEN_LENGTH * 0.5 + 632 + x_bias, SCREEN_WIDTH * 0.5 + 184 + y_bias, 0, 360, radius, radius, 15, Black, ChassisLineName);
+	// 	break;
+	// }
+
+	if (JudgeReceiveData.is_wheels_on)
 	{
-	case GRAPH_UI_ORIENTATION_FOREHEAD:
 		P_graphic_data = Arc_Draw(0, optype, SCREEN_LENGTH * 0.5 + 632 + x_bias, SCREEN_WIDTH * 0.5 + 184 + y_bias, 0, 360, radius, radius, 15, Green, ChassisLineName);
-		break;
-	case GRAPH_UI_ORIENTATION_REARBACK:
+	}
+	else
+	{
 		P_graphic_data = Arc_Draw(0, optype, SCREEN_LENGTH * 0.5 + 632 + x_bias, SCREEN_WIDTH * 0.5 + 184 + y_bias, 0, 360, radius, radius, 15, Orange, ChassisLineName);
-		break;
-	case GRAPH_UI_ORIENTATION_FOLLOW:
-		P_graphic_data = Arc_Draw(0, optype, SCREEN_LENGTH * 0.5 + 632 + x_bias, SCREEN_WIDTH * 0.5 + 184 + y_bias, 0, 360, radius, radius, 15, Cyan, ChassisLineName);
-		break;
-	default:
-		P_graphic_data = Arc_Draw(0, optype, SCREEN_LENGTH * 0.5 + 632 + x_bias, SCREEN_WIDTH * 0.5 + 184 + y_bias, 0, 360, radius, radius, 15, Black, ChassisLineName);
-		break;
 	}
 
 	memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
@@ -1312,10 +1317,10 @@ void GraphicSendtask(void)
 			// ShootLines_Init_2();
 			// ShootLines_Init_3();
 			// ShootLines_Init_4();
-			GIMLine_Init();	  // 云台线
+			GIMLine_Init(); // 云台线
 		}
 
-		ChassisLine_Change(0, Init_Cnt); // 底盘方向线
+		ChassisLine_Change(0, Init_Cnt); // 小轮子状态
 		BoostLine_Change();
 		// PitchUI_Change(0, Init_Cnt);
 		GIMLine_Change(Init_Cnt);
@@ -1356,7 +1361,8 @@ void GraphicSendtask(void)
 			break;
 		}
 
-		if (Last_JudgeReceiveData.Orientation_Status != JudgeReceiveData.Orientation_Status)
+		// 小轮子状态
+		if (Last_JudgeReceiveData.is_wheels_on != JudgeReceiveData.is_wheels_on)
 		{
 			ui_state = UI_STATE_STATUS_UPDATE;
 			last_status_type = 4;
@@ -1399,7 +1405,7 @@ void GraphicSendtask(void)
 			break;
 		case 4: // 底盘方向状态
 			ChassisLine_Change(JudgeReceiveData.Chassis_Gimbal_Diff, 0);
-			Last_JudgeReceiveData.Orientation_Status = JudgeReceiveData.Orientation_Status;
+			Last_JudgeReceiveData.is_wheels_on = JudgeReceiveData.is_wheels_on;
 			break;
 		}
 
@@ -1422,11 +1428,11 @@ void GraphicSendtask(void)
 	case UI_STATE_VALUE_UPDATE:
 		// 更新所有数值，提高发送频率
 		// 更新Pitch角度
-		if (fabs(Last_JudgeReceiveData.Pitch_Angle - JudgeReceiveData.Pitch_Angle) > 0.01f)
-		{
-			// PitchUI_Change(JudgeReceiveData.Pitch_Angle, 0);
-			// Last_JudgeReceiveData.Pitch_Angle = JudgeReceiveData.Pitch_Angle;
-		}
+		// if (fabs(Last_JudgeReceiveData.Pitch_Angle - JudgeReceiveData.Pitch_Angle) > 0.01f)
+		// {
+		// 	// PitchUI_Change(JudgeReceiveData.Pitch_Angle, 0);
+		// 	// Last_JudgeReceiveData.Pitch_Angle = JudgeReceiveData.Pitch_Angle;
+		// }
 
 		// 更新超级电容电压
 		// if (fabs(Last_JudgeReceiveData.Supercap_Voltage - JudgeReceiveData.Supercap_Voltage) >= 2.0f)

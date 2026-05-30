@@ -231,6 +231,8 @@ class Class_FSM_Calibration : public Class_FSM
 public:
     Class_Gimbal *Gimbal;
     void Reload_TIM_Status_PeriodElapsedCallback();
+    void Clear_DM_Errors();
+    void Request_Recalibration();
 
     /*电机校准执行函数*/
     bool Motor_Calibration(Class_DM_Motor_J4310 *Motor, float &Cali_Offset, float Cali_Max_Radian, float Cali_Omega, float locked_torque, uint16_t &locked_cnt);

@@ -256,6 +256,7 @@ typedef struct
 	graph_ui_mode_t UI_Mode;
 	graph_ui_gripper_t Gripper_Status;
 	graph_ui_orientation_t Orientation_Status;
+	bool is_wheels_on;
 	uint8_t Booster_User_Control_Type;
 	uint16_t booster_fric_omega_left;
 	float Supercap_Voltage;

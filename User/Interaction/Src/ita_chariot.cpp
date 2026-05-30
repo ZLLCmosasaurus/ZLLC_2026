@@ -325,6 +325,7 @@ void Class_Chariot::CAN_Chassis_Rx_Gimbal_Callback(uint8_t *Rx_Data)
             if (GraphUI_RemoteUnpack(Rx_Data, &Rx_UI_State) == 1U)
             {
                 GraphUI_RemoteApply(&Rx_UI_State);
+                JudgeReceiveData.is_wheels_on = (Chassis.Get_Wheel_Slave_Status() == Wheel_Slave_ON);
             }
 
             break;

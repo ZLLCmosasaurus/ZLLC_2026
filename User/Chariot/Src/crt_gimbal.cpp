@@ -75,6 +75,8 @@ void Class_Gimbal::Output()
         J3_Roll_2325.Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
         J4_Pitch_2325.Set_DM_Control_Status(DM_Motor_Control_Status_DISABLE);
         Jodell_ERG150T.Set_Motor_Control_Status(Jodell_Motor_Control_DISABLE);
+        // 每次主动失能后清除错误帧
+        Calibration_FSM.Clear_DM_Errors();
     }
     else // 非失能模式
     {
@@ -355,6 +357,32 @@ void Class_FSM_Calibration::Reload_TIM_Status_PeriodElapsedCallback()
         break;
     }
     }
+}
+
+/**
+ * @brief 清除达妙报错信息
+ *
+ */
+void Class_FSM_Calibration::Clear_DM_Errors()
+{
+    Gimbal->J0_Pitch_4340.Clear_Error();
+    Gimbal->J1_Yaw_8009P.Clear_Error();
+    Gimbal->J2_Yaw_4340P.Clear_Error();
+    Gimbal->J3_Roll_2325.Clear_Error();
+    Gimbal->J4_Pitch_2325.Clear_Error();
+}
+
+void Class_FSM_Calibration::Request_Recalibration()
+{
+    // 清除达妙电机报错
+    Clear_DM_Errors();
+    // 校准状态机重置
+    // arm_init设为false
+    Gimbal->arm_init = false;
+    // 清空校准状态标志位，使之可以重新进入校准状态机
+    pitch_cali_status = false;
+    roll_cali_status = false;
+    Set_Status(0);
 }
 
 /**
