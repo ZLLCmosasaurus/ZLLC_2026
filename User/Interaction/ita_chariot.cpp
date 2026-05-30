@@ -238,7 +238,7 @@ float dr16_pitch, dr16_yaw;
 bool init_finish_flag = true;
 bool position_init_flag = true;
 float test_gimbal_pitch = -45.0f;
-
+uint8_t aaaa=0;
 void Class_Chariot::Control_Gimbal()
 {
     // 角度目标值
@@ -308,22 +308,27 @@ void Class_Chariot::Control_Gimbal()
         vt13_y = (Math_Abs(VT13.Get_Right_X()) > DR16_Dead_Zone) ? VT13.Get_Right_X() : 0;
         vt13_r_y = (Math_Abs(VT13.Get_Right_Y()) > DR16_Dead_Zone) ? VT13.Get_Right_Y() : 0;
 
-        if (Gimbal.Get_Gimbal_Control_Type() == Gimbal_Control_Type_DISABLE)
-            Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
-        if (VT13.Get_Button_Right() == VT13_Button_TRIG_FREE_PRESSED && MiniPC.Get_Alive_Status() == 1)
+        // if (Gimbal.Get_Gimbal_Control_Type() == Gimbal_Control_Type_DISABLE)
+        //     Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
+
+        // 右上开自瞄
+        if (VT13.Get_Button_Right() == VT13_Button_PRESSED)
         {
             Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_MINIPC);
-
-                if (MiniPC.Get_MiniPC_Status() == MiniPC_Status_ENABLE)
-                {
-                    tmp_gimbal_yaw = MiniPC.Get_Rx_Yaw_Angle();
-                    tmp_gimbal_pitch = MiniPC.Get_Rx_Pitch_Angle();
-                }
+        }else{
+            Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_NORMAL);
+        }
+        if (MiniPC.Get_MiniPC_Status() == MiniPC_Status_ENABLE && Gimbal.Get_Gimbal_Control_Type() == Gimbal_Control_Type_MINIPC)
+        {
+            if(MiniPC.Get_Alive_Status() == 1){
+                tmp_gimbal_yaw = MiniPC.Get_Rx_Yaw_Angle();
+                tmp_gimbal_pitch = MiniPC.Get_Rx_Pitch_Angle();
+            }
         }
 
         if(VT13.Get_Switch() == VT13_Switch_Status_Left)
         {
-            MiniPC.MiniPC_Target_Mode = Enum_MiniPC_Target_Mode_BASE;
+            MiniPC.MiniPC_Target_Mode = Enum_MiniPC_Target_Mode_AUTOAIM;
         }
         else MiniPC.MiniPC_Target_Mode = Enum_MiniPC_Target_Mode_OUTPOST;
 
@@ -347,8 +352,10 @@ void Class_Chariot::Control_Gimbal()
             if (DR16.Get_Mouse_Right_Key() == DR16_Key_Status_PRESSED)
             {
                 Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_MINIPC);
-                tmp_gimbal_yaw = Gimbal.Get_Target_Yaw_Angle();
-                tmp_gimbal_pitch = Gimbal.Get_Target_Pitch_Angle();
+                if(MiniPC.Get_Alive_Status() == 1){
+                    tmp_gimbal_yaw = MiniPC.Get_Rx_Yaw_Angle();
+                    tmp_gimbal_pitch = MiniPC.Get_Rx_Pitch_Angle();
+                }
             }
             else
             {
@@ -410,7 +417,7 @@ void Class_Chariot::Control_Gimbal()
             {
                 Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_MINIPC);
 
-                if (MiniPC.Get_MiniPC_Status() == MiniPC_Status_ENABLE)
+                if (MiniPC.Get_MiniPC_Status() == MiniPC_Status_ENABLE && MiniPC.Get_Alive_Status() == 1)
                 {
                     tmp_gimbal_yaw = MiniPC.Get_Rx_Yaw_Angle();
                     tmp_gimbal_pitch = MiniPC.Get_Rx_Pitch_Angle();
@@ -424,12 +431,12 @@ void Class_Chariot::Control_Gimbal()
             tmp_gimbal_yaw -= VT13.Get_Mouse_X() * DR16_Mouse_Yaw_Angle_Resolution;
             tmp_gimbal_pitch += VT13.Get_Mouse_Y() * DR16_Mouse_Pitch_Angle_Resolution * 3.0f;
 
-            if (VT13.Get_Keyboard_Key_V() == VT13_Key_Status_TRIG_FREE_PRESSED)
-            {
-                uint8_t now_stats = (uint8_t)MiniPC.MiniPC_Target_Mode;
-                now_stats = (now_stats + 1) % 3;
-                MiniPC.MiniPC_Target_Mode = (Enum_MiniPC_Target_Mode)(now_stats);
-            }
+            // if (VT13.Get_Keyboard_Key_V() == VT13_Key_Status_TRIG_FREE_PRESSED)
+            // {
+            //     uint8_t now_stats = (uint8_t)MiniPC.MiniPC_Target_Mode;
+            //     now_stats = (now_stats + 1) % 3;
+            //     MiniPC.MiniPC_Target_Mode = (Enum_MiniPC_Target_Mode)(now_stats);
+            // }
 
             if(VT13.Get_Keyboard_Key_Q() == VT13_Key_Status_TRIG_FREE_PRESSED)
             {
@@ -471,19 +478,29 @@ void Class_Chariot::Control_Gimbal()
 
             if(VT13.Get_Keyboard_Key_W() == VT13_Key_Status_TRIG_FREE_PRESSED)
             {
-                tmp_gimbal_pitch += gimbal_pitch_offset;
+                float tmp_pitch_offset = Gimbal.Get_Pitch_Autoaim_Offset();
+                tmp_pitch_offset += Gimbal.pitch_autoaim_offset_increment;
             }
             if(VT13.Get_Keyboard_Key_X() == VT13_Key_Status_TRIG_FREE_PRESSED)
             {
-                tmp_gimbal_pitch -= gimbal_pitch_offset;
+                float tmp_pitch_offset = Gimbal.Get_Pitch_Autoaim_Offset();
+                tmp_pitch_offset -= Gimbal.pitch_autoaim_offset_increment;
             }
-            if(VT13.Get_Keyboard_Key_A() == VT13_Key_Status_TRIG_FREE_PRESSED)
+            if(VT13.Get_Keyboard_Key_Z() == VT13_Key_Status_TRIG_FREE_PRESSED)
             {
-                tmp_gimbal_yaw -= gimbal_yaw_offset;
+                float tmp_yaw_offset = Gimbal.Get_Yaw_Autoaim_Offset();
+                tmp_yaw_offset += Gimbal.yaw_autoaim_offset_increment;
             }
             if(VT13.Get_Keyboard_Key_C() == VT13_Key_Status_TRIG_FREE_PRESSED)
             {
-                tmp_gimbal_yaw -= gimbal_yaw_offset;
+                float tmp_yaw_offset = Gimbal.Get_Yaw_Autoaim_Offset();
+                tmp_yaw_offset -= Gimbal.yaw_autoaim_offset_increment;
+            }
+
+            if(VT13.Get_Keyboard_Key_Shift() == VT13_Key_Status_TRIG_FREE_PRESSED)
+            {
+                Gimbal.Set_Pitch_Autoaim_Offset(0.0f);
+                Gimbal.Set_Yaw_Autoaim_Offset(0.0f);
             }
         }
     }
@@ -699,25 +716,27 @@ void Class_Chariot::Control_Booster()
         }
         else if (Active_Controller == Controller_VT13)
         {
-            if (VT13.Get_Keyboard_Key_B() == VT13_Key_Status_TRIG_FREE_PRESSED)
-            {
-                if (Booster.Get_Booster_Control_Type() == Booster_User_Control_Type_SINGLE)
-                {
-                    Booster.Booster_User_Control_Type = Booster_User_Control_Type_DUAL;
-                }
-                else if (Booster.Booster_User_Control_Type == Booster_User_Control_Type_DUAL)
-                {
-                    Booster.Booster_User_Control_Type = Booster_User_Control_Type_REPEATED;
-                }
-                else
-                    Booster.Booster_User_Control_Type = Booster_User_Control_Type_SINGLE;
-            }
+            // if (VT13.Get_Keyboard_Key_B() == VT13_Key_Status_TRIG_FREE_PRESSED)
+            // {
+            //     if (Booster.Get_Booster_Control_Type() == Booster_User_Control_Type_SINGLE)
+            //     {
+            //         Booster.Booster_User_Control_Type = Booster_User_Control_Type_DUAL;
+            //     }
+            //     else if (Booster.Booster_User_Control_Type == Booster_User_Control_Type_DUAL)
+            //     {
+            //         Booster.Booster_User_Control_Type = Booster_User_Control_Type_REPEATED;
+            //     }
+            //     else
+            //         Booster.Booster_User_Control_Type = Booster_User_Control_Type_SINGLE;
+            // }
 
             if(VT13.Get_Keyboard_Key_V() == VT13_Key_Status_TRIG_FREE_PRESSED)
             {
-                uint8_t tmp = (uint8_t)MiniPC.MiniPC_Target_Mode;
-                tmp = (tmp + 1) % 3;
-                MiniPC.MiniPC_Target_Mode = (Enum_MiniPC_Target_Mode)tmp;
+                if(MiniPC.MiniPC_Target_Mode == Enum_MiniPC_Target_Mode_AUTOAIM) MiniPC.MiniPC_Target_Mode = Enum_MiniPC_Target_Mode_OUTPOST;
+                else MiniPC.MiniPC_Target_Mode = Enum_MiniPC_Target_Mode_AUTOAIM;
+                // uint8_t tmp = (uint8_t)MiniPC.MiniPC_Target_Mode;
+                // tmp = (tmp + 1) % 3;
+                // MiniPC.MiniPC_Target_Mode = (Enum_MiniPC_Target_Mode)tmp;
             }
 
             if (VT13.Get_Keyboard_Key_Ctrl() == VT13_Key_Status_TRIG_FREE_PRESSED)
@@ -732,6 +751,12 @@ void Class_Chariot::Control_Booster()
                     Booster.Set_Friction_Control_Type(Friction_Control_Type_DISABLE);
                     Fric_Status = Fric_Status_CLOSE;
                 }
+            }
+
+            if(VT13.Get_Keyboard_Key_B() == VT13_Key_Status_TRIG_FREE_PRESSED)
+            {
+                if(MiniPC.MiniPC_Camera_Mode == Enum_MiniPC_Camera_Mode_LONG) MiniPC.MiniPC_Camera_Mode = Enum_MiniPC_Camera_Mode_SHORT;
+                else MiniPC.MiniPC_Camera_Mode = Enum_MiniPC_Camera_Mode_LONG;
             }
 
             if (Booster.Get_Friction_Control_Type() == Friction_Control_Type_ENABLE)
@@ -959,10 +984,12 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
 {
     static uint8_t mod50 = 0;
     static uint8_t mod50_mod3 = 0;
+    static uint8_t mod50_mod7 = 0;
     mod50++;
     if (mod50 == 50)
     {
         mod50_mod3++;
+        mod50_mod7++;
 #ifdef CHASSIS
 
         for (auto &wheel : Chassis.Motor_Wheel)
@@ -991,14 +1018,18 @@ void Class_Chariot::TIM1msMod50_Alive_PeriodElapsedCallback()
             Referee.TIM1msMod50_Alive_PeriodElapsedCallback();
 
             TIM1msMod50_Chassis_Communicate_Alive_PeriodElapsedCallback();
-            DR16.TIM1msMod50_Alive_PeriodElapsedCallback();
-            VT13.TIM1msMod50_Alive_PeriodElapsedCallback();
+            // DR16.TIM1msMod50_Alive_PeriodElapsedCallback();
+            // VT13.TIM1msMod50_Alive_PeriodElapsedCallback();
             MiniPC.TIM1msMod50_Alive_PeriodElapsedCallback();
             Referee.TIM1msMod50_Alive_PeriodElapsedCallback();
             mod50_mod3 = 0;
             // Referee.UART_Tx_Referee_UI();
         }
-
+        if(mod50_mod7 % 7 == 0){
+            DR16.TIM1msMod50_Alive_PeriodElapsedCallback();
+            VT13.TIM1msMod50_Alive_PeriodElapsedCallback();  
+            mod50_mod7 = 0;         
+        }
         Gimbal.Motor_Pitch_J4310.TIM_Alive_PeriodElapsedCallback();
         Gimbal.Motor_Yaw.TIM_Alive_PeriodElapsedCallback();
 

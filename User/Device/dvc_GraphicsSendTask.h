@@ -203,6 +203,7 @@ typedef struct
 	float Supercap_Voltage;
 	float Pitch_Angle;
 	 float Chassis_Gimbal_Diff;
+	uint8_t MiniPC_camera_mode;
 
 } JudgeReceive_t;
 

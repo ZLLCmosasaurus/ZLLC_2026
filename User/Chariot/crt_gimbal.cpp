@@ -656,8 +656,8 @@ void Class_Gimbal::Output()
         {
             if (MiniPC->Get_Alive_Status() == 1)
             {
-                Target_Pitch_Angle = MiniPC->Get_Rx_Pitch_Angle();
-                Target_Yaw_Angle = MiniPC->Get_Rx_Yaw_Angle();
+                Target_Pitch_Angle = MiniPC->Get_Rx_Pitch_Angle() + pitch_autoaim_offset;
+                Target_Yaw_Angle = MiniPC->Get_Rx_Yaw_Angle() + yaw_autoaim_offset;
             }
         }
         // 限制角度范围 处理yaw轴180度问题

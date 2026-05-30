@@ -571,11 +571,12 @@ extern "C" void Task_Loop()
         // JudgeReceiveData.booster_fric_omega_left = chariot.Booster_fric_omega_left; // 左摩擦轮速度; // 左摩擦轮速度
         // JudgeReceiveData.booster_fric_omega_right = chariot.Booster_fric_omega_right;
         // JudgeReceiveData.Booster_bullet_num = chariot.Booster_bullet_num - chariot.Booster_bullet_num_before;
-        JudgeReceiveData.Minipc_Mode = (uint8_t)chariot.MiniPC.MiniPC_Target_Mode; //自瞄目标 前哨战/基地
+        JudgeReceiveData.Minipc_Mode = (uint8_t)chariot.MiniPC.MiniPC_Target_Mode; //自瞄目标 前哨or其他
         JudgeReceiveData.Antispin_Type = chariot.Antispin_Type;
         JudgeReceiveData.Booster_status = (uint8_t)chariot.Booster.Get_Booster_Control_Type(); //拨弹盘
         JudgeReceiveData.Gimbal_Control_Type = (uint8_t)chariot.Gimbal.Get_Gimbal_Control_Type();
         JudgeReceiveData.PilotLamp_Mode = (uint8_t)chariot.PilotLamp.Get_PilotLamp_Type();
+        JudgeReceiveData.MiniPC_camera_mode = (uint8_t)chariot.MiniPC.MiniPC_Camera_Mode; //0短焦 1长焦
         if (chariot.Referee_UI_Refresh_Status == Referee_UI_Refresh_Status_ENABLE)
             Init_Cnt = 15;
     }

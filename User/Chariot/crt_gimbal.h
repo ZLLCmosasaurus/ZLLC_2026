@@ -356,7 +356,16 @@ public:
     inline void Set_Target_Yaw_Angle(float __Target_Yaw_Angle);
     inline void Set_Target_Pitch_Angle(float __Target_Pitch_Angle);
 
+    inline void Set_Yaw_Autoaim_Offset(float __yaw_autoaim_offset);
+    inline void Set_Pitch_Autoaim_Offset(float __pitch_autoaim_offset);
+
+    inline float Get_Yaw_Autoaim_Offset();
+    inline float Get_Pitch_Autoaim_Offset();
+
     void TIM_Calculate_PeriodElapsedCallback();
+
+    float yaw_autoaim_offset_increment = 0.1f;
+    float pitch_autoaim_offset_increment = 0.1f;
 
 protected:
     //初始化相关常量
@@ -375,6 +384,10 @@ protected:
     float Min_Pitch_Angle = -65.0f;
     // pitch轴最大值
     float Max_Pitch_Angle = 16.0f ; 
+
+    float yaw_autoaim_offset = 0.0f;
+    float pitch_autoaim_offset = 0.0f;
+
 
     //内部变量 
 
@@ -398,6 +411,8 @@ protected:
     //内部函数
 
     void Output();
+
+
 };
 
 /* Exported variables --------------------------------------------------------*/
@@ -480,6 +495,26 @@ void Class_Gimbal::Set_Target_Yaw_Angle(float __Target_Yaw_Angle)
 void Class_Gimbal::Set_Target_Pitch_Angle(float __Target_Pitch_Angle)
 {
     Target_Pitch_Angle = __Target_Pitch_Angle;
+}
+
+inline void Class_Gimbal::Set_Yaw_Autoaim_Offset(float __yaw_autoaim_offset)
+{
+    yaw_autoaim_offset = __yaw_autoaim_offset;
+}
+
+inline void Class_Gimbal::Set_Pitch_Autoaim_Offset(float __pitch_autoaim_offset)
+{
+    pitch_autoaim_offset = __pitch_autoaim_offset;
+}
+
+inline float Class_Gimbal::Get_Yaw_Autoaim_Offset()
+{
+    return yaw_autoaim_offset;
+}
+
+inline float Class_Gimbal::Get_Pitch_Autoaim_Offset()
+{
+    return pitch_autoaim_offset;
 }
 
 // float Get_Initial_Pitch_Angle()
