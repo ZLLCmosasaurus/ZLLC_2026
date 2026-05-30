@@ -124,6 +124,8 @@ void Chassis_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
  * @param CAN_RxMessage CAN2收到的消息
  */
 #ifdef CHASSIS
+uint32_t add;
+float Dt_add;
 void Chassis_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
     switch (CAN_RxMessage->Header.Identifier)
@@ -146,6 +148,7 @@ void Chassis_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
         }
         case (0x141):
         {
+            Dt_add= DWT_GetDeltaT(&add);
             chariot.Motor_Main_Yaw.CAN_RxCpltCallback(CAN_RxMessage->Data);
             break;
         }
