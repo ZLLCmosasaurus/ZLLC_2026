@@ -763,7 +763,7 @@ void Class_Chariot::Control_Booster()
             {
                 if (VT13.Get_Mouse_Right_Key() == VT13_Key_Status_PRESSED)
                 {
-                    if (VT13.Get_Mouse_Left_Key() == VT13_Key_Status_PRESSED)
+                    if (VT13.Get_Mouse_Left_Key() == VT13_Key_Status_PRESSED && MiniPC.Get_Fire_Status() == 1)
                     {
 
                         Booster.Set_Booster_Control_Type(Booster_Control_Type_REPEATED);

@@ -815,16 +815,10 @@ void MiniPCMode_Draw(uint8_t Init_Cnt)
 
 	optype = (Init_Cnt == 0 || (Last_JudgeReceiveData.Minipc_Mode != JudgeReceiveData.Minipc_Mode) || (Last_JudgeReceiveData.MiniPC_camera_mode != JudgeReceiveData.MiniPC_camera_mode)) ? Op_Change : Op_Add;
 
-	if(JudgeReceiveData.Minipc_Mode == 0) //普通自瞄
-	{
-		if(JudgeReceiveData.MiniPC_camera_mode == 0) Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.60 * SCREEN_WIDTH, 20, sizeof(AUTOAIM_S), 2, Green, MiniPCModeStatusName, AUTOAIM_S); //短焦
-		else Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.60 * SCREEN_WIDTH, 20, sizeof(AUTOAIM_L), 2, Green, MiniPCModeStatusName, AUTOAIM_L); //长焦
-	}
-	else //前哨自瞄
-	{
-		if(JudgeReceiveData.MiniPC_camera_mode == 0) Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.60 * SCREEN_WIDTH, 20, sizeof(OUTPOST_S), 2, Green, MiniPCModeStatusName, OUTPOST_S); //短焦
-		else Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.60 * SCREEN_WIDTH, 20, sizeof(OUTPOST_L), 2, Green, MiniPCModeStatusName, OUTPOST_L); //长焦
-	}
+	if(JudgeReceiveData.Minipc_Mode == 0 && JudgeReceiveData.MiniPC_camera_mode == 0) Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.60 * SCREEN_WIDTH, 20, sizeof(AUTOAIM_S), 2, Green, MiniPCModeStatusName, AUTOAIM_S); //短焦
+	else if(JudgeReceiveData.Minipc_Mode == 0 && JudgeReceiveData.MiniPC_camera_mode == 1) Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.60 * SCREEN_WIDTH, 20, sizeof(AUTOAIM_L), 2, Green, MiniPCModeStatusName, AUTOAIM_L); //长焦
+	else if(JudgeReceiveData.Minipc_Mode == 1 && JudgeReceiveData.MiniPC_camera_mode == 0) Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.60 * SCREEN_WIDTH, 20, sizeof(OUTPOST_S), 2, Green, MiniPCModeStatusName, OUTPOST_S); //短焦
+	else Char_Draw(0, optype, 0.9 * SCREEN_LENGTH, 0.60 * SCREEN_WIDTH, 20, sizeof(OUTPOST_L), 2, Green, MiniPCModeStatusName, OUTPOST_L); //长焦
 	Last_JudgeReceiveData = JudgeReceiveData;
 	// switch (JudgeReceiveData.Minipc_Mode)
 	// {
