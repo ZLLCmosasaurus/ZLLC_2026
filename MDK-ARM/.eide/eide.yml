@@ -55,6 +55,7 @@ virtualFolder:
         - path: ../User/Device/Src/buzzer.c
         - path: ../User/Device/Src/buzzer_bsp.c
         - path: ../User/Device/Src/dvc_CustomController.cpp
+        - path: ../User/Device/Src/dvc_Fs_i6x.cpp
       folders: []
     - name: Driver
       files:

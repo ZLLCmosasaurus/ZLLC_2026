@@ -525,10 +525,10 @@ void Class_Chariot::Control_Chassis()
         {
             move_left_y = 1.0f;
         }
-        else if (Key_Is_Pressed(controller_key_s))
-        {
-            move_left_y = -1.0f;
-        }
+        // else if (Key_Is_Pressed(controller_key_s))
+        // {
+        //     move_left_y = -1.0f;
+        // }
 
         if (Key_Is_Pressed(controller_key_a))
         {
