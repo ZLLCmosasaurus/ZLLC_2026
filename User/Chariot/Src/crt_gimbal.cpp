@@ -286,15 +286,15 @@ void Class_Gimbal::Init()
     Boardc_BMI.Init();
 
     // yaw轴电机
-    Motor_Yaw_DM4310.PID_Angle.Init(18.0f, 0.0f, 0.0f, 0.0f, 2000.0f, 4090.0f, 0.0f, 0.0f, 0.0f, 0.001f, 0.0f);
-    Motor_Yaw_DM4310.PID_Omega.Init(120.0f, 1.5f, 0.0f, 0.0f, 2000.0f, 4090.0f, 0.0f, 0.0f, 0.0f, 0.001f, 0.0f);
+    Motor_Yaw_DM4310.PID_Angle.Init(18.0f, 0.0f, 0.0f, 0.0f, 2000.0f, 4090.0f, 0.0f, 0.0f, 0.0f, 0.002f, 0.0f);
+    Motor_Yaw_DM4310.PID_Omega.Init(120.0f, 1.5f, 0.0f, 0.0f, 2000.0f, 4090.0f, 0.0f, 0.0f, 0.0f, 0.002f, 0.0f);
     Motor_Yaw_DM4310.IMU = &Boardc_BMI;
     Motor_Yaw_DM4310.Init(&hfdcan3, DM_Motor_ID_0xA3, DM_Motor_Control_Method_MIT_IMU_Angle, 0, 3.1415f, 20.94f, 2.0f);
     // CAN_Send_Data(&hfdcan1, DM_Motor_ID_0xA1+0xf0, DM_Motor_CAN_Message_Save_Zero, 8);
 
     // pitch轴电机
-    Motor_Pitch_DM4310.PID_Angle.Init(20.0f, 0.0f, 0.0f, 0.0f, 2000, 4090.0f);
-    Motor_Pitch_DM4310.PID_Omega.Init(150.0f, 5.0f, 0.0f, 0.0f, 2000, 4090.0f);
+    Motor_Pitch_DM4310.PID_Angle.Init(18.0f, 0.0f, 0.0f, 0.0f, 2000, 4090.0f);
+    Motor_Pitch_DM4310.PID_Omega.Init(120.0f, 5.0f, 1.0f, 0.0f, 2000, 4090.0f);
     Motor_Pitch_DM4310.IMU = &Boardc_BMI;
     Motor_Pitch_DM4310.Init(&hfdcan2, DM_Motor_ID_0xA4, DM_Motor_Control_Method_MIT_IMU_Angle, 0, 3.1415f, 20.94f, 2.0f);
 
@@ -308,6 +308,7 @@ void Class_Gimbal::Init()
  * @brief 输出到电机
  *
  */
+
 float Tmp_Now_Pitch_Angle = 0.0f, Tmp_Now_Yaw_Angle = 0.0f;
 void Class_Gimbal::Output()
 {
@@ -339,8 +340,9 @@ void Class_Gimbal::Output()
             Tmp_Now_Yaw_Angle = Motor_Yaw_DM4310.Get_True_Angle_Yaw();
             Motor_Yaw_DM4310.PID_Angle.Set_PID_Constants(20.0f, 0.0f, 0.0f);
             Motor_Yaw_DM4310.PID_Omega.Set_PID_Constants(120.0f, 1.5f, 0.0f);
-            Motor_Pitch_DM4310.PID_Angle.Set_PID_Constants(25.0f, 0.0f, 0.0f);
-            Motor_Pitch_DM4310.PID_Omega.Set_PID_Constants(150.0f, 5.0f, 1.5f);
+            Motor_Pitch_DM4310.PID_Angle.Set_PID_Constants(22.0f, 0.0f, 0.0f);
+            Motor_Pitch_DM4310.PID_Omega.Set_PID_Constants(130.0f, 5.0f, 1.0f);
+
             break;
         }
         case Launch_Enable:
@@ -350,10 +352,10 @@ void Class_Gimbal::Output()
             Motor_Pitch_DM4310.Set_DM_Motor_Control_Method(DM_Motor_Control_Method_MIT_Encoder_Position);
             Tmp_Now_Pitch_Angle = Motor_Pitch_DM4310.Get_True_Angle_Pitch_From_Encoder();
             Tmp_Now_Yaw_Angle = Motor_Yaw_DM4310.Get_True_Angle_Yaw_From_Encoder();
-            Motor_Yaw_DM4310.PID_Angle.Set_PID_Constants(20.0f, 0.0f, 0.0f);
+            Motor_Yaw_DM4310.PID_Angle.Set_PID_Constants(10.0f, 0.0f, 0.2f);
             Motor_Yaw_DM4310.PID_Omega.Set_PID_Constants(120.0f, 1.5f, 0.0f);
-            Motor_Pitch_DM4310.PID_Angle.Set_PID_Constants(25.0f, 0.0f, 0.0f);
-            Motor_Pitch_DM4310.PID_Omega.Set_PID_Constants(150.0f, 5.0f, 1.5f);
+            Motor_Pitch_DM4310.PID_Angle.Set_PID_Constants(18.0f, 0.0f, 0.0f);
+            Motor_Pitch_DM4310.PID_Omega.Set_PID_Constants(120.0f, 5.0f, 1.0f);
             break;
         }
         }
@@ -397,7 +399,13 @@ void Class_Gimbal::TIM_Calculate_PeriodElapsedCallback()
     Motor_Yaw_DM4310.Transform_EmcoderAngle_To_TrueAngle();
 
     // PID输出
-    Motor_Yaw_DM4310.TIM_PID_PeriodElapsedCallback();
+    static uint8_t mod2 = 0;
+    mod2++;
+    if(mod2 == 2)
+    {
+        Motor_Yaw_DM4310.TIM_PID_PeriodElapsedCallback();
+        mod2 = 0;
+    }
     Motor_Pitch_DM4310.TIM_PID_PeriodElapsedCallback();
     // 增加上位机MPC解算前馈
     if (Gimbal_Control_Type != Gimbal_Control_Type_DISABLE)

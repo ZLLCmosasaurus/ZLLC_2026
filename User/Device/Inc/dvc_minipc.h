@@ -231,6 +231,7 @@ struct Pack_tx_t
     float bullet_speed;
     uint16_t bullet_num;
     uint8_t lidar_start_lob;
+    float yaw_from_encoder;
     uint16_t crc16;
 #endif
 
@@ -324,6 +325,7 @@ public:
     inline uint8_t Get_Alive_Status();
     inline uint8_t Get_Lidar_Lob_Stability();
     inline uint8_t Get_Lidar_if_Lob();
+    inline uint8_t GetLobPoint() { return lob_point; }
     inline float Get_Distance();
     inline Enum_MiniPC_Type Get_MiniPC_Type();
     inline Enum_MiniPC_Move_Control_Mode Get_Move_Control_Mode();
@@ -346,6 +348,9 @@ public:
     inline void Set_Lidar_Lob_Stability(uint8_t __Lidar_Lob_Stability);
     inline void Set_Bullet_Speed(float __Bullet_Speed);
     inline void Set_Bullet_Num(uint16_t __Bullet_Num);
+    inline void Set_Yaw_Encoder(float __Yaw_Encoder);
+    inline void SetLobMode(bool enable, uint8_t point = 0);
+    inline void SetLobPoint(uint8_t point_) { lob_point = point_; }
     //inline void Set_Antispin_Type(Enum_Antispin_Type __Antispin_Type);
     void Append_CRC16_Check_Sum(uint8_t *pchMessage, uint32_t dwLength);
     bool Verify_CRC16_Check_Sum(const uint8_t *pchMessage, uint32_t dwLength);
@@ -441,8 +446,11 @@ protected:
     float locked_yaw = 0.0f;             // 锁定的目标 yaw 角
     float locked_pitch = 0.0f;           // 锁定的目标 pitch 角
 
+    uint8_t lob_point = 0;  // 吊射点位：0 或 1
+    bool lob_exec_enabled = false;   // 下位机是否启用吊射执行
+
     const float g = 9.72472f;       // 重力加速度
-    const float bullet_v = 15.85f;   // 子弹速度
+    const float bullet_v = 16.10f;   // 子弹速度
 
     // 距离
     float Distance;
@@ -858,6 +866,16 @@ void Class_MiniPC::Set_Bullet_Num(uint16_t __Bullet_Num)
 void Class_MiniPC::Set_Bullet_Speed(float __Bullet_Speed)
 {
     Tx_Bullet_Speed = __Bullet_Speed;
+}
+
+void Class_MiniPC::Set_Yaw_Encoder(float __Yaw_Encoder)
+{
+    Pack_Tx.yaw_from_encoder = __Yaw_Encoder;
+}
+
+void Class_MiniPC::SetLobMode(bool enable, uint8_t point) {
+    lob_exec_enabled = enable;
+    lob_point = (point == 0) ? 0 : 1;
 }
 
 /**

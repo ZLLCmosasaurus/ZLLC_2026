@@ -372,7 +372,7 @@ protected:
         //DR16鼠标云台yaw灵敏度系数, 不同鼠标不同参数
         float DR16_Mouse_Yaw_Angle_Resolution = 57.8*2.0f;
         //DR16鼠标云台pitch灵敏度系数, 不同鼠标不同参数
-        float DR16_Mouse_Pitch_Angle_Resolution = 57.8f;
+        float DR16_Mouse_Pitch_Angle_Resolution = 57.8f*2.0f;
         
         //迷你主机云台pitch自瞄控制系数
         float MiniPC_Autoaiming_Yaw_Angle_Resolution = 0.003f;

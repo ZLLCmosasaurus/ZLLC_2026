@@ -700,6 +700,71 @@ void SCapLine_Init(void)
 }
 
 /**********************************************************************************************************
+ *函 数 名: LauncherMode_Init
+ *功能说明: 发射模式UI初始化（仅圆形指示器，无文字）
+ *形    参: 无
+ *返 回 值: 无
+ **********************************************************************************************************/
+/**********************************************************************************************************
+ *函 数 名: LauncherMode_Init
+ *功能说明: 发射模式UI初始化（显示文字"lob"，并创建隐藏的矩形框）
+ *形    参: 无
+ *返 回 值: 无
+ **********************************************************************************************************/
+void LauncherMode_Init(void)
+{
+	static uint8_t text_name[] = "LOB";
+	static uint8_t frame_name[] = "LBF";
+	static uint8_t str[] = "lob";
+
+	// 文字位置：X=1693, Y=520，字体大小15，白色
+	Char_Draw(2, Op_Add, 1693, 450, 15, sizeof(str) - 1, 1, Purple, text_name, str);
+
+	// 矩形框初始设为不可见（线宽0，颜色黑色）
+	// 框包围文字：文字左上角约(1693, 520)，宽约30，高约15，左右留白5，上下留白2
+	uint16_t start_x = 1693 - 5;
+	uint16_t start_y = 450 - 2;
+	uint16_t end_x = 1693 + 30 + 5;
+	uint16_t end_y = 450 + 15 + 2;
+
+	graphic_data_struct_t *rect = Rectangle_Draw(2, Op_Add, start_x, start_y, end_x, end_y, 0, Black, frame_name);
+	memcpy(data_pack, (uint8_t *)rect, DRAWING_PACK);
+	Send_UIPack(Drawing_Graphic1_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK);
+}
+
+/**********************************************************************************************************
+ *函 数 名: RadarStatus_Init
+ *功能说明: 雷达状态UI初始化（显示文字"Standby"或"Ready"，字体20，位置Y=500）
+ *形    参: 无
+ *返 回 值: 无
+ **********************************************************************************************************/
+void RadarStatus_Init(void)
+{
+	static uint8_t text_name[] = "RDS";
+	uint8_t *init_str;
+	uint8_t len;
+	uint8_t color;
+
+	// 根据当前状态确定初始显示内容和颜色
+	if (JudgeReceiveData.Radar_if_Ready == 1)
+	{
+		static uint8_t ready_str[] = "Ready";
+		init_str = ready_str;
+		len = sizeof(ready_str) - 1;
+		color = Purple;
+	}
+	else
+	{
+		static uint8_t standby_str[] = "Standby";
+		init_str = standby_str;
+		len = sizeof(standby_str) - 1;
+		color = Yellow;
+	}
+
+	Char_Draw(2, Op_Add, 1593, 500, 20, len, 1, color, text_name, init_str);
+}
+
+/**********************************************************************************************************
  *函 数 名: SCapLine_Change
  *功能说明: 超级电容容量
  *形    参: 无
@@ -1001,6 +1066,91 @@ void YawValue_Change(float yaw, uint8_t Init_Cnt)
 }
 
 /**********************************************************************************************************
+ *函 数 名: LauncherMode_Change
+ *功能说明: 发射模式状态变化时更新矩形框（吊射模式显示绿框，否则隐藏）
+ *形    参: mode        当前发射模式（0:Normal, 1:Aimer, 2:Launcher）
+ *          Init_Cnt    初始化标志（0：正常更新，非0：强制以添加模式绘制）
+ *返 回 值: 无
+ **********************************************************************************************************/
+void LauncherMode_Change(uint8_t mode, uint8_t Init_Cnt)
+{
+	static uint8_t last_mode = 0xFF;
+	static uint8_t frame_name[] = "LBF";
+	static uint8_t optype;
+	graphic_data_struct_t *P_graphic_data;
+
+	// 确定矩形框是否可见：吊射模式（mode == 2）显示绿色框，否则隐藏
+	uint8_t line_width;
+	uint8_t color;
+	if (mode == 2) // Launcher 模式
+	{
+		line_width = 2;
+		color = Green;
+	}
+	else
+	{
+		line_width = 0; // 线宽0使其不可见
+		color = Black;
+	}
+
+	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
+	if (Init_Cnt == 0 && mode == last_mode)
+		return;
+
+	// 矩形框坐标（与初始化时相同）
+	uint16_t start_x = 1693 - 5;
+	uint16_t start_y = 450 - 2;
+	uint16_t end_x = 1693 + 30 + 5;
+	uint16_t end_y = 450 + 15 + 2;
+
+	P_graphic_data = Rectangle_Draw(2, optype, start_x, start_y, end_x, end_y, line_width, color, frame_name);
+	memcpy(data_pack, (uint8_t *)P_graphic_data, DRAWING_PACK);
+	Send_UIPack(Drawing_Graphic1_ID, JudgeReceiveData.robot_id, JudgeReceiveData.robot_id + 0x100, data_pack, DRAWING_PACK);
+
+	last_mode = mode;
+}
+
+/**********************************************************************************************************
+ *函 数 名: RadarStatus_Change
+ *功能说明: 雷达状态变化时更新显示文字（0→Standby蓝色，1→Ready红色）
+ *形    参: status      当前雷达状态（0:Standby, 1:Ready）
+ *          Init_Cnt    初始化标志（0：正常更新，非0：强制以添加模式绘制）
+ *返 回 值: 无
+ **********************************************************************************************************/
+void RadarStatus_Change(uint8_t status, uint8_t Init_Cnt)
+{
+	static uint8_t last_status = 0xFF;
+	static uint8_t text_name[] = "RDS";
+	static uint8_t optype;
+	uint8_t *str;
+	uint8_t len;
+	uint8_t color;
+
+	if (status == 1)
+	{
+		static uint8_t ready_str[] = "Ready";
+		str = ready_str;
+		len = sizeof(ready_str) - 1;
+		color = Purple;
+	}
+	else
+	{
+		static uint8_t standby_str[] = "Standby";
+		str = standby_str;
+		len = sizeof(standby_str) - 1;
+		color = Yellow;
+	}
+
+	optype = (Init_Cnt == 0) ? Op_Change : Op_Add;
+	if (Init_Cnt == 0 && status == last_status)
+		return;
+
+	Char_Draw(2, optype, 1593, 500, 20, len, 1, color, text_name, str);
+
+	last_status = status;
+}
+
+/**********************************************************************************************************
  *函 数 名: GraphicSendtask
  *功能说明: ͼ�η�������
  *形    参: ��
@@ -1054,12 +1204,13 @@ void GraphicSendtask(void)
 
 		if (Init_Cnt % 2 == 0)
 		{
-			Pitch_Line_Init_1(); // Pitch线
-			Pitch_Line_Init_2();
-			Pitch_Line_Init_3();
-			SCapLine_Init();  // 超电容线
-			Lanelines_Init(); // 车道线
-			GIMLine_Init();	  // 云台线
+			// Pitch_Line_Init_1(); // Pitch线
+			// Pitch_Line_Init_2();
+			// Pitch_Line_Init_3();
+			SCapLine_Init(); // 超电容线
+			// Lanelines_Init(); // 车道线
+			GIMLine_Init();		// 云台线
+			RadarStatus_Init(); // 雷达状态
 		}
 		else
 		{
@@ -1067,6 +1218,7 @@ void GraphicSendtask(void)
 			ShootLines_Init_2();
 			ShootLines_Init_3();
 			ShootLines_Init_4();
+			// LauncherMode_Init();
 		}
 
 		ChassisLine_Change(0, Init_Cnt); // 底盘方向线
@@ -1074,9 +1226,10 @@ void GraphicSendtask(void)
 		PitchUI_Change(0, Init_Cnt);
 		GIMLine_Change(Init_Cnt);
 		Scap_Change(100, Init_Cnt);
-
+		RadarStatus_Change(JudgeReceiveData.Radar_if_Ready, 1);
 		PitchValue_Change(JudgeReceiveData.Pitch_Angle, 1);
 		YawValue_Change(JudgeReceiveData.Yaw_Angle, 1);
+		// LauncherMode_Change(JudgeReceiveData.Launcher_Mode, 1);
 
 		// 初始化完成后，保存当前数据作为比较基准
 		memcpy(&Last_JudgeReceiveData, &JudgeReceiveData, sizeof(JudgeReceive_t));
@@ -1119,6 +1272,22 @@ void GraphicSendtask(void)
 			last_update_time = current_time;
 			break;
 		}
+		if (Last_JudgeReceiveData.Launcher_Mode != JudgeReceiveData.Launcher_Mode)
+		{
+			ui_state = UI_STATE_STATUS_UPDATE;
+			last_status_type = 4;
+			status_update_retry = 0;
+			last_update_time = current_time;
+			break;
+		}
+		if (Last_JudgeReceiveData.Radar_if_Ready != JudgeReceiveData.Radar_if_Ready)
+		{
+			ui_state = UI_STATE_STATUS_UPDATE;
+			last_status_type = 5; // 新类型号，确保未使用（已用1,2,3,4）
+			status_update_retry = 0;
+			last_update_time = current_time;
+			break;
+		}
 
 		// 如果没有状态变化，且距离上次数值更新已经过去足够时间，则进入数值更新状态
 		if (current_time - last_update_time > 10) // 10ms更新一次数值
@@ -1142,6 +1311,14 @@ void GraphicSendtask(void)
 		case 3: // 底盘控制类型
 			Lanelines_Init();
 			Last_JudgeReceiveData.Chassis_Control_Type = JudgeReceiveData.Chassis_Control_Type;
+			break;
+		case 4: // 发射模式
+			LauncherMode_Change(JudgeReceiveData.Launcher_Mode, 0);
+			Last_JudgeReceiveData.Launcher_Mode = JudgeReceiveData.Launcher_Mode;
+			break;
+		case 5: // 雷达状态
+			RadarStatus_Change(JudgeReceiveData.Radar_if_Ready, 0);
+			Last_JudgeReceiveData.Radar_if_Ready = JudgeReceiveData.Radar_if_Ready;
 			break;
 		}
 

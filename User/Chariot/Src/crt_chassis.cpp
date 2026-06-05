@@ -130,7 +130,7 @@ void Class_HybridTrackLeg_Chassis::Init(float __Velocity_X_Max, float __Velocity
     Slope_Omega.Init(0.05f, 0.05f);
 
     // imu初始化
-    BoardDM_BMI.Init();
+    // BoardDM_BMI.Init();
     // 过热检测状态机初始化
     FSM_OverHeated_Detect.Chassis = this;
     FSM_OverHeated_Detect.Init(2, 0);
@@ -264,7 +264,7 @@ void Class_HybridTrackLeg_Chassis::Speed_Resolution()
  */
 void Class_HybridTrackLeg_Chassis::Transform_Angle_To_Relative()
 {
-    Chassis_Pitch = BoardDM_BMI.Get_Rad_Roll();
+    // Chassis_Pitch = BoardDM_BMI.Get_Rad_Roll();
 }
 
 /**
@@ -461,7 +461,7 @@ void Class_HybridTrackLeg_Chassis::Jointleg_Controller()
 #ifdef LOCKED_SWITCH               // 自动伸缩腿，已注释，不过目前是开环，后期可做成闭环
     static uint16_t mod2s = 0;     // 2s重置计数器
     static uint8_t pose_state = 1; // 位姿控制状态 0-Enable 1-Standby
-    Chassis_Pitch = BoardDM_BMI.Get_Angle_Pitch();
+    // Chassis_Pitch = BoardDM_BMI.Get_Angle_Pitch();
     Error_Pitch = Chassis_Pitch;
     Joint_Heat = Motor_Joint[1].Get_Now_Rotor_Temperature();
 

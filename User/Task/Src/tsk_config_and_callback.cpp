@@ -283,7 +283,7 @@ void Gimbal_Device_CAN3_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage){
     {
     case (0x51): //留给下板通讯
     {
-        dt_receive1 = DWT_GetDeltaT(&last_cnt_1);
+       
         chariot.CAN_Gimbal_Rx_Chassis_Callback();
     }
     break;
@@ -295,6 +295,7 @@ void Gimbal_Device_CAN3_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage){
     break;
     case (0x13):
     {
+         dt_receive1 = DWT_GetDeltaT(&last_cnt_1);
         chariot.Gimbal.Motor_Yaw_DM4310.CAN_RxCpltCallback(CAN_RxMessage->Data);
         // chariot.Gimbal.Motor_Yaw.CAN_RxCpltCallback(CAN_RxMessage->Data);
     }

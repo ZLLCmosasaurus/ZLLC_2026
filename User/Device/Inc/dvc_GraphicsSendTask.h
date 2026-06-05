@@ -201,11 +201,13 @@ typedef struct
 	uint8_t Minipc_Mode;
 	uint8_t Gimbal_Control_Type; // 添加云台控制状态字段
 	uint8_t Booster_User_Control_Type;
+	uint8_t Launcher_Mode;
 	uint16_t booster_fric_omega_left;
 	float Supercap_Voltage;
 	float Pitch_Angle;
 	float Chassis_Gimbal_Diff;
 	float Yaw_Angle;
+	uint8_t Radar_if_Ready;
 
 } JudgeReceive_t;
 
@@ -239,6 +241,10 @@ void Pitch_Line_Init_3(void);
 void GIMLine_Init(void);
 void SCapLine_Init(void);
 void Lanelines_Init(void);
+void LauncherMode_Init(void);
+void RadarStatus_Init(void);
+void RadarStatus_Change(uint8_t status, uint8_t Init_Cnt);
+void LauncherMode_Change(uint8_t mode, uint8_t Init_Cnt);
 void SCapLine_Change(void);
 void ChassisLine_Change(float theta, uint8_t Init_Cnt);
 void BoostLine_Change(void);

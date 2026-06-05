@@ -412,7 +412,7 @@ void TIM_CAN_PeriodElapsedCallback()
         CAN_Send_Data(&hfdcan3, 0x52, CAN3_Gimbal_Tx_Chassis_Data, 8); //给底盘发送控制命令 按照0x77 ID 发送
     }
 
-    if(mod5 == 4 )
+    if(mod5 == 4  || mod5 == 2 )
     {
         CAN_Send_Data(&hfdcan3,0x03,CAN3_0xxf3_Tx_Data,8);// YAW
     }

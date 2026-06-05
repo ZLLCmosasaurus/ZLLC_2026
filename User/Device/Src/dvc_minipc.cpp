@@ -73,40 +73,56 @@ void Class_MiniPC::Data_Process()
   memcpy(&Pack_Rx, (Pack_rx_t *)USB_Manage_Object->Rx_Buffer, USB_Manage_Object->Rx_Buffer_Length);
   static float tmp_yaw, tmp_pitch;
   static float tmp_x, tmp_y, tmp_z;
-  if (Lidar_if_Lob == 2)
-  {
-    // 检测包序号是否变化（新计算完成）
-    bool is_new_packet = (Pack_Rx.lob_time != last_lob_time);
-    if (is_new_packet)
-    {
-      last_lob_time = Pack_Rx.lob_time;
+  // if (Lidar_if_Lob == 2)
+  // {
+  //   // 检测包序号是否变化（新计算完成）
+  //   bool is_new_packet = (Pack_Rx.lob_time != last_lob_time);
+  //   if (is_new_packet)
+  //   {
+  //     last_lob_time = Pack_Rx.lob_time;
 
-      // 只在首次进入雷达模式或用户主动重置锁定时才更新目标
-      if (!radar_locked)
-      {
-        Convert_Radar_to_GunCoordinate(Pack_Rx.lidar_lob_x, Pack_Rx.lidar_lob_y, Pack_Rx.lidar_lob_z,
-                                       &tmp_x, &tmp_y, &tmp_z);
-        Distance = calc_distance(tmp_x, tmp_y, tmp_z);
-        locked_yaw = calc_yaw(tmp_x, tmp_y, 0.0f);
-        locked_pitch = Calc_Pitch_Compensated(tmp_x, tmp_y, tmp_z, tmp_x, tmp_y, tmp_z);
-        radar_locked = true;
-      }
-    }
-    // 始终使用锁定的角度
-    Rx_Angle_Yaw = locked_yaw;
-    Rx_Angle_Pitch = -locked_pitch;
+  //     // 只在首次进入雷达模式或用户主动重置锁定时才更新目标
+  //     if (!radar_locked)
+  //     {
+  //       Convert_Radar_to_GunCoordinate(Pack_Rx.lidar_lob_x, Pack_Rx.lidar_lob_y, Pack_Rx.lidar_lob_z,
+  //                                      &tmp_x, &tmp_y, &tmp_z);
+  //       Distance = calc_distance(tmp_x, tmp_y, tmp_z);
+  //       locked_yaw = calc_yaw(tmp_x, tmp_y, 0.0f);
+  //       locked_pitch = Calc_Pitch_Compensated(tmp_x, tmp_y, tmp_z, tmp_x, tmp_y, tmp_z);
+  //       radar_locked = true;
+  //     }
+  //   }
+  //   // 始终使用锁定的角度
+  //   Rx_Angle_Yaw = locked_yaw;
+  //   Rx_Angle_Pitch = -locked_pitch;
+  // }
+  // else
+  // {
+  //   // 非雷达模式时，清除锁定，以便下次重新进入
+  //   if (radar_locked)
+  //   {
+  //     radar_locked = false;
+  //     Rx_Angle_Yaw = IMU->Get_Angle_Yaw();
+  //     Rx_Angle_Pitch = -IMU->Get_Angle_Pitch();
+  //   }
+  // }
+  if (lob_exec_enabled)
+  {
+    Convert_Radar_to_GunCoordinate(Pack_Rx.lidar_lob_x, Pack_Rx.lidar_lob_y, Pack_Rx.lidar_lob_z,
+                                   &tmp_x, &tmp_y, &tmp_z);
+    float x = tmp_x;
+    float y = tmp_y;
+    float z = tmp_z;
+    Distance = calc_distance(x, y, z);
+    float yaw_calc = calc_yaw(x, y, 0.0f);
+    float pitch_calc = Calc_Pitch_Compensated(x, y, z, x, y, z);
+    Rx_Angle_Yaw = yaw_calc;
+    Rx_Angle_Pitch = -pitch_calc; // 符号与你的电机方向一致
+    Lidar_Lob_Stability = Pack_Rx.lidar_lob_stability;
+    // 如果需要区分点位的弹道参数，可以在这里使用 lob_point
+    // if (lob_point == 0) { ... } else { ... }
   }
   else
-  {
-		// 非雷达模式时，清除锁定，以便下次重新进入
-		if (radar_locked) 
-			{
-        radar_locked = false;
-        Rx_Angle_Yaw   = IMU->Get_Angle_Yaw();
-        Rx_Angle_Pitch = -IMU->Get_Angle_Pitch();
-			}
-  }
-  if (Lidar_if_Lob == 1)
   {
     Mode = Pack_Rx.mode;
     Rx_Angle_Pitch = -Pack_Rx.target_pitch;
@@ -169,7 +185,22 @@ void Class_MiniPC::Output()
   Pack_Tx.pitch_vel = Tx_Gyro_Pitch;
   Pack_Tx.bullet_speed = Tx_Bullet_Speed;
   Pack_Tx.bullet_num = Tx_Bullet_Num;
-  Pack_Tx.lidar_start_lob = Lidar_if_Lob;
+  // if (Lidar_if_Lob == 2)
+  // {
+  //   // 第0位 = 1（吊射使能）
+  //   // 第4位和第5位 = 点位（0或1）
+  //   Pack_Tx.lidar_start_lob = 0x01 | ((lob_point & 0x03) << 4);
+  // }
+  // else
+  // {
+  //   // 非吊射模式时，清0
+  //   Pack_Tx.lidar_start_lob = 0;
+  // }
+  if (lob_exec_enabled)
+    // 最低位置1，bit4和bit5放点位
+    Pack_Tx.lidar_start_lob = 0x01 | (lob_point  << 3);
+  else
+    Pack_Tx.lidar_start_lob = 0;
   Pack_Tx.game_stage = (Enum_MiniPC_Game_Stage)Referee->Get_Game_Stage();
   Pack_Tx.crc16 = 0xffff;
   memcpy(USB_Manage_Object->Tx_Buffer, &Pack_Tx, sizeof(Pack_Tx));
@@ -493,26 +524,18 @@ float Class_MiniPC::meanFilter(float input)
 void Class_MiniPC::Convert_Radar_to_GunCoordinate(float radar_x, float radar_y, float radar_z,
                                                   float *gun_x, float *gun_y, float *gun_z)
 {
-  // 固定平移（雷达坐标系下）
-  const float t_x = 0.13759f;
-  const float t_y = -0.11821f; // 注意符号：需根据实际安装方向确定正负
-  const float t_z = 0.025f;
 
+  const float offset = 0.131f;
   // 当前云台 pitch（角度制 → 弧度）
   float pitch_rad = -Tx_Angle_Pitch * PI / 180.0f; // Tx_Angle_Pitch 来自 IMU
-
-  // 平移
-  float px = radar_x - t_x;
-  float py = radar_y - t_y;
-  float pz = radar_z - t_z;
 
   // 绕 Y 轴旋转（角度 = -pitch_rad）
   float c = cosf(pitch_rad);
   float s = sinf(pitch_rad);
 
-  *gun_x = px * c - pz * s;
-  *gun_y = py; // Y 坐标不变（绕 Y 轴旋转）
-  *gun_z = px * s + pz * c;
+  *gun_x = radar_x - cosf(pitch_rad) * offset;
+  *gun_y = radar_y;
+  *gun_z = radar_z - sinf(pitch_rad) * offset;
 }
 
 /**
