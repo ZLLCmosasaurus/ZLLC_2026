@@ -41,10 +41,10 @@ enum Enum_Pitch_Control_Status
     Pitch_Status_Control_Lock ,
 };
 
-enum Enum_MinPC_Aim_Status
+enum Enum_MiniPC_Aim_Status
 {
-    MinPC_Aim_Status_DISABLE = 0,
-    MinPC_Aim_Status_ENABLE,
+    MiniPC_Aim_Status_DISABLE = 0,
+    MiniPC_Aim_Status_ENABLE,
 };
 
 /**
@@ -87,6 +87,13 @@ enum Enum_Gimbal_Status
 {
     Gimbal_Status_DISABLE = 0,
     Gimbal_Status_ENABLE,
+};
+
+enum Enum_MiniPC_Mode
+{
+    MiniPC_DISABLE = 0,
+    MiniPC_AIMER,
+    MiniPC_RADAR,
 };
 
 /**
@@ -219,6 +226,7 @@ public:
         void CAN_Chassis_Rx_Gimbal_Callback_1();
         void CAN_Chassis_Tx_Gimbal_Callback_1();
         void Control_Chassis_Omega_TIM_PeriodElapsedCallback();
+        inline float Get_Chassis_Reference_Angle();
         inline float Get_Gimbal_Yaw_IMU_Angle();
         inline void Set_Gimbal_Yaw_Angle(float __Angle);
         inline void  Set_Gimbal_Pitch_Angle(float __Angle);
@@ -276,9 +284,11 @@ public:
     //超级电容超级放电状态
     Enum_Supercap_Control_Status  Supercap_Control_Status = Supercap_Control_Status_DISABLE;
     //自瞄锁住状态
-    Enum_MinPC_Aim_Status MiniPC_Aim_Status = MinPC_Aim_Status_DISABLE;
+    Enum_MiniPC_Aim_Status MiniPC_Aim_Status = MiniPC_Aim_Status_DISABLE;
     //迷你主机状态
     Enum_MiniPC_Status MiniPC_Status = MiniPC_Status_DISABLE;
+    //上位机控制模式
+    Enum_MiniPC_Mode MiniPC_Mode = MiniPC_DISABLE;
     /*
     Enum_Radar_Target UI_Radar_Target = Radar_Target_Pos_Outpost;
     Enum_Radar_Target_Outpost UI_Radar_Target_Pos = Radar_Target_Pos_Outpost_A;
@@ -307,7 +317,7 @@ protected:
 
     #ifdef CHASSIS
         //底盘标定参考正方向角度(数据来源yaw电机)
-        float Reference_Angle =  0.0063f;//1.56926239f;//2.02542996f;//0.980980754f;
+        float Reference_Angle =  1.2372514f;
         //小陀螺云台坐标系稳定偏转角度 用于矫正
         float Offset_Angle = 0.0f;  //7.5°
         //底盘转换后的角度（数据来源yaw电机）
@@ -360,9 +370,9 @@ protected:
         float DR16_Pitch_Resolution = 0.003f * PI;
 
         //DR16鼠标云台yaw灵敏度系数, 不同鼠标不同参数
-        float DR16_Mouse_Yaw_Angle_Resolution = 57.8*4.0f;
+        float DR16_Mouse_Yaw_Angle_Resolution = 57.8*2.0f;
         //DR16鼠标云台pitch灵敏度系数, 不同鼠标不同参数
-        float DR16_Mouse_Pitch_Angle_Resolution = 57.8f;
+        float DR16_Mouse_Pitch_Angle_Resolution = 57.8f*2.0f;
         
         //迷你主机云台pitch自瞄控制系数
         float MiniPC_Autoaiming_Yaw_Angle_Resolution = 0.003f;
@@ -588,6 +598,10 @@ protected:
     float Class_Chariot::Get_Gimbal_Yaw_IMU_Angle()
     {
         return (Yaw_IMU_Angle);
+    }
+    float Class_Chariot::Get_Chassis_Reference_Angle()
+    {
+        return Reference_Angle;
     }
     void Class_Chariot::Set_Gimbal_Yaw_Angle(float __Angle)
     {

@@ -5,7 +5,8 @@
 #include "crt_chassis.h"
 #include "dvc_referee.h"
 
-#define PI 3.14159265358979323846f
+#define PI 3.14159f
+#define Reference_Angle__ 1.2372514f
 #define DMA_FLAG_TCIF4 ((uint32_t)0x20000020)
 /*��Ļ����*/
 #define SCREEN_WIDTH 1080
@@ -17,6 +18,14 @@
 #define CMD_LEN 2		  // �����볤��
 #define CRC_LEN 2		  // β��CRC16У��
 #define DRAWING_PACK 15	  // ��1��ͼ���ݰ�����
+
+#define REFEREE_DMA_TX_QUEUE_DEPTH 4
+#define REFEREE_DMA_MAX_PACKET_LEN SEND_MAX_SIZE
+
+typedef struct {
+    uint8_t data[REFEREE_DMA_MAX_PACKET_LEN];
+    uint16_t len;
+} RefereeDMAPacket_t;
 
 /* ����ϵͳ���ݶ�����ID */
 #define Drawing_Delete_ID 0x0100
@@ -184,23 +193,21 @@ typedef struct
 {
 	uint8_t robot_id;
 	uint8_t Chassis_Control_Type;
-	uint8_t Bullet_Status;
-	uint8_t Minipc_Status;
-	uint8_t MiniPC_Aim_Status;
-	uint8_t Fric_Status;
-	uint8_t Supercap_Energy;
-	uint8_t Supercap_State;
-	uint8_t Radar_Double_Damage_Flag;
+	uint8_t Minipc_Status; //自瞄当前运行状态
+	uint8_t MiniPC_Aim_Status; //上位机存活状态
+	uint8_t Fric_Status;  //摩擦轮状态
+	uint8_t Supercap_Energy;  // 超级电容能量百分比
+	uint8_t Supercap_State; // 超级电容状态
 	uint8_t Minipc_Mode;
-	uint8_t Antispin_Type;
 	uint8_t Gimbal_Control_Type; // 添加云台控制状态字段
 	uint8_t Booster_User_Control_Type;
+	uint8_t Launcher_Mode;
 	uint16_t booster_fric_omega_left;
-	uint16_t booster_fric_omega_right;
-	uint16_t Booster_bullet_num;
 	float Supercap_Voltage;
 	float Pitch_Angle;
-	 float Chassis_Gimbal_Diff;
+	float Chassis_Gimbal_Diff;
+	float Yaw_Angle;
+	uint8_t Radar_if_Ready;
 
 } JudgeReceive_t;
 
@@ -215,6 +222,7 @@ void GraphicSendtask(void);
 
 void Send_UIPack(uint16_t data_cmd_id, uint16_t SendID, uint16_t receiverID, uint8_t *data, uint16_t pack_len);
 void Send_toReferee(uint16_t cmd_id, uint16_t data_len);
+void Referee_DMA_EnqueuePacket(const uint8_t *data, uint16_t len);
 
 graphic_data_struct_t *Line_Draw(uint8_t layer, int Op_Type, uint16_t startx, uint16_t starty, uint16_t endx, uint16_t endy, uint16_t line_width, int color, uint8_t name[]);
 graphic_data_struct_t *Rectangle_Draw(uint8_t layer, int Op_Type, uint16_t startx, uint16_t starty, uint16_t endx, uint16_t endy, uint16_t line_width, int color, uint8_t name[]);
@@ -223,11 +231,29 @@ graphic_data_struct_t *CharGraphic_Draw(uint8_t layer, int Op_Type, uint16_t sta
 
 extern F405_typedef F405;
 
+void ShootLines_Init_1(void);
+void ShootLines_Init_2(void);
+void ShootLines_Init_3(void);
+void ShootLines_Init_4(void);
+void Pitch_Line_Init_1(void);
+void Pitch_Line_Init_2(void);
+void Pitch_Line_Init_3(void);
+void GIMLine_Init(void);
+void SCapLine_Init(void);
 void Lanelines_Init(void);
-void Char_Init(void);
-void CarPosture_Change(short Yaw_100, uint8_t Init_Cnt);
+void LauncherMode_Init(void);
+void RadarStatus_Init(void);
+void RadarStatus_Change(uint8_t status, uint8_t Init_Cnt);
+void LauncherMode_Change(uint8_t mode, uint8_t Init_Cnt);
+void SCapLine_Change(void);
+void ChassisLine_Change(float theta, uint8_t Init_Cnt);
+void BoostLine_Change(void);
+void GIMLine_Change(uint8_t Init_Cnt);
 void PitchUI_Change(float Pitch, uint8_t Init_Cnt);
-void CharChange(uint8_t Init_Flag);
+//void CharChange(uint8_t Init_Flag);
+
+void PitchValue_Change(float pitch, uint8_t Init_Cnt);
+void YawValue_Change(float yaw, uint8_t Init_Cnt);
 
 void Char_Draw(uint8_t layer, int Op_Type, uint16_t startx, uint16_t starty, uint8_t size, uint8_t len, uint16_t line_width, int color, uint8_t name[], uint8_t *str_data);
 
@@ -250,5 +276,8 @@ extern unsigned char JudgeSend[SEND_MAX_SIZE];
 extern JudgeReceive_t JudgeReceiveData;
 extern JudgeReceive_t Last_JudgeReceiveData;
 extern uint8_t Init_Cnt;
+extern volatile uint8_t referee_dma_busy;
+extern uint32_t last_update_time_value;
+extern uint8_t referee_dma_count;
 
 #endif

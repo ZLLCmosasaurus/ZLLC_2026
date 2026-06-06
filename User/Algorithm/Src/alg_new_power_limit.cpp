@@ -194,7 +194,7 @@ void Class_New_Power_Limit::Power_Task(Struct_Power_Management &power_management
     power_management.Needed_Scaled_Theoretical_Total_Power = dir_needScaled_power + mot_needScaled_power;
 
     //上层功率分配
-    Power_Allocate(power_management.Max_Power,0.0f,dirmotor_predic_power,motmotor_predic_power,&dir_max_power,&mot_max_power);
+    Power_Allocate(power_management.Max_Power,0.3f,dirmotor_predic_power,motmotor_predic_power,&dir_max_power,&mot_max_power);
     //下层功率限制
     if (dir_max_power >= dirmotor_predic_power) // 计算转向收缩系数
     {

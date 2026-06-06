@@ -63,6 +63,8 @@ void Error_Handler(void);
 #define CS1_ACCEL_GPIO_Port GPIOC
 #define CS1_GYRO_Pin GPIO_PIN_3
 #define CS1_GYRO_GPIO_Port GPIOC
+#define RADAR_CONTROL_Pin GPIO_PIN_9
+#define RADAR_CONTROL_GPIO_Port GPIOE
 #define INT1_ACCEL_Pin GPIO_PIN_10
 #define INT1_ACCEL_GPIO_Port GPIOE
 #define INT1_ACCEL_EXTI_IRQn EXTI15_10_IRQn

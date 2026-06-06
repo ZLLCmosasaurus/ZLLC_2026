@@ -20,6 +20,24 @@ enum Enum_Chassis_Control_Type__
     Chassis_Control_Type_NORMAL__,
 };
 
+enum Enum_Track_Control_Type__: uint8_t
+{
+    Track_Off__ = 0,
+    Track_On__,
+};
+
+/**
+ * @brief 位姿控制类型
+ * 
+ */
+enum Enum_Pose_Control_Type__ : uint8_t
+{
+    Pose_DISABLE__ = 0,
+    Pose_STANDBY__,
+    Pose_ENABLE__,
+    Pose_CONTRACT__,
+};
+
 struct Struct_Chassis_INS_Data
 {
     
@@ -45,6 +63,9 @@ public:
 
     // 轮向电机
     Class_Motor_DJI_C620 Motor_Wheel[4];
+
+    //履带驱动电机
+    Class_Motor_DJI_C620 Motor_Track[2];
     
     //功率管理
     Class_New_Power_Limit Power_Limit;
@@ -108,6 +129,10 @@ public:
 
     inline Enum_Chassis_Control_Type__ Get_Chassis_Control_Type();
 
+    inline Enum_Track_Control_Type__ Get_Track_Control_Type();
+
+    inline Enum_Pose_Control_Type__ Get_Pose_Control_Type();
+
     inline float Get_Target_Velocity_X();
 
     inline float Get_Target_Velocity_Y();
@@ -117,6 +142,10 @@ public:
     inline void Set_Power_Limit_Max(float __Power_Limit_Max);
 
     inline void Set_Chassis_Control_Type(Enum_Chassis_Control_Type__ __Chassis_Control_Type);
+
+    inline void Set_Track_Control_Type(Enum_Track_Control_Type__ __Track_Control_Type);
+
+    inline void Set_Pose_Control_Type(Enum_Pose_Control_Type__ __Pose_Control_Type);
 
     inline void Set_Target_Velocity_X(float __Target_Velocity_X);
 
@@ -195,13 +224,16 @@ protected:
 
     // 底盘控制方法
     Enum_Chassis_Control_Type__ Chassis_Control_Type = Chassis_Control_Type_DISABLE__;
-
+    Enum_Track_Control_Type__ Track_Control_Type = Track_Off__;
+    Enum_Pose_Control_Type__ Pose_Control_Type = Pose_DISABLE__;
     // 目标速度X
     float Target_Velocity_X = 0.0f;
     // 目标速度Y
     float Target_Velocity_Y = 0.0f;
     // 目标角速度
     float Target_Omega = 0.0f;
+    //履带的角速度
+    float Target_Track_Omega = 10.0f;
 
     // 内部函数
 
@@ -226,10 +258,10 @@ protected:
 /* Exported variables --------------------------------------------------------*/
 //底盘参数
 //底盘半宽 单位m
-const float HALF_WIDTH__ = 0.220f;
+const float HALF_WIDTH__ = 0.2455f;
 
 //底盘半长 单位m
-const float HALF_LENGTH__ = 0.2455f;
+const float HALF_LENGTH__ = 0.185f;
 
 /* Exported function declarations --------------------------------------------*/
 /**
@@ -390,6 +422,26 @@ inline Enum_Chassis_Control_Type__ Class_Chassis::Get_Chassis_Control_Type()
 }
 
 /**
+ * @brief 获取履带控制模式
+ * 
+ * @return Enum_Track_Control_Type__ 履带控制模式
+ */
+inline Enum_Track_Control_Type__ Class_Chassis::Get_Track_Control_Type()
+{
+    return (Track_Control_Type);
+}
+
+/**
+ * @brief 获取位姿控制方法
+ * 
+ * @return Enum_Pose_Control_Type__ 位姿控制方法
+ */
+inline Enum_Pose_Control_Type__ Class_Chassis::Get_Pose_Control_Type()
+{
+    return (Pose_Control_Type);
+}
+
+/**
  * @brief 获取目标速度X
  *
  * @return float 目标速度X
@@ -437,6 +489,26 @@ inline void Class_Chassis::Set_Power_Limit_Max(float __Power_Limit_Max)
 inline void Class_Chassis::Set_Chassis_Control_Type(Enum_Chassis_Control_Type__ __Chassis_Control_Type)
 {
     Chassis_Control_Type = __Chassis_Control_Type;
+}
+
+/**
+ * @brief 设定履带控制模式
+ * 
+ * @param __Track_Control_Type 履带控制模式
+ */
+inline void Class_Chassis::Set_Track_Control_Type(Enum_Track_Control_Type__ __Track_Control_Type)
+{
+    Track_Control_Type = __Track_Control_Type;
+}
+
+/**
+ * @brief 设定位姿控制方法
+ * 
+ * @param __Pose_Control_Type 位姿控制方法
+ */
+inline void Class_Chassis::Set_Pose_Control_Type(Enum_Pose_Control_Type__ __Pose_Control_Type)
+{
+    Pose_Control_Type = __Pose_Control_Type;
 }
 
 /**

@@ -193,6 +193,7 @@ uint8_t CAN_Send_Data(FDCAN_HandleTypeDef *hcan, uint16_t ID, uint8_t *Data, uin
 
 void TIM_CAN_PeriodElapsedCallback();
 
+HAL_StatusTypeDef FDCAN_RecoverFromFifoFull(FDCAN_HandleTypeDef *hfdcan);
 #ifdef __cplusplus
 }
 #endif

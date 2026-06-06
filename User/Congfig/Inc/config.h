@@ -15,15 +15,15 @@
 /* Includes ------------------------------------------------------------------*/
 
 /* Exported macros -----------------------------------------------------------*/
-#define MINIPC_COMM_CAN
-// #define MINIPC_COMM_USB
+// #define MINIPC_COMM_CAN
+#define MINIPC_COMM_USB
 
 //底盘或云台状态
-// #define CHASSIS
+//#define CHASSIS
 #define GIMBAL
 
+
 //调试或比赛状态
-// #define DEBUG
 
 //#define Only_Chassis
 //功率控制相关
@@ -40,9 +40,11 @@
 // #define Speed_Controller // 速控
 #define Force_Controller // 力控
 
+// #define DEBUG
+
 //位姿控制选择
-// #define LOCKED_SWITCH
-#define AUTO_SWITCH
+#define LOCKED_SWITCH
+// #define AUTO_SWITCH
 
 //发射机构选择
 // #define Single_Friction

@@ -4,11 +4,6 @@
             "path": "."
         }
     ],
-    "settings": {
-        "files.associations": {
-            "new": "cpp",
-            "cmath": "cpp"
-        }
-    },
+    "settings": {},
     "extensions": {}
 }

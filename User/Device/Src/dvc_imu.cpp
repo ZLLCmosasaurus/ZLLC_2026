@@ -26,7 +26,7 @@ void Class_IMU::Init()
     IMU_MahonyAHRS.init(INS_Quat);
  
     //EKF初始化
-    IMU_QuaternionEKF_Init(10, 0.001, 10000000, 1, 0 , 0.0f, &QEKF_INS);
+    IMU_QuaternionEKF_Init(10, 0.001, 10000000, 1, 0 , -0.00016f, &QEKF_INS);
 
     INS.AccelLPF = 0.0085;
 
@@ -207,6 +207,16 @@ float Class_IMU::Get_Rad_Pitch(void)
 float Class_IMU::Get_Rad_Yaw(void)
 {
     return (INS.Yaw/180.f*PI);
+}
+
+Quaternion Class_IMU::Get_Quaternion(void)
+{
+    return Quaternion{
+        .w = INS.q[0],
+        .x = INS.q[1],
+        .y = INS.q[2],
+        .z = INS.q[3],
+    };
 }
 
 Enum_IMU_Status Class_IMU::Get_IMU_Status(void)

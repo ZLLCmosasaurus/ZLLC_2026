@@ -18,6 +18,7 @@
 #include "drv_can.h"
 #include "alg_pid.h"
 #include "main.h"
+#include "kalman_filter.h"
 /* Exported macros -----------------------------------------------------------*/
 
 /* Exported types ------------------------------------------------------------*/
@@ -85,7 +86,8 @@ enum Enum_DM_Motor_Control_Method
 	DM_Motor_Control_Method_MIT_IMU_Angle,
     DM_Motor_Control_Method_ONE_TO_FOUR,//达妙电机一拖四模式
     DM_Motor_Control_Method_MIT_OPENLOOP,
-    DM_Motor_Control_Method_MIT_Angle //关节电机角度控制模式
+    DM_Motor_Control_Method_MIT_Angle, //关节电机角度控制模式
+    DM_Motor_Control_Method_MIT_Encoder_Position // 电机编码器位置控制模式
 };
 
 /**
@@ -113,11 +115,15 @@ struct Struct_DM_Motor_Rx_Data
     Enum_DM_Motor_ErrorCode ErrorCode;
     float Now_Angle;
     float Now_Radian;
+    float Now_Angle_Deg;
+    float Now_Angle_Rad;
     float Now_Omega_Angle;
     float Now_Omega_Radian;
+    float Now_Omega_after_kalman;
     float Now_Torque;
     float Now_MOS_Temperature; //驱动MOS的平均温度
     float Now_Rotor_Temperature; // 电机内部线圈的平均温度
+    uint16_t Now_Encoder_Position;
     uint16_t Pre_Position;
     int32_t Total_Position;
     int32_t Pre_Total_Position;
@@ -140,15 +146,19 @@ public:
     Class_PID PID_Angle;
     // PID角速度环控制
     Class_PID PID_Omega;
+    KalmanFilter Kf_Omega;
     // PID扭矩环控制
     Class_PID PID_Torque;
 
-    void Init(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CAN_ID, Enum_DM_Motor_Control_Method __Control_Method = DM_Motor_Control_Method_MIT_POSITION, int32_t __Position_Offset = 0, float __Omega_Max = 20.94359f, float __Torque_Max = 10.0f);
+    void Init(FDCAN_HandleTypeDef *hcan, Enum_DM_Motor_ID __CAN_ID, Enum_DM_Motor_Control_Method __Control_Method = DM_Motor_Control_Method_MIT_POSITION, int32_t __Position_Offset = 0, float __Positon_Max = 3.141593f, float __Omega_Max = 20.94359f, float __Torque_Max = 10.0f);
 
     inline Enum_DM_Motor_Control_Status Get_DM_Motor_Control_Status();
     inline Enum_DM_Motor_Status Get_DM_Motor_Status();
     inline float Get_Now_Angle();
     inline float Get_Now_Radian();
+    inline float Get_Now_Angle_Deg();
+    inline float Get_Now_Angle_Rad();
+    inline uint16_t Get_Now_Encoder_Position();
     inline float Get_Now_Omega();
     inline float Get_Now_Torque();
     inline float Get_Now_MOS_Temperature();
@@ -157,6 +167,9 @@ public:
     inline float Get_MIT_K_P();
     inline float Get_MIT_K_D();
     inline float Get_Target_Angle();
+    inline float Get_Target_Angle_Deg();
+    inline float Get_Target_Angle_Rad();
+    inline float Get_Target_Encoder_Position();
     inline float Get_Target_Omega();
     inline float Get_Target_Torque();
     inline float Get_Out();
@@ -168,9 +181,12 @@ public:
     inline void Set_Target_Angle(float __Target_Angle);
     inline void Set_Target_Omega(float __Target_Omega);
     inline void Set_Target_Angle_DEG(float __Target_Angle_DEG);
+    inline void Set_Target_Encoder_Position(float __Target_Encoder_Position);
     inline void Set_Target_Omega_DEG(float __Target_Omega_DEG);
     inline void Set_Target_Torque(float __Target_Torque);
+    inline void Set_Target_Constants(float __Target_Angle, float __Target_Omega, float __Target_Torque, float __MIT_K_P, float __MIT_K_D);
     inline void Set_Out(float __Out);
+    inline void Reset_Set_Out_And_Output(float __Out);
 	inline void Limit_Out();
 
     void CAN_RxCpltCallback(uint8_t *Rx_Data);
@@ -189,6 +205,8 @@ protected:
     uint8_t *CAN_Tx_Data;
     //位置反馈偏移
     uint32_t Position_Offset;
+    //位置反馈最大值, 调参助手设置, 即为P_MAX，一般单圈设置为3.141593, 也就是360度
+    float Position_Max;
     //最大速度, 调参助手设置, 推荐20.94359, 也就是最大转速200rpm
     float Omega_Max;
     //最大扭矩, 调参助手设置, 推荐7, 也就是最大输出7NM
@@ -198,7 +216,7 @@ protected:
     //常量
     
     //一圈位置刻度
-    uint32_t Position_Max = 65536;
+    // uint32_t Position_Max = 65536;
 
     //内部变量
 
@@ -231,8 +249,10 @@ protected:
     float MIT_K_D = 0.0f;
     //目标的角度, rad
     float Target_Angle = 0.0f;
+    float Target_Angle_Rad = 0.0f;
+    float Target_Encoder_Position = 0.0f;
     //目标的角度, °
-    float Target_Angle_DEG = 0.0f;
+    float Target_Angle_Deg = 0.0f;
     //目标的速度, °/s
     float Target_Omega_DEG = 0.0f;
     //目标的速度, rad/s
@@ -281,6 +301,25 @@ float Class_DM_Motor_J4310::Get_Now_Radian()
     return (Data.Now_Radian);
 }
 
+float Class_DM_Motor_J4310::Get_Now_Angle_Deg()
+{
+    return (Data.Now_Angle_Deg);
+}
+
+float Class_DM_Motor_J4310::Get_Now_Angle_Rad()
+{
+    return (Data.Now_Angle_Rad);
+}
+
+/**
+ * @brief 获取当前的编码器位置
+ * 
+ * @return float 当前的编码器位置
+ */
+uint16_t Class_DM_Motor_J4310::Get_Now_Encoder_Position()
+{
+    return (Data.Now_Encoder_Position);
+}
 
 /**
  * @brief 获取当前的速度, rad/s
@@ -447,9 +486,9 @@ void Class_DM_Motor_J4310::Set_Target_Angle(float __Target_Angle)
  *
  * @param __Target_Angle 目标的角度, °
  */
-void Class_DM_Motor_J4310::Set_Target_Angle_DEG(float __Target_Angle_DEG)
+void Class_DM_Motor_J4310::Set_Target_Angle_DEG(float __Target_Angle_Deg)
 {
-    Target_Angle_DEG = __Target_Angle_DEG;
+    Target_Angle_Deg = __Target_Angle_Deg;
 }
 
 /**
@@ -483,6 +522,24 @@ void Class_DM_Motor_J4310::Set_Target_Torque(float __Target_Torque)
 }
 
 /**
+ * @brief 设定电机控制参数
+ * 
+ * @param __Target_Angle 目标角度 rad
+ * @param __Target_Omega 目标角速度 rad/s
+ * @param __Target_Torque 前馈力矩
+ * @param __MIT_K_P 位置环系数
+ * @param __MIT_K_D 速度环系数
+ */
+void Class_DM_Motor_J4310::Set_Target_Constants(float __Target_Angle, float __Target_Omega, float __Target_Torque, float __MIT_K_P, float __MIT_K_D)
+{
+    Target_Angle = __Target_Angle;
+    Target_Omega = __Target_Omega;
+    Target_Torque = __Target_Torque;
+    MIT_K_P = __MIT_K_P;
+    MIT_K_D = __MIT_K_D;
+}
+
+/**
  * @brief 设定目标的输出
  *
  * @param __Out 目标的输出
@@ -492,6 +549,17 @@ void Class_DM_Motor_J4310::Set_Out(float __Out)
 {
     Out=__Out;
 } 
+
+/**
+ * @brief 重置设定输出量
+ *
+ * @param __Out 输出量
+ */
+inline void Class_DM_Motor_J4310::Reset_Set_Out_And_Output(float __Out)
+{
+    Out = __Out;
+    Output();
+}
 
 /**
  * @brief 限制目标的输出

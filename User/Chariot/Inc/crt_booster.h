@@ -53,10 +53,25 @@ enum Enum_Friction_Control_Type
     Friction_Control_Type_ENABLE,
 };
 
+/**
+ * @brief 裁判系统弹速更新状态
+ * 
+ */
 enum Enum_Referee_Bullet_Velocity_Updata_Status : uint8_t
 {
     Referee_Bullet_Velocity_Updata_Status_DISABLE = 0,
     Referee_Bullet_Velocity_Updata_Status_ENABLE,
+};
+
+/**
+ * @brief 发射模式选择
+ * 
+ */
+enum Enum_Shooter_Mode : uint8_t
+{
+    Normal,     // 正常发射
+    Aimer,      // 自瞄发射
+    Launcher,   // 部署发送
 };
 
 /**
@@ -104,7 +119,6 @@ class Class_Booster
 public:
     uint8_t Cmd_if_Fire = 0;
     uint8_t Shoot_Flag = 0; //0关闭 1开启 测试发射机构
-    float Speed;
     //热量检测有限自动机
     Class_FSM_Heat_Detect FSM_Heat_Detect;
     friend class Class_FSM_Heat_Detect;
@@ -140,9 +154,11 @@ public:
 
     inline Enum_Booster_Control_Type Get_Booster_Control_Type();
     inline Enum_Friction_Control_Type Get_Friction_Control_Type();
+    inline Enum_Shooter_Mode Get_Shooter_Mode();
 
     inline void Set_Booster_Control_Type(Enum_Booster_Control_Type __Booster_Control_Type);
     inline void Set_Friction_Control_Type(Enum_Friction_Control_Type __Friction_Control_Type);
+    inline void Set_Shooter_Mode(Enum_Shooter_Mode __Shooter_Mode);
     inline void Set_Friction_Omega(float __Friction_Omega);
     inline void Set_Driver_Omega(float __Driver_Omega);
     // inline void Set_Booster_Type(Enum_Booster_Type __Booster_Type);
@@ -158,12 +174,12 @@ protected:
     //初始化相关常量
 
     //常量
-    uint16_t Heat_Max = 400;
+    //热量上限值，从裁判系统读取，否则默认为200
+    uint16_t Heat_Max = 200;
     //热量冷却值,从裁判系统读取，否则默认为24
     uint16_t Cooling_Value = 24;
-    float Heat_Consumption = 10.f;
     //拨弹盘堵转扭矩阈值, 超出被认为卡弹
-    uint16_t Driver_Torque_Threshold = 13000;
+    uint16_t Driver_Torque_Threshold = 8500;
     //摩擦轮单次判定发弹阈值, 超出被认为发射子弹
     uint16_t Friction_Torque_Threshold = 3000;
     //摩擦轮速度判定发弹阈值, 超出则说明已经开机
@@ -189,12 +205,20 @@ protected:
     //发射机构状态
     Enum_Booster_Control_Type Booster_Control_Type = Booster_Control_Type_CEASEFIRE;
     Enum_Friction_Control_Type Friction_Control_Type = Friction_Control_Type_DISABLE;
+    Enum_Shooter_Mode Shooter_Mode = Normal;
     // Enum_Booster_Type Booster_Type;
     //摩擦轮角速度
     float Friction_Omega = 650.0f;
-    int16_t Fric_High_Rpm = 3750;//3800;//3750;
-    int16_t Fric_Low_Rpm = 3150;//3000;
-    int16_t Fric_Transform_Rpm = 50;
+    // 12m/s 外级摩擦轮
+    int16_t Fric_High_Rpm_12m_s = 3750;
+    // 12m/s 内级摩擦轮
+    int16_t Fric_Low_Rpm_12m_s = 2800;      
+    // 16m/s 外级摩擦轮
+    int16_t Fric_High_Rpm_16m_s = 5050;//5100;
+    // 16m/s 内级摩擦轮
+    int16_t Fric_Low_Rpm_16m_s = 4300;//4250;
+    // 弹速调整值 
+    int16_t Fric_Transform_Rpm = 100;
     //拨弹盘实际的目标速度, 一圈八发子弹
     float Driver_Omega = -2.0f * PI;
     //拨弹轮目标绝对角度 加圈数
@@ -267,6 +291,16 @@ void Class_Booster::Set_Friction_Control_Type(Enum_Friction_Control_Type __Frict
     Friction_Control_Type = __Friction_Control_Type;
 }
 
+/**
+ * @brief 设定发射模式
+ * 
+ * @param __Shooter_Mode 
+ */
+void Class_Booster::Set_Shooter_Mode(Enum_Shooter_Mode __Shooter_Mode)
+{
+    Shooter_Mode = __Shooter_Mode;
+}
+
 
 /**
  * @brief 获得发射机构状态
@@ -287,6 +321,16 @@ Enum_Friction_Control_Type Class_Booster::Get_Friction_Control_Type()
 {
     return (Friction_Control_Type);
 
+}
+
+/**
+ * @brief 获得发射模式状态
+ * 
+ * @return Enum_Shooter_Mode 
+ */
+Enum_Shooter_Mode Class_Booster::Get_Shooter_Mode()
+{
+    return (Shooter_Mode);
 }
 
 /**
