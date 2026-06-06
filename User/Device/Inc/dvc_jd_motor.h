@@ -1,24 +1,23 @@
+#include <cmath>
 #include <string.h>
 #include "drv_uart.h"
 #include "drv_math.h"
 #include "agile_modbus.h"
 #include "agile_modbus_rtu.h"
+#include "buzzer.h"
 
-// 电机通信状态
 enum Jodell_Motor_Comm_Status
 {
     Jodell_Motor_Comm_OFFLINE = 0,
     Jodell_Motor_Comm_ONLINE
 };
 
-// 电机返回的运行状态（使能/未使能）
 enum Jodell_Motor_Working_Status
 {
     Jodell_Motor_Working_DISABLE = 0,
     Jodell_Motor_Working_ENABLE
 };
 
-// 控制电机运行状态（使能/未使能）
 enum Jodell_Motor_Control_Status
 {
     Jodell_Motor_Control_ENABLE = 0,
@@ -31,22 +30,38 @@ enum Jodell_Tx_Frame_Type
     Jodell_Tx_Frame_WRITE
 };
 
-struct Jodell_Roll_Rx_Data
-// 查询帧返回的电机旋转轴数据
+enum Jodell_Motor_Fault_Code : uint8_t
 {
-    bool Enable_Status;
-    float Now_Angle;
-    float Now_Omega;
-    float Now_Torque;
+    Jodell_Motor_Fault_NONE = 0x00,
+    Jodell_Motor_Fault_ENCODER = 1 << 2,
+    Jodell_Motor_Fault_OVER_CURRENT = 1 << 3,
+    Jodell_Motor_Fault_VOLTAGE = 1 << 4,
+    Jodell_Motor_Fault_OVER_TEMP = 1 << 6,
+    Jodell_Motor_Fault_PRODUCT = 1 << 7,
+};
+
+struct Jodell_Roll_Rx_Data
+{
+    bool Enable_Status = false;
+    uint8_t Fault_Code = Jodell_Motor_Fault_NONE;
+    bool Has_Fault = false;
+    float Now_Angle = 0.0f;
+    float Now_Absolute_Angle = 0.0f;
+    float Now_Relative_Angle = 0.0f;
+    float Now_Omega = 0.0f;
+    float Now_Torque = 0.0f;
+    int8_t Now_Turns = 0;
+    uint8_t Motion_Mode = 0;
 };
 
 struct Jodell_Gripper_Rx_Data
-// 查询帧返回的夹爪轴数据
 {
-    bool Enable_Status;
-    uint8_t Now_Position;
-    float Now_Omega;
-    float Now_Torque;
+    bool Enable_Status = false;
+    uint8_t Fault_Code = Jodell_Motor_Fault_NONE;
+    bool Has_Fault = false;
+    uint8_t Now_Position = 0;
+    float Now_Omega = 0.0f;
+    float Now_Torque = 0.0f;
 };
 
 class Class_Jodell_Motor
@@ -59,6 +74,8 @@ public:
     void TIM1msMod50_Alive_PeriodElapsedCallback();
 
     void TIM_UART_Tx_PeriodElapsedCallback();
+
+    void Jodell_Error_Check_Buzzer();
 
     inline void Set_Motor_Control_Status(Jodell_Motor_Control_Status __Motor_Control_Status);
     inline Jodell_Motor_Working_Status Get_Motor_Working_Status();
@@ -74,52 +91,54 @@ public:
     inline float Get_Now_Omega();
     inline float Get_Now_Roll();
     inline uint8_t Get_Now_Gripper_Position();
+    inline uint8_t Get_Gripper_Fault_Code();
+    inline uint8_t Get_Roll_Fault_Code();
+    inline bool Get_Motor_Has_Fault();
+    inline bool Get_Gripper_Has_Fault();
+    inline bool Get_Roll_Has_Fault();
 
     inline void Set_Gripper_Position(uint8_t __Target_Gripper_Position);
     inline uint8_t Get_Gripper_Position();
 
 private:
-    // 绑定的UART
     Struct_UART_Manage_Object *UART_Manage_Object;
 
-    // Modbus结构体
     agile_modbus_rtu_t ctx_rtu;
     agile_modbus_t *ctx = &ctx_rtu._ctx;
-    // Modbus发送缓冲区
     uint8_t Modbus_Tx_Buffer[128];
-    // Modbus接收缓冲区
     uint8_t Modbus_Rx_Buffer[128];
-    // 电机的从机地址
     int Slave_Address;
 
-    // 当前时刻的电机通信flag
     uint32_t Flag = 0;
-    // 前一时刻的电机通信flag
     uint32_t Pre_Flag = 0;
 
-    // 电机通信状态
     Jodell_Motor_Comm_Status Motor_Communication_Status = Jodell_Motor_Comm_OFFLINE;
-    // 电机控制状态，影响控制帧的发送
     Jodell_Motor_Control_Status Motor_Control_Status = Jodell_Motor_Control_DISABLE;
-    // 电机返回的使能状态
     Jodell_Motor_Working_Status Motor_Working_Status = Jodell_Motor_Working_DISABLE;
-    // 电机通信帧类型，控制帧或查询帧
     Jodell_Tx_Frame_Type Motor_Tx_Frame_Type = Jodell_Tx_Frame_WRITE;
 
     float Target_Roll = 0.0f;
-    float Target_Relative_Roll = 0.0f;
-    int8_t Target_Roll_Turns = 0;
-    float Target_Omega = 5.0f;
-    float Target_Torque = 1.5f;
+    int16_t Target_Absolute_Position_Deg = 0;
+    int8_t Target_Absolute_Position_Turns = 0;
+    float Target_Omega = 17.4527f;
+    float Target_Torque = 0.3f;
     uint8_t Target_Gripper_Position = 0;
 
-    // 查询帧电机返回的数据
+    // 堵转检测相关变量
+    uint16_t Locked_cnt = 0;
+    bool is_locked = false;
+    // 堵转时的当前角度
+    float Locked_Angle;
+
     Jodell_Gripper_Rx_Data Gripper_Data;
     Jodell_Roll_Rx_Data Roll_Data;
 
     void Data_Process(uint16_t *data, int regs);
 
     void Modbus_Clear_Receive_Buffer();
+
+    // 检测堵转函数
+    void Jodell_Safety_Check();
 };
 
 inline uint8_t Class_Jodell_Motor::Get_Gripper_Position()
@@ -157,6 +176,31 @@ inline uint8_t Class_Jodell_Motor::Get_Now_Gripper_Position()
     return Gripper_Data.Now_Position;
 }
 
+inline uint8_t Class_Jodell_Motor::Get_Gripper_Fault_Code()
+{
+    return Gripper_Data.Fault_Code;
+}
+
+inline uint8_t Class_Jodell_Motor::Get_Roll_Fault_Code()
+{
+    return Roll_Data.Fault_Code;
+}
+
+inline bool Class_Jodell_Motor::Get_Motor_Has_Fault()
+{
+    return (Gripper_Data.Has_Fault || Roll_Data.Has_Fault);
+}
+
+inline bool Class_Jodell_Motor::Get_Gripper_Has_Fault()
+{
+    return Gripper_Data.Has_Fault;
+}
+
+inline bool Class_Jodell_Motor::Get_Roll_Has_Fault()
+{
+    return Roll_Data.Has_Fault;
+}
+
 inline void Class_Jodell_Motor::Set_Gripper_Position(uint8_t __Target_Gripper_Position)
 {
     Target_Gripper_Position = __Target_Gripper_Position;
@@ -169,19 +213,47 @@ inline void Class_Jodell_Motor::Set_Target_Omega(float __Target_Omega)
 
 inline void Class_Jodell_Motor::Set_Target_Roll(float __Target_Roll)
 {
-    // 记录原始目标弧度
     Target_Roll = __Target_Roll;
-    float total_degrees = __Target_Roll * 180.0f / PI;
+    const float total_degrees = __Target_Roll * 180.0f / PI;
+    const int32_t rounded_total_degrees = static_cast<int32_t>(std::lround(total_degrees));
 
-    // 计算圈数
-    int32_t turns = (int32_t)floor(total_degrees / 360.0f);
+    int32_t turns = 0;
+    int32_t absolute_position_deg = rounded_total_degrees;
 
-    // 计算剩余角度
-    float angle = total_degrees - (float)turns * 360.0f;
+    // Absolute mode uses "turn count + signed degree position". This keeps
+    // the continuous target monotonic after crossing 360° while preserving
+    // small negative targets as negative positions instead of wrapping them.
+    if (absolute_position_deg > 360)
+    {
+        turns = static_cast<int32_t>(std::floor(static_cast<float>(absolute_position_deg) / 360.0f));
+        absolute_position_deg -= turns * 360;
+    }
+    else if (absolute_position_deg < -360)
+    {
+        turns = static_cast<int32_t>(std::ceil(static_cast<float>(absolute_position_deg) / 360.0f));
+        absolute_position_deg -= turns * 360;
+    }
 
-    // 待发送的数据
-    Target_Relative_Roll = angle;      // 虽然变量名没改，但现在存的是 0-360 的角度
-    Target_Roll_Turns = (int8_t)turns; // 新增变量记录圈数
+    if (turns > 127)
+    {
+        turns = 127;
+    }
+    else if (turns < -128)
+    {
+        turns = -128;
+    }
+
+    if (absolute_position_deg > 32767)
+    {
+        absolute_position_deg = 32767;
+    }
+    else if (absolute_position_deg < -32768)
+    {
+        absolute_position_deg = -32768;
+    }
+
+    Target_Absolute_Position_Deg = static_cast<int16_t>(absolute_position_deg);
+    Target_Absolute_Position_Turns = static_cast<int8_t>(turns);
 }
 
 inline void Class_Jodell_Motor::Set_Target_Torque(float __Target_Torque)

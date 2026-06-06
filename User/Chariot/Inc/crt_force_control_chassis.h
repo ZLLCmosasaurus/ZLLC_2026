@@ -34,6 +34,7 @@ struct Struct_Chassis_INS_Data
 class Class_Chassis
 {
 public:
+    /*力控底盘相关*/
     // 底盘速度值PID
     Class_PID PID_Velocity_X;
 
@@ -114,6 +115,8 @@ public:
 
     inline float Get_Target_Radian();
 
+    inline bool Get_Yaw_Radian_Control_Enable();
+
     inline void Set_Power_Limit_Max(float __Power_Limit_Max);
 
     inline void Set_Chassis_Control_Type(Enum_Chassis_Control_Type__ __Chassis_Control_Type);
@@ -125,6 +128,8 @@ public:
     inline void Set_Target_Omega(float __Target_Omega);
 
     inline void Set_Target_Radian(float __Target_Radian);
+
+    inline void Set_Yaw_Radian_Control_Enable(bool __Yaw_Radian_Control_Enable);
 
     void Init();
     void TIM_100ms_Alive_PeriodElapsedCallback();
@@ -190,7 +195,7 @@ protected:
     // 写变量
 
     // 功率限制上限
-    float Power_Limit_Max = 60.0f;
+    float Power_Limit_Max = 120.0f;
 
     // 读写变量
 
@@ -205,6 +210,7 @@ protected:
     float Target_Omega = 0.0f;
     // 目标角度
     float Target_Radian = 0.0f;
+    bool Yaw_Radian_Control_Enable = false;
 
     // 内部函数
     void Self_Resolution();
@@ -399,6 +405,11 @@ inline float Class_Chassis::Get_Target_Radian()
     return (Target_Radian);
 }
 
+inline bool Class_Chassis::Get_Yaw_Radian_Control_Enable()
+{
+    return (Yaw_Radian_Control_Enable);
+}
+
 /**
  * @brief 设定功率控制上限
  *
@@ -452,6 +463,21 @@ inline void Class_Chassis::Set_Target_Omega(float __Target_Omega)
 inline void Class_Chassis::Set_Target_Radian(float __Target_Radian)
 {
     Target_Radian = __Target_Radian;
+}
+
+inline void Class_Chassis::Set_Yaw_Radian_Control_Enable(bool __Yaw_Radian_Control_Enable)
+{
+    if (__Yaw_Radian_Control_Enable && !Yaw_Radian_Control_Enable)
+    {
+        Target_Radian = Boardc_BMI.Get_Rad_Yaw();
+        PID_Radian.Set_Integral_Error(0.0f);
+    }
+    else if (!__Yaw_Radian_Control_Enable && Yaw_Radian_Control_Enable)
+    {
+        PID_Radian.Set_Integral_Error(0.0f);
+    }
+
+    Yaw_Radian_Control_Enable = __Yaw_Radian_Control_Enable;
 }
 
 #endif

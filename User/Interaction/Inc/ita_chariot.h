@@ -11,7 +11,7 @@
 
 #ifndef TSK_INTERACTION_H
 #define TSK_INTERACTION_H
-
+#endif
 /* Includes ------------------------------------------------------------------*/
 
 #include "dvc_dr16.h"
@@ -26,6 +26,7 @@
 #include "config.h"
 #include "alg_filter.h"
 #include "arm_model.h"
+#include "dvc_GraphicsSendTask.h"
 
 /* Exported macros -----------------------------------------------------------*/
 class Class_Chariot;
@@ -40,6 +41,17 @@ enum Enum_Chassis_Status
     Chassis_Status_DISABLE = 0,
     Chassis_Status_ENABLE,
 };
+
+#ifdef GIMBAL
+enum Enum_Controller_Key_Status
+{
+    Controller_Key_Status_FREE = 0,
+    Controller_Key_Status_PRESSED,
+    Controller_Key_Status_TRIG_FREE_PRESSED,
+    Controller_Key_Status_TRIG_PRESSED_FREE,
+};
+
+#endif
 
 /**
  * @brief 云台通讯状态
@@ -60,6 +72,7 @@ enum Enum_DR16_Control_Type
     DR16_Control_Type_REMOTE = 0,
     DR16_Control_Type_KEYBOARD,
     DR16_Control_Type_NONE,
+    DR16_Control_Type_IDLE,
 };
 
 /**
@@ -71,6 +84,7 @@ enum Enum_VT13_Control_Type
     VT13_Control_Type_REMOTE = 0,
     VT13_Control_Type_KEYBOARD,
     VT13_Control_Type_NONE,
+    VT13_Control_Type_IDLE,
 };
 
 /**
@@ -90,10 +104,38 @@ enum Enum_Active_Controller
  */
 enum Enum_Keyboard_Control_Type
 {
+    Keyboard_Control_Type_DISABLE,
     Keyboard_Control_Type_MOVING,   // 平地移动
     Keyboard_Control_Type_WORKING,  // 取兑矿模式
     Keyboard_Control_Type_UPLIFT,   // 上台阶模式
-    Keyboard_Control_Type_DOWNLIFT  // 下台阶模式
+    Keyboard_Control_Type_DOWNLIFT, // 下台阶模式
+    Keyboard_Control_Type_SAVE_LOAD // 存取矿模式
+};
+
+/**
+ * @brief 整车朝向枚举类型
+ *
+ */
+enum Enum_Chariot_Orientation
+{
+    Chariot_Orientation_FOREHEAD = 0, // 朝前（机械臂所在方向）
+    Chariot_Orientation_REARBACK = 1   // 朝后
+};
+
+enum Enum_VT03_Yaw_Control_Type
+{
+    VT03_Yaw_Control_Type_MANUAL = 0,
+    VT03_Yaw_Control_Type_FOLLOW
+};
+
+/**
+ * @brief 存取矿数据来源类型
+ *
+ */
+enum Enum_Save_Load_Type
+{
+    SAVE_LOAD_UNIT_1 = 1,
+    SAVE_LOAD_UNIT_2
 };
 
 /**
@@ -117,38 +159,94 @@ public:
     void Reload_TIM_Status_PeriodElapsedCallback();
 };
 
-// 自定义控制器数据格式
-struct Struct_Offline_Controller_Data
+#ifdef GIMBAL
+// 存取矿状态机
+class Class_FSM_Save_Load : public Class_FSM
 {
-    float Angle[6];
-    bool gripper_status;
-} __attribute__((packed));
+public:
+    Class_Gimbal *Gimbal;
+    void Reload_TIM_Status_PeriodElapsedCallback(Enum_Save_Load_Type unit_type, bool step);
+    void Reset();
+
+private:
+    bool test_flag[6] = {false};
+    struct Struct_Enery_Unit_Position
+    {
+        /* angles */
+        float init_pos[6];
+        float auxiliary_pos[6];
+        float finish_pos[6];
+    };
+
+    // 靠内的存取矿角度
+    Struct_Enery_Unit_Position Enery_Unit_1 =
+        {
+            {0.0f},
+            {0.0f, 0.1057f, 1.9896f, 0.0f, 0.0f, 0.0f},
+            {0.0f, 0.4887f, 1.5144f, 0.0f, 0.0f, 0.0f}};
+
+    // 靠外的存取矿角度
+    Struct_Enery_Unit_Position Enery_Unit_2 =
+        {
+            {0.0f},
+            {0.0f, -0.2532f, 2.0040f, 0.0f, 0.0f, 0.0f},
+            {0.0f, 0.0832f, 1.742f, 0.0f, 0.0f, 0.0f}};
+
+    Enum_Save_Load_Type Selected_Unit_Type = SAVE_LOAD_UNIT_1;
+    Enum_Save_Load_Type Active_Unit_Type = SAVE_LOAD_UNIT_1;
+
+    uint16_t Trajectory_Point_Index = 0;
+    uint8_t Trajectory_Point_Tick = 0;
+    bool Trajectory_Forward = true;
+    uint8_t Return_Init_Stage = 0;
+
+    float Now_J1_Radian;
+    float Now_J2_Radian;
+
+    Struct_Enery_Unit_Position &Get_Unit_Position(Enum_Save_Load_Type unit_type);
+    void Hold_Init_Pose(const Struct_Enery_Unit_Position &active_unit);
+    const float *Get_Trajectory_J1() const;
+    const float *Get_Trajectory_J2() const;
+    uint16_t Get_Trajectory_Point_Count() const;
+    float Get_Trajectory_Start_J1() const;
+    float Get_Trajectory_Start_J2() const;
+    float Get_Trajectory_End_J1() const;
+    float Get_Trajectory_End_J2() const;
+    void Prepare_Trajectory(bool forward);
+    bool Run_Trajectory();
+    void Configure_Joint_Planner(bool enable);
+};
+#endif
 
 // 云台发送底盘相关通信帧格式
 // Data[6] 的位域定义
-struct LiftControl {
-    uint8_t lift_select : 4; // 0-3位：控制四个抬升，0为不选中，1为选中
-    uint8_t lift_direction   : 4; // 4-7位：控制升高/降低，0为降低，1为抬高
+struct LiftControl
+{
+    uint8_t lift_select : 4;    // 0-3位：控制四个抬升，0为不选中，1为选中
+    uint8_t lift_direction : 4; // 4-7位：控制升高/降低，0为降低，1为抬高
 } __attribute__((packed));
 
 // Data[7] 的位域定义
-struct OtherStatus {
-    uint8_t chassis_contorl_mode     : 2; // 0-1位：底盘控制模式，00:失能，01：使能，10：上台阶状态机
-    uint8_t uplift_fsm_direction     : 1; // 2位：上台阶状态机前进/保持
-    uint8_t backdoor_jump            : 1; // 3位：150mm台阶后门跳转开关
-    uint8_t downlift_init            : 1; // 4位：下台阶初始抬升高度跳转
-    uint8_t wheel_slave_ctrl         : 1; // 5位：小轮子从动开关
-    uint8_t reserved                 : 2; // 6-7位：保留
+struct OtherStatus
+{
+    uint8_t chassis_contorl_mode : 2; // 0-1位：底盘控制模式，00:失能，01：使能，10：上台阶状态机
+    uint8_t uplift_fsm_direction : 1; // 2位：上台阶状态机前进/保持
+    uint8_t backdoor_jump : 1;        // 3位：150mm台阶后门跳转开关
+    uint8_t downlift_init : 1;        // 4位：下台阶初始抬升高度跳转
+    uint8_t wheel_slave_ctrl : 1;     // 5位：小轮子从动开关
+    uint8_t lift_calibrate : 1;             // 6位：保留
+    uint8_t yaw_data_is_radian : 1;   // 7位：0=Yaw角速度，1=Yaw角度增量
 } __attribute__((packed));
 
 // 完整的协议数据结构
-struct Gimbal_Tx_Chassis_Frame {
-    int16_t x_velocity;      // Data[0,1] X轴速度
-    int16_t y_velocity;      // Data[2,3] Y轴速度
-    int16_t yaw_data;        // Data[4,5] Yaw速度/角度
-    LiftControl lift;        // Data[6]   抬升控制
-    OtherStatus status;     // Data[7]   其他状态
-}__attribute__((packed));
+struct Gimbal_Tx_Chassis_Frame
+{
+    int16_t x_velocity; // Data[0,1] X轴速度
+    int16_t y_velocity; // Data[2,3] Y轴速度
+    int16_t yaw_data;   // Data[4,5] Yaw速度/角度
+    LiftControl lift;   // Data[6]   抬升控制
+    OtherStatus status; // Data[7]   其他状态
+} __attribute__((packed));
 
 /**
  * @brief 控制对象
@@ -175,10 +273,10 @@ public:
     // 发射机构
     Class_Booster Booster;
 
-    // 离线状态下自定义控制器数据
-    Struct_Offline_Controller_Data Offline_Controller_Data;
+    // 离线状态下自定义控制器
+    Class_Custom_Controller Offline_Custom_Controller;
 
-    uint8_t UART1_Buffer[14];
+    uint8_t Controller_Buffer[15];
 
     // 遥控器离线保护控制状态机
     Class_FSM_Alive_Control FSM_Alive_Control;
@@ -187,30 +285,8 @@ public:
     Class_FSM_Alive_Control_VT13 FSM_Alive_Control_VT13;
     friend class Class_FSM_Alive_Control_VT13;
 
-#elifdef CHASSIS_TEST
-    Class_DR16 DR16;
-    float DR16_Dead_Zone = 0.3f;
-    void Chassis_Test_Control();
-    // 遥控器离线保护控制状态机
-    Class_FSM_Alive_Control FSM_Alive_Control;
-    friend class Class_FSM_Alive_Control;
-
-    Enum_Chassis_Control_Type Pre_Chassis_Control_Type = Chassis_Control_Type_DISABLE;
-    Enum_Chassis_Control_Type__ Pre_Chassis_Control_Type__ = Chassis_Control_Type_DISABLE__;
-    inline Enum_Chassis_Control_Type Get_Pre_Chassis_Control_Type();
-    inline Enum_Chassis_Control_Type__ Get_Pre_Chassis_Control_Type__();
-    inline void Set_Pre_Chassis_Control_Type(Enum_Chassis_Control_Type __Chassis_Control_Type);
-    inline void Set_Pre_Chassis_Control_Type__(Enum_Chassis_Control_Type__ __Chassis_Control_Type);
-
-#endif
-
-#ifdef MOTOR_TEST_CHASSIS
-    Class_DJI_Motor_C620 Test_Motor;
-    void Init_Motor_Test_Chassis();
-    void Output_Motor_Test_Chassis();
-    float target_omega = 0.0f; // rad
-    float target_angle = 0.0f; // rad
-    Enum_DJI_Motor_Control_Method Test_Method = DJI_Motor_Control_Method_OMEGA;
+    // 存取矿状态机
+    Class_FSM_Save_Load FSM_Save_Load;
 #endif
 
     void Init(float __DR16_Dead_Zone = 0);
@@ -244,6 +320,7 @@ public:
 
     void CAN_Gimbal_Rx_Chassis_Callback();
     void CAN_Gimbal_Tx_Chassis_Callback();
+    void CAN_Gimbal_Tx_Chassis_UI_Callback();
 
     void TIM_Control_Callback();
 
@@ -261,13 +338,13 @@ public:
     Enum_MiniPC_Status MiniPC_Status = MiniPC_Status_DISABLE;
     // 裁判系统UI刷新状态
     Enum_Referee_UI_Refresh_Status Referee_UI_Refresh_Status = Referee_UI_Refresh_Status_DISABLE;
-    // 数据帧结构体
+    // 云台发送到底盘的数据帧结构体
     Gimbal_Tx_Chassis_Frame Rx_Frame;
-    
+    // 云台发送到底盘的UI更新帧结构体
+    graph_ui_sync_t Rx_UI_State;
+
     void Judge_DR16_Control_Type();
     void Judge_VT13_Control_Type();
-
-    void Control_Chassis();
 
     // 角度目标值
     float tmp_j0_pitch_radian, tmp_j1_yaw_radian, tmp_j2_yaw_radian, tmp_j3_roll_radian, tmp_j4_pitch_radian, tmp_j5_roll_radian;
@@ -275,8 +352,12 @@ public:
     float tmp_gripper_radian;
 
     // 遥控器摇杆值
+    float left_x, left_y, right_x, yaw;
     float dr16_right_x, dr16_right_y, dr16_left_x, dr16_left_y, dr16_yaw;
     float vt13_right_x, vt13_right_y, vt13_left_x, vt13_left_y, vt13_yaw;
+
+    // 鼠标转向灵敏度值
+    float Mouse_Resolution = 5.0f;
 
 protected:
     // 初始化相关常量
@@ -293,9 +374,6 @@ protected:
 #endif
 
 #ifdef GIMBAL
-    // 机械臂在线状态，当所有电机全掉线时视为机械臂掉线，需要重新arm_init
-    bool is_arm_online = true;
-
     // 遥控器相关变量
     // 遥控器拨动的死区, 0~1
     float DR16_Dead_Zone = 0.3f;
@@ -324,8 +402,42 @@ protected:
     float DR16_Mouse_VT03_Yaw_Angle_Resolution = 57.8f * 10.0f;
     // 鼠标控制VT03图传Pitch角度灵敏度系数
     float DR16_Mouse_VT03_Pitch_Angle_Resolution = 57.8f * 10.0f;
+
     // 键鼠控制模式下机器人工况模式
-    Enum_Keyboard_Control_Type Keyboard_Control_Type = Keyboard_Control_Type_MOVING;
+    Enum_Keyboard_Control_Type Keyboard_Control_Type = Keyboard_Control_Type_DISABLE;
+    // 图传以及底盘掉头方向
+    Enum_Chariot_Orientation Chariot_Orientation = Chariot_Orientation_FOREHEAD;
+    Enum_VT03_Yaw_Control_Type VT03_Yaw_Control_Type = VT03_Yaw_Control_Type_MANUAL;
+    /*存取矿状态机数据来源*/
+    Enum_Save_Load_Type Save_Load_Unit = SAVE_LOAD_UNIT_1;
+    bool Save_Load_Confirm_Request = false;
+    bool Lift_Calibrate_Request = false;
+    float controller_right_y = 0.0f;
+    float controller_mouse_x = 0.0f;
+    float controller_mouse_y = 0.0f;
+    float controller_mouse_z = 0.0f;
+
+    Enum_Controller_Key_Status controller_mouse_left_key = Controller_Key_Status_FREE;
+    Enum_Controller_Key_Status controller_mouse_right_key = Controller_Key_Status_FREE;
+    Enum_Controller_Key_Status controller_key_w = Controller_Key_Status_FREE;
+    Enum_Controller_Key_Status controller_key_s = Controller_Key_Status_FREE;
+    Enum_Controller_Key_Status controller_key_a = Controller_Key_Status_FREE;
+    Enum_Controller_Key_Status controller_key_d = Controller_Key_Status_FREE;
+    Enum_Controller_Key_Status controller_key_shift = Controller_Key_Status_FREE;
+    Enum_Controller_Key_Status controller_key_ctrl = Controller_Key_Status_FREE;
+    Enum_Controller_Key_Status controller_key_q = Controller_Key_Status_FREE;
+    Enum_Controller_Key_Status controller_key_e = Controller_Key_Status_FREE;
+    Enum_Controller_Key_Status controller_key_r = Controller_Key_Status_FREE;
+    Enum_Controller_Key_Status controller_key_f = Controller_Key_Status_FREE;
+    Enum_Controller_Key_Status controller_key_g = Controller_Key_Status_FREE;
+    Enum_Controller_Key_Status controller_key_z = Controller_Key_Status_FREE;
+    Enum_Controller_Key_Status controller_key_x = Controller_Key_Status_FREE;
+    Enum_Controller_Key_Status controller_key_c = Controller_Key_Status_FREE;
+    Enum_Controller_Key_Status controller_key_v = Controller_Key_Status_FREE;
+    Enum_Controller_Key_Status controller_key_b = Controller_Key_Status_FREE;
+    Enum_DR16_Switch_Status controller_dr16_left_switch = DR16_Switch_Status_UP;
+    Enum_DR16_Switch_Status controller_dr16_right_switch = DR16_Switch_Status_UP;
+    Enum_VT13_Switch_Status controller_vt13_switch = VT13_Switch_Status_Left;
 
     // 内部变量
     // 遥控器离线计数
@@ -350,7 +462,7 @@ protected:
     // 单发连发标志位
     uint8_t Shoot_Flag = 0;
     // DR16控制数据来源
-    Enum_DR16_Control_Type DR16_Control_Type = DR16_Control_Type_REMOTE;
+    Enum_DR16_Control_Type DR16_Control_Type = DR16_Control_Type_NONE;
     Enum_VT13_Control_Type VT13_Control_Type = VT13_Control_Type_NONE;
     // 当前使用的遥控器
     Enum_Active_Controller Active_Controller = Controller_NONE;
@@ -364,15 +476,20 @@ protected:
     Enum_DR16_Control_Type Get_DR16_Control_Type();
     // 获取VT13控制类型
     Enum_VT13_Control_Type Get_VT13_Control_Type();
+    void Controller_Data_Update();
+    void Create_Controller_Snapshot();
+    void Judge_Keyboard_Mode();
+    void Judge_Chariot_Control_Type();
 
     // void Judge_DR16_Control_Type();
 
-    // void Control_Chassis();
-    void Control_Gimbal();
-    void Control_Booster();
-
     void Transform_Mouse_Axis();
 #endif
+
+    void Control_Chassis();
+    void Control_Gimbal();
+    void Control_Booster();
+    void UI_Remote_Update();
 };
 
 /* Exported variables --------------------------------------------------------*/
@@ -527,5 +644,4 @@ Enum_Gimbal_Status Class_Chariot::Get_Gimbal_Status()
 
 #endif
 
-#endif
 /************************ COPYRIGHT(C) USTC-ROBOWALKER **************************/

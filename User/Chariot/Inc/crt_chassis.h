@@ -32,6 +32,7 @@
 #include "alg_fsm.h"
 #include "dvc_dr16.h"
 #include "dvc_dwt.h"
+#include "my_kalman.h"
 /* Exported macros -----------------------------------------------------------*/
 #define wheel_diameter 0.14100000f  // 轮子直径，m
 #define half_width 0.159f           // m
@@ -66,7 +67,8 @@
  * @brief 底盘右拨杆和抬升状态枚举
  *
  */
-enum Enum_Chassis_DR16_Right_Uplift_Status{
+enum Enum_Chassis_DR16_Right_Uplift_Status
+{
     DR16_Right_Switch_MIDDLE = 0,
     DR16_Right_Switch_UP,
     DR16_Right_Switch_DOWN,
@@ -538,11 +540,13 @@ void Class_Tricycle_Chassis::Set_Supercap_Mode(Enum_Supercap_Mode __Supercap_Mod
 }
 
 class Class_Mecanum_Chassis;
+class Class_Chassis;
 class Class_FSM_Calibration_Chassis : public Class_FSM
 {
 public:
     Class_Mecanum_Chassis *Chassis;
     void Reload_TIM_Status_PeriodElapsedCallback();
+    void Request_Recalibration();
 
     /*电机校准执行函数*/
     bool Motor_Calibration(Class_DJI_Motor_C620 *Motor, uint8_t index, float locked_torque, uint16_t &locked_cnt);
@@ -556,6 +560,7 @@ protected:
     float uplift_offset[4] = {0.0f};
     float uplift_cali_torque = 10000.0f;
     bool uplift_cali_status[4] = {false};
+    bool uplift_online_status[4] = {false};
 
     uint16_t uplift_locked_cnt[4] = {0}; // 抬升堵转时间计数
 };
@@ -564,7 +569,8 @@ class Class_FSM_Ledder : public Class_FSM
 {
 public:
     Class_Mecanum_Chassis *Chassis;
-    
+    Class_Chassis *Force_Chassis = nullptr;
+
     Enum_Uplift_FSM_Direction FSM_Direction = Uplift_FSM_HOLD;
 
     float Yaw = 0.0f;
@@ -575,18 +581,51 @@ public:
     uint8_t TRIGGER_CNT = 0;
     uint16_t FORWARD_CNT = 0;
 
+    void Init_Attitude_Control();
     void Reload_TIM_Status_PeriodElapsedCallback();
 
 protected:
+    void Reset_Attitude_Control();
+    bool Get_Attitude_Feedback(float *pitch, float *roll);
+    void Apply_Attitude_Control(const float *base_target,
+                                const float *lower_limit,
+                                const float *upper_limit,
+                                bool unilateral_pitch_limit,
+                                float pitch_target_rad,
+                                float window_limit_rad = 0.0f);
     /*上台阶相关角度*/
     float ledder_prepare[4] = {22.0f, 22.0f, 20.0f, 20.0f};
 
-    float ledder_1_touch[4] = {18.0f, 18.0f, 17.5f, 17.5f};
-    float ledder_1_uplift[4] = {0.0f, 0.0f, 1.5f, 1.5f};
+    float ledder_1_touch[4] = {18.0f, 18.0f, 15.0f, 15.0f};
+    float ledder_1_uplift[4] = {0.0f, 0.0f, 0.0f, 0.0f};
     float ledder_1_over[4] = {22.0f, 22.0f, 20.0f, 20.0f};
     float ledder_2_touch[4] = {11.0f, 11.0f, 17.0f, 17.0f};
     float ledder_2_uplift[4] = {0.0f, 0.0f, 2.5f, 2.5f};
     float ledder_2_over[4] = {22.0f, 22.0f, 20.0f, 20.0f};
+    float Base_Uplift_Target[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+
+    // 抬升机构触地状态判断相关变量
+    float Touched_Torque;
+
+    Class_PID Pitch_PID;
+    Class_PID Roll_PID;
+
+    // Index map:
+    // 0 - right front, 1 - left front, 2 - left rear, 3 - right rear
+    // Sign convention:
+    // Pitch > 0: front side goes down.
+    // Roll > 0: right side goes up.
+    // TODO: replace with the final commissioning value if a different pitch is required.
+    float Pitch_Offset = 0.0f;
+    float Init_Pitch_Target_Base_Rad = -(5.0f / 180.0f) * PI;
+    float Init_Pitch_Target_Rad = -(5.0f / 180.0f) * PI;
+    float Init_Attitude_Window_Rad = 0.8f;
+    float Init_Attitude_Out_Max = 0.8f;
+    float Lift_Attitude_Out_Max = 1.0f;
+    float Attitude_Dead_Zone_Rad = 0.0087f;
+
+    float Pitch_Mix[4] = {1.0f, 1.0f, -1.0f, -1.0f};
+    float Roll_Mix[4] = {-1.0f, 1.0f, 1.0f, -1.0f};
 
     Enum_DR16_Switch_Status Judge_DR16_Switch_Status(Enum_DR16_Switch_Status Now_Status, Enum_DR16_Switch_Status Pre_Status);
 };
@@ -595,6 +634,7 @@ class Class_FSM_Off_Ledder : public Class_FSM_Ledder
 {
 public:
     void Reload_TIM_Status_PeriodElapsedCallback();
+
 protected:
     // ToF测距模块回传的底盘离地高度
     float Height_Meter;
@@ -661,6 +701,10 @@ public:
     inline float Get_Target_Omega();
     inline float Get_Delta_Radian();
     inline float Get_Target_Track_Omega();
+    inline float Get_Track_Request_Power();
+    inline float Get_Track_Allocated_Power();
+    inline float Get_Track_Power_Scale();
+    inline float Get_Slope_Track_Power_Limit();
     inline float Get_Target_Uplift_Radian(uint8_t index);
 
     inline Enum_Supercap_Mode Get_Supercap_Mode();
@@ -671,6 +715,7 @@ public:
     inline bool Get_Backdoor_Jump();
     inline bool Get_Downlift_Init();
     inline Enum_Wheel_Slave_Status Get_Wheel_Slave_Status();
+    inline bool Get_Lift_Calibrate_Status();
 
     inline void Set_Chassis_Control_Type(Enum_Chassis_Control_Type __Chassis_Control_Type);
     inline void Set_Target_Velocity_X(float __Target_Velocity_X);
@@ -681,10 +726,13 @@ public:
     inline void Set_Now_Velocity_Y(float __Now_Velocity_Y);
     inline void Set_Now_Omega(float __Now_Omega);
     inline void Set_Target_Track_Omega(float __Target_Track_Omega);
+    inline void Set_Track_Allocated_Power(float __Track_Allocated_Power);
+    inline void Set_Track_Power_Scale(float __Track_Power_Scale);
+    inline void Set_Slope_Track_Power_Limit(float __Slope_Track_Power_Limit);
     inline void Set_Target_Uplift_Radian(uint8_t index, float __Target_Uplift_Radian);
     inline void Set_Supercap_Mode(Enum_Supercap_Mode __Supercap_Mode);
     inline void Set_DR16_Right_Uplift_Status(Enum_Chassis_DR16_Right_Uplift_Status __DR16_Right_Uplift_Status);
-    
+    inline void Set_Lift_Calibrate_Status(bool flag);
     inline void Set_Lift_Direction(uint8_t index, Enum_Lift_Direction direction);
     inline void Set_Lift_Select(bool select_1, bool select_2, bool select_3, bool select_4);
     inline void Set_Wheel_Slave_Status(Enum_Wheel_Slave_Status __Wheel_Slave_Status);
@@ -695,7 +743,10 @@ public:
     inline void Set_Velocity_Y_Max(float __Velocity_Y_Max);
     inline void Set_Velocity_X_Max(float __Velocity_X_Max);
 
+    void Request_Lift_Recalibration();
     void TIM_Calculate_PeriodElapsedCallback(Enum_Sprint_Status __Sprint_Status);
+    float Calculate_Track_Request_Power();
+    void Apply_Track_Power_Limit();
 
     // 着地时的角度，相对于Min_Radian
     float Downlift_Touch_Radian[4] = {9.0f, 9.0f, 19.5f, 19.5f};
@@ -722,7 +773,8 @@ protected:
         Uplift_Max_Radian[0] - 28.5f,
         Uplift_Max_Radian[1] - 28.5f,
         Uplift_Max_Radian[2] - 21.15f,
-        Uplift_Max_Radian[3] - 21.15f,};
+        Uplift_Max_Radian[3] - 21.15f,
+    };
 
     // 常量
 
@@ -734,6 +786,10 @@ protected:
     float Target_Motor_Omega[4];
     // 履带电机目标角速度，rad/s，两边保持一致
     float Target_Track_Omega;
+    float Track_Request_Power = 0.0f;
+    float Track_Allocated_Power = 0.0f;
+    float Track_Power_Scale = 1.0f;
+    float Slope_Track_Power_Limit = 60.0f;
     // 传给抬升电机的实际目标角度
     float Target_Uplift_Motor_Radian[4];
     // 用于和Uplift_Min_Radian相加得到电机目标角度的值，也就是加offset之前的目标角度，主要用于遥控器逻辑，初始在最高点，设为最小值和最大值之间的差值，此时赋给电机的角度应为0.0f
@@ -756,12 +812,14 @@ protected:
     Enum_Chassis_Control_Type Chassis_Control_Type = Chassis_Control_Type_DISABLE;
     Enum_Supercap_Mode Supercap_Mode = Supercap_DISABLE;
     Enum_Chassis_DR16_Right_Uplift_Status DR16_Right_Uplift_Status = DR16_Right_Switch_MIDDLE;
-    
+
     // 抬升状态机枚举
     Enum_Uplift_FSM_Direction Uplift_FSM_Direction = Uplift_FSM_HOLD;
     // 小轮子从动状态枚举
     Enum_Wheel_Slave_Status Wheel_Slave_Status = Wheel_Slave_OFF;
     // 抬升控制相关
+    // 抬升重新校准
+    bool Lift_Calibrate = false;
     // 抬升选择
     bool Lift_Select[4] = {false};
     // 抬升方向
@@ -881,6 +939,26 @@ float Class_Mecanum_Chassis::Get_Target_Track_Omega()
     return (Target_Track_Omega);
 }
 
+float Class_Mecanum_Chassis::Get_Track_Request_Power()
+{
+    return (Track_Request_Power);
+}
+
+float Class_Mecanum_Chassis::Get_Track_Allocated_Power()
+{
+    return (Track_Allocated_Power);
+}
+
+float Class_Mecanum_Chassis::Get_Track_Power_Scale()
+{
+    return (Track_Power_Scale);
+}
+
+float Class_Mecanum_Chassis::Get_Slope_Track_Power_Limit()
+{
+    return (Slope_Track_Power_Limit);
+}
+
 /**
  * @brief 获取当前电机功率
  *
@@ -939,7 +1017,8 @@ Enum_Chassis_DR16_Right_Uplift_Status Class_Mecanum_Chassis::Get_DR16_Right_Upli
  */
 inline Enum_Lift_Direction Class_Mecanum_Chassis::Get_Lift_Direction(uint8_t index)
 {
-    if (index >= 4) return Lift_Direction_HOLD;
+    if (index >= 4)
+        return Lift_Direction_HOLD;
     return Lift_Direction[index];
 }
 
@@ -948,7 +1027,8 @@ inline Enum_Lift_Direction Class_Mecanum_Chassis::Get_Lift_Direction(uint8_t ind
  */
 inline bool Class_Mecanum_Chassis::Get_Lift_Select(uint8_t index)
 {
-    if (index >= 4) return false;
+    if (index >= 4)
+        return false;
     return Lift_Select[index];
 }
 
@@ -982,6 +1062,11 @@ inline bool Class_Mecanum_Chassis::Get_Downlift_Init()
 inline Enum_Wheel_Slave_Status Class_Mecanum_Chassis::Get_Wheel_Slave_Status()
 {
     return Wheel_Slave_Status;
+}
+
+inline bool Class_Mecanum_Chassis::Get_Lift_Calibrate_Status()
+{
+    return Lift_Calibrate;
 }
 
 /**
@@ -1037,6 +1122,26 @@ void Class_Mecanum_Chassis::Set_Delta_Radian(float __Delta_Radian)
 void Class_Mecanum_Chassis::Set_Target_Track_Omega(float __Target_Track_Omega)
 {
     Target_Track_Omega = __Target_Track_Omega;
+}
+
+void Class_Mecanum_Chassis::Set_Track_Allocated_Power(float __Track_Allocated_Power)
+{
+    Track_Allocated_Power = __Track_Allocated_Power;
+}
+
+void Class_Mecanum_Chassis::Set_Track_Power_Scale(float __Track_Power_Scale)
+{
+    Track_Power_Scale = __Track_Power_Scale;
+}
+
+inline void Class_Mecanum_Chassis::Set_Lift_Calibrate_Status(bool flag)
+{
+    Lift_Calibrate = flag;
+}
+
+void Class_Mecanum_Chassis::Set_Slope_Track_Power_Limit(float __Slope_Track_Power_Limit)
+{
+    Slope_Track_Power_Limit = __Slope_Track_Power_Limit;
 }
 
 /**
@@ -1101,9 +1206,9 @@ void Class_Mecanum_Chassis::Set_Target_Uplift_Radian(uint8_t index, float __Targ
         return;
 
     Target_Uplift_Radian[index] = __Target_Radian;
-    Target_Uplift_Motor_Radian[index] = Uplift_Min_Radian[index] + Target_Uplift_Radian[index];
-
     Math_Constrain(Target_Uplift_Radian + index, 0.0f, Uplift_Max_Radian[index] - Uplift_Min_Radian[index]);
+
+    Target_Uplift_Motor_Radian[index] = Uplift_Min_Radian[index] + Target_Uplift_Radian[index];
     Math_Constrain(Target_Uplift_Motor_Radian + index, Uplift_Min_Radian[index], Uplift_Max_Radian[index]);
 }
 
@@ -1117,13 +1222,13 @@ void Class_Mecanum_Chassis::Set_DR16_Right_Uplift_Status(Enum_Chassis_DR16_Right
     DR16_Right_Uplift_Status = __DR16_Right_Uplift_Status;
 }
 
-
 /**
  * @brief 设定指定抬升机构的运动方向
  */
 inline void Class_Mecanum_Chassis::Set_Lift_Direction(uint8_t index, Enum_Lift_Direction direction)
 {
-    if (index >= 4) return;
+    if (index >= 4)
+        return;
     Lift_Direction[index] = direction;
 }
 

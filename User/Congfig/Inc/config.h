@@ -17,13 +17,8 @@
 /* Exported macros -----------------------------------------------------------*/
 
 //底盘或云台状态
-//#define CHASSIS
+// #define CHASSIS
 #define GIMBAL
-
-#ifdef CHASSIS
-//#define RADIAN_CONTROL
-#define OMEGA_CONTROL
-#endif
 
 //调试或比赛状态
 #define DEBUG
@@ -48,7 +43,7 @@
 //#define BUFFER_LOOP
 
 //遥控器选择
-//#define USE_VT13
+#define USE_VT13
 #define USE_DR16
 
 /* 兵种/底盘类型选择*/

@@ -340,7 +340,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32H723xx,__FPU_PRESENT=1,__FPU_USED=1,ARM_MATH_CM7,USE_PWR_LDO_SUPPLY</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;../USB_DEVICE/App;../USB_DEVICE/Target;../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;../Drivers/CMSIS/Device/ST/STM32H7xx/Include;../User/Congfig/Inc;../User/Task/Inc;../User/Interaction/Inc;../User/Chariot/Inc;../User/Device/Inc;../User/Driver/Inc;../User/Algorithm/Inc;../Drivers/CMSIS/Include</IncludePath>
+              <IncludePath>../Core/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;../USB_DEVICE/App;../USB_DEVICE/Target;../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;../Drivers/CMSIS/Device/ST/STM32H7xx/Include;../User/Congfig/Inc;../User/Task/Inc;../User/Interaction/Inc;../User/Chariot/Inc;../User/Device/Inc;../User/Driver/Inc;../User/Algorithm/Inc;../Drivers/CMSIS/Include;../User/UI/Inc</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -426,6 +426,11 @@
               <FileName>crt_gimbal.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>..\User\Chariot\Src\crt_gimbal.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>crt_joint_planner.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User\Chariot\Src\crt_joint_planner.cpp</FilePath>
             </File>
             <File>
               <FileName>arm_model.cpp</FileName>
@@ -551,6 +556,11 @@
               <FileName>buzzer_bsp.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\Device\Src\buzzer_bsp.c</FilePath>
+            </File>
+            <File>
+              <FileName>dvc_CustomController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User\Device\Src\dvc_CustomController.cpp</FilePath>
             </File>
           </Files>
         </Group>

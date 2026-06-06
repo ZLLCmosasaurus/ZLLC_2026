@@ -4,6 +4,7 @@ void Class_Chassis::Init()
 {
     // PID初始化
 
+    /*力控底盘PID参数*/
     // 底盘速度xPID, 输出摩擦力
     PID_Velocity_X.Init(60.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1000.0f, 0.002f);
 
@@ -19,16 +20,16 @@ void Class_Chassis::Init()
     // 轮向电机ID初始化
     // 电机初始化
     Motor_Wheel[0].Init(&hfdcan1, Motor_DJI_ID_0x201, Motor_DJI_Control_Method_CURRENT, 3591.f / 187.f, Motor_DJI_Power_Limit_Status_ENABLE);
-    Motor_Wheel[0].PID_Omega.Init(0.0f, 0.0f, 0.0f, 0.0f, 20.0f, 20.0f);
+    Motor_Wheel[0].PID_Omega.Init(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, Motor_Wheel[0].Get_Current_Max());
     // 电机初始化
     Motor_Wheel[1].Init(&hfdcan1, Motor_DJI_ID_0x202, Motor_DJI_Control_Method_CURRENT, 3591.f / 187.f, Motor_DJI_Power_Limit_Status_ENABLE);
-    Motor_Wheel[1].PID_Omega.Init(0.0f, 0.0f, 0.0f, 0.0f, 20.0f, 20.0f);
+    Motor_Wheel[1].PID_Omega.Init(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, Motor_Wheel[1].Get_Current_Max());
     // 电机初始化
     Motor_Wheel[2].Init(&hfdcan1, Motor_DJI_ID_0x203, Motor_DJI_Control_Method_CURRENT, 3591.f / 187.f, Motor_DJI_Power_Limit_Status_ENABLE);
-    Motor_Wheel[2].PID_Omega.Init(0.0f, 0.0f, 0.0f, 0.0f, 20.0f, 20.0f);
+    Motor_Wheel[2].PID_Omega.Init(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, Motor_Wheel[2].Get_Current_Max());
     // 电机初始化
     Motor_Wheel[3].Init(&hfdcan1, Motor_DJI_ID_0x204, Motor_DJI_Control_Method_CURRENT, 3591.f / 187.f, Motor_DJI_Power_Limit_Status_ENABLE);
-    Motor_Wheel[3].PID_Omega.Init(0.0f, 0.0f, 0.0f, 0.0f, 20.0f, 20.0f);
+    Motor_Wheel[3].PID_Omega.Init(1.0f, 0.0f, 0.0f, 0.0f, 0.0f, Motor_Wheel[3].Get_Current_Max());
 
     // 超级电容初始化
     Supercap.Init_UART(&huart1);
@@ -36,27 +37,22 @@ void Class_Chassis::Init()
     // imu初始化
     Boardc_BMI.Init();
 
-    // 低通滤波初始化
-    // 实际速度滤波
-    //  PID_Velocity_Filter[0].Init(-4.0f,4.0f,Filter_Fourier_Type_LOWPASS,10.0f,0.0f,500.0f,5);
-    //  PID_Velocity_Filter[1].Init(-4.0f,4.0f,Filter_Fourier_Type_LOWPASS,10.0f,0.0f,500.0f,5);
-    //  PID_Omega_Filter.Init(-20.0f,20.0f,Filter_Fourier_Type_LOWPASS,10.0f,0.0f,500.0f,15);
-
     // Spike滤波初始化
     init_filter(&Velocity_X_Spike, 5);
     init_filter(&Velocity_Y_Spike, 5);
     init_filter(&Omega_Spike, 5);
 
     // 斜坡函数加减速速度X  控制周期1ms
-    Slope_Velocity_X.Init(0.005f, 0.01f);
+    Slope_Velocity_X.Init(0.0075f, 0.0075f);
     // 斜坡函数加减速速度Y  控制周期1ms
-    Slope_Velocity_Y.Init(0.005f, 0.01f);
+    Slope_Velocity_Y.Init(0.0075f, 0.0075f);
     // 斜坡函数加减速角速度
     Slope_Omega.Init(0.05f, 0.05f);
+    Power_Limit.Set_K3(0.0f);
 }
 
-// #define Control_Type_Oemga
-#define Control_Type_Current
+#define Control_Type_Omega
+// #define Control_Type_Current
 
 void Class_Chassis::TIM_100ms_Alive_PeriodElapsedCallback()
 {
@@ -72,9 +68,15 @@ void Class_Chassis::TIM_100ms_Alive_PeriodElapsedCallback()
  */
 void Class_Chassis::TIM_2ms_Resolution_PeriodElapsedCallback()
 {
+    Angle_Pitch = Boardc_BMI.Get_Rad_Pitch();
+    Angle_Roll = Boardc_BMI.Get_Rad_Roll();
+
     Self_Resolution();
 
-    PID_Radian_Output();
+    if (Yaw_Radian_Control_Enable)
+    {
+        PID_Radian_Output();
+    }
 
     // PID_Velocity_Filter[0].Set_Now(Now_Velocity_X);
     // PID_Velocity_Filter[0].TIM_Adjust_PeriodElapsedCallback();
@@ -107,6 +109,7 @@ void Class_Chassis::TIM_2ms_Resolution_PeriodElapsedCallback()
  */
 void Class_Chassis::TIM_2ms_Control_PeriodElapsedCallback()
 {
+    // 运动学逆解算计算出各个轮子速度
     Kinematics_Inverse_Resolution();
 
 #ifdef Control_Type_Current
@@ -162,6 +165,7 @@ void Class_Chassis::Output_To_Dynamics()
     }
     case (Chassis_Control_Type_NORMAL__):
     {
+        /*力控底盘力矩PID计算*/
         PID_Velocity_X.Set_Target(Slope_Velocity_X.Get_Out());
         PID_Velocity_X.Set_Now(Now_Velocity_X_Spike);
         PID_Velocity_X.TIM_Adjust_PeriodElapsedCallback();
@@ -240,6 +244,10 @@ void Class_Chassis::Output_To_Motor()
             Motor_Wheel[i].Set_Control_Method(Motor_DJI_Control_Method_CURRENT);
 
             Motor_Wheel[i].Set_Target_Current(0.0f);
+
+            #ifdef Control_Type_Omega
+            Motor_Wheel[i].PID_Omega.Set_Integral_Error(0.0f);
+            #endif
         }
 
         break;
@@ -247,7 +255,6 @@ void Class_Chassis::Output_To_Motor()
     case (Chassis_Control_Type_NORMAL__):
     {
 #ifdef Control_Type_Current
-        // 全向模型
         for (int i = 0; i < 4; i++)
         {
             Motor_Wheel[i].Set_Control_Method(Motor_DJI_Control_Method_CURRENT);
@@ -258,7 +265,7 @@ void Class_Chassis::Output_To_Motor()
             Motor_Wheel[i].Set_Target_Current(Target_Wheel_Current[i]);
         }
 #endif
-#ifdef Control_Type_Oemga
+#ifdef Control_Type_Omega
         for (int i = 0; i < 4; i++)
         {
             Motor_Wheel[i].Set_Control_Method(Motor_DJI_Control_Method_OMEGA);
@@ -276,8 +283,11 @@ void Class_Chassis::Output_To_Motor()
     }
 
     // 进行功率限制
-    Power_Management.Max_Power = 120.0f;
+    Power_Management.Max_Power = Power_Limit_Max;
     Power_Limit.Power_Task(Power_Management);
+    Wheel_Factor = Power_Management.Scale_Conffient;
+    Now_Wheel_Motor_Power = Power_Management.Scaled_Total_Power;
+    Now_Motor_Power = Now_Wheel_Motor_Power;
 
     for (int i = 0; i < 4; i++)
     {
@@ -292,16 +302,12 @@ void Class_Chassis::Output_To_Motor()
 void Class_Chassis::Self_Resolution()
 // 正运动学解算
 {
-    // static float last_X = 0.0f;
-    // static float last_Y = 0.0f;
-    // static float last_Omega = 0.0f;
-    // 根据电机编码器与陀螺仪计算速度和角度
-
     Now_Velocity_X = 0.0f;
     Now_Velocity_Y = 0.0f;
     Now_Omega = 0.0f;
 
     // 轮线速度的计算方式 v = Ω * r，根据正运动学测得得结果，1和2号的轮子转向反了，这里取负
+
     float wheel_vel0 = Motor_Wheel[0].Get_Now_Omega() * Wheel_Radius;
     float wheel_vel1 = -Motor_Wheel[1].Get_Now_Omega() * Wheel_Radius;
     float wheel_vel2 = -Motor_Wheel[2].Get_Now_Omega() * Wheel_Radius;
@@ -329,17 +335,6 @@ void Class_Chassis::Self_Resolution()
     Now_Velocity_X *= 0.25f;
     Now_Velocity_Y *= 0.25f;
     Now_Omega = (-wheel_vel[0] + wheel_vel[1] + wheel_vel[2] - wheel_vel[3]) / (4.0f * (half_l + half_w));
-
-    // bool flag = (fabs(Now_Velocity_X - last_X) >= 1.0f) || (fabs(Now_Velocity_Y - last_Y)) || (fabs(Now_Omega - last_Omega));
-
-    // if(flag)
-    // {
-
-    // }
-
-    // last_X = Now_Velocity_X;
-    // last_Y = Now_Velocity_Y;
-    // last_Omega = Now_Omega;
 
     for (int i = 0; i < 4; i++) // 数据传递处理
     {
@@ -370,7 +365,5 @@ void Class_Chassis::PID_Radian_Output()
     
     PID_Radian.TIM_Adjust_PeriodElapsedCallback();
 
-    #ifdef RADIAN_CONTROL
     Set_Target_Omega(PID_Radian.Get_Out());
-    #endif
 }

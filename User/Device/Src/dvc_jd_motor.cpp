@@ -86,11 +86,11 @@ void Class_Jodell_Motor::Jodell_Motor_UART_RxCplt_Callback(uint8_t *Rx_Data, uin
         if (function == AGILE_MODBUS_FC_READ_HOLDING_REGISTERS)
         {
             // 返回的数据
-            uint16_t read_data[6];
+            uint16_t read_data[8];
             // 读取的寄存器个数
             int regs_read = agile_modbus_deserialize_read_registers(ctx, Length, read_data);
 
-            if (regs_read >= 6)
+            if (regs_read >= 8)
                 Data_Process(read_data, regs_read);
 
             // 下一帧为写入帧
@@ -142,6 +142,12 @@ void Class_Jodell_Motor::TIM_UART_Tx_PeriodElapsedCallback()
         {
         case Jodell_Motor_Control_ENABLE:
         {
+            // 每次写入前检测是否堵转
+            if(is_locked)
+            {
+                Set_Target_Roll(Locked_Angle);
+            }
+
             write_addr = Gripper_rACT_Write_Register;
 
             write_nb = 8;
@@ -154,11 +160,11 @@ void Class_Jodell_Motor::TIM_UART_Tx_PeriodElapsedCallback()
             write_data[2] = (0xF0 << 8) | Target_Gripper_Position;
             write_data[3] = (0x80 << 8) | 0x01;
             // 旋转端位置，速度以及运动模式 0x03EC 0x03ED
-            write_data[4] = Target_Relative_Roll;
+            write_data[4] = static_cast<uint16_t>(Target_Absolute_Position_Deg);
             write_data[5] = ((uint8_t)((Target_Torque / MAX_TORQUE) * 255.0f) << 8) |
                             (uint8_t)((Target_Omega / MAX_OMEGA) * 255.0f);
             write_data[6] = 0x0000;                          // 0x03EE
-            write_data[7] = (Target_Roll_Turns << 8) | 0x01; // 0x03EF
+            write_data[7] = (static_cast<uint16_t>(static_cast<uint8_t>(Target_Absolute_Position_Turns)) << 8) | 0x01; // 0x03EF
 
             break;
         }
@@ -184,7 +190,7 @@ void Class_Jodell_Motor::TIM_UART_Tx_PeriodElapsedCallback()
     else if (Motor_Tx_Frame_Type == Jodell_Tx_Frame_READ)
     {
         read_addr = Gripper_rACT_Read_Register;
-        read_nb = 6;
+        read_nb = 8;
 
         Data_Length = agile_modbus_serialize_read_registers(ctx, read_addr, read_nb);
     }
@@ -212,6 +218,11 @@ void Class_Jodell_Motor::Data_Process(uint16_t *data, int regs)
     uint8_t roll_enable_status = ((data[1] & 0xFF) >> 3) & 0x03;
     Roll_Data.Enable_Status = (roll_enable_status == 0x03 ? true : false);
 
+    Gripper_Data.Fault_Code = static_cast<uint8_t>(data[0] >> 8);
+    Gripper_Data.Has_Fault = (Gripper_Data.Fault_Code != Jodell_Motor_Fault_NONE);
+    Roll_Data.Fault_Code = static_cast<uint8_t>(data[1] >> 8);
+    Roll_Data.Has_Fault = (Roll_Data.Fault_Code != Jodell_Motor_Fault_NONE);
+
     // 更新电机类中的电机运行状态
     Motor_Working_Status = (Gripper_Data.Enable_Status && Roll_Data.Enable_Status ? Jodell_Motor_Working_ENABLE : Jodell_Motor_Working_DISABLE);
 
@@ -228,8 +239,70 @@ void Class_Jodell_Motor::Data_Process(uint16_t *data, int regs)
     int16_t roll_pos_raw = (int16_t)data[4];
     uint8_t roll_torque_raw = data[5] >> 8;
     uint8_t roll_omega_raw = data[5] & 0xFF;
+    uint8_t roll_motion_mode = data[6] & 0xFF;
+    int8_t roll_turns_raw = static_cast<int8_t>(data[6] >> 8);
+    int16_t roll_relative_pos_raw = static_cast<int16_t>(data[7]);
 
-    Roll_Data.Now_Angle = ((float)roll_pos_raw / 360.0f) * PI;
+    Roll_Data.Now_Absolute_Angle = ((float)roll_pos_raw / 180.0f) * PI;
+    Roll_Data.Now_Relative_Angle = ((float)roll_relative_pos_raw / 180.0f) * PI;
+    Roll_Data.Now_Turns = roll_turns_raw;
+    Roll_Data.Motion_Mode = roll_motion_mode;
+    Roll_Data.Now_Angle = ((float)(roll_turns_raw * 360 + roll_pos_raw) / 180.0f) * PI;
     Roll_Data.Now_Torque = ((float)roll_torque_raw / 255.0f) * MAX_TORQUE;
     Roll_Data.Now_Omega = ((float)roll_omega_raw / 255.0f) * MAX_OMEGA;
+
+    // 每次返回数据后堵转检测
+    Jodell_Safety_Check();
+}
+
+void Class_Jodell_Motor::Jodell_Safety_Check()
+{
+    float Now_Total_Angle = Roll_Data.Now_Absolute_Angle + Roll_Data.Now_Turns * 2*PI;
+    // 检测当前位置和目标位置以及扭矩值并计数
+    if(fabs(Now_Total_Angle - Target_Roll) >= 0.5f && Roll_Data.Now_Torque >= 1.0f)
+    {
+        if(Locked_cnt < 25)
+        {
+            Locked_cnt++;
+        }
+    }
+    else
+    {
+        if(Locked_cnt > 0)
+        {
+            Locked_cnt--;
+        }
+    }
+
+    if(Locked_cnt >= 25)
+    {
+        if(!is_locked)
+        {
+            is_locked = true;
+            Locked_Angle = Now_Total_Angle;
+        }
+    }
+    else if(Locked_cnt == 0)
+    {
+        is_locked = false;
+    }
+}
+
+void Class_Jodell_Motor::Jodell_Error_Check_Buzzer()
+{
+    if(Get_Motor_Has_Fault())
+    {
+        if(Get_Gripper_Has_Fault() && !Get_Roll_Has_Fault())
+        {
+            buzzer_setTask(&buzzer, BUZZER_CALIBRATING_PRIORITY);
+        }
+        else if(Get_Roll_Has_Fault() && !Get_Gripper_Has_Fault())
+        {
+            buzzer_setTask(&buzzer, BUZZER_CALIBRATED_PRIORITY);
+        }
+        else
+        {
+            buzzer_setTask(&buzzer, BUZZER_POKEMON_HEALED);
+        }
+    }
 }

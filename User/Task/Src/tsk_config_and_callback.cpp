@@ -57,34 +57,6 @@ bool start_flag = 0;
 // 机器人控制对象
 Class_Chariot chariot;
 
-#ifdef MY_DEBUG
-bool debug_test_enable = true;   // Debug模式下测试使能标志
-uint32_t debug_test_counter = 0; // 测试计数器
-
-/*轨迹计算测试用变量*/
-float q_start[6] = {0.0f, 0.0f, 2.0f, 0.0f, 0.5f, 0.0f};
-float trajectory_xyz[600][3]; // 轨迹点数组，测试用
-float trajectory_rpy[3] = {0.0000f, -1.5000f, 0.0000f};
-uint32_t delta_cnt = 0;     // DWT测用时的计数值
-float delta_s = 0.0f;       // DWT测得的用时
-float total_s = 0.0f;       // 完成一次完整计算总用时
-uint16_t calculate_cnt = 0; // 计算次数，用于控制计算只进行一次
-float x_calc;
-float y_calc;
-float z_calc;
-float q_to_show[6];
-float xyz_rpy_to_show[6];
-float s_test;
-/*测试用 测完删*/
-float start_xyz[3];
-float start_rpy[3];
-#endif
-
-#ifdef MOTOR_TEST_CHASSIS
-uint32_t delta_cnt = 0; // DWT测用时的计数值
-float delta_s = 0.0f;   // DWT测得的用时
-#endif
-
 /* Private function declarations ---------------------------------------------*/
 /* Function prototypes -------------------------------------------------------*/
 
@@ -128,6 +100,16 @@ void Chassis_Device_CAN1_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
     {
         // chariot.Chassis.Mecanum_Wheels[3].CAN_RxCpltCallback(CAN_RxMessage->Data);
         chariot.Force_Chassis.Motor_Wheel[3].CAN_RxCpltCallback(CAN_RxMessage->Data);
+    }
+    break;
+    case (0xA1):
+    {
+        chariot.Chassis.Track_Motor[0].CAN_RxCpltCallback(CAN_RxMessage->Data);
+    }
+    break;
+    case (0xA2):
+    {
+        chariot.Chassis.Track_Motor[1].CAN_RxCpltCallback(CAN_RxMessage->Data);
     }
     break;
 #endif
@@ -297,6 +279,7 @@ void Chassis_Device_CAN2_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 #endif
 
 #ifdef CHASSIS
+void PowerMeter_CAN3_Callback(uint8_t *Rx_Data);
 void Chassis_Device_CAN3_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
     switch (CAN_RxMessage->Header.Identifier)
@@ -306,9 +289,14 @@ void Chassis_Device_CAN3_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
         chariot.CAN_Chassis_Rx_Gimbal_Callback(CAN_RxMessage->Data);
         break;
     }
-    case (0x95):
+    case (0x95): // UI更新包
     {
         chariot.CAN_Chassis_Rx_Gimbal_Callback(CAN_RxMessage->Data);
+        break;
+    }
+    case (0x123):
+    {
+        PowerMeter_CAN3_Callback(CAN_RxMessage->Data);
         break;
     }
     }
@@ -375,6 +363,8 @@ void Gimbal_Device_CAN3_Callback(Struct_CAN_Rx_Buffer *CAN_RxMessage)
 {
     switch (CAN_RxMessage->Header.Identifier)
     {
+    case (0x81): // 自定义控制器A包
+    case (0x82): // 自定义控制器B包
     case (0x188):
     case (0x199):
     case (0x178):
@@ -446,7 +436,10 @@ void VT13_UART_Callback(uint8_t *Buffer, uint16_t Length)
 {
     chariot.VT13.VT13_UART_RxCpltCallback(Buffer);
     // 底盘 云台 发射机构 的控制策略
-    chariot.TIM_Control_Callback();
+    if (*(Buffer + 0) == 0xA9 && *(Buffer + 1) == 0x53)
+    {
+        chariot.TIM_Control_Callback();
+    }
 }
 #endif
 
@@ -470,6 +463,7 @@ void Ist8310_IIC3_Callback(uint8_t *Tx_Buffer, uint8_t *Rx_Buffer, uint16_t Tx_L
 void Referee_UART10_Callback(uint8_t *Buffer, uint16_t Length)
 {
     chariot.Referee.UART_RxCpltCallback(Buffer, Length);
+    JudgeReceiveData.robot_id = chariot.Referee.Get_ID();
 }
 #endif
 
@@ -483,30 +477,7 @@ void Referee_UART10_Callback(uint8_t *Buffer, uint16_t Length)
 
 void Offline_Controller_UART1_Callback(uint8_t *Buffer, uint16_t Length)
 {
-    memcpy(chariot.UART1_Buffer, Buffer, 15);
-
-    int i;
-    for (i = 0; i < 15; i++)
-    {
-        if (chariot.UART1_Buffer[i] == 0xA5)
-        {
-            break;
-        }
-    }
-
-    bool flag = chariot.UART1_Buffer[(i+14) % 15] == 0x11;
-
-    if (flag)
-    {
-        for (int j = 0; j < 6; j++)
-        {
-            int index = 2 * j + i;
-            int16_t temp = (Buffer[index + 2] << 8) | Buffer[index + 1];
-            chariot.Offline_Controller_Data.Angle[j] = temp / 100.f;
-        }
-
-        chariot.Offline_Controller_Data.gripper_status = Buffer[(i+13)%15] == 1 ? true : false;
-    }
+    chariot.Offline_Custom_Controller.Custom_Controller_Data_Process(Buffer);
 }
 
 void Referee_UART10_Callback(uint8_t *Buffer, uint16_t Length)
@@ -531,6 +502,19 @@ void SuperCAP_UART1_Callback(uint8_t *Buffer, uint16_t Length)
     memcpy(&tmp_power, &Buffer[6], sizeof(int16_t));
 
     chariot.Force_Chassis.Supercap.Set_Now_Power((float)tmp_power / 75.0f);
+}
+
+float PowerMeter_Voltage, PowerMeter_Current, PowerMeter_Power;
+void PowerMeter_CAN3_Callback(uint8_t *Rx_Data)
+{
+    uint16_t power_int = (Rx_Data[1] << 8) | Rx_Data[0];
+    PowerMeter_Power = (float)power_int / 100.0f;
+
+    uint16_t voltage_int = (Rx_Data[3] << 8) | Rx_Data[2];
+    PowerMeter_Voltage = (float)voltage_int / 100.0f;
+
+    uint16_t current_int = (Rx_Data[5] << 8) | Rx_Data[4];
+    PowerMeter_Current = (float)current_int / 100.0f;
 }
 
 void TOFSense_UART7_Callback(uint8_t *Buffer, uint16_t Length)
@@ -608,12 +592,12 @@ void Task100us_TIM4_Callback()
 #endif
 #elif defined(USE_VT13)
 #ifdef DEBUG
-        if (chariot.VT13.Get_VT13_Status() == VT13_Status_DISABLE)
-        {
-            chariot.Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_DISABLE);
-            chariot.Booster.Set_Booster_Control_Type(Booster_Control_Type_DISABLE);
-            chariot.Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
-        }
+        // if (chariot.VT13.Get_VT13_Status() == VT13_Status_DISABLE)
+        // {
+        //     chariot.Gimbal.Set_Gimbal_Control_Type(Gimbal_Control_Type_DISABLE);
+        //     chariot.Booster.Set_Booster_Control_Type(Booster_Control_Type_DISABLE);
+        //     chariot.Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_DISABLE);
+        // }
 #else
         if (CAN3_Chassis_Rx_Data_A.game_process != 4)
         {
@@ -644,8 +628,6 @@ void Task1ms_TIM5_Callback()
     if (init_finished > 2000)
         start_flag = 1;
 
-    buzzer_taskScheduler(&buzzer);
-
     if (init_finished == 2500)
     {
         buzzer_setTask(&buzzer, BUZZER_MARIO_SIMPLE_PRIORITY);
@@ -659,6 +641,9 @@ void Task1ms_TIM5_Callback()
     /****************************** 交互层回调函数 1ms *****************************************/
     if (start_flag == 1)
     {
+
+        // 上电蜂鸣器
+        buzzer_taskScheduler(&buzzer);
 #ifdef GIMBAL
 
 // ============ 电机测试模式：绕过遥控器检测 ============
@@ -672,8 +657,8 @@ void Task1ms_TIM5_Callback()
         else
 #endif
         {
-            // 正常模式：需要遥控器
             chariot.FSM_Alive_Control.Reload_TIM_Status_PeriodElapsedCallback();
+            chariot.FSM_Alive_Control_VT13.Reload_TIM_Status_PeriodElapsedCallback();
         }
 #endif
 
@@ -700,7 +685,7 @@ void Task1ms_TIM5_Callback()
             chariot.Chassis.Track_Motor[1].TIM_Process_PeriodElapsedCallback();
         }
 #endif
-        if(mod3 == 3)
+        if (mod3 == 3)
         {
             mod3 = 0;
         }
@@ -710,9 +695,10 @@ void Task1ms_TIM5_Callback()
             // 上位机
             TIM_USB_PeriodElapsedCallback(&MiniPC_USB_Manage_Object);
 
+#ifdef GIMBAL
             // 钧舵电机Modbus发送
             chariot.Gimbal.Jodell_ERG150T.TIM_UART_Tx_PeriodElapsedCallback();
-
+#endif
             // 串口统一发送
             TIM_UART_PeriodElapsedCallback();
             mod5 = 0;
@@ -720,8 +706,6 @@ void Task1ms_TIM5_Callback()
         if (mod100 == 100)
         {
 #ifdef CHASSIS
-            // 裁判系统发送
-            chariot.Referee.TIM_UART_Tx_PeriodElapsedCallback();
 #endif
             mod100 = 0;
         }
@@ -734,54 +718,21 @@ void Task1ms_TIM5_Callback()
         if (mod68 == 68)
         {
 #ifdef CHASSIS
-// 裁判系统发送
+            // 裁判系统发送
+            // 判断UI刷新
+            if (chariot.Rx_UI_State.flags && Init_Cnt == 0)
+            {
+                Init_Cnt = 255;
+            }
+            //车体Pitch角度更新
+            JudgeReceiveData.Pitch_Angle = chariot.Force_Chassis.Get_Angle_Pitch();
+            JudgeReceiveData.Yaw_Angle = chariot.Force_Chassis.Get_Angle_Roll();
+            // UI发送
+            GraphicSendtask();
 #endif
             mod68 = 0;
         }
     }
-#ifdef MY_DEBUG
-    /*测试大王奉命接管此区*/
-    else // 充分利用启动前的2000ms进行轨迹计算
-    {
-        chariot.Gimbal.Trajectory_Tracer.dh_model.Fkine(q_start, start_xyz, start_rpy);
-        // 将计算出的真实姿态，赋值给 trajectory_rpy
-        trajectory_rpy[0] = start_rpy[2]; // Yaw
-        trajectory_rpy[1] = start_rpy[1]; // Pitch
-        trajectory_rpy[2] = start_rpy[0]; // Roll
-
-        if (calculate_cnt < 600)
-        // 前600次用于计算轨迹点，从0到599一共调用600次计算函数，可以把所有点都算完
-        {
-            chariot.Gimbal.Trajectory_Tracer.Trajectory_Generator(q_start, 1, trajectory_xyz); // 计算轨迹点
-            x_calc = trajectory_xyz[calculate_cnt][0];
-            y_calc = trajectory_xyz[calculate_cnt][1];
-            z_calc = trajectory_xyz[calculate_cnt][2];
-        }
-        else if (calculate_cnt < 1200)
-        {
-            chariot.Gimbal.valid_solution_cnt = chariot.Gimbal.Trajectory_Tracer.Trajectory_Ikine(q_start, start_rpy, trajectory_xyz, chariot.Gimbal.q_solution, chariot.Gimbal.is_low_speed); // 逆运动学求解，测试用
-
-            for (int i = 0; i < 6; i++)
-            {
-                q_to_show[i] = chariot.Gimbal.q_solution[calculate_cnt - 600][i];
-                // show_FK_result(q_to_show, xyz_rpy_to_show); // 计算正运动学，得到末端xyzrpy，用于显示验证
-                if (i < 3)
-                {
-                    start_xyz[i] = trajectory_xyz[calculate_cnt - 600][i];
-                    start_rpy[i] = trajectory_rpy[i];
-                }
-            }
-        }
-        else
-        {
-            // 1200次之后，取点和逆解都算完了，停止计算
-            calculate_cnt = 1200;
-        }
-
-        calculate_cnt++;
-    }
-/*测试大王奉命接管此区*/
-#endif
 }
 
 /**
@@ -807,6 +758,9 @@ extern "C" void Task_Init()
     UART_Init(&huart7, TOFSense_UART7_Callback, 32);
 
     SPI_Init(&hspi2, Device_SPI2_Callback);
+
+    // UI任务初始化
+    // GraphUI_Init(42);
 #ifdef POWER_LIMIT
 
 #endif
@@ -822,14 +776,19 @@ extern "C" void Task_Init()
 
     // c板陀螺仪spi外设
     SPI_Init(&hspi2, Device_SPI2_Callback);
-// 磁力计iic外设
-// IIC_Init(&hi2c3, Ist8310_IIC3_Callback);    //达妙无磁力计
+    // 磁力计iic外设
+    // IIC_Init(&hi2c3, Ist8310_IIC3_Callback);    //达妙无磁力计
+
+    // 图传舵机PWM输出
+    HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+    HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
 // 遥控器接收
 #ifdef USE_DR16
     UART_Init(&huart5, DR16_UART5_Callback, 18);
-    // UART_Init(&huart6, Image_UART6_Callback, 40);
-#elif defined(USE_VT13)
-    UART_Init(&huart9, VT13_UART_Callback, 30);
+#endif
+
+#ifdef USE_VT13
+    UART_Init(&huart1, VT13_UART_Callback, 30);
 #endif
     // 上位机USB
     USB_Init(&MiniPC_USB_Manage_Object, MiniPC_USB_Callback);
@@ -876,23 +835,10 @@ extern "C" void Task_Init()
 extern "C" void Task_Loop()
 {
 #ifdef GIMBAL
-    // // 解析法求解逆运动学
-    // ikine_pieper_solutions(chariot.Gimbal.target_pos, chariot.Gimbal.target_rpy, &chariot.Gimbal.solutions[0]);
-    // chariot.Gimbal.valid_IK_cnt = solution_filter(&chariot.Gimbal.solutions[0], chariot.Gimbal.valid_solution);
-    // if (chariot.Gimbal.valid_IK_cnt > 0)
-    // {
-    //     float *current_angle = get_now_motor_angles(&chariot.Gimbal);
-    //     chariot.Gimbal.solution_index = get_best_solution_index(chariot.Gimbal.solutions, chariot.Gimbal.valid_solution, current_angle);
-    //     // 将选择的合法解转为电机控制角度
-    //     for (int i = 0; i < 6; i++)
-    //     {
-    //         chariot.Gimbal.model_result[i] = chariot.Gimbal.solutions[chariot.Gimbal.solution_index][i][0];
-    //     }
-    // }        // 计算 q_start 对应的真实 XYZ 和 RPY
 
 #endif
-#ifdef CHASSIS
 
+#ifdef CHASSIS
 #endif
 }
 

@@ -869,6 +869,8 @@ void Class_Motor_DJI_C620::Init(FDCAN_HandleTypeDef *hcan, Enum_Motor_DJI_ID __C
     Gearbox_Rate = __Gearbox_Rate;
     Current_Max = __Current_Max;
     Tx_Data = allocate_tx_data(hcan, __CAN_Rx_ID);
+
+    kalman_Init(&Kalman_Filter, 0.9,0.005,0,1);
 }
 
 /**
@@ -983,9 +985,15 @@ void Class_Motor_DJI_C620::Data_Process()
     }
     Rx_Data.Total_Encoder = Rx_Data.Total_Round * Encoder_Num_Per_Round + tmp_encoder;
 
+    
     // 计算电机本身信息
     Rx_Data.Now_Angle = (float) Rx_Data.Total_Encoder / (float) Encoder_Num_Per_Round * 2.0f * PI / Gearbox_Rate;
     Rx_Data.Now_Omega = (float) tmp_omega * RPM_TO_RADPS / Gearbox_Rate;
+    // 卡尔曼滤波估计角速度
+    float input_now_omeag = (float) tmp_omega * RPM_TO_RADPS / Gearbox_Rate;
+    kalman_set_now(&Kalman_Filter, input_now_omeag);
+    Recv_Adjust_PeriodElapsedCallback(&Kalman_Filter);
+    // Rx_Data.Now_Omega = Kalman_Filter.Out;
     Rx_Data.Now_Current = tmp_current / Current_To_Out;
     Rx_Data.Now_Temperature = tmp_buffer->Temperature + CELSIUS_TO_KELVIN;
     Rx_Data.Now_Power = power_calculate(Power_K_0, Power_K_1, Power_K_2, Power_A, Rx_Data.Now_Current, Rx_Data.Now_Omega * Gearbox_Rate);

@@ -1274,7 +1274,6 @@ inline void Class_DJI_Motor_C620_Steer::Set_Transform_Radian_Omega(float __Trans
     Transform_Radian_Omega = __Transform_Radian_Omega;
 }
 
-
 inline float Class_DJI_Motor_C620_Uplift::Get_Zero_Position()
 {
     return (Zero_Position);
