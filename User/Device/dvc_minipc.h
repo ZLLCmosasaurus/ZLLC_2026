@@ -148,6 +148,20 @@ enum Enum_MiniPC_Self_Color : uint8_t
     MiniPC_Self_Color_BLUE,
 };
 
+enum Enum_MiniPC_Target_Mode : uint8_t
+{
+    Enum_MiniPC_Target_Mode_AUTOAIM = 0, //打其他
+    Enum_MiniPC_Target_Mode_OUTPOST, //打前哨
+     
+};
+
+
+enum Enum_MiniPC_Camera_Mode : uint8_t
+{
+    Enum_MiniPC_Camera_Mode_SHORT = 0, //短焦
+    Enum_MiniPC_Camera_Mode_LONG, //长焦
+};
+
 /**
  * @brief 迷你主机源数据
  *
@@ -212,6 +226,18 @@ struct Pack_tx_t
 {
     int16_t q[4];
 } __attribute__((packed));
+
+// struct Pack_tx_target_t
+// {
+//     uint8_t autoaim_mode;
+//     int16_t speed;
+// }__attribute__((packed));
+struct Pack_tx_target_t
+{
+    int16_t speed;
+    uint8_t camera_mode; //0：短焦 1:长焦
+    uint8_t autoaim_mode; //0:普通自瞄 1:前哨自瞄
+}__attribute__((packed));
 /**
  * @brief 接收数据包
  *
@@ -238,6 +264,7 @@ public:
     void Init(CAN_HandleTypeDef *hcan);
 
     inline Enum_MiniPC_Status Get_MiniPC_Status();
+    Enum_MiniPC_Target_Mode MiniPC_Target_Mode = Enum_MiniPC_Target_Mode_AUTOAIM;
     // inline Enum_Antispin_Type Get_Antispin_Type();
     inline float Get_Chassis_Target_Velocity_X();
     inline float Get_Chassis_Target_Velocity_Y();
@@ -256,6 +283,7 @@ public:
     inline uint8_t Get_Alive_Status();
     inline float Get_Distance();
     inline Enum_MiniPC_Move_Control_Mode Get_Move_Control_Mode();
+    inline Enum_MiniPC_Target_Mode Get_MiniPC_Target_Mode(); 
 
     inline void Set_Game_Stage(Enum_MiniPC_Game_Stage __Game_Stage);
     inline void Set_Chassis_Now_Velocity_X(float __Chassis_Now_Velocity_X);
@@ -270,6 +298,7 @@ public:
     inline void Set_Self_Color(Enum_MiniPC_Self_Color __Self_Color);
     inline void Set_Outpost_Status(Enum_MiniPC_Data_Status __Outpost_Status);
     inline void Set_Outpost_Protect_Status(Enum_MiniPC_Data_Status __Outpost_Protect_Status);
+    inline void Set_MiniPC_Target_Mode(Enum_MiniPC_Target_Mode __MiniPC_Target_Mode);  
     // inline void Set_Antispin_Type(Enum_Antispin_Type __Antispin_Type);
     void Append_CRC16_Check_Sum(uint8_t *pchMessage, uint32_t dwLength);
     bool Verify_CRC16_Check_Sum(const uint8_t *pchMessage, uint32_t dwLength);
@@ -291,6 +320,10 @@ public:
     Class_IMU *IMU;
     Class_Referee *Referee;
 
+    bool Pack_Tx_Flag = 0;//=0发四元数，=1发目标模式
+
+    Enum_MiniPC_Camera_Mode MiniPC_Camera_Mode = Enum_MiniPC_Camera_Mode_SHORT;
+
 protected:
     // 初始化相关常量
 
@@ -300,6 +333,8 @@ protected:
     Struct_CAN_Manage_Object *CAN_Manage_Object;
     // 发送缓存区
     uint8_t *CAN_Tx_Data;
+    // 目标选择模式发送缓冲区
+    uint8_t *CAN_Tx_Target_Data;
     // 数据包头标
     uint8_t Frame_Header;
     // 数据包尾标
@@ -322,6 +357,7 @@ protected:
     Struct_MiniPC_Rx_Data Data_NUC_To_MCU;
 
     Pack_tx_t Pack_Tx_CAN;
+    Pack_tx_target_t Pack_Tx_Target_CAN;
     Pack_rx_t Pack_Rx;
 
     float Tx_Angle_Roll;
@@ -334,7 +370,7 @@ protected:
     float Rx_Angle_Yaw;
 
     uint8_t Fire;
-    uint8_t alive;
+    uint8_t alive;  //自瞄识别控制标志
 
     const float g = 9.8;         // 重力加速度
     const float bullet_v = 21.7; // 子弹速度
@@ -499,6 +535,11 @@ Enum_MiniPC_Move_Control_Mode Class_MiniPC::Get_Move_Control_Mode()
     return (Data_NUC_To_MCU.Move_Control_Mode);
 }
 
+inline Enum_MiniPC_Target_Mode Class_MiniPC::Get_MiniPC_Target_Mode()
+{
+    return MiniPC_Target_Mode;
+}
+
 float Class_MiniPC::Get_Rx_Pitch_Angle()
 {
     return (Rx_Angle_Pitch);
@@ -647,6 +688,11 @@ void Class_MiniPC::Set_Outpost_Status(Enum_MiniPC_Data_Status __Outpost_Status)
 void Class_MiniPC::Set_Outpost_Protect_Status(Enum_MiniPC_Data_Status __Outpost_Protect_Status)
 {
     Data_MCU_To_NUC.Outpost_Protect_Status_Enum = __Outpost_Protect_Status;
+}
+
+inline void Class_MiniPC::Set_MiniPC_Target_Mode(Enum_MiniPC_Target_Mode __MiniPC_Target_Mode)
+{
+    MiniPC_Target_Mode = __MiniPC_Target_Mode;
 }
 
 /**

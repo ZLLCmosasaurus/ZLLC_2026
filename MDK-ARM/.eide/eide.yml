@@ -85,7 +85,6 @@ virtualFolder:
       folders: []
     - name: Device
       files:
-        - path: ../User/Device/dvc_imu.cpp
         - path: ../User/Device/dvc_boardc_bmi088.cpp
         - path: ../User/Device/dvc_boardc_ist8310.cpp
         - path: ../User/Device/dvc_djimotor.cpp
@@ -107,6 +106,8 @@ virtualFolder:
         - path: ../User/Device/buzzer_bsp.c
         - path: ../User/Device/buzzer.c
         - path: ../User/Device/dvc_dmmotor.cpp
+        - path: ../User/Device/dvc_imu.cpp
+        - path: ../User/Device/dvc_pilotlamp.cpp
       folders: []
     - name: Interaction
       files:
@@ -187,6 +188,7 @@ targets:
         - USE_HAL_DRIVER
         - STM32F407xx
       incList:
+        - .
         - ../Core/Inc
         - ../Drivers/STM32F4xx_HAL_Driver/Inc
         - ../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy

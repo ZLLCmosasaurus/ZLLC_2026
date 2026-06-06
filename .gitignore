@@ -32,6 +32,7 @@ RTE/
 *.exf
 *.elf
 *.hex
+*.txt
 
 #keil 工程配置文件
 *.uvoptx

@@ -62,6 +62,7 @@ enum Enum_DM_Motor_ID : uint8_t
     DM_Motor_ID_0xA6,
     DM_Motor_ID_0xA7,
     DM_Motor_ID_0xA8,
+    DM_Motor_ID_0x71 = 0x71,
 };
 
 enum Enum_DM_Motor_ErrorCode : uint8_t

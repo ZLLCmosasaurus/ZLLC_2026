@@ -47,10 +47,10 @@
 
 // ���ֶ��޸�
 #if INFANTRY_ID == 0
-#define GxOFFSET 0.00247530174f
-#define GyOFFSET 0.000393082853f
-#define GzOFFSET 0.000393082853f
-#define gNORM 9.69293118f
+#define GxOFFSET 0.000455399422f
+#define GyOFFSET 0.0063384641f
+#define GzOFFSET 0.000335913646
+#define gNORM 9.80653
 #elif INFANTRY_ID == 1
 #define GxOFFSET 0.0007222f
 #define GyOFFSET -0.001786f
@@ -143,7 +143,7 @@ protected:
 
     uint8_t error = BMI088_NO_ERROR;
 
-    const uint8_t caliOffset = 1;
+    const uint8_t caliOffset = 0;
 
     uint8_t fac_us = 0;
     uint32_t fac_ms = 0;

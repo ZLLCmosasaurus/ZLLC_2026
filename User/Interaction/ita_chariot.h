@@ -24,6 +24,7 @@
 #include "crt_chassis.h"
 #include "config.h"
 #include "dvc_dmmotor.h"
+#include "dvc_pilotlamp.h"
 
 #include "buzzer.h"
 /* Exported macros -----------------------------------------------------------*/
@@ -160,6 +161,8 @@ public:
     // 底盘
     Class_Tricycle_Chassis Chassis;
 
+    Class_PilotLamp PilotLamp;
+
 #ifdef GIMBAL
     // 遥控器
     Class_DR16 DR16;
@@ -180,6 +183,8 @@ public:
    
     friend class Class_FSM_Alive_Control;
     friend class Class_FSM_Alive_Control_VT13;
+
+    
 #endif
 
     void Init(float __DR16_Dead_Zone = 0);
@@ -279,7 +284,6 @@ protected:
     // 常量
     // 键鼠模式按住shift 最大速度缩放系数
     float DR16_Mouse_Chassis_Shift = 2.0f;
-    // 舵机占空比 默认关闭弹舱
     uint16_t Compare = 400;
     // DR16底盘加速灵敏度系数(0.001表示底盘加速度最大为1m/s2)
     float DR16_Keyboard_Chassis_Speed_Resolution_Small = 0.001f;

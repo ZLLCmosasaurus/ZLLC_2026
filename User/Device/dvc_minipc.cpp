@@ -33,6 +33,7 @@ void Class_MiniPC::Init(CAN_HandleTypeDef *hcan)
   {
     CAN_Manage_Object = &CAN1_Manage_Object;
     CAN_Tx_Data = CAN1_MiniPc_Tx_Data;
+    CAN_Tx_Target_Data = CAN1_MiniPc_Tx_Target_Data;
   }
   else if (hcan->Instance == CAN2)
   {
@@ -63,7 +64,7 @@ void Class_MiniPC::Data_Process()
   // Self_aim(target_x, target_y, target_z, &tmp_yaw, &tmp_pitch, &Distance);
   Rx_Angle_Pitch = -tmp_pitch * 180 / PI;
   Rx_Angle_Yaw = tmp_yaw * 180 / PI;
-  Math_Constrain(&Rx_Angle_Pitch, -45.0f, 10.0f);
+  Math_Constrain(&Rx_Angle_Pitch, -65.0f, 16.0f);
 }
 
 /**
@@ -77,13 +78,23 @@ void Class_MiniPC::Output()
   float Yaw_rad = Tx_Angle_Yaw * PI / 180.0f;
   float Pitch_rad = Tx_Angle_Pitch * PI / 180.0f;
   float Roll_rad = Tx_Angle_Roll * PI / 180.0f;
+  float tmp_q[4];
+  tmp_q[3] = ((arm_cos_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f) + arm_sin_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f)));
+  tmp_q[0] = ((arm_sin_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f) - arm_cos_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f)));
+  tmp_q[1] = ((arm_cos_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f) + arm_sin_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f)));
+  tmp_q[2] = ((arm_cos_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f) - arm_sin_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f)));
+  float m = sqrtf(tmp_q[0] * tmp_q[0] + tmp_q[1] * tmp_q[1] + tmp_q[2] * tmp_q[2] + tmp_q[3] * tmp_q[3]);
+  Pack_Tx_CAN.q[0] = (int16_t)(tmp_q[0] * 10000.0f / m);
+  Pack_Tx_CAN.q[1] = (int16_t)(tmp_q[1] * 10000.0f / m);
+  Pack_Tx_CAN.q[2] = (int16_t)(tmp_q[2] * 10000.0f / m);
+  Pack_Tx_CAN.q[3] = (int16_t)(tmp_q[3] * 10000.0f / m);
 
-  Pack_Tx_CAN.q[3] = (int16_t)((arm_cos_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f) + arm_sin_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f)) * 10000.f);
-  Pack_Tx_CAN.q[0] = (int16_t)((arm_sin_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f) - arm_cos_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f)) * 10000.f);
-  Pack_Tx_CAN.q[1] = (int16_t)((arm_cos_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f) + arm_sin_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f)) * 10000.f);
-  Pack_Tx_CAN.q[2] = (int16_t)((arm_cos_f32(Roll_rad / 2.0f) * arm_cos_f32(Pitch_rad / 2.0f) * arm_sin_f32(Yaw_rad / 2.0f) - arm_sin_f32(Roll_rad / 2.0f) * arm_sin_f32(Pitch_rad / 2.0f) * arm_cos_f32(Yaw_rad / 2.0f)) * 10000.f);
+  Pack_Tx_Target_CAN.autoaim_mode = (uint8_t)(MiniPC_Target_Mode); // 打前哨用前哨自瞄
+  Pack_Tx_Target_CAN.camera_mode = (uint8_t)(MiniPC_Camera_Mode);  // 打前哨用短焦
 
+  Pack_Tx_Target_CAN.speed = (int16_t)(Referee->Get_Shoot_Speed() * 100.0f);
   memcpy(CAN_Tx_Data, &Pack_Tx_CAN, sizeof(Pack_tx_t));
+  memcpy(CAN_Tx_Target_Data, &Pack_Tx_Target_CAN, sizeof(Pack_tx_target_t));
 }
 
 /**

@@ -126,7 +126,7 @@ typedef enum
 
 typedef __packed struct
 {
-	uint8_t operate_tpye;		  // 0空操作  1ɾ������ͼ��  2ɾ������ͼ��
+	uint8_t operate_tpye;		  // 0�ղ���  1ɾ������ͼ��  2ɾ������ͼ��
 	uint8_t layer;				  // ͼ���  0~9
 } client_custom_graphic_delete_t; // �ͻ���ɾ��ͼ��
 
@@ -198,9 +198,12 @@ typedef struct
 	uint16_t booster_fric_omega_left;
 	uint16_t booster_fric_omega_right;
 	uint16_t Booster_bullet_num;
+	uint8_t Booster_status;
+	uint8_t PilotLamp_Mode;
 	float Supercap_Voltage;
 	float Pitch_Angle;
 	 float Chassis_Gimbal_Diff;
+	uint8_t MiniPC_camera_mode;
 
 } JudgeReceive_t;
 

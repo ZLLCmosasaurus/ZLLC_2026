@@ -5,6 +5,8 @@
   * @brief          : Main program body
   ******************************************************************************
   * @attention
+	
+	
   *
   * Copyright (c) 2024 STMicroelectronics.
   * All rights reserved.
@@ -30,6 +32,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "tsk_config_and_callback.h"
+
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -69,7 +73,6 @@ void SystemClock_Config(void);
   * @retval int
   */
 int main(void)
-
 {
 
   /* USER CODE BEGIN 1 */

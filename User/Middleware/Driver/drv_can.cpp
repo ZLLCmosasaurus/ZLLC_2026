@@ -55,6 +55,7 @@ uint8_t CAN2_Gimbal_Tx_Chassis_Data_1[8]; // 云台给底盘发送缓冲区
 uint8_t CAN2_Chassis_Tx_Gimbal_Data_1[8]; // 底盘给云台发送缓冲区
 
 uint8_t CAN1_MiniPc_Tx_Data[8];
+uint8_t CAN1_MiniPc_Tx_Target_Data[8];
 uint8_t CAN2_MiniPc_Tx_Data[8];
 /*********LK电机 控制缓冲区***********/
 uint8_t CAN1_0x141_Tx_Data[8];
@@ -250,13 +251,18 @@ void TIM_CAN_PeriodElapsedCallback()
 		if(mod % 5 ==0)
 		{
 			CAN_Send_Data(&hcan1, 0xa0, CAN1_MiniPc_Tx_Data, 8); // 上位机
+            //CAN_Send_Data(&hcan1,)
 			CAN_Send_Data(&hcan1,0x71,CAN1_0xxf1_Tx_Data,8);
-            CAN_Send_Data(&hcan2, 0x1ff, CAN2_0x1ff_Tx_Data, 8); //pitch-GM6020  按照0x1ff ID 发送 可控制多个电机
+            CAN_Send_Data(&hcan2, 0x1ff, CAN2_0x1ff_Tx_Data, 8); 
             CAN_Send_Data(&hcan2, 0x200, CAN2_0x200_Tx_Data, 8); //摩擦轮+拨弹轮 按照0x200 ID 发送 可控制多个电机
 			
 			//CAN_Send_Data(&hcan2,0x03,CAN2_0xxf3_Tx_Data,8);
 			//CAN_Send_Data(&hcan2, 0x1ff,CAN2_0x1ff_Tx_Data,8);//2006测试			
 		}
+        else if(mod % 5 == 1)
+        {
+            CAN_Send_Data(&hcan1, 0xa2, CAN1_MiniPc_Tx_Target_Data, 8);
+        }
         else
         {
            CAN_Send_Data(&hcan1,0x1ff,CAN1_0x1ff_Tx_Data,8);

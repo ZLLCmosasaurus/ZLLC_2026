@@ -705,6 +705,11 @@
               <FileType>8</FileType>
               <FilePath>..\User\Device\dvc_dmmotor.cpp</FilePath>
             </File>
+            <File>
+              <FileName>dvc_pilotlamp.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>..\User\Device\dvc_pilotlamp.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
