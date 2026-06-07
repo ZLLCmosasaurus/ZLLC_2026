@@ -615,7 +615,7 @@ void Class_Chariot::Control_Chassis()
                 Chassis.Set_Chassis_Control_Type(Chassis_Control_Type_SPIN);
                 gimbal_velocity_x = 0.0f;
                 gimbal_velocity_y = 0.0f;
-                chassis_omega     = 0.0f;//CHASSIS_SPIN_OMEGA;
+                chassis_omega     = 9.0f;
                 break;
             }
 
@@ -918,34 +918,41 @@ void Class_Chariot::Control_Booster()
                     break;
                 }
 
-                if (MiniPC.MiniPC_Fire_Updata_Flag == 1)
-                {
-                    float now = DWT_GetTimeline_s();
-                    if (Booster.Get_Flag() == 0)
-                    {
-                        threshold = 0.05f;
-                    }
-                    else if (Booster.Get_Flag() == 1)
-                    {
-                        threshold = Booster.Get_Heat_Consumption() / Booster.Get_Cooling_Value();
-                    }
-
-                    if ((now - last_shot_time) >= threshold)
-                    {
-                        bt2 = DWT_GetDeltaT(&single_t1);
-                        Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
-                        last_shot_time = now;
-                    }
-                    else
-                    {
-                        Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
-                    }
-                    MiniPC.MiniPC_Fire_Updata_Flag = 0;
+                if(MiniPC.Get_mode() == 1 || MiniPC.Get_mode() == 2){
+                    Booster.Set_Booster_Control_Type(Booster_Control_Type_REPEATED);
                 }
                 else{
                     Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
-                    //Booster.Set_Shoot_Number(0.f);
                 }
+
+                // if (MiniPC.MiniPC_Fire_Updata_Flag == 1)
+                // {
+                //     float now = DWT_GetTimeline_s();
+                //     if (Booster.Get_Flag() == 0)
+                //     {
+                //         threshold = 0.05f;
+                //     }
+                //     else if (Booster.Get_Flag() == 1)
+                //     {
+                //         threshold = Booster.Get_Heat_Consumption() / Booster.Get_Cooling_Value();
+                //     }
+
+                //     if ((now - last_shot_time) >= threshold)
+                //     {
+                //         bt2 = DWT_GetDeltaT(&single_t1);
+                //         Booster.Set_Booster_Control_Type(Booster_Control_Type_SINGLE);
+                //         last_shot_time = now;
+                //     }
+                //     else
+                //     {
+                //         Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+                //     }
+                //     MiniPC.MiniPC_Fire_Updata_Flag = 0;
+                // }
+                // else{
+                //     Booster.Set_Booster_Control_Type(Booster_Control_Type_CEASEFIRE);
+                //     //Booster.Set_Shoot_Number(0.f);
+                // }
                 break;
             }
             case (FS_Switch_Status_MIDDLE)://右1中开火

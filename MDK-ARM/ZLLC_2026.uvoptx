@@ -103,7 +103,7 @@
         <bEvRecOn>1</bEvRecOn>
         <bSchkAxf>0</bSchkAxf>
         <bTchkAxf>0</bTchkAxf>
-        <nTsel>6</nTsel>
+        <nTsel>4</nTsel>
         <sDll></sDll>
         <sDllPa></sDllPa>
         <sDlgDll></sDlgDll>
@@ -120,7 +120,6 @@
         <SetRegEntry>
           <Number>0</Number>
           <Key>DLGUARM</Key>
-          <Name>4騉</Name>
         </SetRegEntry>
         <SetRegEntry>
           <Number>0</Number>
@@ -329,6 +328,21 @@
           <count>35</count>
           <WinNumber>1</WinNumber>
           <ItemText>hfdcan1</ItemText>
+        </Ww>
+        <Ww>
+          <count>36</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>tmp_game_status,0x0A</ItemText>
+        </Ww>
+        <Ww>
+          <count>37</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>\\ZLLC_2026\../Core/Src/fdcan.c\hfdcan1</ItemText>
+        </Ww>
+        <Ww>
+          <count>38</count>
+          <WinNumber>1</WinNumber>
+          <ItemText>\\ZLLC_2026\../Core/Src/fdcan.c\hfdcan1</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>
